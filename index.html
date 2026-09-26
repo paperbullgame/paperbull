@@ -4649,7 +4649,7 @@ function init() {
   const W = '#fff';
   // [id, name, tagline, palette, logo tile gradient [from,to], logo art (drawn on a 48×48 tile)]
   const THEMES = [
-    ['classic', 'Classic Purple', 'The original PAPERBULL look', null, ['#667eea', '#764ba2'],
+    ['classic', 'Classic', 'Clean light or dark, purple accents', null, ['#667eea', '#764ba2'],
       `<path d="M13 15c-1 6 3 10 8 10M35 15c1 6-3 10-8 10" stroke="${W}" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="24" cy="28" r="9" fill="${W}"/><circle cx="20.5" cy="27" r="1.6" fill="#5b4bc4"/><circle cx="27.5" cy="27" r="1.6" fill="#5b4bc4"/><ellipse cx="24" cy="32.5" rx="4" ry="2.4" fill="#ffc6d9"/>`],
     ['midnight', 'Midnight', 'Dark mode for night traders', pal(218, 30, 40), ['#1b2440', '#0a0e1a'],
       `<path d="M28 10a13 13 0 1 0 10 21A10.5 10.5 0 0 1 28 10z" fill="#ffd36b"/><circle cx="13" cy="13" r="1.4" fill="${W}"/><circle cx="37" cy="12" r="1" fill="${W}"/><circle cx="36" cy="22" r="1.3" fill="${W}"/>`],
@@ -5510,7 +5510,7 @@ ${id === 'gold' ? `${R} h1,${R} .card.hero [data-b="total"]{color:var(--amber)!i
     const up = (out.stocks || out.crypto) >= 0, pct = out.stocks || out.crypto || 0;
     M.vix = clamp(M.vix + (up ? -1 : 1) * (1 + Math.random() * 3), 9, 60);
     M.hist.unshift({ k: e.k, t: Date.now(), text: out.text, why: out.why, up, pct }); M.hist.length = Math.min(M.hist.length, 20);
-    addNews({ id: uid(), t: simT, sym: null, group: out.stocks ? 'stock' : 'crypto', text: `${E.icon} ${out.text}`, pct: Math.exp(pct) - 1, up, mega: true, why: out.why, macro: e.k }, false);
+    addNews({ id: uid(), t: simT, sym: null, group: out.stocks ? 'stock' : 'crypto', text: out.text, pct: Math.exp(pct) - 1, up, mega: true, why: out.why, macro: e.k }, false);
     toast(`${E.icon} ${out.text}`, 'news', up ? '📈' : '📉'); try { SFX.play('news'); } catch (x) {}
     SS('macro', M);
   }
@@ -5540,7 +5540,7 @@ ${id === 'gold' ? `${R} h1,${R} .card.hero [data-b="total"]{color:var(--amber)!i
         <div class="grid2 nd-grid"><section class="card"><div class="card-h"><h3>Economic calendar</h3><span class="muted small">These move the whole market</span></div><div id="ndCal"></div></section>
         <section class="card"><div class="card-h"><h3>Latest big reports</h3></div><div id="ndHist"></div></section></div>
         <section class="card"><div class="card-h"><h3>Live headlines</h3><div class="seg" id="ndF">${[['all', 'All'], ['macro', 'Market-wide'], ['stock', 'Stocks'], ['crypto', 'Crypto'], ['mine', 'My holdings']].map(([k, l]) => `<button data-f="${k}" class="${this.f === k ? 'on' : ''}">${l}</button>`).join('')}</div></div><div id="ndFeed" class="nd-feed"></div></section>
-        <section class="card"><div class="card-h"><h3>What moves the market?</h3><span class="muted small">A quick guide</span></div><div class="nd-guide">${GUIDE.map(([i, t, d]) => `<div class="nd-g"><span>${i}</span><b>${t}</b><p>${d}</p></div>`).join('')}</div></section>`;
+        <section class="card"><div class="card-h"><h3>What moves the market?</h3><span class="muted small">A quick guide</span></div><div class="nd-guide">${GUIDE.map(([i, t, d]) => `<div class="nd-g">${window.PBEI ? PBEI(i, '') : `<span>${i}</span>`}<b>${t}</b><p>${d}</p></div>`).join('')}</div></section>`;
       if (NEWS.length < 3) for (let i = 0; i < 4; i++) fireNews(simT, true);
       $$('#ndF button').forEach(b => b.onclick = () => { this.f = b.dataset.f; $$('#ndF button').forEach(x => x.classList.toggle('on', x === b)); this.feed(true); });
       this.update(true);
@@ -5555,8 +5555,8 @@ ${id === 'gold' ? `${R} h1,${R} .card.hero [data-b="total"]{color:var(--amber)!i
       const mo = mood(), tiles = [['🏦', 'Fed interest rate', M.rate.toFixed(2) + '%', 'Higher = harder for stocks'], ['🛒', 'Inflation (CPI)', M.cpi.toFixed(1) + '%', 'Fed target is 2%'], ['👷', 'Unemployment', M.unemp.toFixed(1) + '%', 'Low = strong economy'],
         ['🛢️', 'Oil', '$' + M.oil.toFixed(2), 'Per barrel'], ['💵', 'US dollar index', M.dxy.toFixed(1), 'Strength vs other money'], ['😱', 'Fear index (VIX)', M.vix.toFixed(1), M.vix > 25 ? 'Investors are scared' : M.vix < 14 ? 'Investors are calm' : 'Normal nerves'],
         ['🐂', 'Market mood', Math.round(mo * 100) + '% up', mo > .6 ? 'Bulls in charge' : mo < .4 ? 'Bears in charge' : 'Mixed day']];
-      const me = $('#ndMacro'); if (me) me.innerHTML = tiles.map(([i, k, v, s]) => `<div class="nd-t"><span class="i">${i}</span><small>${k}</small><b class="mono">${v}</b><em>${s}</em></div>`).join('');
-      const ce = $('#ndCal'); if (ce) ce.innerHTML = M.cal.map(e => { const E = EVENTS[e.k], s = Math.max(0, (e.at - Date.now()) / 1000); return `<div class="nd-ev"><span class="i">${E.icon}</span><span class="t"><b>${E.name}</b><small>Expected: ${esc(e.exp.txt)}</small></span><span class="c mono ${s < 30 ? 'soon' : ''}">${s < 1 ? 'Now' : fmtDur(s)}</span></div>`; }).join('');
+      const me = $('#ndMacro'); if (me) me.innerHTML = tiles.map(([i, k, v, s]) => `<div class="nd-t">${window.PBEI ? PBEI(i, 'i') : `<span class="i">${i}</span>`}<small>${k}</small><b class="mono">${v}</b><em>${s}</em></div>`).join('');
+      const ce = $('#ndCal'); if (ce) ce.innerHTML = M.cal.map(e => { const E = EVENTS[e.k], s = Math.max(0, (e.at - Date.now()) / 1000); return `<div class="nd-ev">${window.PBEI ? PBEI(E.icon, 'i') : `<span class="i">${E.icon}</span>`}<span class="t"><b>${E.name}</b><small>Expected: ${esc(e.exp.txt)}</small></span><span class="c mono ${s < 30 ? 'soon' : ''}">${s < 1 ? 'Now' : fmtDur(s)}</span></div>`; }).join('');
       const he = $('#ndHist'); if (he && (full || he._n !== M.hist.length + (M.hist[0]?.t || 0))) { he._n = M.hist.length + (M.hist[0]?.t || 0);
         he.innerHTML = M.hist.length ? M.hist.slice(0, 6).map(h => `<div class="nd-h"><span class="im ${h.up ? 'pos' : 'neg'}">${h.up ? '▲' : '▼'}</span><span><b>${EVENTS[h.k].icon} ${esc(h.text)}</b><small>${esc(h.why)} · ${timeAgo(h.t)}</small></span></div>`).join('') : '<div class="empty">The first report is coming up soon. Watch the calendar.</div>'; }
       this.feed(full);
@@ -6271,6 +6271,226 @@ ${id === 'gold' ? `${R} h1,${R} .card.hero [data-b="total"]{color:var(--amber)!i
   }
   window.BuckAI = { open: openPanel, close: closePanel, think, findAssets, ta };
   boot();
+})();
+
+/* =====================================================================
+   VISUAL 3 — icon set, theme-aware charts, smoother sparklines
+   ===================================================================== */
+(() => {
+  /* ---------------- colors from the active theme ---------------- */
+  const cv = document.createElement('canvas').getContext('2d');
+  function rgb(c) {   // any CSS color -> [r,g,b,a]
+    cv.fillStyle = '#000'; cv.fillStyle = c || '#000'; const s = cv.fillStyle;
+    if (s[0] === '#') return [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16), 1];
+    const m = s.match(/[\d.]+/g) || [0, 0, 0, 1]; return [+m[0], +m[1], +m[2], m[3] == null ? 1 : +m[3]];
+  }
+  const rgba = (c, a) => { const [r, g, b] = rgb(c); return `rgba(${r},${g},${b},${a})`; };
+  const tok = (n, f) => { const v = getComputedStyle(document.body).getPropertyValue(n).trim(); return v || f; };
+  const T = () => ({ up: tok('--up', '#10b981'), dn: tok('--dn', '#ef4444'), tx: tok('--tx', '#1b1d29'), mut: tok('--mut', '#6b7080'), line: tok('--line', '#e6e7f1'), panel: tok('--panel', '#fff'), acc: tok('--amber', '#5b3fe0') });
+  window.PBColor = { rgba, tok, T };
+
+  function chartTheme() {
+    const t = T();
+    return {
+      layout: { textColor: rgba(t.mut, .95), fontFamily: "'PB Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 11 },
+      grid: { vertLines: { visible: false }, horzLines: { visible: true, color: rgba(t.line, .9) } },
+      crosshair: { vertLine: { color: rgba(t.mut, .55), width: 1, style: 3, labelBackgroundColor: rgba(t.tx, 1) }, horzLine: { color: rgba(t.mut, .45), width: 1, style: 3, labelBackgroundColor: rgba(t.tx, 1) } },
+    };
+  }
+  function styleMain(series, up, kind) {
+    if (!series) return; const t = T(), c = up ? t.up : t.dn;
+    try {
+      if (kind === 'area') series.applyOptions({ lineColor: c, topColor: rgba(c, .24), bottomColor: rgba(c, 0), lineWidth: 2, crosshairMarkerRadius: 5, crosshairMarkerBorderColor: rgba(t.panel, 1), crosshairMarkerBorderWidth: 2, crosshairMarkerBackgroundColor: c });
+      else if (kind === 'line' || kind === 'step') series.applyOptions({ color: c, crosshairMarkerRadius: 5, crosshairMarkerBorderColor: rgba(t.panel, 1), crosshairMarkerBorderWidth: 2 });
+    } catch (e) {}
+  }
+
+  /* all small charts */
+  const mk0 = makeChart;
+  makeChart = function (el) { const c = mk0.apply(this, arguments); if (c) try { c.applyOptions(chartTheme()); c.applyOptions({ grid: { horzLines: { visible: false } } }); } catch (e) {} return c; };
+
+  /* the big asset chart */
+  const dm0 = DetailChart.mount;
+  DetailChart.mount = function () {
+    const r = dm0.apply(this, arguments);
+    if (this.chart) try { this.chart.applyOptions(chartTheme()); styleMain(this.series, this.lastUp, this.style); } catch (e) {}
+    return r;
+  };
+  const dd0 = DetailChart.draw;
+  DetailChart.draw = function () { const r = dd0.apply(this, arguments); styleMain(this.series, this.lastUp, this.style); return r; };
+
+  /* home: portfolio value as a baseline chart (green above where the range started, red below) */
+  const hm0 = Home.mount;
+  Home.mount = function () {
+    const r = hm0.apply(this, arguments);
+    try {
+      if (this.pv && this.pvSeries) {
+        this.pv.removeSeries(this.pvSeries);
+        const t = T();
+        this.pvSeries = this.pv.addBaselineSeries({ baseValue: { type: 'price', price: 0 }, lineWidth: 2, priceLineVisible: false, lastValueVisible: false,
+          topLineColor: t.up, topFillColor1: rgba(t.up, .22), topFillColor2: rgba(t.up, .02), bottomLineColor: t.dn, bottomFillColor1: rgba(t.dn, .02), bottomFillColor2: rgba(t.dn, .22),
+          crosshairMarkerRadius: 5, crosshairMarkerBorderColor: rgba(t.panel, 1), crosshairMarkerBorderWidth: 2 });
+        this.pv.applyOptions({ timeScale: { fixLeftEdge: true, fixRightEdge: true, lockVisibleTimeRangeOnResize: true }, rightPriceScale: { scaleMargins: { top: .18, bottom: .1 } } });
+        this.drawPV(true);
+      }
+    } catch (e) { console.error(e); }
+    return r;
+  };
+  Home.drawPV = function (fit) {
+    this.lastLen = acct.history.length; this.lastPv = Date.now();
+    if (!this.pvSeries) return;
+    const now = nowSec(), span = { '1D': 86400, '1W': 604800, '1M': 2592000, ALL: Infinity }[this.range];
+    const pts = [...acct.history.filter(p => now - p.t <= span), { t: now, v: valuation().total }];
+    const data = [];
+    for (const p of pts) { const t = Math.floor(p.t) + TZ_SHIFT; const l = data[data.length - 1]; if (l && l.time >= t) l.value = p.v; else data.push({ time: t, value: p.v }); }
+    if (data.length === 1) data.unshift({ time: data[0].time - 60, value: data[0].value });
+    const note = $('#pvNote'); if (note) note.textContent = data.length < 4 ? 'Your value chart fills in as you play. A point is saved every minute.' : '';
+    const base = data[0].value;
+    try { this.pvSeries.applyOptions({ baseValue: { type: 'price', price: base } }); } catch (e) {}
+    this.pvSeries.setData(data);
+    if (this._baseLine) try { this.pvSeries.removePriceLine(this._baseLine); } catch (e) {}
+    try { this._baseLine = this.pvSeries.createPriceLine({ price: base, color: rgba(T().mut, .5), lineWidth: 1, lineStyle: 2, axisLabelVisible: false }); } catch (e) {}
+    if (fit) this.pv.timeScale().fitContent();
+  };
+
+  /* re-theme live charts when the look changes */
+  function retheme() {
+    try { if (Home.pv) Home.pv.applyOptions(chartTheme()), Home.pv.applyOptions({ grid: { horzLines: { visible: false } } }); } catch (e) {}
+    try { if (DetailChart.chart) DetailChart.chart.applyOptions(chartTheme()), styleMain(DetailChart.series, DetailChart.lastUp, DetailChart.style); } catch (e) {}
+  }
+  const al0 = applyLook;
+  applyLook = function () { const r = al0.apply(this, arguments); setTimeout(retheme, 30); return r; };
+
+  /* ---------------- sparklines: smooth line, soft fill, dotted open ---------------- */
+  let SPK = 0;
+  function smooth(P) {
+    let d = `M${P[0][0].toFixed(1)},${P[0][1].toFixed(1)}`;
+    for (let i = 0; i < P.length - 1; i++) {
+      const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+      d += `C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+    }
+    return d;
+  }
+  sparkSVG = function (a, w = 72, h = 28) {
+    const cl = a.lite ? ringValues(a) : a.bufs.m5.bars.map(b => b.c), n = w >= 200 ? 36 : 24, step = Math.max(1, Math.floor(cl.length / n)), vals = [];
+    for (let i = 0; i < cl.length; i += step) vals.push(cl[i]);
+    vals.push(a.price);
+    if (vals.length < 2) return '';
+    let mn = Infinity, mx = -Infinity; for (const v of vals) { if (v < mn) mn = v; if (v > mx) mx = v; }
+    const r = mx - mn || 1, pad = 3, y = v => pad + (1 - (v - mn) / r) * (h - pad * 2);
+    const P = vals.map((v, i) => [i / (vals.length - 1) * w, y(v)]);
+    const line = smooth(P), id = 'spg' + (++SPK % 1e6), up = chg24(a) >= 0, oy = y(vals[0]).toFixed(1);
+    return `<svg class="spark v2 ${up ? 'up' : 'dn'}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".26"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>`
+      + `<line class="op" x1="0" x2="${w}" y1="${oy}" y2="${oy}"/><path class="ar" d="${line}L${w},${h}L0,${h}Z" fill="url(#${id})"/><path class="ln" d="${line}"/></svg>`;
+  };
+
+  /* ---------------- icon set (24px, 1.8 stroke, duotone fill) ---------------- */
+  const S = (body) => `<svg viewBox="0 0 24 24" class="pbi" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+  const ICONS = {
+    home: S('<path class="du" d="M4 10.2 12 4l8 6.2V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.2a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5.2H5.5A1.5 1.5 0 0 1 4 19z"/>'),
+    markets: S('<path d="M7 3.5v3M7 16.5v4M17 3v4.5M17 14.5V21"/><rect class="du" x="4.5" y="6.5" width="5" height="10" rx="1.4"/><rect class="du" x="14.5" y="7.5" width="5" height="7" rx="1.4"/>'),
+    news: S('<path class="du" d="M4 5.5A1.5 1.5 0 0 1 5.5 4h10A1.5 1.5 0 0 1 17 5.5V19a1.5 1.5 0 0 0 1.5 1.5h-13A1.5 1.5 0 0 1 4 19z"/><path d="M17 9h2.5a.5.5 0 0 1 .5.5V19a1.5 1.5 0 0 1-3 0M7.5 8h6M7.5 11.5h6M7.5 15h3.5"/>'),
+    portfolio: S('<path d="M20.5 13.5A8.5 8.5 0 1 1 10.5 3.5"/><path class="du" d="M13.5 3.2a8 8 0 0 1 7.3 7.3h-7.3z"/>'),
+    learn: S('<path class="du" d="M2.8 9.2 12 4.8l9.2 4.4L12 13.6z"/><path d="M6.5 11.3v4.4c0 1.4 2.5 2.8 5.5 2.8s5.5-1.4 5.5-2.8v-4.4M21.2 9.2v5.3"/>'),
+    shop: S('<path class="du" d="M5.2 8.5h13.6l-1 10.6a1.6 1.6 0 0 1-1.6 1.4H7.8a1.6 1.6 0 0 1-1.6-1.4z"/><path d="M8.8 10.5V7.2a3.2 3.2 0 0 1 6.4 0v3.3"/>'),
+    pets: S('<ellipse cx="5.8" cy="10.2" rx="1.8" ry="2.2"/><ellipse cx="9.6" cy="5.8" rx="1.8" ry="2.3"/><ellipse cx="14.4" cy="5.8" rx="1.8" ry="2.3"/><ellipse cx="18.2" cy="10.2" rx="1.8" ry="2.2"/><path class="du" d="M12 11.3c-2.7 0-5.6 3.6-5.6 6.4a2.8 2.8 0 0 0 2.8 2.8c1.1 0 1.8-.6 2.8-.6s1.7.6 2.8.6a2.8 2.8 0 0 0 2.8-2.8c0-2.8-2.9-6.4-5.6-6.4z"/>'),
+    garden: S('<path d="M12 21v-9.5"/><path class="du" d="M12 12.5C12 8.4 9.3 6 4.8 6c0 4.2 2.7 6.5 7.2 6.5zM12 10.5c0-3.8 2.6-6.3 7.2-6.3 0 3.9-2.6 6.3-7.2 6.3z"/><path d="M7.5 21h9"/>'),
+    bank: S('<path class="du" d="M3.5 9.2 12 4l8.5 5.2z"/><path d="M3.5 9.2h17M6 12v5.5M10 12v5.5M14 12v5.5M18 12v5.5M3.5 20.5h17"/>'),
+    ranks: S('<path class="du" d="M7 4h10v5.5a5 5 0 0 1-10 0z"/><path d="M17 5.5h2.5v1.3a3.2 3.2 0 0 1-2.9 3.2M7 5.5H4.5v1.3a3.2 3.2 0 0 0 2.9 3.2M12 14.5v3M8.5 20.5h7M9.5 20.5l.6-3h3.8l.6 3"/>'),
+    profile: S('<circle class="du" cx="12" cy="8.2" r="3.9"/><path d="M4.5 20.2c.9-3.6 3.9-5.7 7.5-5.7s6.6 2.1 7.5 5.7"/>'),
+    settings: S('<circle class="du" cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M4.5 7.7l2 1.2M17.5 15.1l2 1.2M4.5 16.3l2-1.2M17.5 8.9l2-1.2"/><path d="M12 5.2a6.8 6.8 0 1 1 0 13.6 6.8 6.8 0 0 1 0-13.6z"/>'),
+    news2: null,
+  };
+  window.PBIcons = ICONS;
+  function paintIcons() {
+    for (const a of document.querySelectorAll('#nav a[data-s]')) {
+      const k = a.dataset.s, ic = ICONS[k]; if (!ic) continue;
+      const svg = a.querySelector('svg'); if (!svg || svg.classList.contains('pbi')) continue;
+      svg.outerHTML = ic;
+    }
+    for (const s of document.querySelectorAll('.pg-h .pg-ic')) {
+      const k = document.body.dataset.screen, ic = ICONS[k]; const svg = s.querySelector('svg');
+      if (ic && svg && !svg.classList.contains('pbi')) s.innerHTML = ic;
+    }
+    for (const c of document.querySelectorAll('.th-card:not([data-pv])')) {
+      c.dataset.pv = '1';
+      c.insertAdjacentHTML('beforeend', `<span class="th-prev" aria-hidden="true"><span class="tp-top"><i></i><i></i><i></i></span><svg viewBox="0 0 100 30" preserveAspectRatio="none"><path class="a" d="M0 24C10 22 14 16 22 17S34 25 44 19 56 8 66 11 80 18 88 9 96 6 100 5V30H0z"/><path class="l" d="M0 24C10 22 14 16 22 17S34 25 44 19 56 8 66 11 80 18 88 9 96 6 100 5"/></svg><span class="tp-btn"></span></span>`);
+    }
+    const sb = document.getElementById('settingsBtn');
+    if (sb && !sb.querySelector('.pbi')) { const svg = sb.querySelector('svg'); if (svg) svg.outerHTML = ICONS.settings; }
+  }
+
+  /* ---------------- emoji -> line icons in the places that act as UI icons ---------------- */
+  const P = {
+    columns: '<path d="M3.5 9 12 4.5 20.5 9z"/><path d="M5.5 11v6.5M9.8 11v6.5M14.2 11v6.5M18.5 11v6.5M3.5 20h17"/>',
+    wave: '<path d="M3 9c2.2 0 2.2-2 4.5-2S9.7 9 12 9s2.2-2 4.5-2S18.8 9 21 9M3 14c2.2 0 2.2-2 4.5-2s2.2 2 4.5 2 2.2-2 4.5-2 2.3 2 4.5 2M3 19c2.2 0 2.2-2 4.5-2s2.2 2 4.5 2 2.2-2 4.5-2 2.3 2 4.5 2"/>',
+    receipt: '<path d="M6 3.5h12v17l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3z"/><path d="M9 8h6M9 11.5h6M9 15h3.5"/>',
+    candles: '<path d="M7 3.5v3M7 16.5v4M17 3v4.5M17 14.5V21"/><rect x="4.5" y="6.5" width="5" height="10" rx="1.4"/><rect x="14.5" y="7.5" width="5" height="7" rx="1.4"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5.5 5.5"/>',
+    trend: '<path d="M3.5 17 9 11.5l3.5 3.5L20 7.5"/><path d="M14.5 7.5H20V13"/>',
+    bricks: '<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M3.5 9.7h17M3.5 14.3h17M9 5v4.7M15 9.7v4.6M9 14.3V19"/>',
+    squiggle: '<path d="M3 13c1.5-4 3-4 4.5 0s3 4 4.5 0 3-4 4.5 0 3 4 4.5 0"/>',
+    bars: '<path d="M4 20.5h16"/><rect x="5.5" y="11" width="3" height="7" rx="1"/><rect x="10.5" y="6" width="3" height="12" rx="1"/><rect x="15.5" y="9" width="3" height="9" rx="1"/>',
+    shield: '<path d="M12 3.5 19 6v5.5c0 4.3-2.9 7.6-7 9-4.1-1.4-7-4.7-7-9V6z"/><path d="m9 12 2.2 2.2L15.5 10"/>',
+    target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+    bulb: '<path d="M9 17.5h6M10 20.5h4M12 3.5a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V17h5v-.6c0-.8.4-1.5 1-2A6 6 0 0 0 12 3.5z"/>',
+    timer: '<circle cx="12" cy="13.5" r="7"/><path d="M12 13.5V10M9.5 3.5h5M18.5 7l1.3-1.3"/>',
+    rocket: '<path d="M14.5 4.5c2.5-.8 4.3-.8 5 0 .8.7.8 2.5 0 5L13 16l-5-5z"/><path d="M8 11 5 11.5 3.5 14l4 .5M13 16l-.5 3-2.5 1.5-.5-4"/><circle cx="15.5" cy="8.5" r="1.3"/><path d="M6.5 17.5 4 20"/>',
+    news: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h10A1.5 1.5 0 0 1 17 5.5V19a1.5 1.5 0 0 0 1.5 1.5h-13A1.5 1.5 0 0 1 4 19z"/><path d="M17 9h2.5a.5.5 0 0 1 .5.5V19a1.5 1.5 0 0 1-3 0M7.5 8h6M7.5 11.5h6M7.5 15h3.5"/>',
+    bolt: '<path d="M13 3 5 13.5h6.5L11 21l8-10.5h-6.5z"/>',
+    calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17.5h2"/>',
+    coin: '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.2c-.5-.9-1.5-1.4-2.6-1.4-1.5 0-2.6.8-2.6 2 0 2.8 5.4 1.4 5.4 4.3 0 1.2-1.2 2.1-2.8 2.1-1.2 0-2.3-.6-2.8-1.6M12 6.3v1.5M12 16.2v1.5"/>',
+    clipboard: '<rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4"/>',
+    sprout: '<path d="M12 21v-9.5"/><path d="M12 12.5C12 8.4 9.3 6 4.8 6c0 4.2 2.7 6.5 7.2 6.5zM12 10.5c0-3.8 2.6-6.3 7.2-6.3 0 3.9-2.6 6.3-7.2 6.3z"/>',
+    scale: '<path d="M12 4v16.5M7.5 20.5h9M5 7.5h14M5 7.5 2.5 13a2.7 2.7 0 0 0 5 0zM19 7.5 16.5 13a2.7 2.7 0 0 0 5 0z"/>',
+    bank: '<path d="M3.5 9.2 12 4l8.5 5.2z"/><path d="M3.5 9.2h17M6 12v5.5M10 12v5.5M14 12v5.5M18 12v5.5M3.5 20.5h17"/>',
+    gauge: '<path d="M4 17a8 8 0 1 1 16 0"/><path d="m12 17 3.5-5"/><circle cx="12" cy="17" r="1.3"/>',
+    people: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8"/><path d="M15.5 5.6a3.2 3.2 0 0 1 0 6M17 14.9c2 .5 3.2 2.1 3.5 4.6"/>',
+    dollar: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/>',
+    laptop: '<rect x="4.5" y="5" width="15" height="10.5" rx="1.5"/><path d="M2.5 19h19"/>',
+    pulse: '<path d="M3 12h4l2.5-6 4.5 12 2.5-6H21"/>',
+    cart: '<path d="M3 4h2.5l2.2 11.2a1.5 1.5 0 0 0 1.5 1.2h8.3a1.5 1.5 0 0 0 1.4-1.1L20.5 8H6.3"/><circle cx="9.5" cy="20" r="1.2"/><circle cx="17" cy="20" r="1.2"/>',
+    drop: '<path d="M12 3.5s6 6.3 6 10.5a6 6 0 0 1-12 0c0-4.2 6-10.5 6-10.5z"/>',
+    bag: '<path d="M5.2 8.5h13.6l-1 10.6a1.6 1.6 0 0 1-1.6 1.4H7.8a1.6 1.6 0 0 1-1.6-1.4z"/><path d="M8.8 10.5V7.2a3.2 3.2 0 0 1 6.4 0v3.3"/>',
+    list: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r="1"/><circle cx="4.8" cy="12" r="1"/><circle cx="4.8" cy="17.5" r="1"/>',
+    flame: '<path d="M12 21a6.5 6.5 0 0 0 6.5-6.5c0-4.5-4-6.5-4.5-11-3 2-4.5 4.5-4.5 7-1-.6-1.6-1.6-1.8-2.8C6.3 9.3 5.5 11.8 5.5 14.5A6.5 6.5 0 0 0 12 21z"/>',
+    crown: '<path d="m3.5 8 4.2 3.8L12 5l4.3 6.8L20.5 8 19 18H5z"/><path d="M5 21h14"/>',
+    moon: '<path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z"/>',
+    smile: '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 14c.8 1.3 2 2 3.5 2s2.7-.7 3.5-2M9 9.5h.01M15 9.5h.01"/>',
+    layers: '<path d="m12 3.5 8.5 4.5-8.5 4.5L3.5 8z"/><path d="m3.5 12 8.5 4.5 8.5-4.5M3.5 16l8.5 4.5 8.5-4.5"/>',
+    diamond: '<path d="M6.5 4h11l3.5 5-9 11.5L3 9z"/><path d="M3 9h18M9.5 4 8 9l4 11.5L16 9l-1.5-5"/>',
+    whale: '<path d="M3 13.5c0 3.5 3.5 6 8.5 6 4.5 0 7.5-2.5 8.5-6.5l1.5-3.5-3 1.5c-1.5 1-2.5 2.5-4 2.5H3z"/><path d="M8 16.5h.01M18.5 6.5c-.5-1.5.5-3 2-3M18.5 6.5c.5-1.5-.5-3-2-3"/>',
+    bot: '<rect x="4.5" y="8" width="15" height="11" rx="3"/><path d="M12 4.5V8M9 13h.01M15 13h.01M9.5 16h5M2.5 12.5v2M21.5 12.5v2"/><circle cx="12" cy="4" r="1"/>',
+    hand: '<path d="M8.5 12V5.5a1.5 1.5 0 0 1 3 0V11M11.5 10V4.5a1.5 1.5 0 0 1 3 0V11M14.5 10.5V6a1.5 1.5 0 0 1 3 0v8a6.5 6.5 0 0 1-6.5 6.5h-.5a6 6 0 0 1-5-2.7L3.8 14.4a1.5 1.5 0 0 1 2.4-1.8l2.3 2.4"/>',
+    cap: '<path d="M2.8 9.2 12 4.8l9.2 4.4L12 13.6z"/><path d="M6.5 11.3v4.4c0 1.4 2.5 2.8 5.5 2.8s5.5-1.4 5.5-2.8v-4.4M21.2 9.2v5.3"/>',
+    books: '<path d="M4 4.5h4v15H4zM8 6.5h4v13H8z"/><path d="m13.5 6 3.8-1 3.2 13.7-3.8 1z"/>',
+    star: '<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+    flag: '<path d="M5 21V4M5 4.5h12l-2.5 4 2.5 4H5"/>',
+    compass: '<circle cx="12" cy="12" r="8.5"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
+    send: '<path d="M4 12 20 4.5 16.5 20l-4.5-6z"/><path d="m12 14 8-9.5"/>',
+    egg: '<path d="M12 3.5c3.5 0 6.5 5.5 6.5 10a6.5 6.5 0 0 1-13 0c0-4.5 3-10 6.5-10z"/>',
+  };
+  const EMO = { '🏛':'columns', '🌊':'wave', '🧾':'receipt', '🕯':'candles', '🔍':'search', '📈':'trend', '🧱':'bricks', '〰':'squiggle', '📊':'bars', '🛡':'shield', '🎯':'target', '🧠':'bulb', '⏱':'timer', '🚀':'rocket', '📰':'news', '⚡':'bolt', '🗓':'calendar', '🪙':'coin', '📋':'clipboard', '🌱':'sprout', '⚖':'scale', '🏦':'bank', '🐂':'gauge', '👷':'people', '💵':'dollar', '💻':'laptop', '😱':'pulse', '🛒':'cart', '🛢':'drop', '🛍':'bag', '📜':'list', '🔥':'flame', '👑':'crown', '🌕':'moon', '🐸':'smile', '🧺':'layers', '💎':'diamond', '🐋':'whale', '🤖':'bot', '🧻':'hand', '🎓':'cap', '📚':'books', '🧑‍🏫':'star', '🏁':'flag', '🧬':'layers', '🟢':'trend', '🧭':'compass', '💸':'send', '🥚':'egg', '💰':'coin', '📉':'pulse' };
+  const HUE = { columns: 230, wave: 200, receipt: 260, candles: 150, search: 210, trend: 150, bricks: 20, squiggle: 280, bars: 250, shield: 200, target: 350, bulb: 45, timer: 15, rocket: 265, news: 220, bolt: 45, calendar: 330, coin: 42, clipboard: 190, sprout: 130, scale: 260, bank: 230, gauge: 30, people: 190, dollar: 150, laptop: 220, pulse: 350, cart: 30, drop: 20, bag: 300, list: 250, flame: 18, crown: 45, moon: 50, smile: 130, layers: 280, diamond: 195, whale: 205, bot: 250, hand: 0, cap: 255, books: 25, star: 45, flag: 350, compass: 180, send: 150, egg: 40 };
+  const EI_SEL = '.cc-ic,.chal-ic,.ach .ic,.nd-t .i,.nd-ev .i,.nd-g>span:first-child';
+  function iconize(root) {
+    for (const el of (root || document).querySelectorAll(EI_SEL)) {
+      if (el.firstElementChild && el.firstElementChild.classList.contains('pbi')) continue;
+      const t = el.textContent.trim().replace(/️/g, ''), k = EMO[t] || EMO[[...t][0]];
+      if (!k || el.children.length) continue;
+      el.innerHTML = S(P[k]); el.classList.add('ei'); el.style.setProperty('--h', HUE[k]);
+    }
+  }
+  window.PBIconize = iconize;
+  window.PBEI = (e, cls) => { const t = String(e).trim().replace(/\uFE0F/g, ''), k = EMO[t] || EMO[[...t][0]]; return k ? `<span class="${cls} ei" style="--h:${HUE[k]}">${S(P[k])}</span>` : `<span class="${cls}">${e}</span>`; };
+  const r1 = router;
+  router = function () { const r = r1.apply(this, arguments); try { iconize(document.getElementById('view')); } catch (e) {} return r; };
+  setInterval(() => { try { const v = document.getElementById('view'); if (v && document.visibilityState === 'visible') iconize(v); } catch (e) {} }, 700);
+
+  const r0 = router;
+  router = function () { const r = r0.apply(this, arguments); try { paintIcons(); } catch (e) {} return r; };
+  paintIcons(); setTimeout(paintIcons, 500); setInterval(paintIcons, 3000);
 })();
 
 /* SHOP-PLUS:END */
@@ -8587,6 +8807,157 @@ body.gated .bai-panel,body.edu-on .bai-panel{display:none}
 .bai-b .pos,.bai-b .neg,.bai-b .flat{background:none!important;padding:0!important;box-shadow:none!important;border:0!important;font-weight:700}
 .bai-kv span>span,.bai-kv span>.mono{display:block}
 @media (min-width:700px) and (max-width:899px){.bai-panel{bottom:calc(var(--navh,62px) + env(safe-area-inset-bottom,0px) + 12px);height:min(680px,calc(100vh - var(--navh,62px) - 110px))}}
+
+</style>
+<style id="pbVisual">
+/* =====================================================================
+   VISUAL 3
+   ===================================================================== */
+
+/* ---------- sparklines ---------- */
+.spark.v2{overflow:hidden}
+.spark.v2.up{color:var(--up)}.spark.v2.dn{color:var(--dn)}
+.spark.v2 .ln{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.spark.v2 .op{stroke:var(--mut);stroke-opacity:.35;stroke-width:1;stroke-dasharray:2 3;vector-effect:non-scaling-stroke}
+.spark.v2 .ar{stroke:none}
+
+/* ---------- icons: duotone, filled a little more when active ---------- */
+.pbi .du{fill:currentColor;fill-opacity:.12}
+#nav a.on .pbi .du,.pg-h .pbi .du{fill-opacity:.28}
+#nav a .pbi{stroke-width:1.8!important;fill:none!important}
+#nav a.on .pbi{stroke:currentColor!important}
+.pg-h .pg-ic .pbi{width:24px;height:24px}
+#settingsBtn .pbi{width:18px;height:18px;vertical-align:-4px}
+
+/* =====================================================================
+   CLASSIC LIGHT: calm canvas, white chrome, one brand color
+   ===================================================================== */
+html.classic:not(.dark):not(#_){--bg:#f4f5f9;--bg2:#fbfbfd;--panel:#ffffff;--panel2:#f3f4f8;--line:#e8e9f0;--line2:#dcdee8;--tx:#161827;--mut:#646a7e;--dim:#9aa0b2;--up:#0fa47a;--dn:#e5484d;--brand:#5b3fe0;--brand-d:#4a30c9;--brand-soft:#efebff;background:#f4f5f9}
+html.classic:not(.dark):not(#_) body{background:#f4f5f9!important;color:var(--tx)}
+html.classic:not(.dark):not(#_) body::after{background:radial-gradient(1100px 420px at 70% -140px,rgba(91,63,224,.10),transparent 70%),#f4f5f9!important}
+
+/* sidebar */
+@media (min-width:900px){
+  html.classic:not(.dark):not(#_) #nav{background:#fff!important;border-right:1px solid var(--line)!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  html.classic:not(.dark):not(#_) #nav a{color:#4c5166!important;font-weight:600!important}
+  html.classic:not(.dark):not(#_) #nav a:hover{background:#f4f5f9!important;color:var(--tx)!important}
+  html.classic:not(.dark):not(#_) #nav a.on{background:var(--brand-soft)!important;color:var(--brand)!important;box-shadow:none!important}
+  html.classic:not(.dark):not(#_) #nav a.on::after{content:'';position:absolute;left:-12px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--brand)}
+  html.classic:not(.dark):not(#_) #nav .nav-brand,html.classic:not(.dark):not(#_) #nav .brand-name{color:var(--tx)!important}
+  html.classic:not(.dark):not(#_) #nav .nav-foot{color:var(--dim)!important}
+  html.classic:not(.dark):not(#_) #nav .nav-auth{background:#fff!important;color:var(--tx)!important;border:1px solid var(--line2)!important;box-shadow:none!important}
+  html.classic:not(.dark):not(#_) #nav .nav-auth:hover{background:#f4f5f9!important}
+}
+@media (max-width:899px){
+  html.classic:not(.dark):not(#_) #nav{background:rgba(255,255,255,.96)!important;border:1px solid var(--line)!important;box-shadow:0 10px 30px -12px rgba(16,20,40,.25)!important}
+  html.classic:not(.dark):not(#_) #nav a{color:#6b7085!important}
+  html.classic:not(.dark):not(#_) #nav a.on{color:var(--brand)!important}
+  html.classic:not(.dark):not(#_) #nav a.on::before{background:var(--brand-soft)!important}
+}
+
+/* top bar + ticker */
+html.classic:not(.dark):not(#_) #topWrap{background:rgba(255,255,255,.92)!important;box-shadow:none!important;border-bottom:1px solid var(--line)!important;backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px)}
+
+/* page headers and text that used to sit on purple */
+html.classic:not(.dark):not(#_) .pg-h h1{color:var(--tx)!important}
+html.classic:not(.dark):not(#_) .pg-h p{color:var(--mut)!important;opacity:1}
+html.classic:not(.dark):not(#_) .pg-h .pg-ic{background:var(--brand-soft)!important;color:var(--brand)!important;box-shadow:none!important}
+html.classic:not(.dark):not(#_) main .foot-note,html.classic:not(.dark):not(#_) .mk-count,html.classic:not(.dark):not(#_) main>#view>.muted,html.classic:not(.dark):not(#_) main>#view>p{color:var(--mut)!important}
+
+/* cards: hairline border, soft shadow */
+html.classic:not(.dark):not(#_) .card,html.classic:not(.dark):not(#_) .tile,html.classic:not(.dark):not(#_) .promo,html.classic:not(.dark):not(#_) .pack-card,html.classic:not(.dark):not(#_) .stock-card,html.classic:not(.dark):not(#_) .stat-card{border:1px solid var(--line)!important;box-shadow:0 1px 2px rgba(16,20,40,.04),0 4px 14px -8px rgba(16,20,40,.10)!important}
+html.classic:not(.dark):not(#_) .stat-card{box-shadow:inset 3px 0 0 var(--g1),0 1px 2px rgba(16,20,40,.04)!important}
+@media(hover:hover){html.classic:not(.dark):not(#_) .stock-card:hover,html.classic:not(.dark):not(#_) .pack-card:hover,html.classic:not(.dark):not(#_) .promo:hover{box-shadow:0 2px 4px rgba(16,20,40,.05),0 16px 32px -16px rgba(40,30,120,.28)!important}}
+html.classic:not(.dark):not(#_) .card.hero [data-b="total"]{color:var(--tx)!important}
+
+/* controls on the light canvas */
+html.classic:not(.dark):not(#_) .seg,html.classic:not(.dark):not(#_) .chips{background:#eceef4!important;border-color:transparent!important}
+html.classic:not(.dark):not(#_) .seg button.on,html.classic:not(.dark):not(#_) .chips button.on{background:#fff!important;color:var(--tx)!important;box-shadow:0 1px 2px rgba(16,20,40,.12)!important}
+html.classic:not(.dark):not(#_) .search,html.classic:not(.dark):not(#_) select{background:#fff!important;border:1px solid var(--line2)!important;box-shadow:none!important;color:var(--tx)!important}
+
+/* =====================================================================
+   CLASSIC DARK: near-black canvas with a hint of brand
+   ===================================================================== */
+html.classic.dark:not(#_){--bg:#0c0d13;--bg2:#101119;--panel:#15161f;--panel2:#1c1d28;--line:#23242f;--line2:#2e3040;--tx:#eceef6;--mut:#9398ab;--dim:#646a80;--up:#2fd08f;--dn:#ff5d63;--brand:#7a63ff;--brand-d:#6a52f5;--brand-soft:rgba(122,99,255,.16)}
+html.classic.dark:not(#_) body{background:#0c0d13!important}
+html.classic.dark:not(#_) body::after{background:radial-gradient(1000px 420px at 70% -160px,rgba(122,99,255,.16),transparent 70%),#0c0d13!important}
+html.classic.dark:not(#_) #topWrap{background:rgba(12,13,19,.9)!important;border-bottom:1px solid var(--line)!important;box-shadow:none!important}
+@media (min-width:900px){
+  html.classic.dark:not(#_) #nav{background:#101119!important;border-right:1px solid var(--line)!important;box-shadow:none!important;backdrop-filter:none!important}
+  html.classic.dark:not(#_) #nav a{color:#a1a6ba!important;font-weight:600!important}
+  html.classic.dark:not(#_) #nav a:hover{background:#171824!important;color:#fff!important}
+  html.classic.dark:not(#_) #nav a.on{background:var(--brand-soft)!important;color:#c9bfff!important;box-shadow:none!important}
+  html.classic.dark:not(#_) #nav a.on::after{content:'';position:absolute;left:-12px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--brand)}
+  html.classic.dark:not(#_) #nav .nav-auth{background:transparent!important;border:1px solid var(--line2)!important;color:var(--tx)!important}
+  html.classic.dark:not(#_) #nav .nav-foot{color:var(--dim)!important}
+}
+@media (max-width:899px){html.classic.dark:not(#_) #nav{background:rgba(21,22,31,.94)!important;border:1px solid var(--line)!important}html.classic.dark:not(#_) #nav a.on{color:#c9bfff!important}html.classic.dark:not(#_) #nav a.on::before{background:var(--brand-soft)!important}}
+html.classic.dark:not(#_) .card,html.classic.dark:not(#_) .tile,html.classic.dark:not(#_) .promo,html.classic.dark:not(#_) .pack-card,html.classic.dark:not(#_) .stock-card,html.classic.dark:not(#_) .stat-card{background:var(--panel)!important;border:1px solid var(--line)!important;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -20px rgba(0,0,0,.8)!important}
+html.classic.dark:not(#_) .stat-card{box-shadow:inset 3px 0 0 var(--g1)!important}
+html.classic.dark:not(#_) .pg-h h1{color:var(--tx)!important}html.classic.dark:not(#_) .pg-h p{color:var(--mut)!important;opacity:1}
+html.classic.dark:not(#_) .pg-h .pg-ic{background:var(--brand-soft)!important;color:#c9bfff!important;box-shadow:none!important}
+html.classic.dark:not(#_) .card.hero [data-b="total"]{color:#fff!important}
+
+/* =====================================================================
+   STOCK CARDS: tighter, price and change on one line
+   ===================================================================== */
+.stock-card{display:grid!important;grid-template-columns:1fr auto;grid-template-areas:"top top" "px chg" "spark spark" "own own" "trade trade";gap:6px 10px!important;padding:14px!important}
+.stock-card .sc-top{grid-area:top;display:flex;align-items:center;gap:10px;min-width:0}
+.stock-card .sc-nm{min-width:0}
+.stock-card .sc-nm b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stock-card .sc-px{grid-area:px;font-size:22px!important;font-weight:700;color:var(--tx)!important;letter-spacing:-.02em;align-self:end;margin-top:4px}
+.stock-card .sc-chg{grid-area:chg;align-self:end;justify-self:end;margin-bottom:3px;font-size:12.5px!important;font-weight:700;padding:3px 8px;border-radius:8px;background:color-mix(in srgb,var(--mut) 10%,transparent)}
+.stock-card .sc-chg.pos,.stock-card .sc-chg:has(.pos){background:color-mix(in srgb,var(--up) 13%,transparent)}
+.stock-card .sc-chg.neg,.stock-card .sc-chg:has(.neg){background:color-mix(in srgb,var(--dn) 13%,transparent)}
+.stock-card .sc-spark{grid-area:spark;margin:2px -2px 0}
+.stock-card .sc-spark .spark{height:48px!important}
+.stock-card .sc-own{grid-area:own;font-size:12px!important;color:var(--mut)}
+.stock-card .sc-trade{grid-area:trade}
+@media (max-width:599px){
+  .stock-card{padding:12px!important}
+  .stock-card .sc-px{font-size:20px!important}
+  .stock-card .sc-spark .spark{height:40px!important}
+}
+
+/* =====================================================================
+   CHART FRAMES
+   ===================================================================== */
+#pvChart,.chart{border-radius:12px}
+.chart-msg{color:var(--mut)!important}
+
+/* ---------- text that used to sit on the purple canvas ---------- */
+html.classic:not(#_) .asset-top h2,html.classic:not(#_) #view>.card-h h3{color:var(--tx)!important;text-shadow:none!important}
+html.classic:not(#_) .asset-top small,html.classic:not(#_) #view>.card-h .muted,html.classic:not(#_) .foot-note,html.classic:not(#_) #view>p,html.classic:not(#_) .mk-count,html.classic:not(#_) .site-credit{color:var(--mut)!important;text-shadow:none!important}
+html.classic:not(#_) .mk-head .seg button,html.classic:not(#_) .seg button,html.classic:not(#_) .chips button{color:var(--mut)!important}
+html.classic:not(#_) .mk-head .seg button.on,html.classic:not(#_) .seg button.on,html.classic:not(#_) .chips button.on{color:var(--tx)!important}
+html.classic:not(#_) .mk-head .mk-select{background:var(--panel)!important;color:var(--tx)!important;border:1px solid var(--line2)!important}
+html.classic.dark:not(#_) .seg,html.classic.dark:not(#_) .chips{background:#1a1b25!important;border-color:transparent!important}
+html.classic.dark:not(#_) .seg button.on,html.classic.dark:not(#_) .chips button.on{background:#2a2c3a!important;box-shadow:none!important}
+html.classic:not(#_) .asset-top .back{background:var(--panel)!important;color:var(--tx)!important;border:1px solid var(--line)!important;box-shadow:none!important}
+html.classic:not(#_) .trade-bar{background:color-mix(in srgb,var(--panel) 94%,transparent)!important;border-color:var(--line)!important}
+
+/* ---------- emoji swapped for line icons ---------- */
+.ei{--c:hsl(var(--h,250) 62% 46%);--b:hsl(var(--h,250) 85% 55% / .11);color:var(--c)!important;background:var(--b)!important;display:grid!important;place-items:center;font-size:0!important;filter:none!important;opacity:1!important}
+html.dark .ei,html:not(.classic) .ei{--c:hsl(var(--h,250) 85% 72%);--b:hsl(var(--h,250) 80% 60% / .14)}
+.ei .pbi{width:22px;height:22px}
+.cc-ic.ei{border-radius:14px}.cc-ic.big.ei .pbi{width:26px;height:26px}
+.chal-ic.ei{display:grid!important;width:44px;height:44px;border-radius:13px;flex:none}
+.ach .ic.ei{width:40px;height:40px;border-radius:12px;margin-bottom:8px}
+.ach:not(.got) .ic.ei{--c:var(--dim);--b:color-mix(in srgb,var(--mut) 10%,transparent)}
+.nd-t .i.ei{width:34px;height:34px;border-radius:10px;margin-bottom:6px}.nd-t .i.ei .pbi{width:19px;height:19px}
+.nd-ev .i.ei{width:36px;height:36px;border-radius:11px}.nd-ev .i.ei .pbi{width:19px;height:19px}
+.nd-g>span.ei,.nd-g>.ei{width:40px;height:40px;border-radius:12px;margin-bottom:6px}
+
+/* ---------- theme cards: tiny live preview ---------- */
+.th-prev{display:block;margin-top:auto;border-radius:10px;padding:7px 8px 8px;background:color-mix(in srgb,var(--ptx) 7%,transparent);border:1px solid color-mix(in srgb,var(--ptx) 10%,transparent);position:relative}
+.th-prev .tp-top{display:flex;gap:4px;margin-bottom:5px}
+.th-prev .tp-top i{height:5px;border-radius:3px;background:color-mix(in srgb,var(--ptx) 22%,transparent);flex:1}
+.th-prev .tp-top i:first-child{flex:.6;background:var(--pac)}
+.th-prev svg{display:block;width:100%;height:26px}
+.th-prev .l{fill:none;stroke:var(--pup);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.th-prev .a{fill:color-mix(in srgb,var(--pup) 20%,transparent)}
+.th-prev .tp-btn{position:absolute;right:8px;top:6px;width:18px;height:7px;border-radius:4px;background:var(--pac)}
+.th-card{min-height:0!important}
 
 </style>
 <!-- LEARN-MODE:END -->
