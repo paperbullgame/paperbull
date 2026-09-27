@@ -5101,6 +5101,18 @@ function simStep(dt, t, quiet) {
   }
   if (acct && acct.orders.length)
     for (const sym of new Set(acct.orders.map(o => o.sym))) checkOrders(sym, t, quiet);
+  if (acct && acct.shorts) for (const sym of Object.keys(acct.shorts)) checkMargin(sym, t, quiet);
+}
+/* a short is closed automatically if the price doubles, so a short can never lose more than its collateral */
+function checkMargin(sym, t, quiet) {
+  const s = acct.shorts[sym],
+    a = SIM[sym];
+  if (!s || !a || !(a.price >= 2 * s.avg)) return;
+  const r = executeTrade({ sym, side: 'cover', qty: s.qty, price: a.price, kind: 'margin call', t: t * 1000 });
+  if (!r.ok) return;
+  acct.flags.marginCall = true;
+  if (quiet) FF.fills.push(r.trade);
+  else toast(`Margin call: ${sym} doubled, so your short was closed. ${fmtSigned(r.trade.pnl)}`, 'err');
 }
 function addNews(item, quiet) {
   NEWS.unshift(item);
@@ -5730,6 +5742,7 @@ function newAccount(name, id = uid()) {
     createdAt: Date.now(),
     cash: start,
     positions: {},
+    shorts: {},
     realized: 0,
     trades: [],
     orders: [],
@@ -5772,6 +5785,8 @@ function normalizeAcct(a) {
   normalizePets(a);
   if (!a.luck) a.luck = 1;
   for (const k of Object.keys(a.positions)) if (!SIM[k]) delete a.positions[k];
+  a.shorts ||= {};
+  for (const k of Object.keys(a.shorts)) if (!SIM[k] || !(a.shorts[k].qty > 0)) delete a.shorts[k];
   a.orders = a.orders.filter(o => SIM[o.sym]);
   return a;
 }
@@ -5806,6 +5821,17 @@ function valuation() {
     else crypto += v;
     cost += p.qty * p.avgCost;
   }
+  let shortVal = 0,
+    shortPL = 0;
+  for (const [sym, p] of Object.entries(acct.shorts || {})) {
+    const px = priceOf(sym) ?? p.avg,
+      v = p.qty * (2 * p.avg - px);
+    if (SIM[sym].type === 'stock') stocks += v;
+    else crypto += v;
+    cost += p.qty * p.avg;
+    shortVal += v;
+    shortPL += p.qty * (p.avg - px);
+  }
   const total = acct.cash + stocks + crypto + (typeof bankNet === 'function' ? bankNet() : 0),
     dayBase = acct.dayStart?.value || CONFIG.STARTING_CASH;
   return {
@@ -5814,6 +5840,8 @@ function valuation() {
     crypto,
     cash: acct.cash,
     invested: stocks + crypto,
+    shortVal,
+    shortPL,
     cost,
     unreal: stocks + crypto - cost,
     ret: total / CONFIG.STARTING_CASH - 1,
@@ -5842,7 +5870,41 @@ function executeTrade({ sym, side, qty, price, kind = 'market', t = Date.now() }
   let pnl = null,
     pnlPct = null,
     bonus = 0;
-  if (side === 'buy') {
+  const shorts = (acct.shorts ||= {}),
+    sh = shorts[sym];
+  if (side === 'short') {
+    if (value > availableCash() + 0.005)
+      return { ok: false, msg: 'Not enough cash. A short sets aside cash equal to its size as collateral.' };
+    acct.cash -= value;
+    if (sh) {
+      sh.avg = (sh.qty * sh.avg + value) / (sh.qty + qty);
+      sh.qty += qty;
+    } else shorts[sym] = { qty, avg: price, openedAt: t };
+    acct.flags.shorted = true;
+  } else if (side === 'cover') {
+    if (!sh || qty > sh.qty + 1e-9)
+      return { ok: false, msg: `You can cover up to ${fmtQty(sh ? sh.qty : 0)} ${sym}` };
+    pnl = (sh.avg - price) * qty;
+    pnlPct = 1 - price / sh.avg;
+    acct.realized += pnl;
+    acct.cash += qty * sh.avg + pnl;
+    if (pnl > 0 && acct.armed.mult) {
+      bonus = pnl * 0.5;
+      acct.armed.mult = false;
+      acct.cash += bonus;
+      acct.realized += bonus;
+      setTimeout(() => toast(`Profit Multiplier: +${fmtUSD(bonus, 2)} bonus`, 'xp'), 400);
+    } else if (pnl < 0 && acct.armed.shield) {
+      bonus = -pnl * 0.5;
+      acct.armed.shield = false;
+      acct.cash += bonus;
+      acct.realized += bonus;
+      setTimeout(() => toast(`Loss Shield refunded ${fmtUSD(bonus, 2)}`, 'xp'), 400);
+    }
+    if (pnl > 0) acct.flags.shortWin = true;
+    sh.qty = floorTo(sh.qty - qty, dec);
+    if (sh.qty <= 0) delete shorts[sym];
+  } else if (side === 'buy') {
     if (value > availableCash() + 0.005) return { ok: false, msg: 'Not enough available cash' };
     acct.cash -= value;
     if (pos) {
@@ -5910,7 +5972,7 @@ function executeTrade({ sym, side, qty, price, kind = 'market', t = Date.now() }
   let xp = 10 + Math.min(40, Math.floor(value / 1000));
   if (pnl > 0) xp += Math.min(200, Math.floor(pnl / 100));
   addXP(xp);
-  if (!FF.active) SFX.play(side === 'buy' ? 'buy' : pnl >= 0 ? 'win' : 'loss');
+  if (!FF.active) SFX.play(side === 'buy' || side === 'short' ? 'buy' : pnl >= 0 ? 'win' : 'loss');
   acct.coins += coinGain(2 + (pnl > 0 ? Math.min(60, Math.floor(pnl / 100)) : 0), true);
   bumpCoins();
   if (!FF.active) petGainXP(activePet(), 6 + Math.min(20, value / 2500));
@@ -6175,6 +6237,22 @@ const ACHIEVEMENTS = [
     desc: 'Beat every bot on the leaderboard (3+ trades, positive return).',
     xp: 300,
     test: c => c.ret > 0 && acct.trades.length >= 3 && botReturns().every(b => c.ret > b.returnPct),
+  },
+  {
+    id: 'bear_hug',
+    ic: '🐻',
+    name: 'Bear Hug',
+    desc: 'Open your first short: a bet that a price will fall.',
+    xp: 25,
+    test: () => !!acct.flags.shorted,
+  },
+  {
+    id: 'bear_market',
+    ic: '📉',
+    name: 'Called It',
+    desc: 'Close a short for a profit.',
+    xp: 50,
+    test: () => !!acct.flags.shortWin,
   },
   {
     id: 'paper_hands',
@@ -7597,7 +7675,7 @@ const Asset = {
       <section class="card"><div class="card-h"><h3>Headlines</h3></div><div id="aNews"></div></section>
     </div>
     <aside class="card trade" id="tradeCard"></aside></div>
-    <div class="trade-bar" id="tradeBar"><button class="btn sell" data-qt="sell">Sell</button><div class="tb-mid"><b class="mono" id="tbPx">—</b><small class="mono" id="tbChg"></small></div><button class="btn buy" data-qt="buy">Buy</button></div>`;
+    <div class="trade-bar" id="tradeBar"><button class="btn sell" data-qt="sell">Sell</button><button class="btn tb-short" data-qt="short">Short</button><div class="tb-mid"><b class="mono" id="tbPx">—</b><small class="mono" id="tbChg"></small></div><button class="btn buy" data-qt="buy">Buy</button></div>`;
     DetailChart.mount($('#aChart'), $('#aLegend'), sym);
     $$('#rangeSeg button').forEach(
       b =>
@@ -7635,7 +7713,19 @@ const Asset = {
           }
         })
     );
-    $$('#tradeBar [data-qt]').forEach(b => (b.onclick = () => openQuickTrade(sym, b.dataset.qt)));
+    $$('#tradeBar [data-qt]').forEach(
+      b =>
+        (b.onclick = () => {
+          if (b.dataset.qt === 'short') {
+            this.st.side = acct.shorts && acct.shorts[sym] ? 'cover' : 'short';
+            this.st.amt = '';
+            this.renderTrade();
+            $('#tradeCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+          }
+          openQuickTrade(sym, b.dataset.qt);
+        })
+    );
     document.body.classList.add('has-tradebar');
     this.renderTrade();
     this.update(true);
@@ -7687,8 +7777,10 @@ const Asset = {
     if (!el) return;
     const orders = acct.orders.filter(o => o.sym === this.sym);
     let h = `<h3 style="margin-bottom:8px">Your position</h3>`;
-    if (!pos)
-      h += `<div class="muted small" style="padding:6px 0">You don't own any ${esc(this.sym)} yet.</div>`;
+    const shp = (acct.shorts || {})[this.sym];
+    if (!pos && !shp)
+      h += `<div class="muted small" style="padding:6px 0">You don't own any ${esc(this.sym)} yet. Buy it if you think it will rise, or short it if you think it will fall.</div>`;
+    else if (!pos) h += '';
     else {
       const mv = pos.qty * a.price,
         pl = mv - pos.qty * pos.avgCost,
@@ -7708,6 +7800,24 @@ const Asset = {
           .join('') +
         `<div class="pos-btns"><button class="btn sm" data-ps="buy">Buy more</button><button class="btn sm" data-ps="half">Sell half</button><button class="btn sm sell" data-ps="all">Sell all</button></div>`;
     }
+    if (shp) {
+      const pl = shp.qty * (shp.avg - a.price),
+        tot = valuation().total,
+        room = 2 * shp.avg;
+      h +=
+        `<div class="short-pos"><div class="short-h"><span class="side-tag short">SHORT</span><span class="muted small">You profit if ${esc(this.sym)} falls</span></div>` +
+        [
+          ['Shorted', fmtQty(shp.qty)],
+          ['Entry price', fmtUSD(shp.avg)],
+          ['Collateral', fmtUSD(shp.qty * shp.avg)],
+          ['Unrealized P/L', `<span class="${cls(pl)}">${fmtSigned(pl)} (${fmtPct(pl / (shp.qty * shp.avg))})</span>`],
+          ['Margin call at', `<span class="neg">${fmtUSD(room)}</span> <small class="muted">(${fmtPct(room / a.price - 1).replace('+', '')} away)</small>`],
+          ['Portfolio weight', fmtPct((shp.qty * (2 * shp.avg - a.price)) / tot).replace('+', '')],
+        ]
+          .map(([k, v]) => `<div class="row"><span>${k}</span><span>${v}</span></div>`)
+          .join('') +
+        `<div class="pos-btns"><button class="btn sm" data-sh="more">Short more</button><button class="btn sm" data-sh="half">Cover half</button><button class="btn sm buy" data-sh="all">Cover all</button></div></div>`;
+    }
     if (orders.length)
       h +=
         `<h3 style="margin:14px 0 4px">Open orders</h3>` +
@@ -7723,6 +7833,25 @@ const Asset = {
           (b.onclick = () => {
             cancelOrder(b.dataset.cancel);
             toast('Order cancelled');
+            this.update(true);
+          })
+      );
+      $$('[data-sh]', el).forEach(
+        b =>
+          (b.onclick = () => {
+            const k = b.dataset.sh,
+              sp = acct.shorts[this.sym];
+            if (k === 'more' || !sp) {
+              this.st.side = 'short';
+              this.st.amt = '';
+              this.renderTrade();
+              $('#tradeCard')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              return;
+            }
+            const q = k === 'all' ? sp.qty : floorTo(sp.qty / 2, qtyDecimals(a));
+            const r = executeTrade({ sym: this.sym, side: 'cover', qty: q, price: a.price });
+            if (!r.ok) return toast(r.msg, 'err');
+            toast(`Covered ${fmtQty(r.trade.qty)} ${this.sym} @ ${fmtUSD(r.trade.price)} · ${fmtSigned(r.trade.pnl)} — ${tradeQuip(r.trade)}`, 'ok');
             this.update(true);
           })
       );
@@ -7750,9 +7879,25 @@ const Asset = {
       st = this.st,
       el = $('#tradeCard');
     const unit = st.mode === 'usd' ? '$' : a.sym;
+    const hasShort = !!(acct.shorts && acct.shorts[this.sym]);
+    if (st.side === 'cover' && !hasShort) st.side = 'short';
+    const isShortSide = st.side === 'short' || st.side === 'cover';
+    if (isShortSide) st.kind = 'market';
+    const SIDES = [
+      ['buy', 'Buy'],
+      ['sell', 'Sell'],
+      ['short', 'Short'],
+      ...(hasShort ? [['cover', 'Cover']] : []),
+    ];
+    const VERB = { buy: 'buy', sell: 'sell', short: 'short', cover: 'cover' }[st.side];
+    const btnCls = st.side === 'short' ? 'sell' : st.side === 'cover' ? 'buy' : st.side;
     el.innerHTML = `
-      <div class="seg full side"><button data-side="buy" class="${st.side === 'buy' ? 'on' : ''}">Buy</button><button data-side="sell" class="${st.side === 'sell' ? 'on' : ''}">Sell</button></div>
-      <div class="seg full"><button data-kind="market" class="${st.kind === 'market' ? 'on' : ''}">Market</button><button data-kind="limit" class="${st.kind === 'limit' ? 'on' : ''}">Limit</button></div>
+      <div class="seg full side">${SIDES.map(([k, l]) => `<button data-side="${k}" class="${st.side === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      ${
+        isShortSide
+          ? `<div class="short-note">${st.side === 'short' ? `<b>Short = bet ${esc(a.sym)} goes down.</b> You profit when the price falls. Cash equal to the position is set aside as collateral. If the price doubles, the short closes automatically.` : `<b>Cover = close your short.</b> You buy back the shares you borrowed. If the price is below your entry, you keep the difference.`}</div>`
+          : `<div class="seg full"><button data-kind="market" class="${st.kind === 'market' ? 'on' : ''}">Market</button><button data-kind="limit" class="${st.kind === 'limit' ? 'on' : ''}">Limit</button></div>`
+      }
       ${
         st.kind === 'limit'
           ? `<div class="field"><label for="tLimit"><span>Limit price</span><button class="link" id="useLast" type="button">Use last</button></label>
@@ -7762,10 +7907,10 @@ const Asset = {
       }
       <div class="field"><label for="tAmt"><span>Amount</span><button class="link" id="modeBtn" type="button">in ${st.mode === 'usd' ? 'USD' : esc(a.sym)} ⇄</button></label>
         <div class="inp"><span>${esc(unit)}</span><input id="tAmt" inputmode="decimal" placeholder="0" value="${esc(st.amt)}"></div></div>
-      <div class="chips">${(st.side === 'buy' ? ['$100', '$1K', '$10K', 'Max'] : ['25%', '50%', '75%', 'All']).map(c => `<button data-chip="${c}" type="button">${c}</button>`).join('')}</div>
+      <div class="chips">${(st.side === 'buy' || st.side === 'short' ? ['$100', '$1K', '$10K', 'Max'] : ['25%', '50%', '75%', 'All']).map(c => `<button data-chip="${c}" type="button">${c}</button>`).join('')}</div>
       <div class="preview" id="tPrev"></div>
       <div class="block-msg" id="tBlock"></div>
-      <button class="btn big ${st.side}" id="tGo">${settings.oneTap ? (st.side === 'buy' ? 'Buy now' : 'Sell now') : `Review ${st.side === 'buy' ? 'buy' : 'sell'}`}</button>
+      <button class="btn big ${btnCls}" id="tGo">${settings.oneTap ? VERB[0].toUpperCase() + VERB.slice(1) + ' now' : `Review ${VERB}`}</button>
       <label class="onetap"><input type="checkbox" id="oneTap" ${settings.oneTap ? 'checked' : ''}> One-tap trading (skip the review step)</label>
       <p class="fine">Virtual money · simulated order</p>`;
     $$('[data-side]', el).forEach(
@@ -7826,13 +7971,16 @@ const Asset = {
     const a = this.a(),
       st = this.st,
       px = this.refPrice();
-    if (st.side === 'buy') {
+    if (st.side === 'buy' || st.side === 'short') {
       const cash = Math.max(0, availableCash());
       const usd = c === 'Max' ? floorTo(cash, 2) : { $100: 100, $1K: 1000, $10K: 10000 }[c];
       if (st.mode === 'usd') st.amt = String(Math.min(usd, floorTo(cash, 2)));
       else if (px) st.amt = String(floorTo(Math.min(usd, cash) / px, qtyDecimals(a)));
     } else {
-      const avail = Math.max(0, availableQty(this.sym)),
+      const avail =
+          st.side === 'cover'
+            ? (acct.shorts[this.sym] || { qty: 0 }).qty
+            : Math.max(0, availableQty(this.sym)),
         frac = { '25%': 0.25, '50%': 0.5, '75%': 0.75, All: 1 }[c];
       st.mode = 'qty';
       st.amt = String(frac === 1 ? avail : floorTo(avail * frac, qtyDecimals(a)));
@@ -7854,6 +8002,27 @@ const Asset = {
     const r = { px, qty, value };
     if (!(qty > 0)) r.err = 'Amount is too small.';
     else if (value < 1) r.err = 'Minimum order is $1.';
+    const sh = (acct.shorts || {})[this.sym],
+      sq = sh?.qty || 0,
+      sa = sh?.avg || 0;
+    if (st.side === 'short') {
+      r.cashAfter = availableCash() - value;
+      r.newQty = sq + qty;
+      r.newAvg = (sq * sa + value) / (sq + qty);
+      if (!r.err && r.cashAfter < -0.005)
+        r.err = `Not enough cash for the collateral. Available: ${fmtUSD(availableCash())}.`;
+      return r;
+    }
+    if (st.side === 'cover') {
+      r.newQty = sq - qty;
+      r.pnl = (sa - px) * qty;
+      r.back = qty * sa + r.pnl;
+      r.cashAfter = acct.cash + r.back;
+      r.avg = sa;
+      if (!r.err && qty > sq + 1e-9)
+        r.err = sq ? `You can cover up to ${fmtQty(sq)} ${this.sym}.` : `You have no ${this.sym} short open.`;
+      return r;
+    }
     if (st.side === 'buy') {
       r.cashAfter = availableCash() - value;
       r.newQty = hold + qty;
@@ -7875,6 +8044,35 @@ const Asset = {
   previewHTML(r) {
     const st = this.st,
       sym = esc(this.sym);
+    if (st.side === 'short' || st.side === 'cover') {
+      const sh = (acct.shorts || {})[this.sym];
+      if (!r.qty)
+        return `<div class="r"><span>Price</span><span>${fmtUSD(r.px)}</span></div><div class="r"><span>${st.side === 'short' ? 'Available cash' : 'Shorted'}</span><span>${st.side === 'short' ? fmtUSD(availableCash()) : `${fmtQty(sh ? sh.qty : 0)} ${sym}`}</span></div>${sh ? `<div class="r"><span>Your short entry</span><span>${fmtUSD(sh.avg)}</span></div>` : ''}`;
+      const rows =
+        st.side === 'short'
+          ? [
+              ['Est. price', fmtUSD(r.px)],
+              ['Quantity', `${fmtQty(r.qty)} ${sym}`],
+              ['Collateral set aside', fmtUSD(r.value)],
+              'sep',
+              ['Cash after', `<span class="${r.cashAfter < 0 ? 'neg' : ''}">${fmtUSD(r.cashAfter)}</span>`],
+              ['Short after', `${fmtQty(r.newQty)} ${sym} @ ${fmtUSD(r.newAvg)}`],
+              ['Profit if it falls 10%', `<span class="pos">${fmtSigned(r.newQty * r.newAvg * 0.1)}</span>`],
+              ['Margin call at', `<span class="neg">${fmtUSD(2 * r.newAvg)}</span>`],
+            ]
+          : [
+              ['Est. price', fmtUSD(r.px)],
+              ['Quantity', `${fmtQty(r.qty)} ${sym}`],
+              ['Your entry', fmtUSD(r.avg)],
+              'sep',
+              ['Cash back', fmtUSD(r.back)],
+              ['Short after', r.newQty > 1e-9 ? `${fmtQty(r.newQty)} ${sym}` : 'Closed'],
+              ['Est. realized P/L', `<span class="${cls(r.pnl)}">${fmtSigned(r.pnl)}</span>`],
+            ];
+      return rows
+        .map(x => (x === 'sep' ? '<div class="sep"></div>' : `<div class="r"><span>${x[0]}</span><span>${x[1]}</span></div>`))
+        .join('');
+    }
     if (!r.qty)
       return `<div class="r"><span>${st.kind === 'limit' ? 'Limit price' : 'Price'}</span><span>${fmtUSD(r.px)}</span></div><div class="r"><span>Available ${st.side === 'buy' ? 'cash' : sym}</span><span>${st.side === 'buy' ? fmtUSD(availableCash()) : fmtQty(Math.max(0, availableQty(this.sym)))}</span></div>`;
     return [
@@ -7922,7 +8120,7 @@ const Asset = {
         res = executeTrade({ sym: this.sym, side: st.side, qty, price: a.price });
         if (res.ok)
           toast(
-            `${st.side === 'buy' ? 'Bought' : 'Sold'} ${fmtQty(res.trade.qty)} ${this.sym} @ ${fmtUSD(res.trade.price)} — ${tradeQuip(res.trade)}`,
+            `${{ buy: 'Bought', sell: 'Sold', short: 'Shorted', cover: 'Covered' }[st.side]} ${fmtQty(res.trade.qty)} ${this.sym} @ ${fmtUSD(res.trade.price)}${st.side === 'cover' ? ` · ${fmtSigned(res.trade.pnl)}` : ''} — ${tradeQuip(res.trade)}`,
             'ok'
           );
       } else {
@@ -7943,12 +8141,17 @@ const Asset = {
       this.update(true);
     };
     if (settings.oneTap) return submit();
+    const TITLE = { buy: 'Buy', sell: 'Sell', short: 'Short', cover: 'Cover short:' }[st.side];
     modal({
-      title: `${st.kind === 'limit' ? 'Limit ' : ''}${st.side === 'buy' ? 'Buy' : 'Sell'} ${esc(this.sym)}`,
+      title: `${st.kind === 'limit' ? 'Limit ' : ''}${TITLE} ${esc(this.sym)}`,
       confirm: `Confirm ${st.side}`,
-      variant: st.side,
+      variant: st.side === 'short' ? 'sell' : st.side === 'cover' ? 'buy' : st.side,
       html: `<div class="preview">${this.previewHTML(r)}</div><p class="small muted" style="margin-top:10px">${
-        st.kind === 'market'
+        st.side === 'short'
+          ? `You make money if ${esc(this.sym)} falls below ${fmtUSD(r.px)} and lose money if it rises. If it reaches ${fmtUSD(2 * r.newAvg)}, the short closes automatically.`
+          : st.side === 'cover'
+            ? 'Covering buys the shares back at the current price and returns your collateral plus or minus the result.'
+            : st.kind === 'market'
           ? 'Market orders fill at the price the moment you confirm — it keeps moving while you decide.'
           : `This order waits until the price ${st.side === 'buy' ? 'falls to' : 'rises to'} ${fmtUSD(r.px)} — even while you're away.${st.side === 'buy' ? ' The cash is reserved meanwhile.' : ''}`
       }
@@ -8067,15 +8270,26 @@ const Portfolio = {
     const ps = Object.entries(acct.positions)
       .map(([s, p]) => ({ s, p, px: priceOf(s) }))
       .sort((a, b) => b.p.qty * b.px - a.p.qty * a.px);
+    const ss = Object.entries(acct.shorts || {})
+      .map(([s, p]) => ({ s, p, px: priceOf(s) }))
+      .sort((a, b) => b.p.qty * b.p.avg - a.p.qty * a.p.avg);
     setHTML(
       $('#pHold'),
-      ps.length
+      ps.length || ss.length
         ? ps
             .map(({ s, p, px }) => {
               const mv = p.qty * px,
                 pl = mv - p.qty * p.avgCost;
               return `<a class="hrow" data-go="asset/${s}" tabindex="0" role="link"><span class="l">${assetIcon(s)}<span><b>${esc(s)}</b> ${newsBadge(SIM[s])}<small>${fmtQty(p.qty)} @ ${fmtUSD(p.avgCost)} · now ${fmtUSD(px)}</small></span></span>
       <span class="rt">${fmtUSD(mv, 2)}<small class="${cls(pl)}">${fmtSigned(pl)} (${fmtPct(pl / (p.qty * p.avgCost))})</small></span></a>`;
+            })
+            .join('') +
+          ss
+            .map(({ s, p, px }) => {
+              const pl = p.qty * (p.avg - px),
+                v = p.qty * (2 * p.avg - px);
+              return `<a class="hrow is-short" data-go="asset/${s}" tabindex="0" role="link"><span class="l">${assetIcon(s)}<span><b>${esc(s)}</b> <span class="side-tag short">SHORT</span><small>${fmtQty(p.qty)} shorted @ ${fmtUSD(p.avg)} · now ${fmtUSD(px)}</small></span></span>
+      <span class="rt">${fmtUSD(v, 2)}<small class="${cls(pl)}">${fmtSigned(pl)} (${fmtPct(pl / (p.qty * p.avg))})</small></span></a>`;
             })
             .join('')
         : `<div class="empty"><b>No holdings</b><a class="link" data-go="markets" tabindex="0" role="link">Browse markets →</a></div>`
@@ -9130,6 +9344,12 @@ const BUCK_TRADE = {
     'In we go.',
     'Position opened. Buckle up.',
   ],
+  short: [
+    'Betting against {S}. Bold.',
+    'Bear mode on. Don’t look at the chart every second.',
+    'Shorted. Now you want it to fall. Weird feeling, right?',
+    'Collateral locked. Gravity, do your thing.',
+  ],
   meme: ['{S}? Degenerate. Respect.', 'Meme money go brrr.', 'I’ve seen worse ideas. Not many.'],
   big: ['Whale alert 🐋', 'That’s a lot of zeros. Hope you meant it.'],
   win: [
@@ -9148,7 +9368,8 @@ const BUCK_TRADE = {
 const fillIn = (s, o) => s.replace(/\{(\w+)\}/g, (_, k) => o[k] ?? '');
 function tradeQuip(tr) {
   let pool = BUCK_TRADE.buy;
-  if (tr.side === 'sell') pool = tr.pnl >= 0 ? BUCK_TRADE.win : BUCK_TRADE.loss;
+  if (tr.side === 'short') pool = BUCK_TRADE.short;
+  else if (tr.side === 'sell' || tr.side === 'cover') pool = tr.pnl >= 0 ? BUCK_TRADE.win : BUCK_TRADE.loss;
   else if (tr.value >= 25000) pool = BUCK_TRADE.big;
   else if (MEME.has(tr.sym) || tr.sym === 'GME') pool = BUCK_TRADE.meme;
   return fillIn(pick(pool), { S: tr.sym });
@@ -27494,6 +27715,55 @@ html:not(#_):not(#_) .pg-h .pg-ic.tinted svg {
   text-align: right;
 }
 
+/* ---------- short selling ---------- */
+.side-tag.short {
+  color: #fff;
+  background: var(--dn);
+}
+.side-tag.cover {
+  color: var(--up);
+  background: color-mix(in srgb, var(--up) 14%, transparent);
+}
+.short-note {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--mut);
+  background: color-mix(in srgb, var(--dn) 7%, var(--panel2));
+  border: 1px solid color-mix(in srgb, var(--dn) 22%, var(--line));
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0 4px;
+}
+.short-note b {
+  color: var(--tx);
+  font-weight: 650;
+}
+.short-pos {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.short-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.hrow.is-short .side-tag {
+  margin-left: 4px;
+  vertical-align: 1px;
+}
+.seg.full.side button {
+  min-width: 0;
+}
+.trade-bar .tb-short {
+  background: color-mix(in srgb, var(--dn) 14%, var(--panel2)) !important;
+  color: var(--dn) !important;
+  border: 1px solid color-mix(in srgb, var(--dn) 30%, transparent) !important;
+  flex: 0 0 auto;
+  padding-inline: 12px !important;
+}
+
 </style>
 <style id="pbVerse">
 /* =====================================================================
@@ -28780,6 +29050,18 @@ html.classic.dark:not(#_):not(#_):not(#_) .linkish,
 html.classic:not(.dark):not(#_):not(#_):not(#_) button.link,
 html.classic:not(.dark):not(#_):not(#_):not(#_) .linkish {
   color: var(--brand) !important;
+}
+
+/* ---------- short / cover tabs ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .seg.side button[data-side='short'].on,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .seg.side button[data-side='short'].on {
+  background: var(--dn-soft) !important;
+  color: var(--dn) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .seg.side button[data-side='cover'].on,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .seg.side button[data-side='cover'].on {
+  background: var(--up-soft) !important;
+  color: var(--up) !important;
 }
 
 </style>
