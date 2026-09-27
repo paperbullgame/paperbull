@@ -1014,6 +1014,24 @@
         opacity: 0.5;
         cursor: not-allowed;
       }
+      .sto-steps {
+        margin: 0 0 14px;
+        padding-left: 20px;
+        display: grid;
+        gap: 8px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .sto-steps .mono {
+        font-size: 12px;
+        padding: 1px 5px;
+        border-radius: 6px;
+        background: var(--panel2);
+        word-break: break-all;
+      }
+      .sto-live.on {
+        border-color: color-mix(in srgb, var(--up) 45%, var(--line));
+      }
       .qa {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2804,7 +2822,7 @@
       const API = 'https://amnbnuabxoxhggidlhcn.supabase.co/rest/v1/rpc/';
       const ANON =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtbmJudWFieG94aGdnaWRsaGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjc5ODAsImV4cCI6MjEwNTYwMzk4MH0.WwHTYzYEwKtW2_fjoyPiltnxI331-Ve5IGolTpavISo';
-      const GAME_ITEMS = [["th_amber", "theme", "Amber", 150, "c"], ["th_mint", "theme", "Mint", 150, "c"], ["th_ice", "theme", "Ice", 400, "r"], ["th_violet", "theme", "Ultraviolet", 400, "r"], ["th_rose", "theme", "Rose", 1000, "e"], ["th_gold", "theme", "24K Gold", 2500, "l"], ["sk_classic", "skin", "Classic", 150, "c"], ["sk_retro", "skin", "Retro Terminal", 150, "c"], ["sk_mono", "skin", "Monochrome", 400, "r"], ["sk_ocean", "skin", "Deep Ocean", 400, "r"], ["sk_neon", "skin", "Neon Nights", 1000, "e"], ["sk_lava", "skin", "Lava", 2500, "l"], ["av_bull", "avatar", "Bull", 150, "c"], ["av_bear", "avatar", "Bear", 150, "c"], ["av_fox", "avatar", "Fox", 150, "c"], ["av_frog", "avatar", "Frog", 150, "c"], ["av_shark", "avatar", "Shark", 400, "r"], ["av_wolf", "avatar", "Wolf", 400, "r"], ["av_ape", "avatar", "Ape", 400, "r"], ["av_rocket", "avatar", "Rocket", 1000, "e"], ["av_diamond", "avatar", "Diamond", 1000, "e"], ["av_robot", "avatar", "Algo", 1000, "e"], ["av_whale", "avatar", "Whale", 2500, "l"], ["av_crown", "avatar", "Crown", 2500, "l"], ["ti_rookie", "title", "Rookie", 150, "c"], ["ti_dip", "title", "Dip Buyer", 150, "c"], ["ti_hodl", "title", "HODLer", 150, "c"], ["ti_chart", "title", "Chart Wizard", 400, "r"], ["ti_degen", "title", "Certified Degen", 400, "r"], ["ti_hands", "title", "Diamond Hands", 1000, "e"], ["ti_wolf", "title", "Wolf of Sim Street", 1000, "e"], ["ti_oracle", "title", "The Oracle", 2500, "l"], ["ti_whale", "title", "Market Whale", 2500, "l"], ["pu_xp", "power", "XP Booster", 120, "c"], ["pu_cash", "power", "Cash Drop", 250, "c"], ["pu_tip", "power", "Insider Tip", 300, "r"], ["pu_mult", "power", "Profit Multiplier", 350, "r"], ["pu_shield", "power", "Loss Shield", 300, "r"], ["pu_mega", "power", "Mega Cash Drop", null, "l"], ["co_s", "coins", "Coin Pouch", null, "c"], ["co_m", "coins", "Coin Sack", null, "r"], ["co_l", "coins", "Coin Vault", null, "e"], ["th_lime", "theme", "Lime", 150, "c"], ["th_coral", "theme", "Coral", 150, "c"], ["th_teal", "theme", "Lagoon", 400, "r"], ["th_sakura", "theme", "Sakura", 1000, "e"], ["th_ruby", "theme", "Ruby", 2500, "l"], ["sk_sunset", "skin", "Sunset", 150, "c"], ["sk_matrix", "skin", "The Matrix", 400, "r"], ["sk_candy", "skin", "Cotton Candy", 400, "r"], ["sk_arctic", "skin", "Arctic", 1000, "e"], ["sk_vapor", "skin", "Vaporwave", 2500, "l"], ["av_cowboy", "avatar", "Cowboy", 150, "c"], ["av_panda", "avatar", "Panda", 150, "c"], ["av_koala", "avatar", "Koala", 150, "c"], ["av_lion", "avatar", "Lion", 400, "r"], ["av_tiger", "avatar", "Tiger", 400, "r"], ["av_ninja", "avatar", "Ninja", 400, "r"], ["av_hero", "avatar", "Hero", 400, "r"], ["av_trex", "avatar", "T-Rex", 1000, "e"], ["av_alien", "avatar", "Alien", 1000, "e"], ["av_wizard", "avatar", "Wizard", 1000, "e"], ["ti_bag", "title", "Bag Holder", 150, "c"], ["ti_moon", "title", "Moon Boy", 150, "c"], ["ti_tape", "title", "Tape Reader", 150, "c"], ["ti_fomo", "title", "FOMO Survivor", 150, "c"], ["ti_tiger", "title", "Paper Tiger", 400, "r"], ["ti_candle", "title", "Candle Whisperer", 400, "r"], ["ti_bearw", "title", "Bear Whisperer", 1000, "e"], ["ti_stonk", "title", "Stonk Lord", 2500, "l"], ["pu_coin2", "power", "Coin Doubler", 220, "r"], ["pu_luck", "power", "Lucky Charm", 400, "r"], ["pu_refresh", "power", "Pack Refresh", 200, "c"], ["pu_streak", "power", "Streak Saver", 150, "c"], ["egg_c", "egg", "Pet Egg", 350, "r"], ["egg_r", "egg", "Shiny Egg", 1000, "e"], ["egg_l", "egg", "Golden Egg", 3000, "l"], ["tr_snack", "treat", "Snack", 40, "c"], ["tr_toy", "treat", "Squeaky Toy", 80, "c"], ["tr_feast", "treat", "Feast", 140, "r"], ["tr_potion", "treat", "Growth Potion", 260, "r"], ["th_sky", "theme", "Sky", 150, "c"], ["th_peach", "theme", "Peach", 150, "c"], ["th_lav", "theme", "Lavender", 400, "r"], ["th_forest", "theme", "Forest", 400, "r"], ["th_aurora", "theme", "Aurora", 1000, "e"], ["th_diamond", "theme", "Diamond", 2500, "l"], ["sk_forest", "skin", "Forest Floor", 150, "c"], ["sk_berry", "skin", "Berry", 150, "c"], ["sk_ice", "skin", "Glacier", 400, "r"], ["sk_fire", "skin", "Wildfire", 400, "r"], ["sk_galaxy", "skin", "Galaxy", 1000, "e"], ["sk_gold", "skin", "Solid Gold", 2500, "l"], ["av_chef", "avatar", "Chef", 150, "c"], ["av_pirate", "avatar", "Pirate", 150, "c"], ["av_dj", "avatar", "DJ", 400, "r"], ["av_detective", "avatar", "Detective", 400, "r"], ["av_pumpkin", "avatar", "Pumpkin", 400, "r"], ["av_ghost", "avatar", "Ghost", 1000, "e"], ["av_viking", "avatar", "Viking", 1000, "e"], ["av_astro", "avatar", "Astronaut", 2500, "l"], ["ti_paper", "title", "Paper Hands", 150, "c"], ["ti_bhsl", "title", "Buy High, Sell Low", 150, "c"], ["ti_doodle", "title", "Chart Doodler", 150, "c"], ["ti_rider", "title", "Trend Rider", 400, "r"], ["ti_green", "title", "Green Day Hero", 400, "r"], ["ti_wick", "title", "Wick Watcher", 400, "r"], ["ti_pattern", "title", "Pattern Master", 1000, "e"], ["ti_tamer", "title", "Bull Tamer", 1000, "e"], ["ti_sensei", "title", "Candle Sensei", 1000, "e"], ["ti_legend2", "title", "Market Legend", 2500, "l"], ["ti_goat", "title", "The GOAT Trader", 2500, "l"], ["ti_glitch", "title", "Infinite Money Glitch", 2500, "l"], ["tr_apple", "treat", "Apple", 25, "c"], ["tr_bone", "treat", "Chew Bone", 60, "c"], ["tr_cake", "treat", "Party Cake", 180, "r"], ["tr_sushi", "treat", "Sushi Roll", 220, "r"], ["tr_golden", "treat", "Golden Apple", 600, "e"], ["egg_frost", "egg", "Frost Egg", 1800, "e"], ["egg_cosmic", "egg", "Cosmic Egg", 5000, "l"], ["egg_speckled", "egg", "Speckled Egg", 200, "c"], ["egg_lucky", "egg", "Lucky Egg", 600, "r"], ["egg_mystery", "egg", "Mystery Egg", 777, "e"], ["egg_coin", "egg", "Coin Egg", 900, "r"], ["egg_scholar", "egg", "Scholar Egg", 900, "r"], ["egg_idle", "egg", "Idle Egg", 900, "r"], ["egg_ember", "egg", "Ember Egg", 1200, "e"], ["egg_ocean", "egg", "Ocean Egg", 1500, "e"], ["egg_jade", "egg", "Jade Egg", 2200, "e"], ["egg_obsidian", "egg", "Obsidian Egg", 4000, "l"], ["egg_rainbow", "egg", "Rainbow Egg", 7500, "l"], ["pack:basic", "pack", "Starter Pack", 150, null], ["pack:pro", "pack", "Pro Pack", 450, null], ["pack:whale", "pack", "Whale Pack", 1200, null], ["pack:mega", "pack", "Mega Pack", 2500, null], ["pack:pocket", "pack", "Pocket Pack", 60, null], ["pack:snack", "pack", "Snack Pack", 200, null], ["pack:title", "pack", "Title Pack", 250, null], ["pack:color", "pack", "Color Pack", 300, null], ["pack:skin", "pack", "Chart Skin Pack", 350, null], ["pack:avatar", "pack", "Avatar Pack", 400, null], ["pack:power", "pack", "Power Pack", 600, null], ["pack:lucky", "pack", "Lucky Pack", 777, null], ["pack:bull", "pack", "Bull Pack", 800, null], ["pack:bear", "pack", "Bear Pack", 800, null], ["pack:mystery", "pack", "Mystery Pack", 999, null], ["pack:frost", "pack", "Frost Pack", 1000, null], ["pack:rocket", "pack", "Rocket Pack", 1600, null], ["pack:inferno", "pack", "Inferno Pack", 1800, null], ["pack:trophy", "pack", "Trophy Pack", 2200, null], ["pack:moon", "pack", "Moon Pack", 4000, null], ["pack:galaxy", "pack", "Galaxy Pack", 5000, null], ["pack:legend", "pack", "Legend Pack", 9000, null]];
+      const GAME_ITEMS = [["th_amber", "theme", "Amber", 150, "c"], ["th_mint", "theme", "Mint", 150, "c"], ["th_ice", "theme", "Ice", 400, "r"], ["th_violet", "theme", "Ultraviolet", 400, "r"], ["th_rose", "theme", "Rose", 1000, "e"], ["th_gold", "theme", "24K Gold", 2500, "l"], ["sk_classic", "skin", "Classic", 150, "c"], ["sk_retro", "skin", "Retro Terminal", 150, "c"], ["sk_mono", "skin", "Monochrome", 400, "r"], ["sk_ocean", "skin", "Deep Ocean", 400, "r"], ["sk_neon", "skin", "Neon Nights", 1000, "e"], ["sk_lava", "skin", "Lava", 2500, "l"], ["av_bull", "avatar", "Bull", 150, "c"], ["av_bear", "avatar", "Bear", 150, "c"], ["av_fox", "avatar", "Fox", 150, "c"], ["av_frog", "avatar", "Frog", 150, "c"], ["av_shark", "avatar", "Shark", 400, "r"], ["av_wolf", "avatar", "Wolf", 400, "r"], ["av_ape", "avatar", "Ape", 400, "r"], ["av_rocket", "avatar", "Rocket", 1000, "e"], ["av_diamond", "avatar", "Diamond", 1000, "e"], ["av_robot", "avatar", "Algo", 1000, "e"], ["av_whale", "avatar", "Whale", 2500, "l"], ["av_crown", "avatar", "Crown", 2500, "l"], ["ti_rookie", "title", "Rookie", 150, "c"], ["ti_dip", "title", "Dip Buyer", 150, "c"], ["ti_hodl", "title", "HODLer", 150, "c"], ["ti_chart", "title", "Chart Wizard", 400, "r"], ["ti_degen", "title", "Certified Degen", 400, "r"], ["ti_hands", "title", "Diamond Hands", 1000, "e"], ["ti_wolf", "title", "Wolf of Sim Street", 1000, "e"], ["ti_oracle", "title", "The Oracle", 2500, "l"], ["ti_whale", "title", "Market Whale", 2500, "l"], ["pu_xp", "power", "XP Booster", 120, "c"], ["pu_cash", "power", "Cash Drop", 250, "c"], ["pu_tip", "power", "Insider Tip", 300, "r"], ["pu_mult", "power", "Profit Multiplier", 350, "r"], ["pu_shield", "power", "Loss Shield", 300, "r"], ["pu_mega", "power", "Mega Cash Drop", null, "l"], ["co_s", "coins", "Coin Pouch", null, "c"], ["co_m", "coins", "Coin Sack", null, "r"], ["co_l", "coins", "Coin Vault", null, "e"], ["th_lime", "theme", "Lime", 150, "c"], ["th_coral", "theme", "Coral", 150, "c"], ["th_teal", "theme", "Lagoon", 400, "r"], ["th_sakura", "theme", "Sakura", 1000, "e"], ["th_ruby", "theme", "Ruby", 2500, "l"], ["sk_sunset", "skin", "Sunset", 150, "c"], ["sk_matrix", "skin", "The Matrix", 400, "r"], ["sk_candy", "skin", "Cotton Candy", 400, "r"], ["sk_arctic", "skin", "Arctic", 1000, "e"], ["sk_vapor", "skin", "Vaporwave", 2500, "l"], ["av_cowboy", "avatar", "Cowboy", 150, "c"], ["av_panda", "avatar", "Panda", 150, "c"], ["av_koala", "avatar", "Koala", 150, "c"], ["av_lion", "avatar", "Lion", 400, "r"], ["av_tiger", "avatar", "Tiger", 400, "r"], ["av_ninja", "avatar", "Ninja", 400, "r"], ["av_hero", "avatar", "Hero", 400, "r"], ["av_trex", "avatar", "T-Rex", 1000, "e"], ["av_alien", "avatar", "Alien", 1000, "e"], ["av_wizard", "avatar", "Wizard", 1000, "e"], ["ti_bag", "title", "Bag Holder", 150, "c"], ["ti_moon", "title", "Moon Boy", 150, "c"], ["ti_tape", "title", "Tape Reader", 150, "c"], ["ti_fomo", "title", "FOMO Survivor", 150, "c"], ["ti_tiger", "title", "Paper Tiger", 400, "r"], ["ti_candle", "title", "Candle Whisperer", 400, "r"], ["ti_bearw", "title", "Bear Whisperer", 1000, "e"], ["ti_stonk", "title", "Stonk Lord", 2500, "l"], ["pu_coin2", "power", "Coin Doubler", 220, "r"], ["pu_luck", "power", "Lucky Charm", 400, "r"], ["pu_refresh", "power", "Pack Refresh", 200, "c"], ["pu_streak", "power", "Streak Saver", 150, "c"], ["egg_c", "egg", "Pet Egg", 350, "r"], ["egg_r", "egg", "Shiny Egg", 1000, "e"], ["egg_l", "egg", "Golden Egg", 3000, "l"], ["tr_snack", "treat", "Snack", 40, "c"], ["tr_toy", "treat", "Squeaky Toy", 80, "c"], ["tr_feast", "treat", "Feast", 140, "r"], ["tr_potion", "treat", "Growth Potion", 260, "r"], ["th_sky", "theme", "Sky", 150, "c"], ["th_peach", "theme", "Peach", 150, "c"], ["th_lav", "theme", "Lavender", 400, "r"], ["th_forest", "theme", "Forest", 400, "r"], ["th_aurora", "theme", "Aurora", 1000, "e"], ["th_diamond", "theme", "Diamond", 2500, "l"], ["sk_forest", "skin", "Forest Floor", 150, "c"], ["sk_berry", "skin", "Berry", 150, "c"], ["sk_ice", "skin", "Glacier", 400, "r"], ["sk_fire", "skin", "Wildfire", 400, "r"], ["sk_galaxy", "skin", "Galaxy", 1000, "e"], ["sk_gold", "skin", "Solid Gold", 2500, "l"], ["av_chef", "avatar", "Chef", 150, "c"], ["av_pirate", "avatar", "Pirate", 150, "c"], ["av_dj", "avatar", "DJ", 400, "r"], ["av_detective", "avatar", "Detective", 400, "r"], ["av_pumpkin", "avatar", "Pumpkin", 400, "r"], ["av_ghost", "avatar", "Ghost", 1000, "e"], ["av_viking", "avatar", "Viking", 1000, "e"], ["av_astro", "avatar", "Astronaut", 2500, "l"], ["ti_paper", "title", "Paper Hands", 150, "c"], ["ti_bhsl", "title", "Buy High, Sell Low", 150, "c"], ["ti_doodle", "title", "Chart Doodler", 150, "c"], ["ti_rider", "title", "Trend Rider", 400, "r"], ["ti_green", "title", "Green Day Hero", 400, "r"], ["ti_wick", "title", "Wick Watcher", 400, "r"], ["ti_pattern", "title", "Pattern Master", 1000, "e"], ["ti_tamer", "title", "Bull Tamer", 1000, "e"], ["ti_sensei", "title", "Candle Sensei", 1000, "e"], ["ti_legend2", "title", "Market Legend", 2500, "l"], ["ti_goat", "title", "The GOAT Trader", 2500, "l"], ["ti_glitch", "title", "Infinite Money Glitch", 2500, "l"], ["tr_apple", "treat", "Apple", 25, "c"], ["tr_bone", "treat", "Chew Bone", 60, "c"], ["tr_cake", "treat", "Party Cake", 180, "r"], ["tr_sushi", "treat", "Sushi Roll", 220, "r"], ["tr_golden", "treat", "Golden Apple", 600, "e"], ["egg_frost", "egg", "Frost Egg", 1800, "e"], ["egg_cosmic", "egg", "Cosmic Egg", 5000, "l"], ["egg_speckled", "egg", "Speckled Egg", 200, "c"], ["egg_lucky", "egg", "Lucky Egg", 600, "r"], ["egg_mystery", "egg", "Mystery Egg", 777, "e"], ["egg_coin", "egg", "Coin Egg", 900, "r"], ["egg_scholar", "egg", "Scholar Egg", 900, "r"], ["egg_idle", "egg", "Idle Egg", 900, "r"], ["egg_ember", "egg", "Ember Egg", 1200, "e"], ["egg_ocean", "egg", "Ocean Egg", 1500, "e"], ["egg_jade", "egg", "Jade Egg", 2200, "e"], ["egg_obsidian", "egg", "Obsidian Egg", 4000, "l"], ["egg_rainbow", "egg", "Rainbow Egg", 7500, "l"], ["th_obsidian", "theme", "Obsidian Gold", 2500, "l"], ["th_vipgold", "theme", "VIP Gold", 2500, "l"], ["sk_holo", "skin", "Holographic", 2500, "l"], ["av_goldbull", "avatar", "Golden Bull", 2500, "l"], ["ti_mm", "title", "Market Maker", 2500, "l"], ["ti_whaleclub", "title", "Whale Club", 2500, "l"], ["egg_mythic", "egg", "Mythic Egg", null, "l"], ["pack:basic", "pack", "Starter Pack", 150, null], ["pack:pro", "pack", "Pro Pack", 450, null], ["pack:whale", "pack", "Whale Pack", 1200, null], ["pack:mega", "pack", "Mega Pack", 2500, null], ["pack:pocket", "pack", "Pocket Pack", 60, null], ["pack:snack", "pack", "Snack Pack", 200, null], ["pack:title", "pack", "Title Pack", 250, null], ["pack:color", "pack", "Color Pack", 300, null], ["pack:skin", "pack", "Chart Skin Pack", 350, null], ["pack:avatar", "pack", "Avatar Pack", 400, null], ["pack:power", "pack", "Power Pack", 600, null], ["pack:lucky", "pack", "Lucky Pack", 777, null], ["pack:bull", "pack", "Bull Pack", 800, null], ["pack:bear", "pack", "Bear Pack", 800, null], ["pack:mystery", "pack", "Mystery Pack", 999, null], ["pack:frost", "pack", "Frost Pack", 1000, null], ["pack:rocket", "pack", "Rocket Pack", 1600, null], ["pack:inferno", "pack", "Inferno Pack", 1800, null], ["pack:trophy", "pack", "Trophy Pack", 2200, null], ["pack:moon", "pack", "Moon Pack", 4000, null], ["pack:galaxy", "pack", "Galaxy Pack", 5000, null], ["pack:legend", "pack", "Legend Pack", 9000, null]];
       const GAME_ASSETS = [["AAPL", "Apple", "stock"], ["TSLA", "Tesla", "stock"], ["NVDA", "NVIDIA", "stock"], ["MSFT", "Microsoft", "stock"], ["AMZN", "Amazon", "stock"], ["SPY", "S&P 500 ETF", "stock"], ["QQQ", "Nasdaq-100 ETF", "stock"], ["GOOGL", "Alphabet", "stock"], ["META", "Meta Platforms", "stock"], ["NFLX", "Netflix", "stock"], ["AMD", "AMD", "stock"], ["PLTR", "Palantir", "stock"], ["COIN", "Coinbase", "stock"], ["GME", "GameStop", "stock"], ["DIS", "Disney", "stock"], ["NKE", "Nike", "stock"], ["KO", "Coca-Cola", "stock"], ["JPM", "JPMorgan Chase", "stock"], ["BA", "Boeing", "stock"], ["UBER", "Uber", "stock"], ["SBUX", "Starbucks", "stock"], ["BTC", "Bitcoin", "crypto"], ["ETH", "Ethereum", "crypto"], ["SOL", "Solana", "crypto"], ["DOGE", "Dogecoin", "crypto"], ["XRP", "XRP", "crypto"], ["ADA", "Cardano", "crypto"], ["AVAX", "Avalanche", "crypto"], ["LINK", "Chainlink", "crypto"], ["LTC", "Litecoin", "crypto"], ["SHIB", "Shiba Inu", "crypto"], ["PEPE", "Pepe", "crypto"]];
       const ITEM_TYPE = { theme: 'Theme', skin: 'Chart skin', avatar: 'Avatar', title: 'Title', power: 'Power-up', egg: 'Egg', treat: 'Pet treat', coins: 'Coins', pack: 'Pack' };
       const RAR = { c: 'Common', r: 'Rare', e: 'Epic', l: 'Legendary' };
@@ -2863,6 +2881,7 @@
         promos: ['#bef264', '#65a30d', NF('<path class="f" d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4z"/><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4z"/><path d="M14 6v2.2M14 10.9v2.2M14 15.8V18M7.5 10.5h3M7.5 13.5h2"/>')],
         tourney: ['#ffd166', '#ef4444', NF('<path class="f" d="M7 4h10v5.5a5 5 0 0 1-10 0z"/><path d="M7 4h10v5.5a5 5 0 0 1-10 0z"/><path d="M17 5.5h2.5v1.3a3.2 3.2 0 0 1-2.9 3.2M7 5.5H4.5v1.3a3.2 3.2 0 0 0 2.9 3.2M12 14.5v3M8.5 20.5h7M9.5 20.5l.6-3h3.8l.6 3"/>')],
         market: ['#7dd3fc', '#0369a1', NF('<path class="f" d="M3.5 18 8 12.5l3.5 3 4-6 5 3.5V20h-17z"/><path d="M3.5 18 8 12.5l3.5 3 4-6 5 3.5"/><path d="M16 6.5h4.5V11"/>')],
+        store: ['#fde68a', '#d97706', NF('<path class="f" d="M6 3.5h12l3.5 5.5L12 20.5 2.5 9z"/><path d="M6 3.5h12l3.5 5.5L12 20.5 2.5 9z"/><path d="M2.5 9h19M9 3.5l3 5.5 3-5.5M12 20.5 9 9M12 20.5l3-11.5"/>')],
         shop: ['#fdba74', '#ea580c', NF('<path class="f" d="M4 9.5h16l-1 10a1.5 1.5 0 0 1-1.5 1.3h-11A1.5 1.5 0 0 1 5 19.5z"/><path d="M4 9.5h16l-1 10a1.5 1.5 0 0 1-1.5 1.3h-11A1.5 1.5 0 0 1 5 19.5z"/><path d="M8.5 9.5V7a3.5 3.5 0 0 1 7 0v2.5"/><circle class="k" cx="12" cy="14.5" r="1.4"/>')],
         analytics: ['#6ef09a', '#16a34a', NF('<path class="f" d="M3.5 17.5 8.5 12l3.5 3 8.5-9v14.5h-17z"/><path d="M3.5 17.5 8.5 12l3.5 3 8.5-9"/><path d="M16 6h4.5v4.5M3.5 20.5h17"/>')],
         site: ['#8fc2ff', '#2563eb', NF('<path d="M4 7h16M4 12h16M4 17h16"/><circle class="k" cx="9" cy="7" r="2.4"/><circle class="k" cx="15.5" cy="12" r="2.4"/><circle class="k" cx="7" cy="17" r="2.4"/>')],
@@ -3377,6 +3396,7 @@
         ['-', 'Game'],
         ['market', 'Market', IC.chart, 'moderator'],
         ['shop', 'Shop items', IC.coin, 'moderator'],
+        ['store', 'Store ($)', IC.coin, 'moderator'],
         ['content', 'Content', IC.content, 'moderator'],
         ['-', 'Settings'],
         ['site', 'Site controls', IC.site, 'moderator'],
@@ -3676,6 +3696,10 @@
         items_change: 'Changed shop prices',
         game_change: 'Changed game settings',
         market_add: 'Added a stock',
+        store_product_edit: 'Changed a Store product',
+        store_on: 'Opened the Store',
+        store_off: 'Closed the Store',
+        user_entitle: 'Changed Pro / VIP',
         market_edit: 'Changed a stock',
         market_remove: 'Removed a stock',
         code_change: 'Changed the access code',
@@ -5603,6 +5627,138 @@
                 const id = c.dataset.off,
                   cur = ov[id] || {};
                 save(id, { price: cur.price ?? null, off: !c.checked }, c.checked ? 'Back on sale' : 'Taken off sale · live');
+              })
+          );
+        },
+      };
+
+      /* ---------- real-money store ---------- */
+      const cents = c => '$' + ((+c || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const WEBHOOK = 'https://amnbnuabxoxhggidlhcn.supabase.co/functions/v1/pb-stripe-webhook';
+      VIEWS.store = {
+        d: null,
+        async render(v) {
+          v.innerHTML = head('Store', 'Real-money purchases through Stripe. Everything is delivered by the server, so it can’t be faked from a browser.') + `<div class="card">${skeleton(5)}</div>`;
+          await this.load(v);
+        },
+        onLive(k) {
+          if ((k === 'grant' || k === 'catalog' || k === 'site') && $('#stoK')) this.load($('#view'));
+        },
+        async load(v) {
+          try {
+            this.d = await A('pba_store');
+          } catch (e) {
+            if (v) v.innerHTML = head('Store', '') + `<div class="card empty">${esc(e.message)}</div>`;
+            return;
+          }
+          this.paint(v);
+        },
+        paint(v) {
+          const d = this.d,
+            own = can('owner');
+          v.innerHTML =
+            head('Store', 'Real-money purchases through Stripe. Everything is delivered by the server, so it can’t be faked from a browser.', `<button class="btn" id="stoRf">Refresh</button>`) +
+            `<div class="kpis" id="stoK">
+        <div class="kpi c3"><small><span class="ic">${IC.coin}</span>Revenue (all time)</small><b class="mono">${cents(d.revenue_cents)}</b><em>${num(d.paid_orders)} paid orders</em></div>
+        <div class="kpi c2"><small><span class="ic">${IC.pulse}</span>Last 30 days</small><b class="mono">${cents(d.revenue_30d_cents)}</b><em>before Stripe fees</em></div>
+        <div class="kpi c4"><small><span class="ic">${IC.users}</span>Buyers</small><b class="mono">${num(d.buyers)}</b><em>players who paid</em></div>
+        <div class="kpi"><small><span class="ic">${IC.shield}</span>VIP / Pro</small><b class="mono">${num(d.vips)} / ${num(d.pros)}</b><em>active VIPs · Pro owners</em></div></div>
+      <div class="card sto-live ${d.live ? 'on' : ''}"><div class="card-h"><h3>Store status</h3><span class="pill ${d.live ? 'p-ok' : 'p-warn'}"><i></i>${d.live ? 'Open — players can buy' : 'Closed — buttons say “Coming soon”'}</span></div>
+        <ol class="sto-steps">
+          <li>Create a free <b>Stripe</b> account at stripe.com (use <b>Test mode</b> first to try it without real money).</li>
+          <li>Stripe → Developers → API keys → copy the <b>Secret key</b> (<span class="mono">sk_…</span>).</li>
+          <li>Supabase → project <b>chartsense</b> → Edge Functions → <b>Secrets</b> → add <span class="mono">STRIPE_SECRET_KEY</span> = your secret key. <em>Never paste it anywhere else.</em></li>
+          <li>Stripe → Developers → Webhooks → <b>Add endpoint</b>: <span class="mono sto-url">${WEBHOOK}</span> <button class="btn sm" id="stoCopy">${IC.copy}Copy</button><br>Events: <span class="mono">checkout.session.completed, checkout.session.async_payment_succeeded, invoice.paid, customer.subscription.deleted, charge.refunded</span></li>
+          <li>Copy the webhook’s <b>Signing secret</b> (<span class="mono">whsec_…</span>) into Supabase secrets as <span class="mono">STRIPE_WEBHOOK_SECRET</span>.</li>
+          <li>Open the Store below. Do a test purchase with card <span class="mono">4242 4242 4242 4242</span> while Stripe is in Test mode, then switch Stripe to live keys.</li>
+        </ol>
+        ${own ? `<button class="btn ${d.live ? '' : 'pri'}" id="stoToggle">${d.live ? 'Close the Store' : 'Open the Store'}</button>` : '<p class="small muted">Only the owner can open or close the Store and change prices.</p>'}</div>
+      <div class="card"><div class="card-h"><h3>Products</h3><span class="small muted">Prices in US dollars · changes reach every open game instantly</span></div>
+        <div class="tw"><table><thead><tr><th>Product</th><th>Type</th><th class="r">Gives</th><th class="r">Price ($)</th><th class="r">Sold</th><th>On sale</th></tr></thead><tbody>${d.products
+          .map(
+            p => `<tr class="${p.active ? '' : 'off'}"><td><b>${esc(p.name)}</b><div class="small muted" style="white-space:normal;max-width:340px">${esc(p.blurb || '')}</div></td><td>${esc({ coins: 'Coin pack', bundle: 'Bundle', vip: 'VIP (monthly)', pro: 'Pro unlock', item: 'Exclusive' }[p.kind] || p.kind)}${p.once ? ' <span class="pill p-mut">once</span>' : ''}</td>
+          <td class="r mono small">${p.coins ? num(p.coins) + ' coins' : ''}${p.items.length ? (p.coins ? ' + ' : '') + p.items.map(i => esc((GAME_ITEMS.find(x => x[0] === i) || [0, 0, i])[2])).join(', ') : ''}${!p.coins && !p.items.length ? '—' : ''}</td>
+          <td class="r"><input class="in mono ovin" type="number" min="0.5" max="999.99" step="0.01" data-sp="${esc(p.id)}" value="${(p.price_cents / 100).toFixed(2)}" ${own ? '' : 'disabled'} aria-label="Price"></td>
+          <td class="r mono">${num(p.sold)}</td><td><label class="sw"><input type="checkbox" data-sa="${esc(p.id)}" ${p.active ? 'checked' : ''} ${own ? '' : 'disabled'}><span></span></label></td></tr>`
+          )
+          .join('')}</tbody></table></div></div>
+      <div class="grid g2"><div class="card"><div class="card-h"><h3>Give Pro or VIP</h3><span class="small muted">For support — e.g. a payment that went wrong</span></div>
+        <label class="f"><span>Username</span><input class="in" id="enU" placeholder="username" autocomplete="off"></label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-en="pro">Give Pro</button><button class="btn" data-en="unpro">Remove Pro</button><button class="btn" data-en="vip30">+30 days VIP</button><button class="btn" data-en="unvip">End VIP</button></div></div>
+      <div class="card"><div class="card-h"><h3>How money flows</h3></div><p class="small muted" style="margin:0">Players pay on Stripe’s own checkout page. When Stripe confirms the payment, the server adds coins/items as a gift the player receives instantly, and turns on Pro/VIP. Refunds you make in Stripe automatically take the coins back and switch off Pro/VIP. Stripe pays out to your bank on its normal schedule.</p></div></div>
+      <div class="card"><div class="card-h"><h3>Orders</h3><span class="small muted">Last 100</span></div>${
+        d.orders.length
+          ? `<div class="tw"><table><thead><tr><th>When</th><th>Player</th><th>Product</th><th class="r">Amount</th><th>Status</th></tr></thead><tbody>${d.orders
+              .map(o => `<tr><td>${dt(o.created_at)}</td><td><a href="#/user/${esc(o.user_id)}">@${esc(o.username)}</a></td><td>${esc(o.product_name || o.product_id)}</td><td class="r mono">${cents(o.amount_cents)}</td><td>${{ paid: '<span class="pill p-ok"><i></i>Paid</span>', pending: '<span class="pill p-mut"><i></i>Checkout opened</span>', refunded: '<span class="pill p-dn"><i></i>Refunded</span>', expired: '<span class="pill p-mut">Expired</span>' }[o.status] || esc(o.status)}</td></tr>`)
+              .join('')}</tbody></table></div>`
+          : '<div class="empty">No orders yet.</div>'
+      }</div>`;
+          $('#stoRf').onclick = () => this.load(v);
+          $('#stoCopy').onclick = async () => {
+            try {
+              await navigator.clipboard.writeText(WEBHOOK);
+              toast('Webhook URL copied');
+            } catch (e) {
+              toast(WEBHOOK);
+            }
+          };
+          if ($('#stoToggle'))
+            $('#stoToggle').onclick = async () => {
+              const on = !d.live;
+              if (on) {
+                const ok = await confirmBox({ title: 'Open the Store?', text: 'Players will be able to pay real money. Make sure your Stripe keys and webhook are set up (steps above) and a test purchase worked.', ok: 'Open the Store', danger: false });
+                if (!ok) return;
+              }
+              try {
+                await act(A('pba_store_live', { p_on: on }), on ? 'The Store is open' : 'The Store is closed');
+                this.load(v);
+              } catch (e) {}
+            };
+          $$('[data-sp]', v).forEach(i => {
+            const save = async () => {
+              const c = Math.round(+i.value * 100),
+                p = d.products.find(x => x.id === i.dataset.sp);
+              if (!(c >= 50 && c <= 99999)) return toast('Price must be $0.50 to $999.99.', 'err');
+              if (c === p.price_cents) return;
+              try {
+                await act(A('pba_store_product_save', { p: { id: p.id, price_cents: c } }), `${p.name} is now ${cents(c)}`);
+                p.price_cents = c;
+              } catch (e) {
+                i.value = (p.price_cents / 100).toFixed(2);
+              }
+            };
+            i.onchange = save;
+          });
+          $$('[data-sa]', v).forEach(
+            c =>
+              (c.onchange = async () => {
+                try {
+                  await act(A('pba_store_product_save', { p: { id: c.dataset.sa, active: c.checked } }), c.checked ? 'Back on sale' : 'Taken off sale');
+                  c.closest('tr').classList.toggle('off', !c.checked);
+                } catch (e) {
+                  c.checked = !c.checked;
+                }
+              })
+          );
+          $$('[data-en]', v).forEach(
+            b =>
+              (b.onclick = async () => {
+                const name = $('#enU').value.trim().replace(/^@/, '').toLowerCase();
+                if (!name) return toast('Type a username first.', 'err');
+                let u;
+                try {
+                  const r = await A('pba_users', { p_q: name, p_per: 10 });
+                  u = (r.rows || r.users || []).find(x => String(x.username).toLowerCase() === name);
+                } catch (e) {
+                  return toast(e.message, 'err');
+                }
+                if (!u) return toast(`No player called @${name}.`, 'err');
+                const k = b.dataset.en,
+                  args = { p_id: u.id, p_pro: k === 'pro' ? true : k === 'unpro' ? false : null, p_vip_days: k === 'vip30' ? 30 : k === 'unvip' ? 0 : null };
+                try {
+                  await act(A('pba_entitle', args), `@${u.username}: ${b.textContent}`);
+                  this.load(v);
+                } catch (e) {}
               })
           );
         },

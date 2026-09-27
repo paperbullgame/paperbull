@@ -4601,6 +4601,7 @@ html:not(.classic) #authGate {
     <a data-go="portfolio" data-s="portfolio" tabindex="0" role="link"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7 5"/></svg><span>Portfolio</span></a>
     <a data-go="learn" data-s="learn" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5A2.5 2.5 0 014 20.5z"/><path d="M9 7.5h7M9 11h5"/></svg><span>Learn</span></a>
     <a data-go="shop" data-s="shop" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.2a2 2 0 01-2 1.8H8.2a2 2 0 01-2-1.8L5 8z"/><path d="M9 10V7a3 3 0 016 0v3"/></svg><span>Shop</span><i class="nav-dot" id="shopDot" hidden></i></a>
+    <a data-go="store" data-s="store" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 6 3-6M12 21 9 9M12 21l3-12"/></svg><span>Store</span></a>
     <a data-go="pets" data-s="pets" tabindex="0" role="link"><svg viewBox="0 0 24 24"><circle cx="6" cy="10" r="2"/><circle cx="10" cy="5.5" r="2"/><circle cx="14" cy="5.5" r="2"/><circle cx="18" cy="10" r="2"/><path d="M12 11c-3 0-6 4-6 7a3 3 0 003 3c1.3 0 2-.6 3-.6s1.7.6 3 .6a3 3 0 003-3c0-3-3-7-6-7z"/></svg><span>Pets</span></a>
     <a class="desk-only" data-go="ranks" data-s="ranks" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/></svg><span>Ranks</span></a>
     <a class="desk-only" data-go="profile" data-s="profile" tabindex="0" role="link"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg><span>Profile</span></a>
@@ -8650,6 +8651,7 @@ const TIPS = [];
 const isCosmetic = it => COSMETIC_TYPES.includes(it.type);
 const owns = id => ITEM[id]?.def || (acct.inv[id] || 0) > 0;
 const itemPrice = it => {
+  if (it.rm) return null; // real-money store items can't be bought with coins
   const o = ITEM_OV[it.id];
   if (o && o.price != null) return o.price;
   return ['power', 'egg', 'treat'].includes(it.type) ? it.price : isCosmetic(it) ? COSMETIC_PRICE[it.r] : null;
@@ -8759,7 +8761,7 @@ function rollRarity(w, min) {
 function rollPack(p, extra = 0) {
   const L = petPerk('packLuck'),
     w = { c: p.w.c, r: p.w.r * (1 + L), e: p.w.e * (1 + L), l: p.w.l * (1 + L) };
-  const inPack = x => !x.def && (!p.types || p.types.includes(x.type));
+  const inPack = x => !x.def && !x.rm && (!p.types || p.types.includes(x.type));
   for (const k of RORDER) if (!ITEMS.some(x => x.r === k && inPack(x))) w[k] = 0; // themed packs only roll rarities they contain
   const out = [];
   const n = p.cards + extra;
@@ -8787,7 +8789,7 @@ function buyPack(id, free) {
   }
   if (free) {
     if (!freePackReady()) return;
-    acct.freePackAt = Date.now() + GAME.free_pack_hours * 3600000 * (1 - petPerk('packTimer'));
+    acct.freePackAt = Date.now() + GAME.free_pack_hours * 3600000 * (1 - petPerk('packTimer')) * (window.PBVipOn && PBVipOn() ? 0.5 : 1);
   } else if (!spendCoins(p.price)) {
     toast(`You need ${p.price - acct.coins} more coins`, 'err');
     return;
@@ -9162,7 +9164,7 @@ const Shop = {
             const has = owns(it.id),
               on = acct.equip[it.type] === it.id;
             return `<div class="col-item ${has ? '' : 'locked'} ${on ? 'on' : ''}" style="--rc:${RARITY[it.r].color}">${itemFace(it)}<b>${esc(it.name)}</b><small>${RARITY[it.r].name}</small>
-        ${on ? '<span class="eq">Equipped</span>' : has ? `<button class="btn sm" data-eq="${it.id}">Equip</button>` : `<button class="btn sm ${acct.coins < itemPrice(it) ? '' : 'primary'}" data-buyc="${it.id}">${coinHTML(itemPrice(it))}</button>`}</div>`;
+        ${on ? '<span class="eq">Equipped</span>' : has ? `<button class="btn sm" data-eq="${it.id}">Equip</button>` : it.rm ? `<button class="btn sm store-btn" data-go="store">${it.vip ? 'VIP only' : 'Store'}</button>` : `<button class="btn sm ${acct.coins < itemPrice(it) ? '' : 'primary'}" data-buyc="${it.id}">${coinHTML(itemPrice(it))}</button>`}</div>`;
           })
           .join('')
     );
@@ -9995,7 +9997,7 @@ const Pets = {
         .map(e => {
           const n = acct.inv[e.id] || 0;
           return `<div class="col-item" style="--rc:${RARITY[e.r].color}">${eggFace(e)}<b>${esc(e.name)}</b><small class="muted" style="color:var(--mut)">${esc(e.desc)}</small>
-        ${n ? `<button class="btn sm primary" data-hatch="${e.id}">Hatch (${n})</button>` : ''}<button class="btn sm" data-buyegg="${e.id}">${coinHTML(e.price)}</button></div>`;
+        ${n ? `<button class="btn sm primary" data-hatch="${e.id}">Hatch (${n})</button>` : ''}${e.rm ? '<button class="btn sm store-btn" data-go="store">Store</button>' : `<button class="btn sm" data-buyegg="${e.id}">${coinHTML(e.price)}</button>`}</div>`;
         })
         .join('')
     );
@@ -18337,6 +18339,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     b.querySelector('.t').textContent = ADV() ? 'Pro on' : 'Pro';
   }
   function setAdv(on) {
+    if (on && window.PBProGate && !PBProGate()) return; // Pro mode is a paid unlock (or part of VIP)
     settings.advanced = !!on;
     saveSettings();
     document.body.classList.toggle('adv', !!on);
@@ -18445,6 +18448,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     ],
     portfolio: ['Portfolio', () => 'Your holdings, open orders and trade history'],
     shop: ['Shop', () => 'Packs, power-ups and cosmetics'],
+    store: ['Store', () => 'VIP, Pro mode, coin packs and exclusive items'],
     pets: ['Pets', () => 'Your companions and the bonuses they give you'],
     ranks: ['Leaderboard', () => 'How your returns stack up against everyone else'],
     profile: ['Profile', () => 'Your level, saves and achievements'],
@@ -18482,8 +18486,9 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   setTimeout(fixGear, 0);
 
   /* phone navigation: 4 main tabs + a More sheet */
-  const MORE = ['learn', 'shop', 'pets', 'bank', 'ranks', 'profile', 'settings'];
+  const MORE = ['store', 'learn', 'shop', 'pets', 'bank', 'ranks', 'profile', 'settings'];
   const LBL = {
+    store: 'Store',
     learn: 'Learn',
     shop: 'Shop',
     pets: 'Pets',
@@ -18623,7 +18628,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const st = document.createElement('style');
   st.textContent = `
   .nav-more{display:none!important;position:relative}.more-dot{position:absolute;top:8px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px var(--panel)}
-  @media(max-width:899px){#nav a[data-s="learn"],#nav a[data-s="shop"],#nav a[data-s="pets"],#nav a[data-s="bank"]{display:none!important}.nav-more{display:flex!important}#nav a{font-size:11px!important}}
+  @media(max-width:899px){#nav a[data-s="learn"],#nav a[data-s="shop"],#nav a[data-s="store"],#nav a[data-s="pets"],#nav a[data-s="bank"]{display:none!important}.nav-more{display:flex!important}#nav a{font-size:11px!important}}
   .more-sheet{position:fixed;inset:0;z-index:950}.ms-bg{position:absolute;inset:0;background:rgba(10,6,30,.45);opacity:0;transition:opacity .2s}
   .ms-panel{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-radius:24px 24px 0 0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateY(100%);transition:transform .24s cubic-bezier(.2,0,0,1);box-shadow:0 -20px 50px -20px rgba(0,0,0,.4)}
   .more-sheet.open .ms-bg{opacity:1}.more-sheet.open .ms-panel{transform:none}
@@ -21222,6 +21227,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     news: ['#ffe066', '#e3a008'],
     learn: ['#67e8f9', '#0891b2'],
     shop: ['#ff8fc7', '#db2777'],
+    store: ['#fde68a', '#d97706'],
     pets: ['#fdba74', '#ea580c'],
     garden: ['#bef264', '#65a30d'],
     bank: ['#a5b4fc', '#4f46e5'],
@@ -24075,6 +24081,312 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     return r;
   };
   window.PBShopFX = { flyCoins, decorate };
+})();
+
+/* =====================================================================
+   STORE — real-money purchases through Stripe Checkout.
+   Prices and delivery live on the server (store_products / pbs_fulfill);
+   this screen only shows products and sends the player to Stripe.
+   Pro mode is a paid unlock (or part of VIP).
+   ===================================================================== */
+(() => {
+  const FN = 'https://amnbnuabxoxhggidlhcn.supabase.co/functions/v1/pb-checkout';
+  const ANON =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtbmJudWFieG94aGdnaWRsaGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjc5ODAsImV4cCI6MjEwNTYwMzk4MH0.WwHTYzYEwKtW2_fjoyPiltnxI331-Ve5IGolTpavISo';
+  const Cloud = window.PBCloud;
+
+  /* ---------- store-only items ---------- */
+  const NEW = [
+    { id: 'th_obsidian', type: 'theme', name: 'Obsidian Gold', r: 'l', color: '#e2b857', rm: true },
+    { id: 'th_vipgold', type: 'theme', name: 'VIP Gold', r: 'l', color: '#ffcc33', rm: true, vip: true },
+    { id: 'sk_holo', type: 'skin', name: 'Holographic', r: 'l', up: '#7df9ff', dn: '#ff6ad5', rm: true },
+    { id: 'av_goldbull', type: 'avatar', name: 'Golden Bull', r: 'l', ic: '🐂', rm: true },
+    { id: 'ti_mm', type: 'title', name: 'Market Maker', r: 'l', rm: true },
+    { id: 'ti_whaleclub', type: 'title', name: 'Whale Club', r: 'l', rm: true },
+    { id: 'egg_mythic', type: 'egg', name: 'Mythic Egg', r: 'l', ic: '', hatch: { c: 0, r: 0, e: 0, l: 100 }, shell: ['#fff3b0', '#b8860b'], desc: 'Always hatches a Legendary pet. Store exclusive.', rm: true },
+  ];
+  for (const it of NEW)
+    if (!ITEM[it.id]) {
+      ITEMS.push(it);
+      ITEM[it.id] = it;
+    }
+  DESIGNS.av_goldbull = () => `<span class="art gold-bull">${buckSVG('cool')}</span>`;
+
+  /* ---------- entitlements (cached so Pro keeps working offline) ---------- */
+  const eKey = () => 'pb2.ent.' + ((Cloud && Cloud.C.s && Cloud.C.s.u) || 'guest');
+  const S = { products: null, live: false, me: null, at: 0, loading: false };
+  const ENT = () => (Cloud && Cloud.C.s ? S.me || Store.get(eKey(), null) : null) || { pro: false, vip: false, owned: [] };
+  const linked = () => !!(Cloud && Cloud.C.s && acct && acct.user && acct.user === Cloud.C.s.u);
+  window.PBVipOn = () => !!(ENT().vip && (!ENT().vip_until || new Date(ENT().vip_until) > Date.now()));
+  const proOn = () => !!(ENT().pro || window.PBVipOn());
+
+  async function refresh(force) {
+    if (S.loading || (!force && Date.now() - S.at < 20000)) return;
+    S.loading = true;
+    try {
+      const r = await Cloud.rpc('pb_store', { p_token: linked() ? Cloud.C.s.token : null });
+      S.products = r.products || [];
+      S.live = !!r.live;
+      S.at = Date.now();
+      if (linked() && r.me) {
+        S.me = r.me;
+        Store.set(eKey(), r.me);
+      } else if (!linked()) S.me = null;
+      applyPerks(true);
+      if (linked() && window.PBVipOn()) vipDaily();
+    } catch (e) {
+      /* offline: keep what we had */
+    } finally {
+      S.loading = false;
+    }
+    if (typeof current !== 'undefined' && current === StoreScreen) StoreScreen.paint();
+  }
+  let dailyAt = 0;
+  async function vipDaily() {
+    if (Date.now() - dailyAt < 600000) return;
+    dailyAt = Date.now();
+    try {
+      const r = await Cloud.rpc('pb_vip_daily', { p_token: Cloud.C.s.token });
+      if (r && r.ok) Cloud.claimGrants();
+    } catch (e) {}
+  }
+  // VIP theme while subscribed; Pro only if owned or VIP (checked against the server)
+  function applyPerks(fromServer) {
+    if (!acct) return;
+    const vip = window.PBVipOn();
+    if (vip && !(acct.inv.th_vipgold > 0)) {
+      acct.inv.th_vipgold = 1;
+      saveAcct();
+    } else if (!vip && acct.inv.th_vipgold > 0 && fromServer) {
+      delete acct.inv.th_vipgold;
+      if (acct.equip.theme === 'th_vipgold') {
+        acct.equip.theme = 'th_amber';
+        if (typeof applyCosmetics === 'function') applyCosmetics();
+      }
+      saveAcct();
+    }
+    if (fromServer && settings.advanced && !proOn()) {
+      settings.advanced = false;
+      saveSettings();
+      document.body.classList.remove('adv');
+      if (typeof current !== 'undefined' && current === Asset) router();
+    }
+    document.body.classList.toggle('is-vip', vip);
+    paintVipChip();
+  }
+  function paintVipChip() {
+    const tr = document.querySelector('#top .top-right');
+    if (!tr) return;
+    let c = document.getElementById('vipChip');
+    if (window.PBVipOn()) {
+      if (!c) {
+        c = document.createElement('a');
+        c.id = 'vipChip';
+        c.className = 'vip-chip';
+        c.dataset.go = 'store';
+        c.setAttribute('role', 'link');
+        c.tabIndex = 0;
+        c.textContent = 'VIP';
+        tr.insertBefore(c, tr.querySelector('.coin-chip') || null);
+      }
+    } else if (c) c.remove();
+  }
+  // 2× XP for VIPs
+  const ax0 = addXP;
+  addXP = function (n) {
+    return ax0.call(this, window.PBVipOn() && n > 0 ? n * 2 : n);
+  };
+
+  /* ---------- Pro mode paywall ---------- */
+  window.PBProGate = function () {
+    if (proOn()) return true;
+    const pro = (S.products || []).find(p => p.kind === 'pro'),
+      vip = (S.products || []).find(p => p.kind === 'vip');
+    modal({
+      title: 'Pro mode is a paid unlock',
+      confirm: 'See the Store',
+      cancel: 'Not now',
+      html: `<div class="st-pay"><div class="st-pay-ic">${I_GEM}</div><p>Pro mode adds 7 indicators, drawing tools, a live order book, stop loss / take profit and chart replay to every stock and coin.</p>
+      <ul><li><b>Pro mode forever</b> · ${pro ? money(pro.price_cents) : '$4.99'} one time</li><li><b>or VIP</b> · ${vip ? money(vip.price_cents) : '$4.99'}/month, with Pro included plus daily coins and 2× XP</li></ul></div>`,
+      onConfirm: () => go('store'),
+    });
+    refresh();
+    return false;
+  };
+
+  /* ---------- checkout ---------- */
+  const money = c => '$' + (c / 100).toFixed(2);
+  let busy = false;
+  async function buy(id, btn) {
+    const p = (S.products || []).find(x => x.id === id);
+    if (!p || busy) return;
+    if (!linked()) {
+      modal({
+        title: 'Make an account first',
+        confirm: acct.user ? 'Connect account' : 'Sign up',
+        html: 'Purchases are saved to your online account, so they follow you to every device and can never get lost. It takes 10 seconds.',
+        onConfirm: () => (acct.user ? document.querySelector('[data-ol="connect"]')?.click() || Gate.show('login') : Gate.show('signup')),
+      });
+      return;
+    }
+    if (!S.live) {
+      toast('The Store opens soon — payments aren’t switched on yet.', 'info');
+      return;
+    }
+    busy = true;
+    const t = btn && btn.innerHTML;
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="st-spin"></i>Opening checkout…';
+    }
+    try {
+      const r = await fetch(FN, {
+        method: 'POST',
+        headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: Cloud.C.s.token, product: id, return_to: location.origin + location.pathname }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (j.url) {
+        try {
+          sessionStorage.setItem('pb2.pending', JSON.stringify({ id, at: Date.now() }));
+        } catch (e) {}
+        location.href = j.url;
+        return;
+      }
+      const M = {
+        not_configured: 'The Store opens soon — payments aren’t switched on yet.',
+        already_owned: 'You already own that.',
+        already_vip: 'You’re already VIP.',
+        auth: 'Log in again to buy.',
+        slow_down: 'Too many checkouts — wait a few minutes.',
+        not_available: 'That isn’t for sale right now.',
+      };
+      toast(M[j.error] || j.detail || 'Couldn’t open checkout. Try again.', 'err');
+    } catch (e) {
+      toast('Couldn’t reach the Store. Check your connection.', 'err');
+    }
+    busy = false;
+    if (btn && btn.isConnected) {
+      btn.disabled = false;
+      btn.innerHTML = t;
+    }
+  }
+
+  /* ---------- coming back from Stripe ---------- */
+  (function returnFromCheckout() {
+    const q = new URLSearchParams(location.search),
+      st = q.get('store');
+    if (!st) return;
+    history.replaceState(null, '', location.pathname + location.hash);
+    if (st === 'cancel') {
+      setTimeout(() => toast('Checkout cancelled — you weren’t charged.', 'info'), 1500);
+      return;
+    }
+    let n = 0;
+    setTimeout(() => {
+      toast('Payment received! Delivering your purchase…', 'ok');
+      if (typeof confetti === 'function') confetti();
+      go('store');
+    }, 1500);
+    const tick = setInterval(() => {
+      n++;
+      if (Cloud.C.s) {
+        Cloud.claimGrants();
+        refresh(true);
+      }
+      if (n >= 12) clearInterval(tick);
+    }, 3000);
+  })();
+
+  // refresh when the server says something changed for this player
+  const cg0 = Cloud.claimGrants;
+  Cloud.claimGrants = function () {
+    const r = cg0.apply(this, arguments);
+    setTimeout(() => refresh(true), 400);
+    return r;
+  };
+  setTimeout(() => refresh(true), 2500);
+  setInterval(() => document.visibilityState === 'visible' && refresh(), 120000);
+
+  /* ---------- the Store screen ---------- */
+  const I_GEM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 6 3-6M12 21 9 9M12 21l3-12"/></svg>';
+  const coinStack = n =>
+    `<span class="st-coins" data-n="${n}">${Array.from({ length: Math.min(5, Math.max(1, Math.round(Math.log10(n) - 1.6))) }, (_, i) => `<i class="coin" style="--i:${i}"></i>`).join('')}</span>`;
+  const itemTile = id => {
+    const it = ITEM[id];
+    return it ? `<span class="st-item">${itemFace(it)}<small>${esc(it.name)}</small></span>` : '';
+  };
+  const StoreScreen = {
+    mount(v) {
+      v.innerHTML = `<div id="stoBody"><div class="pb-skel row"><i></i><i></i><i></i></div></div>`;
+      this.paint();
+      refresh(true);
+    },
+    paint() {
+      const box = document.getElementById('stoBody');
+      if (!box) return;
+      if (!S.products) {
+        if (!S.loading && S.at === 0) box.innerHTML = '<div class="pb-skel row"><i></i><i></i><i></i></div>';
+        return;
+      }
+      const P = S.products,
+        e = ENT(),
+        owned = new Set(e.owned || []),
+        vip = window.PBVipOn();
+      const by = k => P.filter(p => p.kind === k);
+      const btn = (p, label) => {
+        const have = (p.kind === 'pro' && (e.pro_owned || e.pro)) || (p.once && owned.has(p.id)) || (p.kind === 'item' && p.once && p.items.every(i => acct.inv[i] > 0));
+        if (have) return `<span class="st-owned">✓ Owned</span>`;
+        return `<button class="st-buy ${S.live ? '' : 'soon'}" data-sbuy="${p.id}">${S.live ? label || money(p.price_cents) : 'Coming soon'}</button>`;
+      };
+      const vp = by('vip')[0],
+        pro = by('pro')[0],
+        start = by('bundle')[0];
+      box.innerHTML = `
+      ${S.live ? '' : '<div class="st-note">The Store is almost ready. Look around — buying opens very soon.</div>'}
+      ${!linked() ? `<div class="st-note acc">Purchases are saved to your online account. <button class="linkish" data-ol="${acct.user ? 'connect' : 'signup'}">${acct.user ? 'Connect your account' : 'Sign up'}</button> to buy.</div>` : ''}
+      ${vp ? `<section class="st-vip ${vip ? 'on' : ''}"><div class="st-vip-t"><span class="st-badge">${vip ? 'You’re VIP' : esc(vp.badge || 'Monthly')}</span><h2>${esc(vp.name)}</h2>
+        <ul><li>Pro mode included</li><li>${coinHTML(1000)} every day</li><li>2× XP on everything</li><li>Free packs twice as often</li><li>VIP Gold theme + VIP badge</li></ul>
+        ${vip ? `<p class="st-vip-until">Active until ${new Date(e.vip_until).toLocaleDateString([], { month: 'long', day: 'numeric' })}. Renews automatically; cancel any time from your Stripe receipt email.</p>` : `<div class="st-vip-buy"><b>${money(vp.price_cents)}<small>/month</small></b>${btn(vp, 'Become VIP')}</div>`}</div>
+        <div class="st-vip-art" aria-hidden="true">${art('av_goldbull')}</div></section>` : ''}
+      <div class="st-row2">
+        ${start ? `<section class="st-card st-start"><span class="st-badge">${esc(start.badge || 'One time')}</span><h3>${esc(start.name)}</h3><p>${esc(start.blurb || '')}</p><div class="st-items">${coinStack(start.coins)}${start.items.map(itemTile).join('')}</div><div class="st-foot"><b>${money(start.price_cents)}</b>${btn(start, 'Buy bundle')}</div></section>` : ''}
+        ${pro ? `<section class="st-card st-pro"><span class="st-badge">${esc(pro.badge || 'Forever')}</span><h3>${esc(pro.name)}</h3><p>${esc(pro.blurb || '')}</p><div class="st-foot"><b>${money(pro.price_cents)}</b>${proOn() && !e.pro_owned ? '<span class="st-owned">✓ Included in VIP</span>' : btn(pro, 'Unlock Pro')}</div></section>` : ''}
+      </div>
+      <div class="card-h" style="padding:6px 2px 0"><h3>Coins</h3><span class="muted small">Spend them on packs, eggs and cosmetics</span></div>
+      <div class="st-grid">${by('coins')
+        .map(p => `<section class="st-card st-coinpack">${p.badge ? `<span class="st-badge">${esc(p.badge)}</span>` : ''}${coinStack(p.coins)}<h3>${p.coins.toLocaleString()}</h3><p>${esc(p.blurb || '')}</p>${btn(p)}</section>`)
+        .join('')}</div>
+      <div class="card-h" style="padding:6px 2px 0"><h3>Exclusives</h3><span class="muted small">Only in the Store</span></div>
+      <div class="st-grid">${by('item')
+        .map(p => `<section class="st-card st-ex">${p.items.map(i => `<span class="st-exf">${ITEM[i] ? itemFace(ITEM[i], true) : ''}</span>`).join('')}<h3>${esc(p.name)}</h3><p>${esc(p.blurb || '')}</p><div class="st-foot"><b>${money(p.price_cents)}</b>${btn(p, 'Buy')}</div></section>`)
+        .join('')}</div>
+      <p class="st-legal">Payments are handled securely by Stripe — PAPERBULL never sees your card. Prices in US dollars. Everything bought here is a virtual item for use in PAPERBULL, has no cash value and can’t be exchanged for real money. Trading in PAPERBULL uses virtual money only. Ask a parent before buying if you’re under 18.</p>`;
+    },
+    update() {},
+  };
+  window.StoreScreen = StoreScreen;
+  document.addEventListener('click', e => {
+    const b = e.target.closest('#stoBody [data-sbuy]');
+    if (b) buy(b.dataset.sbuy, b);
+  });
+  SCREENS.store = StoreScreen;
+
+  // a doorway from the coin Shop
+  const sm0 = Shop.mount;
+  Shop.mount = function (v) {
+    const r = sm0.apply(this, arguments);
+    try {
+      const top = v.querySelector('.shop-top');
+      if (top && !v.querySelector('.st-door'))
+        top.insertAdjacentHTML(
+          'beforebegin',
+          `<button class="st-door" data-go="store"><span class="st-door-ic">${I_GEM}</span><span><b>PAPERBULL Store</b><small>VIP, Pro mode, coin packs and exclusive items</small></span><span class="st-door-go">Open</span></button>`
+        );
+    } catch (e) {}
+    return r;
+  };
+  window.PBStore = { refresh, state: () => S, pro: proOn, buy };
 })();
 
 /* SHOP-PLUS:END */
@@ -29851,6 +30163,92 @@ html:not(#_):not(#_) .pg-h .pg-ic.tinted svg {
     padding-right: 28px;
   }
 }
+
+</style>
+<style id="pbStore">
+/* ===== Store (src/store.js) ===== */
+#stoBody { display: grid; gap: 14px; }
+.st-note { padding: 10px 14px; border-radius: 12px; font-size: 13px; background: color-mix(in srgb, var(--amber) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent); }
+.st-note.acc { background: var(--panel); border-color: var(--line); }
+.st-badge { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #1a1000; background: linear-gradient(135deg, #ffe08a, #ffb224); }
+.st-vip { position: relative; overflow: hidden; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; padding: 22px; border-radius: 20px;
+  background: radial-gradient(120% 140% at 100% 0%, rgba(255, 204, 51, .22), transparent 55%), linear-gradient(160deg, #1e1a10, #0d0c09 70%); border: 1px solid rgba(255, 204, 51, .35); color: #fff4d6; }
+.st-vip::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255, 235, 160, .10) 50%, transparent 65%); background-size: 250% 100%; animation: stSheen 5s ease-in-out infinite; pointer-events: none; }
+@keyframes stSheen { 0%, 100% { background-position: 120% 0 } 50% { background-position: -20% 0 } }
+.st-vip h2 { margin: 8px 0 10px; font-size: 26px; letter-spacing: -.02em; color: #ffd76a; }
+.st-vip ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 6px 16px; font-size: 14px; }
+.st-vip li::before { content: '✦'; color: #ffcc33; margin-right: 8px; }
+.st-vip-buy { display: flex; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+.st-vip-buy b { font-size: 26px; color: #fff; }
+.st-vip-buy small { font-size: 13px; opacity: .7; font-weight: 500; }
+.st-vip-until { margin: 14px 0 0; font-size: 13px; opacity: .8; }
+.st-vip-art { width: 120px; height: 120px; display: grid; place-items: center; filter: drop-shadow(0 10px 30px rgba(255, 190, 40, .45)); animation: bob 3s ease-in-out infinite; }
+.st-vip-art .art, .st-vip-art svg { width: 110px; height: 110px; }
+.gold-bull { filter: sepia(.35) saturate(1.6) hue-rotate(-8deg) brightness(1.08) drop-shadow(0 0 6px rgba(255, 204, 51, .8)); }
+.st-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.st-card { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); transition: transform .18s, border-color .18s; }
+@media (hover: hover) { .st-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); } }
+.st-card h3 { margin: 2px 0 0; font-size: 17px; }
+.st-card p { margin: 0; font-size: 12.5px; color: var(--mut); line-height: 1.4; flex: 1; }
+.st-card .st-badge { position: absolute; top: 12px; right: 12px; }
+.st-start .st-badge, .st-pro .st-badge { position: static; align-self: flex-start; }
+.st-start { background: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, #22c55e 16%, transparent), transparent 60%), var(--panel); }
+.st-pro { background: radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, #6366f1 20%, transparent), transparent 60%), var(--panel); }
+.st-items { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin: 6px 0; }
+.st-item { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10.5px; color: var(--mut); }
+.st-item .face { height: 44px; }
+.st-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.st-foot b { font-size: 18px; }
+.st-coinpack { align-items: center; text-align: center; padding-top: 22px; }
+.st-coinpack h3 { font-size: 22px; }
+.st-coinpack .st-buy { width: 100%; margin-top: 8px; }
+.st-coins { position: relative; display: block; height: 46px; width: 70px; }
+.st-coins .coin { position: absolute; width: 30px; height: 30px; left: calc(50% - 15px + (var(--i) - 2) * 7px); bottom: calc(var(--i) * 4px); filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .4)); }
+.st-ex { align-items: center; text-align: center; }
+.st-exf .face { height: 70px; }
+.st-ex .st-foot { width: 100%; }
+.st-buy { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: 12px; border: 0; cursor: pointer; font: inherit; font-weight: 800;
+  color: #1a1000; background: linear-gradient(135deg, #ffd76a, #ff9f1a); box-shadow: 0 6px 18px rgba(255, 159, 26, .28); transition: transform .12s, filter .12s; }
+.st-buy:hover { filter: brightness(1.06); }
+.st-buy:active { transform: scale(.97); }
+.st-buy.soon { background: var(--panel2); color: var(--mut); box-shadow: none; }
+.st-buy:disabled { opacity: .7; cursor: wait; }
+.st-owned { font-weight: 800; font-size: 13px; color: var(--up); }
+.st-spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: stSpin .7s linear infinite; }
+@keyframes stSpin { to { transform: rotate(360deg) } }
+.st-legal { font-size: 11.5px; line-height: 1.5; color: var(--mut); margin: 4px 2px 20px; }
+.st-door { display: flex; align-items: center; gap: 14px; width: 100%; margin: 0 0 12px; padding: 14px 16px; border-radius: 16px; cursor: pointer; font: inherit; text-align: left; color: #fff4d6;
+  background: linear-gradient(135deg, #2a2110, #12100a); border: 1px solid rgba(255, 204, 51, .35); }
+.st-door b { display: block; color: #ffd76a; font-size: 15px; }
+.st-door small { display: block; opacity: .75; font-size: 12.5px; }
+.st-door > span:nth-child(2) { flex: 1; }
+.st-door-ic, .st-pay-ic { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 12px; color: #1a1000; background: linear-gradient(135deg, #ffe08a, #ff9f1a); }
+.st-door-ic svg, .st-pay-ic svg { width: 22px; height: 22px; }
+.st-door-go { font-weight: 800; color: #ffd76a; }
+.st-pay { display: grid; gap: 10px; }
+.st-pay ul { margin: 0; padding-left: 18px; }
+.vip-chip { display: inline-grid; place-items: center; height: 30px; padding: 0 11px; border-radius: 99px; font-size: 11.5px; font-weight: 900; letter-spacing: .08em; cursor: pointer; text-decoration: none;
+  color: #1a1000; background: linear-gradient(135deg, #ffe08a, #ffb224); box-shadow: 0 0 14px rgba(255, 190, 40, .35); }
+.store-btn { color: #1a1000 !important; background: linear-gradient(135deg, #ffe08a, #ffb224) !important; border: 0 !important; }
+@media (max-width: 700px) {
+  .st-row2 { grid-template-columns: 1fr; }
+  .st-vip { grid-template-columns: 1fr; padding: 18px; }
+  .st-vip-art { position: absolute; right: -6px; top: 6px; width: 90px; height: 90px; opacity: .9; }
+  .st-vip-art .art, .st-vip-art svg { width: 84px; height: 84px; }
+  .st-vip h2 { font-size: 22px; padding-right: 80px; }
+  .st-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .st-card { padding: 14px 12px; }
+  .st-card .st-badge { top: 8px; right: 8px; font-size: 9.5px; padding: 2px 7px; }
+  .st-foot { flex-direction: column; align-items: stretch; }
+  .st-foot b { text-align: center; }
+  .vip-chip { height: 26px; padding: 0 8px; font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .st-vip::after, .st-vip-art { animation: none; } }
+.st-exf { display: grid; place-items: center; width: 84px; height: 84px; overflow: hidden; }
+.st-exf .face { height: 76px !important; width: 76px; display: grid; place-items: center; }
+.st-exf .art, .st-exf .art svg, .st-exf svg { max-width: 72px; max-height: 72px; }
+.st-exf .title-chip { font-size: 13px; padding: 6px 10px; }
 
 </style>
 <style id="pbShopFx">
