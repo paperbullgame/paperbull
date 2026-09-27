@@ -5357,8 +5357,8 @@
               ro ? '' : `<button class="btn" id="mkPrice">${IC.edit}Set a price</button><button class="btn pri" id="mkAdd">${IC.plus}Add a stock</button>`
             ) +
             `<div class="card"><div class="card-h"><h3>Your changes</h3><input class="in" id="mkQ" placeholder="Filter…" style="max-width:220px" value="${esc(this.q)}"></div><div id="mkBox">${skeleton(4)}</div></div>
-      <div class="card"><div class="card-h"><h3>Built-in names</h3><span class="small muted">${GAME_ASSETS.length} featured + 2,000 generated tickers</span></div>
-        <p class="small muted" style="margin:0 0 10px">These already exist in the game. Click one to set its price, rename it or take it off the market. Generated tickers (like AETC or QUAN) work too when you type the exact symbol.</p>
+      <div class="card"><div class="card-h"><h3>Built-in names</h3><span class="small muted">${GAME_ASSETS.length} featured + ~1,750 more real stocks and coins</span></div>
+        <p class="small muted" style="margin:0 0 10px">These already exist in the game. Click one to set its price, rename it or take it off the market. Every other real ticker in the game (like KO, UBER, PEPE) works too when you type the exact symbol.</p>
         <div class="chips" id="mkKnown">${GAME_ASSETS.map(a => `<button type="button" class="btn sm" data-sym="${esc(a[0])}" title="${esc(a[1])}">${esc(a[0])}</button>`).join('')}</div></div>`;
           if (!ro) {
             $('#mkAdd').onclick = () => this.edit(null, true);
