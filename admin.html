@@ -2153,18 +2153,27 @@
         bad_status: 'Invalid status.',
         bad_role: 'Pick a role.',
         bad_password: 'Password must be 6+ characters.',
-        network: 'Can’t reach the server. Check your connection.',
+        network:
+          'Can’t reach the PAPERBULL server (supabase.co). This Wi-Fi, a VPN or an ad blocker may be blocking it. Try phone data or turn the blocker off.',
+        offline: 'You’re offline. Connect to the internet and try again.',
       };
       async function rpc(fn, args = {}) {
         let r;
-        try {
-          r = await fetch(API + fn, {
-            method: 'POST',
-            headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' },
-            body: JSON.stringify(args),
-          });
-        } catch (e) {
-          throw Object.assign(new Error(ERR.network), { code: 'network' });
+        for (let tries = 0; ; tries++) {
+          try {
+            r = await fetch(API + fn, {
+              method: 'POST',
+              headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' },
+              body: JSON.stringify(args),
+            });
+            break;
+          } catch (e) {
+            if (tries < 2 && navigator.onLine !== false) {
+              await new Promise(ok => setTimeout(ok, 600 * (tries + 1)));
+              continue;
+            }
+            throw Object.assign(new Error(navigator.onLine === false ? ERR.offline : ERR.network), { code: 'network' });
+          }
         }
         const t = await r.text();
         let j = null;
