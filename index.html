@@ -9754,7 +9754,8 @@ function hatchEgg(eggId) {
   if (!(acct.inv[eggId] > 0)) return;
   acct.inv[eggId]--;
   const r = rollRarity(egg.hatch),
-    d = pick(PETS.filter(p => p.r === r));
+    pool = PETS.filter(p => p.r === r && (!egg.perk || p.perk === egg.perk)),
+    d = pick(pool.length ? pool : PETS.filter(p => p.r === r));
   const existing = acct.pets.list.find(p => p.id === d.id);
   let note;
   if (existing) {
@@ -14396,6 +14397,18 @@ function init() {
       shell: ['#e4d8ff', '#5b3fd1'],
       desc: '70% chance of a Legendary pet.',
     },
+    // --- more eggs: cheaper starters, themed eggs that always hatch a perk type, and top-end gambles
+    { id: 'egg_speckled', type: 'egg', name: 'Speckled Egg', r: 'c', ic: '', price: 200, hatch: { c: 85, r: 15, e: 0, l: 0 }, shell: ['#f7f1e3', '#a8927a'], desc: 'The cheapest egg. Almost always a Common pet.' },
+    { id: 'egg_lucky', type: 'egg', name: 'Lucky Egg', r: 'r', ic: '', price: 600, hatch: { c: 40, r: 45, e: 15, l: 0 }, shell: ['#dcfce7', '#16a34a'], desc: 'Better than it looks. Usually Rare, sometimes Epic.' },
+    { id: 'egg_mystery', type: 'egg', name: 'Mystery Egg', r: 'e', ic: '', price: 777, hatch: { c: 25, r: 25, e: 25, l: 25 }, shell: ['#3f3f46', '#111114'], desc: 'A pure gamble: every rarity is equally likely, Legendary included.' },
+    { id: 'egg_coin', type: 'egg', name: 'Coin Egg', r: 'r', ic: '', price: 900, hatch: { c: 50, r: 35, e: 12, l: 3 }, perk: 'coinPct', shell: ['#fef3c7', '#f59e0b'], desc: 'Always hatches a pet that boosts coins from trades.' },
+    { id: 'egg_scholar', type: 'egg', name: 'Scholar Egg', r: 'r', ic: '', price: 900, hatch: { c: 50, r: 35, e: 12, l: 3 }, perk: 'xpPct', shell: ['#ede9fe', '#7c3aed'], desc: 'Always hatches a pet that boosts your XP.' },
+    { id: 'egg_idle', type: 'egg', name: 'Idle Egg', r: 'r', ic: '', price: 900, hatch: { c: 50, r: 35, e: 12, l: 3 }, perk: 'passive', shell: ['#ffe4e6', '#e11d48'], desc: 'Always hatches a pet that makes coins while you’re away.' },
+    { id: 'egg_ember', type: 'egg', name: 'Ember Egg', r: 'e', ic: '', price: 1200, hatch: { c: 0, r: 55, e: 35, l: 10 }, shell: ['#ffedd5', '#ea580c'], desc: 'Rare or better. Warm to the touch.' },
+    { id: 'egg_ocean', type: 'egg', name: 'Ocean Egg', r: 'e', ic: '', price: 1500, hatch: { c: 0, r: 45, e: 40, l: 15 }, shell: ['#cffafe', '#0e7490'], desc: 'Rare or better, with a 15% shot at Legendary.' },
+    { id: 'egg_jade', type: 'egg', name: 'Jade Egg', r: 'e', ic: '', price: 2200, hatch: { c: 0, r: 20, e: 60, l: 20 }, shell: ['#d1fae5', '#047857'], desc: 'Mostly Epic. One in five is Legendary.' },
+    { id: 'egg_obsidian', type: 'egg', name: 'Obsidian Egg', r: 'l', ic: '', price: 4000, hatch: { c: 0, r: 0, e: 40, l: 60 }, shell: ['#52525b', '#09090b'], desc: 'Epic or Legendary, and it leans Legendary.' },
+    { id: 'egg_rainbow', type: 'egg', name: 'Rainbow Egg', r: 'l', ic: '', price: 7500, hatch: { c: 0, r: 0, e: 0, l: 100 }, shell: ['#fbcfe8', '#8b5cf6'], desc: 'Guaranteed Legendary. No luck required.' },
   ];
   for (const it of NEW_ITEMS)
     if (!ITEM[it.id]) {
