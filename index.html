@@ -14970,8 +14970,8 @@ function init() {
   const THEMES = [
     [
       'classic',
-      'Verse',
-      'Deep space, orange glow (the default)',
+      'Classic',
+      'Graphite and orange. Clean, fast, easy on the eyes (the default)',
       null,
       ['#ffb52e', '#ff5e1a'],
       `<path d="M13 15c-1 6 3 10 8 10M35 15c1 6-3 10-8 10" stroke="${W}" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="24" cy="28" r="9" fill="${W}"/><circle cx="20.5" cy="27" r="1.6" fill="#5b4bc4"/><circle cx="27.5" cy="27" r="1.6" fill="#5b4bc4"/><ellipse cx="24" cy="32.5" rx="4" ry="2.4" fill="#ffc6d9"/>`,
@@ -15438,7 +15438,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const cur = isClassic() ? 'classic' : saved() || 'classic';
     const card = ([id, name, tag, p, g, art]) => {
       const c = p || { bg: '#0b0b10', tx: '#f3f4f8', amber: '#ff9a26', up: '#22d67a' };
-      return `<button class="th-card ${cur === id ? 'on' : ''}" data-th="${id}" style="--pbg:${id === 'classic' ? 'radial-gradient(160px 90px at 85% 0%,rgba(122,76,255,.35),transparent 70%),#0b0b10' : c.bg};--ptx:${c.tx};--pac:${c.amber};--pup:${c.up}">${cur === id ? '<span class="th-on">Active</span>' : ''}${logo(id, g, art)}<b>${name}</b><small>${tag}</small><span class="th-bar"></span></button>`;
+      return `<button class="th-card ${cur === id ? 'on' : ''}" data-th="${id}" style="--pbg:${id === 'classic' ? '#131519' : c.bg};--ptx:${c.tx};--pac:${c.amber};--pup:${c.up}">${cur === id ? '<span class="th-on">Active</span>' : ''}${logo(id, g, art)}<b>${name}</b><small>${tag}</small><span class="th-bar"></span></button>`;
     };
     el.innerHTML = `<section class="card"><div class="th-head"><div><h2 style="margin:0">Themes</h2><p style="color:var(--mut);margin:6px 0 0">${THEMES.length} themes. Tap one to restyle the whole site.</p></div><button class="th-sur" id="thRandom">Surprise me</button></div><div class="th-grid" id="thGrid">${THEMES.map(card).join('')}</div></section>`;
     el.querySelector('#thRandom').onclick = () => {
@@ -19956,7 +19956,9 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     return {
       layout: {
         textColor: rgba(t.mut, 0.95),
-        fontFamily: "'PB Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+        fontFamily: document.documentElement.classList.contains('classic')
+          ? "'PB Sans', system-ui, -apple-system, sans-serif"
+          : "'PB Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
         fontSize: 11,
       },
       grid: { vertLines: { visible: false }, horzLines: { visible: true, color: rgba(t.line, 0.9) } },
@@ -21019,7 +21021,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         };
       }
     } catch (e) {
-      body.innerHTML = `${joinCTA()}<div class="block-msg">Couldn’t load: ${E(e.message)}</div>`;
+      body.innerHTML = `${joinCTA()}<div class="block-msg">Couldn’t reach the leaderboard right now. Check your connection and try again in a minute.</div>`;
       authFail(e);
     }
   }
@@ -27895,6 +27897,889 @@ html.classic.dark:not(#_) .ed-btn.pri {
 html.classic.dark:not(#_) .ed-lvb i,
 html.classic.dark:not(#_) .ed-prog i {
   background: var(--vg) !important;
+}
+
+</style>
+<style id="pbPro">
+/* =====================================================================
+   PAPERBULL — "Trading desk after hours"
+   One design language for the default look. Loaded last.
+   html.classic.dark:not(#_):not(#_):not(#_) = default dark look, html.classic:not(.dark):not(#_):not(#_):not(#_) = default light look (replaced at build).
+   Rules: one accent (orange) for action + selection, green/red only for
+   money moving, flat surfaces separated by lightness + hairlines, one
+   type family (tabular figures for every number), no glows.
+   ===================================================================== */
+
+/* ---------- tokens ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) {
+  --bg: #0a0b0e !important;
+  --bg2: #0e1014 !important;
+  --panel: #131519 !important;
+  --panel2: #1a1d22 !important;
+  --panel3: #22262c;
+  --line: #22252b !important;
+  --line2: #2e3239 !important;
+  --tx: #eceef2 !important;
+  --mut: #9ba1ac !important;
+  --dim: #6c727d !important;
+  --amber: #ff8a1c !important;
+  --up: #22c47e !important;
+  --dn: #f0525a !important;
+  --brand: #ff8a1c;
+  --brand-hi: #ff9d40;
+  --brand-ink: #1a0f02;
+  --brand-soft: rgba(255, 138, 28, 0.12);
+  --up-soft: rgba(34, 196, 126, 0.12);
+  --dn-soft: rgba(240, 82, 90, 0.12);
+  --vg: #ff8a1c;
+  --vglow: none;
+  --mono: var(--sans) !important;
+  --r-card: 14px;
+  --r-ctl: 10px;
+  --r-sm: 8px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  color-scheme: dark;
+  background: var(--bg) !important;
+}
+html.classic:not(.dark):not(#_):not(#_):not(#_) {
+  --bg: #f6f6f4 !important;
+  --bg2: #efefec !important;
+  --panel: #ffffff !important;
+  --panel2: #f3f3f0 !important;
+  --panel3: #eaeae6;
+  --line: #e6e5e0 !important;
+  --line2: #d9d8d2 !important;
+  --tx: #16171a !important;
+  --mut: #5d626b !important;
+  --dim: #8a8f98 !important;
+  --amber: #e8700a !important;
+  --up: #0f9d5e !important;
+  --dn: #d93a43 !important;
+  --brand: #e8700a;
+  --brand-hi: #f07d17;
+  --brand-ink: #ffffff;
+  --brand-soft: rgba(232, 112, 10, 0.1);
+  --up-soft: rgba(15, 157, 94, 0.1);
+  --dn-soft: rgba(217, 58, 67, 0.1);
+  --vg: #e8700a;
+  --vglow: none;
+  --mono: var(--sans) !important;
+  --r-card: 14px;
+  --r-ctl: 10px;
+  --r-sm: 8px;
+  background: var(--bg) !important;
+}
+
+/* ---------- ground: no starfield, no nebula ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) body,
+html.classic:not(.dark):not(#_):not(#_):not(#_) body {
+  background: var(--bg) !important;
+  background-image: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) body::before,
+html.classic.dark:not(#_):not(#_):not(#_) body::after,
+html.classic:not(.dark):not(#_):not(#_):not(#_) body::before,
+html.classic:not(.dark):not(#_):not(#_):not(#_) body::after {
+  display: none !important;
+}
+
+/* ---------- type: one family, tabular figures, sentence case ---------- */
+html.classic.dark:not(#_):not(#_):not(#_),
+html.classic:not(.dark):not(#_):not(#_):not(#_) {
+  font-feature-settings: 'tnum' 1, 'cv11' 1;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .mono,
+html.classic.dark:not(#_):not(#_):not(#_) [class*='mono'],
+html.classic.dark:not(#_):not(#_):not(#_) #topVal,
+html.classic.dark:not(#_):not(#_):not(#_) #topChg,
+html.classic.dark:not(#_):not(#_):not(#_) #coinBal,
+html.classic.dark:not(#_):not(#_):not(#_) .lvchip,
+html.classic.dark:not(#_):not(#_):not(#_) .chips button,
+html.classic.dark:not(#_):not(#_):not(#_) .seg button,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .mono,
+html.classic:not(.dark):not(#_):not(#_):not(#_) [class*='mono'],
+html.classic:not(.dark):not(#_):not(#_):not(#_) #topVal,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #topChg,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #coinBal,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .lvchip,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .chips button,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .seg button {
+  font-family: var(--sans) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+}
+html.classic.dark:not(#_):not(#_):not(#_) h1,
+html.classic.dark:not(#_):not(#_):not(#_) h2,
+html.classic.dark:not(#_):not(#_):not(#_) h3,
+html.classic:not(.dark):not(#_):not(#_):not(#_) h1,
+html.classic:not(.dark):not(#_):not(#_):not(#_) h2,
+html.classic:not(.dark):not(#_):not(#_):not(#_) h3 {
+  text-shadow: none !important;
+  letter-spacing: -0.02em;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .card-h h3,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .card-h h3 {
+  font-size: 15px !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.01em !important;
+  text-transform: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .stat-label,
+html.classic.dark:not(#_):not(#_):not(#_) .tile small,
+html.classic.dark:not(#_):not(#_):not(#_) .card.hero .muted.small,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stat-label,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tile small,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .card.hero .muted.small {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: var(--mut) !important;
+  opacity: 1 !important;
+}
+
+/* ---------- surfaces: flat, hairline, one radius ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .card,
+html.classic.dark:not(#_):not(#_):not(#_) .tile,
+html.classic.dark:not(#_):not(#_):not(#_) .stock-card,
+html.classic.dark:not(#_):not(#_):not(#_) .pack-card,
+html.classic.dark:not(#_):not(#_):not(#_) .bk-card,
+html.classic.dark:not(#_):not(#_):not(#_) .stat-card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tile,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stock-card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .pack-card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .bk-card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stat-card {
+  background: var(--panel) !important;
+  background-image: none !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-card) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+html.classic:not(.dark):not(#_):not(#_):not(#_) .card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tile,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stock-card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .pack-card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stat-card {
+  box-shadow: 0 1px 2px rgba(22, 23, 26, 0.04) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .card::before,
+html.classic.dark:not(#_):not(#_):not(#_) .card::after,
+html.classic.dark:not(#_):not(#_):not(#_) .tile::before,
+html.classic.dark:not(#_):not(#_):not(#_) .tile::after,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tile::before,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tile::after {
+  display: none !important;
+}
+
+/* ---------- buttons: solid, no gradient, no glow ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .btn,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .btn {
+  border-radius: var(--r-ctl) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.005em !important;
+  transition:
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    transform 100ms var(--ease) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .btn:not(.primary):not(.buy):not(.sell):not(.danger),
+html.classic:not(.dark):not(#_):not(#_):not(#_) .btn:not(.primary):not(.buy):not(.sell):not(.danger) {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line2) !important;
+  color: var(--tx) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .btn.primary,
+html.classic.dark:not(#_):not(#_):not(#_) #authGate .ag-go,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .btn.primary,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #authGate .ag-go {
+  background: var(--brand) !important;
+  background-image: none !important;
+  border: 1px solid transparent !important;
+  color: var(--brand-ink) !important;
+}
+@media (hover: hover) {
+  html.classic.dark:not(#_):not(#_):not(#_) .btn.primary:hover,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) .btn.primary:hover {
+    background: var(--brand-hi) !important;
+  }
+  html.classic.dark:not(#_):not(#_):not(#_) .btn:not(.primary):not(.buy):not(.sell):hover,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) .btn:not(.primary):not(.buy):not(.sell):hover {
+    border-color: var(--dim) !important;
+  }
+}
+html.classic.dark:not(#_):not(#_):not(#_) .btn:active,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .btn:active {
+  transform: scale(0.97);
+}
+/* buy is green, sell is red — money semantics, not brand */
+html.classic.dark:not(#_):not(#_):not(#_) .btn.buy,
+html.classic.dark:not(#_):not(#_):not(#_) .btn.big.buy,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .btn.buy,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .btn.big.buy {
+  background: var(--up) !important;
+  background-image: none !important;
+  color: #04160d !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .btn.sell,
+html.classic.dark:not(#_):not(#_):not(#_) .btn.big.sell,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .btn.sell,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .btn.big.sell {
+  background: var(--dn) !important;
+  background-image: none !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .btn.buy:disabled,
+html.classic.dark:not(#_):not(#_):not(#_) .btn.sell:disabled,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .btn.buy:disabled,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .btn.sell:disabled {
+  opacity: 0.4 !important;
+}
+
+/* ---------- segmented controls & chips: raised selection, no orange fill ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .seg,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .seg {
+  background: var(--bg2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-ctl) !important;
+  padding: 3px !important;
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .seg button,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .seg button {
+  border-radius: 7px !important;
+  color: var(--mut) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  text-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .seg button.on,
+html.classic.dark:not(#_):not(#_):not(#_) .tabs button.on,
+html.classic.dark:not(#_):not(#_):not(#_) button.on:not(.th-card),
+html.classic:not(.dark):not(#_):not(#_):not(#_) .seg button.on,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tabs button.on {
+  background: var(--panel3) !important;
+  background-image: none !important;
+  color: var(--tx) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset !important;
+}
+html.classic:not(.dark):not(#_):not(#_):not(#_) .seg button.on,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tabs button.on {
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(22, 23, 26, 0.08) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .seg.side button[data-side='buy'].on {
+  background: var(--up-soft) !important;
+  color: var(--up) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .seg.side button[data-side='sell'].on {
+  background: var(--dn-soft) !important;
+  color: var(--dn) !important;
+}
+html.classic:not(.dark):not(#_):not(#_):not(#_) .seg.side button[data-side='buy'].on {
+  color: var(--up) !important;
+}
+html.classic:not(.dark):not(#_):not(#_):not(#_) .seg.side button[data-side='sell'].on {
+  color: var(--dn) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .chips button,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .chips button {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-sm) !important;
+  color: var(--mut) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- inputs ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .inp,
+html.classic.dark:not(#_):not(#_):not(#_) .search,
+html.classic.dark:not(#_):not(#_):not(#_) input.txt,
+html.classic.dark:not(#_):not(#_):not(#_) #agForm .txt,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .inp,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .search,
+html.classic:not(.dark):not(#_):not(#_):not(#_) input.txt {
+  background: var(--bg2) !important;
+  background-image: none !important;
+  border: 1px solid var(--line2) !important;
+  border-radius: var(--r-ctl) !important;
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .inp:focus-within,
+html.classic.dark:not(#_):not(#_):not(#_) .search:focus-within,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .inp:focus-within,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .search:focus-within {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px var(--brand-soft) !important;
+}
+
+/* ---------- top bar ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) #topWrap {
+  background: rgba(10, 11, 14, 0.9) !important;
+  border-bottom: 1px solid var(--line) !important;
+  box-shadow: none !important;
+}
+html.classic:not(.dark):not(#_):not(#_):not(#_) #topWrap {
+  background: rgba(246, 246, 244, 0.92) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #top .top-val,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #top .top-val {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 4px !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #topVal,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #topVal {
+  color: var(--tx) !important;
+  font-weight: 700 !important;
+  font-size: 17px !important;
+  text-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #top .mkt-chip,
+html.classic.dark:not(#_):not(#_):not(#_) #top .coin-chip,
+html.classic.dark:not(#_):not(#_):not(#_) #top .adv-toggle,
+html.classic.dark:not(#_):not(#_):not(#_) #top .mode-btn,
+html.classic.dark:not(#_):not(#_):not(#_) #top .pb-gear,
+html.classic.dark:not(#_):not(#_):not(#_) #top .me-chip,
+html.classic.dark:not(#_):not(#_):not(#_) #baiTop,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #top .mkt-chip,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #top .coin-chip,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #top .adv-toggle,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #top .mode-btn,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #top .pb-gear,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #top .me-chip,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #baiTop {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  border-radius: var(--r-ctl) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #top .coin-chip,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #top .coin-chip {
+  color: var(--tx) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #top .mkt-chip,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #top .mkt-chip {
+  color: var(--mut) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #tape,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #tape {
+  background: var(--bg) !important;
+  border-color: var(--line) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #tape *,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #tape * {
+  font-family: var(--sans) !important;
+}
+
+/* ---------- side nav (desktop) + bottom nav (phone) ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) #nav,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #nav {
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #nav {
+  background: var(--bg) !important;
+  border-right: 1px solid var(--line) !important;
+}
+html.classic:not(.dark):not(#_):not(#_):not(#_) #nav {
+  background: var(--bg) !important;
+  border-right: 1px solid var(--line) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #nav a,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a {
+  border: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  color: var(--mut) !important;
+  font-weight: 550 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  transition:
+    background-color 150ms var(--ease),
+    color 150ms var(--ease) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #nav a.on,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a.on {
+  color: var(--tx) !important;
+  background: var(--panel2) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #nav a.on::after,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a.on::after {
+  display: none !important;
+}
+/* tab icons: quiet until selected, then the brand */
+html.classic.dark:not(#_):not(#_):not(#_) #nav .nt,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #nav .nt,
+html.classic.dark:not(#_):not(#_):not(#_) .ms-t .nt,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .ms-t .nt {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--dim) !important;
+  transform: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #nav a:hover .nt,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a:hover .nt {
+  color: var(--mut) !important;
+  background: transparent !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #nav a.on .nt,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a.on .nt,
+html.classic.dark:not(#_):not(#_):not(#_) .ms-t.on .nt,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .ms-t.on .nt {
+  background: var(--brand-soft) !important;
+  color: var(--brand) !important;
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #nav a.on .nt svg,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a.on .nt svg,
+html.classic.dark:not(#_):not(#_):not(#_) .ms-t.on .nt svg,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .ms-t.on .nt svg {
+  stroke: currentColor !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .nt .pbi .du,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .nt .pbi .du {
+  fill-opacity: 0.16 !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #nav .nav-auth,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #nav .nav-auth {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  color: var(--tx) !important;
+  border-radius: var(--r-ctl) !important;
+}
+@media (min-width: 900px) {
+  html.classic.dark:not(#_):not(#_):not(#_) #nav a,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a {
+    border-radius: var(--r-ctl) !important;
+    padding-block: 7px !important;
+  }
+  html.classic.dark:not(#_):not(#_):not(#_) #nav a.on,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a.on {
+    box-shadow: inset 2px 0 0 var(--brand) !important;
+  }
+}
+@media (max-width: 899px) {
+  html.classic.dark:not(#_):not(#_):not(#_) #nav {
+    background: var(--bg) !important;
+    border-top: 1px solid var(--line) !important;
+    border-right: 0 !important;
+  }
+  html.classic:not(.dark):not(#_):not(#_):not(#_) #nav {
+    background: #fff !important;
+    border-top: 1px solid var(--line) !important;
+  }
+  html.classic.dark:not(#_):not(#_):not(#_) #nav a.on,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a.on {
+    background: transparent !important;
+  }
+  html.classic.dark:not(#_):not(#_):not(#_) #nav a.on::before,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a.on::before {
+    display: none !important;
+  }
+  html.classic.dark:not(#_):not(#_):not(#_) #nav a .nt,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) #nav a .nt {
+    width: 44px !important;
+    height: 26px !important;
+    border-radius: 999px !important;
+  }
+}
+html.classic.dark:not(#_):not(#_):not(#_) .more-sheet .ms-panel,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .more-sheet .ms-panel {
+  background: var(--panel) !important;
+  border-top: 1px solid var(--line) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .ms-t,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .ms-t {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--tx) !important;
+}
+
+/* ---------- page headers ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .pg-h .pg-ic,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .pg-h .pg-ic,
+html.classic.dark:not(#_):not(#_):not(#_) .pg-h .pg-ic.tinted,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .pg-h .pg-ic.tinted {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  color: var(--tx) !important;
+  border-radius: 12px !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .pg-h h1,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .pg-h h1 {
+  font-weight: 700 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* ---------- home: the hero is the account value ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .guest-bar,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .guest-bar {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-left: 1px solid var(--line) !important;
+  border-radius: var(--r-card) !important;
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .card.hero,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .card.hero {
+  padding: 22px 22px 16px !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .card.hero [data-b='total'],
+html.classic:not(.dark):not(#_):not(#_):not(#_) .card.hero [data-b='total'] {
+  color: var(--tx) !important;
+  -webkit-text-fill-color: currentColor !important;
+  background: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  font-family: var(--sans) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.035em !important;
+  font-size: clamp(40px, 6.2vw, 64px) !important;
+  line-height: 1 !important;
+  margin: 6px 0 12px !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .hero-sub > span,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .hero-sub > span {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .lvchip,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .lvchip {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--mut) !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .card.hero .seg,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .card.hero .seg {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* stat row: one family, no rainbow stripes, icon quiet */
+html.classic.dark:not(#_):not(#_):not(#_) .stats-wrap,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stats-wrap {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .stat-card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stat-card {
+  --g1: var(--dim) !important;
+  box-shadow: none !important;
+  min-height: 84px !important;
+  color: var(--tx) !important;
+}
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stat-card {
+  box-shadow: 0 1px 2px rgba(22, 23, 26, 0.04) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .stat-card::before,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stat-card::before {
+  color: var(--dim) !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .stat-card::after,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stat-card::after {
+  display: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .stat-value,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stat-value {
+  font-weight: 650 !important;
+  font-size: clamp(18px, 1.9vw, 22px) !important;
+  letter-spacing: -0.02em !important;
+}
+@media (hover: hover) {
+  html.classic.dark:not(#_):not(#_):not(#_) .stat-card[data-go]:hover,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) .stat-card[data-go]:hover {
+    transform: none !important;
+    border-color: var(--line2) !important;
+  }
+}
+
+/* tournament + promo + buck rows on home */
+html.classic.dark:not(#_):not(#_):not(#_) .tn-home,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tn-home {
+  background: var(--panel) !important;
+  background-image: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .tn-home svg,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tn-home svg {
+  color: var(--brand) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .promo,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .promo {
+  background: var(--panel) !important;
+  background-image: none !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-card) !important;
+  box-shadow: none !important;
+  color: var(--tx) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .promo-go,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .promo-go {
+  background: var(--panel2) !important;
+  background-image: none !important;
+  border: 1px solid var(--line2) !important;
+  color: var(--tx) !important;
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .buck-card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .buck-card {
+  background: var(--panel) !important;
+}
+
+/* ---------- markets ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .stock-card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .stock-card {
+  transition: border-color 150ms var(--ease) !important;
+}
+@media (hover: hover) {
+  html.classic.dark:not(#_):not(#_):not(#_) .stock-card:hover,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) .stock-card:hover {
+    border-color: var(--line2) !important;
+    transform: none !important;
+  }
+}
+html.classic.dark:not(#_):not(#_):not(#_) .tk-badge,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tk-badge {
+  text-shadow: none !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  letter-spacing: -0.02em !important;
+  font-family: var(--sans) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .spark.v2 .ln,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .spark.v2 .ln {
+  filter: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .sc-chg,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .sc-chg {
+  font-weight: 600 !important;
+}
+
+/* ---------- asset page ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) #aPx,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #aPx {
+  font-family: var(--sans) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.035em !important;
+  text-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .chgpill,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .chgpill {
+  box-shadow: none !important;
+  border: 0 !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .card.trade .preview,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .card.trade .preview {
+  background: var(--bg2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-ctl) !important;
+}
+
+/* ---------- portfolio ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .tile,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tile {
+  padding: 14px 16px !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .tile b,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tile b {
+  font-family: var(--sans) !important;
+  font-weight: 650 !important;
+  font-size: 20px !important;
+  letter-spacing: -0.02em !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .tile em,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .tile em {
+  font-family: var(--sans) !important;
+  font-style: normal !important;
+  font-size: 12.5px !important;
+}
+
+/* ---------- shop ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .shop-top,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .shop-top {
+  background: var(--panel) !important;
+  background-image: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .pack-card,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .pack-card {
+  transition: border-color 150ms var(--ease), transform 150ms var(--ease) !important;
+}
+@media (hover: hover) {
+  html.classic.dark:not(#_):not(#_):not(#_) .pack-card:hover,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) .pack-card:hover {
+    border-color: var(--line2) !important;
+    transform: translateY(-2px) !important;
+  }
+}
+html.classic.dark:not(#_):not(#_):not(#_) .pb-rd,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .pb-rd {
+  background: var(--panel) !important;
+  background-image: none !important;
+  border: 1px dashed var(--line2) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .pb-rd-ic,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .pb-rd-ic {
+  background: var(--brand-soft) !important;
+  color: var(--brand) !important;
+  box-shadow: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .pb-rd-f input,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .pb-rd-f input {
+  font-family: var(--sans) !important;
+  background: var(--bg2) !important;
+  border-color: var(--line2) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .pb-rd-f input:focus,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .pb-rd-f input:focus {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px var(--brand-soft) !important;
+}
+
+/* ---------- colored hero blocks on other pages: calm them ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .pet-hero,
+html.classic.dark:not(#_):not(#_):not(#_) .nd-hero,
+html.classic.dark:not(#_):not(#_):not(#_) .gd-head,
+html.classic.dark:not(#_):not(#_):not(#_) .bk-hero,
+html.classic.dark:not(#_):not(#_):not(#_) .ol-card,
+html.classic.dark:not(#_):not(#_):not(#_) .tn-join,
+html.classic.dark:not(#_):not(#_):not(#_) .about,
+html.classic.dark:not(#_):not(#_):not(#_) #saveCard,
+html.classic.dark:not(#_):not(#_):not(#_) #chalCard,
+html.classic.dark:not(#_):not(#_):not(#_) .lg-set {
+  background: var(--panel) !important;
+  background-image: none !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .bk-logo,
+html.classic.dark:not(#_):not(#_):not(#_) .pd-step,
+html.classic.dark:not(#_):not(#_):not(#_) .pd-av,
+html.classic.dark:not(#_):not(#_):not(#_) .col-item.on {
+  box-shadow: none !important;
+}
+
+/* ---------- floating Buck button ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .bai-fab,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .bai-fab {
+  background: var(--panel) !important;
+  border: 1px solid var(--line2) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  color: var(--tx) !important;
+}
+html.classic:not(.dark):not(#_):not(#_):not(#_) .bai-fab {
+  box-shadow: 0 6px 20px rgba(22, 23, 26, 0.12) !important;
+}
+
+/* ---------- modals & sheets ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) #modalRoot .modal,
+html.classic.dark:not(#_):not(#_):not(#_) .modal,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .modal {
+  background: var(--panel) !important;
+  background-image: none !important;
+  border: 1px solid var(--line2) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* ---------- confetti etc. stays, text glows go ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .big,
+html.classic.dark:not(#_):not(#_):not(#_) .fl-up,
+html.classic.dark:not(#_):not(#_):not(#_) .fl-dn,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .big {
+  text-shadow: none !important;
+}
+
+/* ---------- focus: visible, on brand ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) :focus-visible,
+html.classic:not(.dark):not(#_):not(#_):not(#_) :focus-visible {
+  outline: 2px solid var(--brand) !important;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.classic.dark:not(#_):not(#_):not(#_) *,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) * {
+    transition-duration: 0ms !important;
+  }
+}
+
+/* ---------- quick-trade buttons on market cards: tinted, not shouting ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .sc-trade .btn.buy,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .sc-trade .btn.buy {
+  background: var(--up-soft) !important;
+  color: var(--up) !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .sc-trade .btn.sell,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .sc-trade .btn.sell {
+  background: var(--dn-soft) !important;
+  color: var(--dn) !important;
+}
+@media (hover: hover) {
+  html.classic.dark:not(#_):not(#_):not(#_) .sc-trade .btn.buy:hover,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) .sc-trade .btn.buy:hover {
+    background: var(--up) !important;
+    color: #04160d !important;
+  }
+  html.classic.dark:not(#_):not(#_):not(#_) .sc-trade .btn.sell:hover,
+  html.classic:not(.dark):not(#_):not(#_):not(#_) .sc-trade .btn.sell:hover {
+    background: var(--dn) !important;
+    color: #fff !important;
+  }
+}
+html.classic.dark:not(#_):not(#_):not(#_) .sc-trade input,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .sc-trade input {
+  background: var(--bg2) !important;
+  border: 1px solid var(--line2) !important;
+  border-radius: var(--r-sm) !important;
+  font-family: var(--sans) !important;
+}
+
+/* ---------- leaderboards: "you" row in brand, not purple ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) .rk.me,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .rk.me {
+  background: var(--brand-soft) !important;
+  background-image: none !important;
+  box-shadow: inset 2px 0 0 var(--brand) !important;
+  border-color: transparent !important;
+}
+html.classic.dark:not(#_):not(#_):not(#_) .rk .n,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .rk .n {
+  font-family: var(--sans) !important;
+  font-variant-numeric: tabular-nums;
+}
+html.classic.dark:not(#_):not(#_):not(#_) #olBody .block-msg,
+html.classic:not(.dark):not(#_):not(#_):not(#_) #olBody .block-msg {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--mut) !important;
+}
+
+/* ---------- links: brand, never a stray blue ---------- */
+html.classic.dark:not(#_):not(#_):not(#_) button.link,
+html.classic.dark:not(#_):not(#_):not(#_) .linkish,
+html.classic:not(.dark):not(#_):not(#_):not(#_) button.link,
+html.classic:not(.dark):not(#_):not(#_):not(#_) .linkish {
+  color: var(--brand) !important;
 }
 
 </style>
