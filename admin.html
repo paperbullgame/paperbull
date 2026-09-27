@@ -1941,6 +1941,64 @@
       .grid {
         align-items: start;
       }
+      /* nav tile icons */
+      .ni {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        color: var(--n1);
+        background: color-mix(in srgb, var(--n2) 16%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--n1) 22%, transparent);
+        transition:
+          transform 0.2s cubic-bezier(0.3, 1.5, 0.5, 1),
+          background 0.2s,
+          color 0.2s,
+          box-shadow 0.2s;
+      }
+      .ni svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .ni svg .f {
+        fill: currentColor;
+        stroke: none;
+        opacity: 0.28;
+      }
+      .ni svg .k {
+        fill: var(--panel);
+        stroke-width: 1.9;
+      }
+      :root:not([data-theme='dark']) .ni {
+        color: var(--n2);
+      }
+      .nav a {
+        padding-block: 6px;
+      }
+      .nav a:hover .ni {
+        transform: scale(1.08) rotate(-4deg);
+        background: color-mix(in srgb, var(--n2) 26%, transparent);
+      }
+      .nav a.on .ni {
+        color: #fff;
+        background: linear-gradient(145deg, var(--n1), var(--n2));
+        box-shadow:
+          0 6px 16px -6px var(--n2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      }
+      .nav a.on .ni svg .f {
+        opacity: 0.35;
+      }
+      .nav a.on .ni svg .k {
+        fill: var(--n2);
+      }
 </style>
   </head>
   <body>
@@ -1989,6 +2047,23 @@
         if (d < 86400 * 30) return Math.floor(d / 86400) + 'd ago';
         return dday(s);
       }
+      /* nav tab icons: duotone glyphs in colored tiles */
+      const NF = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+      const NI = {
+        dashboard: ['#ffc24a', '#ff6a1f', NF('<rect class="f" x="3.5" y="3.5" width="7.5" height="9" rx="2"/><rect x="13" y="3.5" width="7.5" height="5.5" rx="2"/><rect x="13" y="11" width="7.5" height="9.5" rx="2"/><rect class="f" x="3.5" y="14.5" width="7.5" height="6" rx="2"/><rect x="3.5" y="3.5" width="7.5" height="9" rx="2"/><rect x="3.5" y="14.5" width="7.5" height="6" rx="2"/>')],
+        users: ['#b69cff', '#7c3aed', NF('<circle class="f" cx="9" cy="8" r="3.6"/><circle cx="9" cy="8" r="3.6"/><path class="f" d="M2.8 20c.5-3.6 3-5.8 6.2-5.8s5.7 2.2 6.2 5.8z"/><path d="M2.8 20c.5-3.6 3-5.8 6.2-5.8s5.7 2.2 6.2 5.8z"/><path d="M15.6 4.6a3.5 3.5 0 0 1 0 6.8M17.6 14.4c2 .7 3.3 2.6 3.6 5.6"/>')],
+        gifts: ['#ff8fc7', '#db2777', NF('<rect class="f" x="3" y="7.5" width="18" height="4.5" rx="1.4"/><rect x="3" y="7.5" width="18" height="4.5" rx="1.4"/><path d="M4.8 12v7.2a1.3 1.3 0 0 0 1.3 1.3h11.8a1.3 1.3 0 0 0 1.3-1.3V12M12 7.5v13"/><path d="M12 7.5C10.8 4.4 6.8 3.5 6.8 6s3.4 1.5 5.2 1.5zM12 7.5c1.2-3.1 5.2-4 5.2-1.5S13.8 7.5 12 7.5z"/>')],
+        transactions: ['#4fe3ff', '#0891b2', NF('<circle class="f" cx="12" cy="12" r="9"/><path d="M7 9.5h9.5l-2.6-2.6M17 14.5H7.5l2.6 2.6"/>')],
+        content: ['#ffe066', '#e3a008', NF('<path class="f" d="M6 3.5h8.5L19 8v11.2a1.3 1.3 0 0 1-1.3 1.3H6.3A1.3 1.3 0 0 1 5 19.2V4.8A1.3 1.3 0 0 1 6.3 3.5z"/><path d="M6.3 3.5h8.2L19 8v11.2a1.3 1.3 0 0 1-1.3 1.3H6.3A1.3 1.3 0 0 1 5 19.2V4.8a1.3 1.3 0 0 1 1.3-1.3z"/><path d="M14.5 3.5V8H19M8.5 12.5h7M8.5 16h4.5"/>')],
+        analytics: ['#6ef09a', '#16a34a', NF('<path class="f" d="M3.5 17.5 8.5 12l3.5 3 8.5-9v14.5h-17z"/><path d="M3.5 17.5 8.5 12l3.5 3 8.5-9"/><path d="M16 6h4.5v4.5M3.5 20.5h17"/>')],
+        site: ['#8fc2ff', '#2563eb', NF('<path d="M4 7h16M4 12h16M4 17h16"/><circle class="k" cx="9" cy="7" r="2.4"/><circle class="k" cx="15.5" cy="12" r="2.4"/><circle class="k" cx="7" cy="17" r="2.4"/>')],
+        admins: ['#ff8aa0', '#e11d48', NF('<path class="f" d="M12 3 19.5 5.8v5.8c0 4.5-3.1 8-7.5 9.4-4.4-1.4-7.5-4.9-7.5-9.4V5.8z"/><path d="M12 3 19.5 5.8v5.8c0 4.5-3.1 8-7.5 9.4-4.4-1.4-7.5-4.9-7.5-9.4V5.8z"/><path d="m12 8.2 1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z"/>')],
+        audit: ['#6ff0dc', '#0d9488', NF('<rect class="f" x="4.5" y="4.5" width="15" height="16.5" rx="2"/><rect x="4.5" y="4.5" width="15" height="16.5" rx="2"/><rect x="8.5" y="2.8" width="7" height="3.6" rx="1.2"/><path d="m8 11 1.3 1.3L11.5 10M8 16l1.3 1.3 2.2-2.3M13.5 11.5h3M13.5 16.5h3"/>')],
+      };
+      const navIco = r => {
+        const n = NI[r];
+        return n ? `<span class="ni" style="--n1:${n[0]};--n2:${n[1]}">${n[2]}</span>` : '';
+      };
       const I = d => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
       const IC = {
         dash: I(
@@ -2473,7 +2548,7 @@
       function shell() {
         $('#root').innerHTML = `<div class="app" id="app">
     <aside class="side" id="side"><div class="logo"><span class="mark">${LOGO}</span>PAPERBULL <small>Admin</small></div>
-      <nav class="nav" id="nav">${NAV.map(n => (n[0] === '-' ? `<div class="sec">${n[1]}</div>` : can(n[3]) ? `<a data-r="${n[0]}" href="#/${n[0]}">${n[2]}<span>${n[1]}</span>${n[0] === 'site' ? '<span class="cnt" id="mntBadge" hidden>ON</span>' : ''}</a>` : '')).join('')}</nav>
+      <nav class="nav" id="nav">${NAV.map(n => (n[0] === '-' ? `<div class="sec">${n[1]}</div>` : can(n[3]) ? `<a data-r="${n[0]}" href="#/${n[0]}">${navIco(n[0]) || n[2]}<span>${n[1]}</span>${n[0] === 'site' ? '<span class="cnt" id="mntBadge" hidden>ON</span>' : ''}</a>` : '')).join('')}</nav>
       <div class="me">${avatar(S.me.username)}<div style="flex:1;min-width:0"><b>${esc(S.me.username)}</b><span class="role muted">${esc(S.me.role)}</span></div>
         <button class="btn ghost sm icon" id="outBtn" title="Sign out" aria-label="Sign out">${IC.out}</button></div></aside>
     <div class="main"><header class="top"><button class="btn ghost icon burger" id="burger" aria-label="Menu">${IC.menu}</button>
