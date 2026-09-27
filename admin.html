@@ -972,6 +972,8 @@
       /* ---------- switches ---------- */
       .sw {
         position: relative;
+        display: inline-block;
+        vertical-align: middle;
         width: 42px;
         height: 24px;
         flex: none;
@@ -1011,6 +1013,69 @@
       .sw input:disabled + span {
         opacity: 0.5;
         cursor: not-allowed;
+      }
+      .live {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 6px 10px 4px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel2);
+        font-size: 12px;
+      }
+      .live i {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--mut);
+        flex: none;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+      }
+      .live[data-s='on'] i {
+        background: #22c55e;
+        animation: livePulse 2.4s ease-out infinite;
+      }
+      .live[data-s='off'] i {
+        background: var(--warn);
+      }
+      .live.blip i {
+        animation: liveBlip 0.9s ease-out;
+      }
+      .live b {
+        display: block;
+        font-size: 12px;
+      }
+      .live small {
+        display: block;
+        color: var(--mut);
+        font-size: 11px;
+        line-height: 1.25;
+      }
+      @keyframes livePulse {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55); }
+        70% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+      }
+      @keyframes liveBlip {
+        0% { transform: scale(1); background: #fff; }
+        100% { transform: scale(1); }
+      }
+      .ovin {
+        width: 110px;
+        text-align: right;
+        padding: 6px 8px;
+      }
+      .ovin.set {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px var(--brand-soft);
+      }
+      tr.off td {
+        opacity: 0.55;
+      }
+      tr.off td:last-child {
+        opacity: 1;
       }
       .feat {
         display: flex;
@@ -2683,7 +2748,10 @@
       const API = 'https://amnbnuabxoxhggidlhcn.supabase.co/rest/v1/rpc/';
       const ANON =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtbmJudWFieG94aGdnaWRsaGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjc5ODAsImV4cCI6MjEwNTYwMzk4MH0.WwHTYzYEwKtW2_fjoyPiltnxI331-Ve5IGolTpavISo';
-      const GAME_ITEMS = [["th_amber", "theme", "Amber"], ["th_mint", "theme", "Mint"], ["th_ice", "theme", "Ice"], ["th_violet", "theme", "Ultraviolet"], ["th_rose", "theme", "Rose"], ["th_gold", "theme", "24K Gold"], ["sk_classic", "skin", "Classic"], ["sk_retro", "skin", "Retro Terminal"], ["sk_mono", "skin", "Monochrome"], ["sk_ocean", "skin", "Deep Ocean"], ["sk_neon", "skin", "Neon Nights"], ["sk_lava", "skin", "Lava"], ["av_bull", "avatar", "Bull"], ["av_bear", "avatar", "Bear"], ["av_fox", "avatar", "Fox"], ["av_frog", "avatar", "Frog"], ["av_shark", "avatar", "Shark"], ["av_wolf", "avatar", "Wolf"], ["av_ape", "avatar", "Ape"], ["av_rocket", "avatar", "Rocket"], ["av_diamond", "avatar", "Diamond"], ["av_robot", "avatar", "Algo"], ["av_whale", "avatar", "Whale"], ["av_crown", "avatar", "Crown"], ["ti_rookie", "title", "Rookie"], ["ti_dip", "title", "Dip Buyer"], ["ti_hodl", "title", "HODLer"], ["ti_chart", "title", "Chart Wizard"], ["ti_degen", "title", "Certified Degen"], ["ti_hands", "title", "Diamond Hands"], ["ti_wolf", "title", "Wolf of Sim Street"], ["ti_oracle", "title", "The Oracle"], ["ti_whale", "title", "Market Whale"], ["co_s", "coins", "Coin Pouch"], ["co_m", "coins", "Coin Sack"], ["co_l", "coins", "Coin Vault"], ["th_lime", "theme", "Lime"], ["th_coral", "theme", "Coral"], ["th_teal", "theme", "Lagoon"], ["th_sakura", "theme", "Sakura"], ["th_ruby", "theme", "Ruby"], ["sk_sunset", "skin", "Sunset"], ["sk_matrix", "skin", "The Matrix"], ["sk_candy", "skin", "Cotton Candy"], ["sk_arctic", "skin", "Arctic"], ["sk_vapor", "skin", "Vaporwave"], ["av_cowboy", "avatar", "Cowboy"], ["av_panda", "avatar", "Panda"], ["av_koala", "avatar", "Koala"], ["av_lion", "avatar", "Lion"], ["av_tiger", "avatar", "Tiger"], ["av_ninja", "avatar", "Ninja"], ["av_hero", "avatar", "Hero"], ["av_trex", "avatar", "T-Rex"], ["av_alien", "avatar", "Alien"], ["av_wizard", "avatar", "Wizard"], ["ti_bag", "title", "Bag Holder"], ["ti_moon", "title", "Moon Boy"], ["ti_tape", "title", "Tape Reader"], ["ti_fomo", "title", "FOMO Survivor"], ["ti_tiger", "title", "Paper Tiger"], ["ti_candle", "title", "Candle Whisperer"], ["ti_bearw", "title", "Bear Whisperer"], ["ti_stonk", "title", "Stonk Lord"], ["th_sky", "theme", "Sky"], ["th_peach", "theme", "Peach"], ["th_lav", "theme", "Lavender"], ["th_forest", "theme", "Forest"], ["th_aurora", "theme", "Aurora"], ["th_diamond", "theme", "Diamond"], ["sk_forest", "skin", "Forest Floor"], ["sk_berry", "skin", "Berry"], ["sk_ice", "skin", "Glacier"], ["sk_fire", "skin", "Wildfire"], ["sk_galaxy", "skin", "Galaxy"], ["sk_gold", "skin", "Solid Gold"], ["av_chef", "avatar", "Chef"], ["av_pirate", "avatar", "Pirate"], ["av_dj", "avatar", "DJ"], ["av_detective", "avatar", "Detective"], ["av_pumpkin", "avatar", "Pumpkin"], ["av_ghost", "avatar", "Ghost"], ["av_viking", "avatar", "Viking"], ["av_astro", "avatar", "Astronaut"], ["ti_paper", "title", "Paper Hands"], ["ti_bhsl", "title", "Buy High, Sell Low"], ["ti_doodle", "title", "Chart Doodler"], ["ti_rider", "title", "Trend Rider"], ["ti_green", "title", "Green Day Hero"], ["ti_wick", "title", "Wick Watcher"], ["ti_pattern", "title", "Pattern Master"], ["ti_tamer", "title", "Bull Tamer"], ["ti_sensei", "title", "Candle Sensei"], ["ti_legend2", "title", "Market Legend"], ["ti_goat", "title", "The GOAT Trader"], ["ti_glitch", "title", "Infinite Money Glitch"], ["egg_speckled", "egg", "Speckled Egg"], ["egg_lucky", "egg", "Lucky Egg"], ["egg_mystery", "egg", "Mystery Egg"], ["egg_coin", "egg", "Coin Egg"], ["egg_scholar", "egg", "Scholar Egg"], ["egg_idle", "egg", "Idle Egg"], ["egg_ember", "egg", "Ember Egg"], ["egg_ocean", "egg", "Ocean Egg"], ["egg_jade", "egg", "Jade Egg"], ["egg_obsidian", "egg", "Obsidian Egg"], ["egg_rainbow", "egg", "Rainbow Egg"]];
+      const GAME_ITEMS = [["th_amber", "theme", "Amber", 150, "c"], ["th_mint", "theme", "Mint", 150, "c"], ["th_ice", "theme", "Ice", 400, "r"], ["th_violet", "theme", "Ultraviolet", 400, "r"], ["th_rose", "theme", "Rose", 1000, "e"], ["th_gold", "theme", "24K Gold", 2500, "l"], ["sk_classic", "skin", "Classic", 150, "c"], ["sk_retro", "skin", "Retro Terminal", 150, "c"], ["sk_mono", "skin", "Monochrome", 400, "r"], ["sk_ocean", "skin", "Deep Ocean", 400, "r"], ["sk_neon", "skin", "Neon Nights", 1000, "e"], ["sk_lava", "skin", "Lava", 2500, "l"], ["av_bull", "avatar", "Bull", 150, "c"], ["av_bear", "avatar", "Bear", 150, "c"], ["av_fox", "avatar", "Fox", 150, "c"], ["av_frog", "avatar", "Frog", 150, "c"], ["av_shark", "avatar", "Shark", 400, "r"], ["av_wolf", "avatar", "Wolf", 400, "r"], ["av_ape", "avatar", "Ape", 400, "r"], ["av_rocket", "avatar", "Rocket", 1000, "e"], ["av_diamond", "avatar", "Diamond", 1000, "e"], ["av_robot", "avatar", "Algo", 1000, "e"], ["av_whale", "avatar", "Whale", 2500, "l"], ["av_crown", "avatar", "Crown", 2500, "l"], ["ti_rookie", "title", "Rookie", 150, "c"], ["ti_dip", "title", "Dip Buyer", 150, "c"], ["ti_hodl", "title", "HODLer", 150, "c"], ["ti_chart", "title", "Chart Wizard", 400, "r"], ["ti_degen", "title", "Certified Degen", 400, "r"], ["ti_hands", "title", "Diamond Hands", 1000, "e"], ["ti_wolf", "title", "Wolf of Sim Street", 1000, "e"], ["ti_oracle", "title", "The Oracle", 2500, "l"], ["ti_whale", "title", "Market Whale", 2500, "l"], ["pu_xp", "power", "XP Booster", 120, "c"], ["pu_cash", "power", "Cash Drop", 250, "c"], ["pu_tip", "power", "Insider Tip", 300, "r"], ["pu_mult", "power", "Profit Multiplier", 350, "r"], ["pu_shield", "power", "Loss Shield", 300, "r"], ["pu_mega", "power", "Mega Cash Drop", null, "l"], ["co_s", "coins", "Coin Pouch", null, "c"], ["co_m", "coins", "Coin Sack", null, "r"], ["co_l", "coins", "Coin Vault", null, "e"], ["th_lime", "theme", "Lime", 150, "c"], ["th_coral", "theme", "Coral", 150, "c"], ["th_teal", "theme", "Lagoon", 400, "r"], ["th_sakura", "theme", "Sakura", 1000, "e"], ["th_ruby", "theme", "Ruby", 2500, "l"], ["sk_sunset", "skin", "Sunset", 150, "c"], ["sk_matrix", "skin", "The Matrix", 400, "r"], ["sk_candy", "skin", "Cotton Candy", 400, "r"], ["sk_arctic", "skin", "Arctic", 1000, "e"], ["sk_vapor", "skin", "Vaporwave", 2500, "l"], ["av_cowboy", "avatar", "Cowboy", 150, "c"], ["av_panda", "avatar", "Panda", 150, "c"], ["av_koala", "avatar", "Koala", 150, "c"], ["av_lion", "avatar", "Lion", 400, "r"], ["av_tiger", "avatar", "Tiger", 400, "r"], ["av_ninja", "avatar", "Ninja", 400, "r"], ["av_hero", "avatar", "Hero", 400, "r"], ["av_trex", "avatar", "T-Rex", 1000, "e"], ["av_alien", "avatar", "Alien", 1000, "e"], ["av_wizard", "avatar", "Wizard", 1000, "e"], ["ti_bag", "title", "Bag Holder", 150, "c"], ["ti_moon", "title", "Moon Boy", 150, "c"], ["ti_tape", "title", "Tape Reader", 150, "c"], ["ti_fomo", "title", "FOMO Survivor", 150, "c"], ["ti_tiger", "title", "Paper Tiger", 400, "r"], ["ti_candle", "title", "Candle Whisperer", 400, "r"], ["ti_bearw", "title", "Bear Whisperer", 1000, "e"], ["ti_stonk", "title", "Stonk Lord", 2500, "l"], ["pu_coin2", "power", "Coin Doubler", 220, "r"], ["pu_luck", "power", "Lucky Charm", 400, "r"], ["pu_refresh", "power", "Pack Refresh", 200, "c"], ["pu_streak", "power", "Streak Saver", 150, "c"], ["egg_c", "egg", "Pet Egg", 350, "r"], ["egg_r", "egg", "Shiny Egg", 1000, "e"], ["egg_l", "egg", "Golden Egg", 3000, "l"], ["tr_snack", "treat", "Snack", 40, "c"], ["tr_toy", "treat", "Squeaky Toy", 80, "c"], ["tr_feast", "treat", "Feast", 140, "r"], ["tr_potion", "treat", "Growth Potion", 260, "r"], ["th_sky", "theme", "Sky", 150, "c"], ["th_peach", "theme", "Peach", 150, "c"], ["th_lav", "theme", "Lavender", 400, "r"], ["th_forest", "theme", "Forest", 400, "r"], ["th_aurora", "theme", "Aurora", 1000, "e"], ["th_diamond", "theme", "Diamond", 2500, "l"], ["sk_forest", "skin", "Forest Floor", 150, "c"], ["sk_berry", "skin", "Berry", 150, "c"], ["sk_ice", "skin", "Glacier", 400, "r"], ["sk_fire", "skin", "Wildfire", 400, "r"], ["sk_galaxy", "skin", "Galaxy", 1000, "e"], ["sk_gold", "skin", "Solid Gold", 2500, "l"], ["av_chef", "avatar", "Chef", 150, "c"], ["av_pirate", "avatar", "Pirate", 150, "c"], ["av_dj", "avatar", "DJ", 400, "r"], ["av_detective", "avatar", "Detective", 400, "r"], ["av_pumpkin", "avatar", "Pumpkin", 400, "r"], ["av_ghost", "avatar", "Ghost", 1000, "e"], ["av_viking", "avatar", "Viking", 1000, "e"], ["av_astro", "avatar", "Astronaut", 2500, "l"], ["ti_paper", "title", "Paper Hands", 150, "c"], ["ti_bhsl", "title", "Buy High, Sell Low", 150, "c"], ["ti_doodle", "title", "Chart Doodler", 150, "c"], ["ti_rider", "title", "Trend Rider", 400, "r"], ["ti_green", "title", "Green Day Hero", 400, "r"], ["ti_wick", "title", "Wick Watcher", 400, "r"], ["ti_pattern", "title", "Pattern Master", 1000, "e"], ["ti_tamer", "title", "Bull Tamer", 1000, "e"], ["ti_sensei", "title", "Candle Sensei", 1000, "e"], ["ti_legend2", "title", "Market Legend", 2500, "l"], ["ti_goat", "title", "The GOAT Trader", 2500, "l"], ["ti_glitch", "title", "Infinite Money Glitch", 2500, "l"], ["tr_apple", "treat", "Apple", 25, "c"], ["tr_bone", "treat", "Chew Bone", 60, "c"], ["tr_cake", "treat", "Party Cake", 180, "r"], ["tr_sushi", "treat", "Sushi Roll", 220, "r"], ["tr_golden", "treat", "Golden Apple", 600, "e"], ["egg_frost", "egg", "Frost Egg", 1800, "e"], ["egg_cosmic", "egg", "Cosmic Egg", 5000, "l"], ["egg_speckled", "egg", "Speckled Egg", 200, "c"], ["egg_lucky", "egg", "Lucky Egg", 600, "r"], ["egg_mystery", "egg", "Mystery Egg", 777, "e"], ["egg_coin", "egg", "Coin Egg", 900, "r"], ["egg_scholar", "egg", "Scholar Egg", 900, "r"], ["egg_idle", "egg", "Idle Egg", 900, "r"], ["egg_ember", "egg", "Ember Egg", 1200, "e"], ["egg_ocean", "egg", "Ocean Egg", 1500, "e"], ["egg_jade", "egg", "Jade Egg", 2200, "e"], ["egg_obsidian", "egg", "Obsidian Egg", 4000, "l"], ["egg_rainbow", "egg", "Rainbow Egg", 7500, "l"], ["pack:basic", "pack", "Starter Pack", 150, null], ["pack:pro", "pack", "Pro Pack", 450, null], ["pack:whale", "pack", "Whale Pack", 1200, null], ["pack:mega", "pack", "Mega Pack", 2500, null], ["pack:pocket", "pack", "Pocket Pack", 60, null], ["pack:snack", "pack", "Snack Pack", 200, null], ["pack:title", "pack", "Title Pack", 250, null], ["pack:color", "pack", "Color Pack", 300, null], ["pack:skin", "pack", "Chart Skin Pack", 350, null], ["pack:avatar", "pack", "Avatar Pack", 400, null], ["pack:power", "pack", "Power Pack", 600, null], ["pack:lucky", "pack", "Lucky Pack", 777, null], ["pack:bull", "pack", "Bull Pack", 800, null], ["pack:bear", "pack", "Bear Pack", 800, null], ["pack:mystery", "pack", "Mystery Pack", 999, null], ["pack:frost", "pack", "Frost Pack", 1000, null], ["pack:rocket", "pack", "Rocket Pack", 1600, null], ["pack:inferno", "pack", "Inferno Pack", 1800, null], ["pack:trophy", "pack", "Trophy Pack", 2200, null], ["pack:moon", "pack", "Moon Pack", 4000, null], ["pack:galaxy", "pack", "Galaxy Pack", 5000, null], ["pack:legend", "pack", "Legend Pack", 9000, null]];
+      const GAME_ASSETS = [["AAPL", "Apple", "stock"], ["TSLA", "Tesla", "stock"], ["NVDA", "NVIDIA", "stock"], ["MSFT", "Microsoft", "stock"], ["AMZN", "Amazon", "stock"], ["SPY", "S&P 500 ETF", "stock"], ["QQQ", "Nasdaq-100 ETF", "stock"], ["GOOGL", "Alphabet", "stock"], ["META", "Meta Platforms", "stock"], ["NFLX", "Netflix", "stock"], ["AMD", "AMD", "stock"], ["PLTR", "Palantir", "stock"], ["COIN", "Coinbase", "stock"], ["GME", "GameStop", "stock"], ["DIS", "Disney", "stock"], ["NKE", "Nike", "stock"], ["KO", "Coca-Cola", "stock"], ["JPM", "JPMorgan Chase", "stock"], ["BA", "Boeing", "stock"], ["UBER", "Uber", "stock"], ["SBUX", "Starbucks", "stock"], ["BTC", "Bitcoin", "crypto"], ["ETH", "Ethereum", "crypto"], ["SOL", "Solana", "crypto"], ["DOGE", "Dogecoin", "crypto"], ["XRP", "XRP", "crypto"], ["ADA", "Cardano", "crypto"], ["AVAX", "Avalanche", "crypto"], ["LINK", "Chainlink", "crypto"], ["LTC", "Litecoin", "crypto"], ["SHIB", "Shiba Inu", "crypto"], ["PEPE", "Pepe", "crypto"]];
+      const ITEM_TYPE = { theme: 'Theme', skin: 'Chart skin', avatar: 'Avatar', title: 'Title', power: 'Power-up', egg: 'Egg', treat: 'Pet treat', coins: 'Coins', pack: 'Pack' };
+      const RAR = { c: 'Common', r: 'Rare', e: 'Epic', l: 'Legendary' };
       const LOGO = "<svg viewBox=\"0 0 64 64\"><defs><linearGradient id=\"pbLgA\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffb52e\"/><stop offset=\"1\" stop-color=\"#ff5e1a\"/></linearGradient></defs><rect width=\"64\" height=\"64\" rx=\"15\" fill=\"url(#pbLgA)\"/><path d=\"M13.5 14.5c.6 8.4 5.6 12.5 12.5 12.5h12c6.9 0 11.9-4.1 12.5-12.5\" stroke=\"#fff\" stroke-width=\"5.2\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M21.2 25.5h21.6l-3.6 18.2c-1 4.9-3.8 7.8-7.2 7.8s-6.2-2.9-7.2-7.8z\" fill=\"#fff\"/><path d=\"M28.3 30.5v13.5M35.7 27.5v12.5\" stroke=\"#16c784\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><rect x=\"26.5\" y=\"33\" width=\"3.6\" height=\"8.5\" rx=\"1.3\" fill=\"#16c784\"/><rect x=\"33.9\" y=\"29.8\" width=\"3.6\" height=\"8\" rx=\"1.3\" fill=\"#16c784\"/></svg>";
 
       /* ================= helpers ================= */
@@ -2738,6 +2806,8 @@
         content: ['#ffe066', '#e3a008', NF('<path class="f" d="M6 3.5h8.5L19 8v11.2a1.3 1.3 0 0 1-1.3 1.3H6.3A1.3 1.3 0 0 1 5 19.2V4.8A1.3 1.3 0 0 1 6.3 3.5z"/><path d="M6.3 3.5h8.2L19 8v11.2a1.3 1.3 0 0 1-1.3 1.3H6.3A1.3 1.3 0 0 1 5 19.2V4.8a1.3 1.3 0 0 1 1.3-1.3z"/><path d="M14.5 3.5V8H19M8.5 12.5h7M8.5 16h4.5"/>')],
         promos: ['#bef264', '#65a30d', NF('<path class="f" d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4z"/><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4z"/><path d="M14 6v2.2M14 10.9v2.2M14 15.8V18M7.5 10.5h3M7.5 13.5h2"/>')],
         tourney: ['#ffd166', '#ef4444', NF('<path class="f" d="M7 4h10v5.5a5 5 0 0 1-10 0z"/><path d="M7 4h10v5.5a5 5 0 0 1-10 0z"/><path d="M17 5.5h2.5v1.3a3.2 3.2 0 0 1-2.9 3.2M7 5.5H4.5v1.3a3.2 3.2 0 0 0 2.9 3.2M12 14.5v3M8.5 20.5h7M9.5 20.5l.6-3h3.8l.6 3"/>')],
+        market: ['#7dd3fc', '#0369a1', NF('<path class="f" d="M3.5 18 8 12.5l3.5 3 4-6 5 3.5V20h-17z"/><path d="M3.5 18 8 12.5l3.5 3 4-6 5 3.5"/><path d="M16 6.5h4.5V11"/>')],
+        shop: ['#fdba74', '#ea580c', NF('<path class="f" d="M4 9.5h16l-1 10a1.5 1.5 0 0 1-1.5 1.3h-11A1.5 1.5 0 0 1 5 19.5z"/><path d="M4 9.5h16l-1 10a1.5 1.5 0 0 1-1.5 1.3h-11A1.5 1.5 0 0 1 5 19.5z"/><path d="M8.5 9.5V7a3.5 3.5 0 0 1 7 0v2.5"/><circle class="k" cx="12" cy="14.5" r="1.4"/>')],
         analytics: ['#6ef09a', '#16a34a', NF('<path class="f" d="M3.5 17.5 8.5 12l3.5 3 8.5-9v14.5h-17z"/><path d="M3.5 17.5 8.5 12l3.5 3 8.5-9"/><path d="M16 6h4.5v4.5M3.5 20.5h17"/>')],
         site: ['#8fc2ff', '#2563eb', NF('<path d="M4 7h16M4 12h16M4 17h16"/><circle class="k" cx="9" cy="7" r="2.4"/><circle class="k" cx="15.5" cy="12" r="2.4"/><circle class="k" cx="7" cy="17" r="2.4"/>')],
         admins: ['#ff8aa0', '#e11d48', NF('<path class="f" d="M12 3 19.5 5.8v5.8c0 4.5-3.1 8-7.5 9.4-4.4-1.4-7.5-4.9-7.5-9.4V5.8z"/><path d="M12 3 19.5 5.8v5.8c0 4.5-3.1 8-7.5 9.4-4.4-1.4-7.5-4.9-7.5-9.4V5.8z"/><path d="m12 8.2 1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z"/>')],
@@ -2845,6 +2915,8 @@
         bad_users: 'Pick at least one user (max 500).',
         too_long: 'That text is too long.',
         bad_value: 'Invalid value.',
+        bad_sym: 'Ticker must be 1–7 letters, numbers or dots.',
+        too_many: 'That’s the limit for this list.',
         bad_title: 'Enter a title (1–120 characters).',
         bad_status: 'Invalid status.',
         bad_role: 'Pick a role.',
@@ -3240,12 +3312,16 @@
       /* ================= shell + router ================= */
       const NAV = [
         ['dashboard', 'Dashboard', IC.dash, 'moderator'],
+        ['analytics', 'Analytics', IC.chart, 'moderator'],
+        ['-', 'Players'],
         ['users', 'Users', IC.users, 'moderator'],
         ['gifts', 'Gifts', IC.gift, 'moderator'],
         ['promos', 'Promo codes', IC.ticket, 'moderator'],
         ['transactions', 'Transactions', IC.tx, 'moderator'],
+        ['-', 'Game'],
+        ['market', 'Market', IC.chart, 'moderator'],
+        ['shop', 'Shop items', IC.coin, 'moderator'],
         ['content', 'Content', IC.content, 'moderator'],
-        ['analytics', 'Analytics', IC.chart, 'moderator'],
         ['-', 'Settings'],
         ['site', 'Site controls', IC.site, 'moderator'],
         ['admins', 'Admin accounts', IC.shield, 'owner'],
@@ -3255,6 +3331,7 @@
         $('#root').innerHTML = `<div class="app" id="app">
     <aside class="side" id="side"><div class="logo"><span class="mark">${LOGO}</span>PAPERBULL <small>Admin</small></div>
       <nav class="nav" id="nav">${NAV.map(n => (n[0] === '-' ? `<div class="sec">${n[1]}</div>` : can(n[3]) ? `<a data-r="${n[0]}" href="#/${n[0]}">${navIco(n[0]) || n[2]}<span>${n[1]}</span>${n[0] === 'site' ? '<span class="cnt" id="mntBadge" hidden>ON</span>' : ''}</a>` : '')).join('')}</nav>
+      <div class="live" id="liveBox" data-s="off"><i></i><div><b>Live link</b><small id="liveTxt">Connecting…</small></div></div>
       <div class="me">${avatar(S.me.username)}<div style="flex:1;min-width:0"><b>${esc(S.me.username)}</b><span class="role muted">${esc(S.me.role)}</span></div>
         <button class="btn ghost sm icon" id="outBtn" title="Sign out" aria-label="Sign out">${IC.out}</button></div></aside>
     <div class="main"><header class="top"><button class="btn ghost icon burger" id="burger" aria-label="Menu">${IC.menu}</button>
@@ -3284,6 +3361,64 @@
         if (!location.hash || location.hash === '#/' || location.hash === '#') location.hash = '#/dashboard';
         else route();
         refreshMaint();
+        liveConnect();
+      }
+      /* ================= live link: the database pings every open game and admin tab ================= */
+      const LV = { ws: null, ref: 0, hb: 0, backoff: 1000, state: 'off', at: 0 };
+      function liveState(s, txt) {
+        LV.state = s;
+        const b = $('#liveBox');
+        if (!b) return;
+        b.dataset.s = s;
+        $('#liveTxt').textContent = txt || (s === 'on' ? 'Changes reach players instantly' : s === 'off' ? 'Reconnecting… players fall back to polling' : 'Connecting…');
+      }
+      function liveSend(topic, event, payload) {
+        if (!LV.ws || LV.ws.readyState !== 1) return;
+        LV.ws.send(JSON.stringify({ topic, event, payload, ref: String(++LV.ref) }));
+      }
+      function liveConnect() {
+        if (LV.ws || !S.me) return;
+        try {
+          LV.ws = new WebSocket(`wss://amnbnuabxoxhggidlhcn.supabase.co/realtime/v1/websocket?apikey=${ANON}&vsn=1.0.0`);
+        } catch (e) {
+          LV.ws = null;
+          setTimeout(liveConnect, 5000);
+          return;
+        }
+        LV.ws.onopen = () => {
+          LV.backoff = 1000;
+          liveSend('realtime:pb', 'phx_join', { config: { broadcast: { self: true, ack: false }, presence: { key: '' }, postgres_changes: [], private: false }, access_token: ANON });
+          clearInterval(LV.hb);
+          LV.hb = setInterval(() => liveSend('phoenix', 'heartbeat', {}), 25000);
+        };
+        LV.ws.onmessage = m => {
+          let j;
+          try {
+            j = JSON.parse(m.data);
+          } catch (e) {
+            return;
+          }
+          if (j.event === 'phx_reply' && j.topic === 'realtime:pb' && j.payload?.status === 'ok') liveState('on');
+          else if (j.event === 'broadcast' && j.payload?.event === 'change') {
+            const p = j.payload.payload || {};
+            LV.at = Date.now();
+            const b = $('#liveBox');
+            if (b) {
+              b.classList.add('blip');
+              setTimeout(() => b.classList.remove('blip'), 900);
+            }
+            if (V.cur && V.cur.onLive) V.cur.onLive(p.k || 'site');
+            if (p.k === 'site') refreshMaint();
+          }
+        };
+        LV.ws.onclose = () => {
+          LV.ws = null;
+          clearInterval(LV.hb);
+          liveState('off');
+          setTimeout(liveConnect, LV.backoff);
+          LV.backoff = Math.min(60000, LV.backoff * 1.8);
+        };
+        LV.ws.onerror = () => {};
       }
       document.addEventListener('keydown', e => {
         if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && $('#gs')) {
@@ -3467,6 +3602,11 @@
         user_adjust: 'Adjusted balance',
         badwords_change: 'Changed blocked words',
         events_change: 'Changed live event',
+        items_change: 'Changed shop prices',
+        game_change: 'Changed game settings',
+        market_add: 'Added a stock',
+        market_edit: 'Changed a stock',
+        market_remove: 'Removed a stock',
         code_change: 'Changed the access code',
         sessions_revoked: 'Signed out all admins',
         maintenance_on: 'Turned ON maintenance',
@@ -4946,7 +5086,7 @@
           v.innerHTML =
             head(
               'Site controls',
-              'Turn parts of PAPERBULL on and off. Changes reach players within about a minute.'
+              'Turn parts of PAPERBULL on and off. Changes reach every open game within a second.'
             ) + `<div class="card">${skeleton(5)}</div>`;
           let s;
           try {
@@ -4962,10 +5102,12 @@
             bw = s.badwords || [],
             ro = !can('admin');
           const mLiveOn = s.live ? !!s.live.maintenance.on : !!m.on;
+          const g = Object.assign({ daily_bonus: 50, free_pack_hours: 4, vol_mult: 1, news_every_s: 55 }, s.game || {});
+          this.game = g;
           v.innerHTML =
             head(
               'Site controls',
-              'Turn parts of PAPERBULL on and off. Changes reach players within about a minute.'
+              'Turn parts of PAPERBULL on and off. Changes reach every open game within a second.'
             ) +
             `
       <div class="card danger-zone"><div class="card-h"><h3>Emergency maintenance</h3>${m._updated_by ? `<span class="small muted">Last change by ${esc(m._updated_by)} · ${ago(m._updated_at)}</span>` : ''}</div>
@@ -4981,6 +5123,14 @@
         <label class="f"><span>Banner text</span><input class="in" id="evL" maxlength="60" value="${esc(ev.label || '')}" placeholder="Double coins weekend!" ${ro ? 'disabled' : ''}></label>
         <label class="f"><span>Ends</span><input class="in" id="evU" type="datetime-local" value="${localInput(ev.until)}" ${ro ? 'disabled' : ''}></label></div>
         ${ro ? '' : `<div class="chips" style="margin:-6px 0 12px">${[['2 hours', 2], ['Rest of today', 'eod'], ['24 hours', 24], ['This weekend', 'wk']].map(([l, v]) => `<button type="button" class="btn sm" data-evq="${v}">${l}</button>`).join('')}</div><div style="display:flex;gap:8px"><button class="btn pri" id="evSave">${evLive ? 'Update event' : 'Start event'}</button>${evLive ? '<button class="btn dan" id="evEnd">End now</button>' : ''}</div>`}</div>
+      <div class="card"><div class="card-h"><h3>Game settings</h3><span class="small muted">Applied live, no restart needed</span></div>
+        <div class="grid g2" style="gap:0 12px">
+        <label class="f"><span>Daily login bonus (coins)</span><input class="in" type="number" id="gDaily" min="0" max="10000" step="5" value="${g.daily_bonus}" ${ro ? 'disabled' : ''}></label>
+        <label class="f"><span>Free pack every (hours)</span><input class="in" type="number" id="gPack" min="0.25" max="168" step="0.25" value="${g.free_pack_hours}" ${ro ? 'disabled' : ''}></label>
+        <label class="f"><span>Market volatility</span><select class="in" id="gVol" ${ro ? 'disabled' : ''}>${[[0.5, 'Calm · 0.5×'], [0.75, 'Quiet · 0.75×'], [1, 'Normal · 1×'], [1.5, 'Lively · 1.5×'], [2, 'Wild · 2×'], [3, 'Chaos · 3×']].map(([x, l]) => `<option value="${x}" ${+g.vol_mult === x ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+        <label class="f"><span>Seconds between headlines</span><input class="in" type="number" id="gNews" min="10" max="600" step="5" value="${g.news_every_s}" ${ro ? 'disabled' : ''}></label></div>
+        <p class="small muted" style="margin:-4px 0 12px">Volatility scales how much every price moves; headlines are the company news items that push prices around. Coin and XP multipliers live under <b>Live event</b>.</p>
+        ${ro ? '' : '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="gSave">Save game settings</button><button class="btn" id="gReset">Back to defaults</button></div>'}</div>
       <div class="card"><div class="card-h"><h3>Blocked words</h3><span class="small muted">${bw.length} word${bw.length === 1 ? '' : 's'}</span></div>
         <p class="small muted" style="margin:0 0 10px">Usernames and display names containing any of these are rejected. One word per line, not case sensitive.</p>
         <textarea class="in mono" id="bwT" rows="5" placeholder="badword&#10;anotherone" ${ro ? 'disabled' : ''}>${esc(bw.join('\n'))}</textarea>
@@ -5044,7 +5194,7 @@
                     p_key: 'events',
                     p_value: { coin_mult: c, xp_mult: x, label: $('#evL').value, until: new Date($('#evU').value).toISOString() },
                   }),
-                  'Live event is running. Players see it within a minute.'
+                  'Live event is running. Players see it right away.'
                 );
                 this.render(v);
               } catch (e) {}
@@ -5053,6 +5203,23 @@
             $('#evEnd').onclick = async () => {
               try {
                 await act(A('pba_site_set', { p_key: 'events', p_value: { coin_mult: 1, xp_mult: 1 } }), 'Event ended');
+                this.render(v);
+              } catch (e) {}
+            };
+          if ($('#gSave'))
+            $('#gSave').onclick = async () => {
+              const val = { daily_bonus: +$('#gDaily').value, free_pack_hours: +$('#gPack').value, vol_mult: +$('#gVol').value, news_every_s: +$('#gNews').value };
+              if (!(val.daily_bonus >= 0 && val.daily_bonus <= 10000)) return toast('Daily bonus must be 0 to 10,000 coins.', 'err');
+              if (!(val.free_pack_hours >= 0.25 && val.free_pack_hours <= 168)) return toast('Free pack timer must be 0.25 to 168 hours.', 'err');
+              if (!(val.news_every_s >= 10 && val.news_every_s <= 600)) return toast('Headlines: 10 to 600 seconds.', 'err');
+              try {
+                await act(A('pba_site_set', { p_key: 'game', p_value: val }), 'Game settings saved · live in every open game');
+              } catch (e) {}
+            };
+          if ($('#gReset'))
+            $('#gReset').onclick = async () => {
+              try {
+                await act(A('pba_site_set', { p_key: 'game', p_value: { daily_bonus: 50, free_pack_hours: 4, vol_mult: 1, news_every_s: 55 } }), 'Game settings back to defaults');
                 this.render(v);
               } catch (e) {}
             };
@@ -5099,6 +5266,272 @@
                 } catch (e) {
                   i.checked = !on;
                 }
+              })
+          );
+        },
+      };
+
+      /* ---------- market: add stocks, set prices, delist ---------- */
+      const VOLS = [[0.2, 'Calm (index-fund energy)'], [0.35, 'Steady (blue chip)'], [0.55, 'Normal'], [0.85, 'Wild'], [1.3, 'Unhinged (meme stock)'], [2, 'Absolute chaos']];
+      const symPill = t => `<span class="pill ${t === 'crypto' ? 'p-brand' : 'p-info'}">${t === 'crypto' ? 'Coin' : 'Stock'}</span>`;
+      VIEWS.market = {
+        rows: null,
+        q: '',
+        async render(v) {
+          const ro = !can('admin');
+          v.innerHTML =
+            head(
+              'Market',
+              'Add your own stocks and coins, set any price, rename or delist. Every open game updates within a second.',
+              ro ? '' : `<button class="btn" id="mkPrice">${IC.edit}Set a price</button><button class="btn pri" id="mkAdd">${IC.plus}Add a stock</button>`
+            ) +
+            `<div class="card"><div class="card-h"><h3>Your changes</h3><input class="in" id="mkQ" placeholder="Filter…" style="max-width:220px" value="${esc(this.q)}"></div><div id="mkBox">${skeleton(4)}</div></div>
+      <div class="card"><div class="card-h"><h3>Built-in names</h3><span class="small muted">${GAME_ASSETS.length} featured + 2,000 generated tickers</span></div>
+        <p class="small muted" style="margin:0 0 10px">These already exist in the game. Click one to set its price, rename it or take it off the market. Generated tickers (like AETC or QUAN) work too when you type the exact symbol.</p>
+        <div class="chips" id="mkKnown">${GAME_ASSETS.map(a => `<button type="button" class="btn sm" data-sym="${esc(a[0])}" title="${esc(a[1])}">${esc(a[0])}</button>`).join('')}</div></div>`;
+          if (!ro) {
+            $('#mkAdd').onclick = () => this.edit(null, true);
+            $('#mkPrice').onclick = () => this.priceFor('');
+            $$('#mkKnown [data-sym]').forEach(b => (b.onclick = () => this.priceFor(b.dataset.sym)));
+          } else $$('#mkKnown [data-sym]').forEach(b => (b.disabled = true));
+          $('#mkQ').oninput = () => {
+            this.q = $('#mkQ').value.trim().toLowerCase();
+            this.paint();
+          };
+          await this.load();
+        },
+        async load() {
+          try {
+            this.rows = await A('pba_market');
+          } catch (e) {
+            $('#mkBox').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+            return;
+          }
+          this.paint();
+        },
+        onLive(k) {
+          if (k === 'market' && $('#mkBox')) this.load();
+        },
+        paint() {
+          const box = $('#mkBox');
+          if (!box || !this.rows) return;
+          const ro = !can('admin');
+          const rows = this.rows.filter(r => !this.q || r.sym.toLowerCase().includes(this.q) || (r.name || '').toLowerCase().includes(this.q));
+          box.innerHTML = rows.length
+            ? `<div class="tw"><table><thead><tr><th>Ticker</th><th>Name</th><th>Type</th><th class="r">Price</th><th>Sector</th><th>Status</th><th>Changed</th>${ro ? '' : '<th class="r">Actions</th>'}</tr></thead><tbody>${rows
+                .map(
+                  r => `<tr><td><b class="mono">${esc(r.sym)}</b>${r.custom ? ' <span class="pill p-ok" style="margin-left:6px">Added by you</span>' : ''}</td><td>${esc(r.name)}</td><td>${symPill(r.type)}</td>
+          <td class="r mono">${r.price != null ? usd(+r.price) : '<span class="muted">simulated</span>'}${r.price_at ? `<div class="small muted">set ${ago(r.price_at)}</div>` : ''}</td><td>${esc(r.sector || '—')}</td>
+          <td>${r.hidden ? '<span class="pill p-dn"><i></i>Delisted</span>' : '<span class="pill p-ok"><i></i>Listed</span>'}</td><td class="small">${ago(r.updated_at)}<div class="muted">${esc(r.updated_by || '')}</div></td>
+          ${ro ? '' : `<td class="r"><div style="display:inline-flex;gap:6px;white-space:nowrap"><button class="btn sm" data-px="${esc(r.sym)}">Set price</button><button class="btn sm" data-ed="${esc(r.sym)}">Edit</button><button class="btn sm" data-hd="${esc(r.sym)}">${r.hidden ? 'Relist' : 'Delist'}</button><button class="btn sm dan" data-rm="${esc(r.sym)}">${IC.trash}</button></div></td>`}</tr>`
+                )
+                .join('')}</tbody></table></div>`
+            : `<div class="empty">${this.q ? 'No matches.' : 'No changes yet. Add a stock or set a price to get started.'}</div>`;
+          $$('[data-px]', box).forEach(b => (b.onclick = () => this.priceFor(b.dataset.px)));
+          $$('[data-ed]', box).forEach(b => (b.onclick = () => this.edit(this.rows.find(r => r.sym === b.dataset.ed))));
+          $$('[data-hd]', box).forEach(
+            b =>
+              (b.onclick = async () => {
+                const r = this.rows.find(x => x.sym === b.dataset.hd);
+                if (!r.hidden) {
+                  const ok = await confirmBox({ title: `Delist ${r.sym}?`, text: 'It disappears from Markets and search. Players who hold it can still sell, nobody can buy more.', ok: 'Delist' });
+                  if (!ok) return;
+                }
+                try {
+                  await act(A('pba_market_set', { p: { sym: r.sym, hidden: !r.hidden } }), `${r.sym} ${r.hidden ? 'is back on the market' : 'delisted'}`);
+                  this.load();
+                } catch (e) {}
+              })
+          );
+          $$('[data-rm]', box).forEach(
+            b =>
+              (b.onclick = async () => {
+                const r = this.rows.find(x => x.sym === b.dataset.rm);
+                const ok = await confirmBox({
+                  title: `Remove ${r.sym}?`,
+                  text: r.custom ? 'Your stock gets delisted in the game (positions can still be closed) and this entry is deleted.' : 'Your changes to this built-in name are dropped and it goes back to normal simulation.',
+                  ok: 'Remove',
+                });
+                if (!ok) return;
+                try {
+                  await act(A('pba_market_remove', { p_sym: r.sym }), `${r.sym} removed`);
+                  this.load();
+                } catch (e) {}
+              })
+          );
+        },
+        priceFor(sym) {
+          const r = (this.rows || []).find(x => x.sym === sym) || GAME_ASSETS.find(a => a[0] === sym) && { sym, name: GAME_ASSETS.find(a => a[0] === sym)[1] };
+          modal({
+            title: 'Set a price',
+            ok: 'Set price',
+            body: `<label class="f"><span>Ticker</span><input class="in mono" id="pxS" list="pxL" maxlength="7" value="${esc(sym)}" placeholder="AAPL" autocapitalize="characters" style="text-transform:uppercase"><datalist id="pxL">${GAME_ASSETS.map(a => `<option value="${esc(a[0])}">${esc(a[1])}</option>`).join('')}</datalist></label>
+        <label class="f"><span>New price (USD)</span><input class="in mono" id="pxP" type="number" min="0.000001" step="any" placeholder="${r && r.price != null ? esc(r.price) : '150'}"></label>
+        <div class="chips" style="margin:-6px 0 12px">${[['×2', 2], ['×1.5', 1.5], ['−25%', 0.75], ['−50%', 0.5]].map(([l, m]) => `<button type="button" class="btn sm" data-m="${m}" title="Relative to the last price you set">${l}</button>`).join('')}</div>
+        <p class="small muted" style="margin:0">The price jumps to this the moment you save, then keeps trading normally from there. Players see a headline: “<b>${esc(r ? r.name : 'Company')} repriced by the exchange</b>”.</p><div class="err"></div>`,
+            onMount: ov => {
+              $$('[data-m]', ov).forEach(b => (b.onclick = () => {
+                const base = +$('#pxP', ov).value || (r && +r.price) || 0;
+                if (!base) return toast('Type a base price first.', 'err');
+                $('#pxP', ov).value = +(base * +b.dataset.m).toPrecision(6);
+              }));
+            },
+            onOk: async ov => {
+              const s = $('#pxS', ov).value.trim().toUpperCase(),
+                p = +$('#pxP', ov).value;
+              if (!/^[A-Z0-9.]{1,7}$/.test(s)) throw new Error(ERR.bad_sym);
+              if (!(p > 0)) throw new Error('Enter a price above 0.');
+              await A('pba_market_set', { p: { sym: s, price: p, force: true } });
+              toast(`${s} is now ${usd(p)} · live in every open game`);
+              this.load();
+            },
+          });
+        },
+        edit(r, isNew) {
+          const known = r && !r.custom;
+          modal({
+            title: isNew ? 'Add a stock or coin' : `Edit ${r.sym}`,
+            ok: isNew ? 'Add to the market' : 'Save',
+            body: `<div class="grid g2" style="gap:0 12px"><label class="f"><span>Ticker</span><input class="in mono" id="eS" maxlength="7" value="${esc(r ? r.sym : '')}" ${r ? 'disabled' : ''} placeholder="ZAP" style="text-transform:uppercase"></label>
+        <label class="f"><span>Type</span><select class="in" id="eT" ${known ? 'disabled' : ''}><option value="stock" ${!r || r.type === 'stock' ? 'selected' : ''}>Stock</option><option value="crypto" ${r && r.type === 'crypto' ? 'selected' : ''}>Crypto coin</option></select></label></div>
+        <label class="f"><span>Company / coin name</span><input class="in" id="eN" maxlength="40" value="${esc(r ? r.name : '')}" placeholder="Zap Energy"></label>
+        <div class="grid g2" style="gap:0 12px"><label class="f"><span>${isNew ? 'Starting price (USD)' : 'Price (USD, blank = leave to the simulation)'}</span><input class="in mono" id="eP" type="number" min="0.000001" step="any" value="${r && r.price != null ? esc(r.price) : ''}" placeholder="42"></label>
+        <label class="f"><span>Volatility</span><select class="in" id="eV">${(r && r.vol == null ? [[null, 'Keep as is']] : []).concat(VOLS).map(([x, l]) => `<option value="${x ?? ''}" ${r && r.vol != null ? (Math.abs(+r.vol - x) < 0.01 ? 'selected' : '') : x === 0.55 && isNew ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
+        <label class="f"><span>Sector (shown under the name)</span><input class="in" id="eSec" maxlength="24" value="${esc(r ? r.sector || '' : '')}" placeholder="Tech, Energy, Meme…"></label>
+        <label class="f"><span>Note for other admins</span><input class="in" id="eNote" maxlength="200" value="${esc(r ? r.note || '' : '')}" placeholder="Optional"></label><div class="err"></div>`,
+            onOk: async ov => {
+              const s = (r ? r.sym : $('#eS', ov).value.trim().toUpperCase());
+              if (!/^[A-Z0-9.]{1,7}$/.test(s)) throw new Error(ERR.bad_sym);
+              const name = $('#eN', ov).value.trim();
+              if (!name) throw new Error('Give it a name.');
+              const p = { sym: s, name, type: $('#eT', ov).value, sector: $('#eSec', ov).value.trim(), note: $('#eNote', ov).value.trim() };
+              const px = $('#eP', ov).value.trim();
+              if (isNew && !(+px > 0)) throw new Error('Set a starting price above 0.');
+              if (px) p.price = +px;
+              if ($('#eV', ov).value) p.vol = +$('#eV', ov).value;
+              if (isNew) {
+                p.custom = true;
+                if (GAME_ASSETS.some(a => a[0] === s)) throw new Error(`${s} already exists in the game. Use “Set a price” or edit it from the built-in list.`);
+              }
+              await A('pba_market_set', { p });
+              toast(isNew ? `${s} is now trading in PAPERBULL` : `${s} saved · live`);
+              this.load();
+            },
+          });
+        },
+      };
+
+      /* ---------- shop items: prices + on/off for every in-game item and pack ---------- */
+      VIEWS.shop = {
+        ov: null,
+        q: '',
+        t: '',
+        async render(v) {
+          const ro = !can('admin');
+          const types = [...new Set(GAME_ITEMS.map(i => i[1]))].filter(t => t !== 'coins');
+          v.innerHTML =
+            head(
+              'Shop items',
+              'Change what anything in the shop costs, or take it off sale, without touching the game code. Players see new prices within a second.',
+              ro ? '' : '<button class="btn" id="shReset">Clear all overrides</button>'
+            ) +
+            `<div class="card"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>Items &amp; packs</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><select class="in" id="shT" style="width:auto"><option value="">All types</option>${types.map(t => `<option value="${t}">${ITEM_TYPE[t] || t}</option>`).join('')}</select><input class="in" id="shQ" placeholder="Search items…" style="max-width:220px"></div></div>
+        <div class="kpis" id="shK"></div><div id="shBox">${skeleton(6)}</div></div>`;
+          $('#shQ').oninput = () => {
+            this.q = $('#shQ').value.trim().toLowerCase();
+            this.paint();
+          };
+          $('#shT').onchange = () => {
+            this.t = $('#shT').value;
+            this.paint();
+          };
+          if (!ro)
+            $('#shReset').onclick = async () => {
+              const n = Object.keys(this.ov || {}).length;
+              if (!n) return toast('Nothing to clear — every item is at its normal price.');
+              const ok = await confirmBox({ title: 'Clear all overrides?', text: `${n} item${n === 1 ? '' : 's'} go back to their normal price and on sale.`, ok: 'Clear all' });
+              if (!ok) return;
+              const p = {};
+              for (const k of Object.keys(this.ov)) p[k] = {};
+              try {
+                await act(A('pba_site_set', { p_key: 'items', p_value: p }), 'All items back to normal');
+                this.load();
+              } catch (e) {}
+            };
+          await this.load();
+        },
+        async load() {
+          try {
+            const s = await A('pba_site');
+            this.ov = s.items || {};
+          } catch (e) {
+            $('#shBox').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+            return;
+          }
+          this.paint();
+        },
+        onLive(k) {
+          if (k === 'site' && $('#shBox')) this.load();
+        },
+        paint() {
+          const box = $('#shBox');
+          if (!box || !this.ov) return;
+          const ro = !can('admin'),
+            ov = this.ov;
+          const rows = GAME_ITEMS.filter(i => i[1] !== 'coins' && (!this.t || i[1] === this.t) && (!this.q || i[2].toLowerCase().includes(this.q) || i[0].includes(this.q)));
+          const nOv = Object.keys(ov).length,
+            nOff = Object.values(ov).filter(o => o.off).length;
+          $('#shK').innerHTML = `<div class="kpi"><small>Items in the shop</small><b>${num(GAME_ITEMS.filter(i => i[1] !== 'coins').length)}</b></div><div class="kpi"><small>Custom prices</small><b>${num(nOv - nOff)}</b></div><div class="kpi"><small>Off sale</small><b>${num(nOff)}</b></div>`;
+          box.innerHTML = rows.length
+            ? `<div class="tw"><table><thead><tr><th>Item</th><th>Type</th><th>Rarity</th><th class="r">Normal price</th><th class="r">Your price</th><th>On sale</th></tr></thead><tbody>${rows
+                .map(([id, t, name, price, r]) => {
+                  const o = ov[id] || {},
+                    custom = o.price != null;
+                  return `<tr class="${o.off ? 'off' : ''}"><td><b>${esc(name)}</b><div class="small muted mono">${esc(id)}</div></td><td>${esc(ITEM_TYPE[t] || t)}</td><td>${r ? `<span class="pill ${r === 'l' ? 'p-warn' : r === 'e' ? 'p-brand' : r === 'r' ? 'p-info' : 'p-mut'}">${RAR[r]}</span>` : '—'}</td>
+            <td class="r mono">${price != null ? num(price) : '<span class="muted">free / earned</span>'}</td>
+            <td class="r"><input class="in mono ovin ${custom ? 'set' : ''}" type="number" min="0" max="10000000" step="1" data-price="${esc(id)}" value="${custom ? o.price : ''}" placeholder="${price != null ? num(price) : '—'}" ${ro || price == null ? 'disabled' : ''} aria-label="Price for ${esc(name)}"></td>
+            <td><label class="sw" aria-label="On sale"><input type="checkbox" data-off="${esc(id)}" ${o.off ? '' : 'checked'} ${ro ? 'disabled' : ''}><span></span></label></td></tr>`;
+                })
+                .join('')}</tbody></table></div>`
+            : '<div class="empty">No items match.</div>';
+          if (ro) return;
+          const save = async (id, patch, msg) => {
+            try {
+              const r = await act(A('pba_site_set', { p_key: 'items', p_value: { [id]: patch } }), msg);
+              this.ov = r || {};
+              const inp = $(`[data-price="${CSS.escape(id)}"]`, box);
+              if (inp) inp.classList.toggle('set', this.ov[id] && this.ov[id].price != null);
+              this.paint();
+            } catch (e) {
+              this.paint();
+            }
+          };
+          $$('[data-price]', box).forEach(i => {
+            let t;
+            const go = () => {
+              const id = i.dataset.price,
+                cur = ov[id] || {},
+                v = i.value.trim();
+              const price = v === '' ? null : Math.round(+v);
+              if (price != null && !(price >= 0 && price <= 10000000)) return toast(ERR.bad_price, 'err');
+              if ((cur.price ?? null) === price) return;
+              ov[id] = { ...cur, price }; // so Enter + blur don't save twice
+              save(id, { price, off: !!cur.off }, price == null ? 'Back to the normal price' : `Price set to ${num(price)} coins · live`);
+            };
+            i.onchange = go;
+            i.onkeydown = e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                go();
+              }
+            };
+          });
+          $$('[data-off]', box).forEach(
+            c =>
+              (c.onchange = () => {
+                const id = c.dataset.off,
+                  cur = ov[id] || {};
+                save(id, { price: cur.price ?? null, off: !c.checked }, c.checked ? 'Back on sale' : 'Taken off sale · live');
               })
           );
         },
