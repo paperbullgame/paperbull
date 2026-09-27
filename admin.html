@@ -2121,6 +2121,410 @@
       .upk .empty {
         padding: 22px 12px;
       }
+      /* promo codes */
+      .promo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+      }
+      .promo {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+        background: var(--panel2);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow: hidden;
+        transition:
+          border-color 0.18s,
+          transform 0.18s;
+      }
+      .promo::before {
+        content: '';
+        position: absolute;
+        left: -9px;
+        top: 50px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+      .promo::after {
+        content: '';
+        position: absolute;
+        right: -9px;
+        top: 50px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+      .promo:hover {
+        border-color: color-mix(in srgb, #84cc16 40%, var(--line));
+        transform: translateY(-2px);
+      }
+      .promo.off,
+      .promo.expired,
+      .promo.used_up {
+        opacity: 0.72;
+      }
+      .promo-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .promo-code {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 19px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        padding: 6px 12px;
+        border-radius: 10px;
+        border: 1.5px dashed color-mix(in srgb, #84cc16 60%, transparent);
+        background: color-mix(in srgb, #84cc16 10%, transparent);
+        color: #a3e635;
+        cursor: pointer;
+      }
+      :root:not([data-theme='dark']) .promo-code {
+        color: #4d7c0f;
+      }
+      .promo-code span svg {
+        width: 14px;
+        height: 14px;
+        opacity: 0.7;
+      }
+      .promo-rw {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        border-top: 1px dashed var(--line);
+        padding-top: 12px;
+      }
+      .promo-rw b {
+        font-size: 16px;
+      }
+      .promo-use {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .promo-bar {
+        flex: 1;
+        height: 6px;
+        border-radius: 6px;
+        background: var(--line);
+        overflow: hidden;
+      }
+      .promo-bar i {
+        display: block;
+        height: 100%;
+        border-radius: 6px;
+        background: linear-gradient(90deg, #bef264, #65a30d);
+      }
+      .promo-bar i.inf {
+        background: repeating-linear-gradient(90deg, #65a30d55 0 8px, transparent 8px 14px);
+      }
+      .promo-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .promo-rec {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .promo-rec span {
+        padding: 2px 8px;
+        border-radius: 99px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+      .promo-act {
+        display: flex;
+        gap: 6px;
+        margin-top: auto;
+      }
+      .promo-act .btn:not(.icon) {
+        flex: 1;
+      }
+      .promo-prev {
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: color-mix(in srgb, #84cc16 9%, transparent);
+        border: 1px dashed color-mix(in srgb, #84cc16 45%, transparent);
+        margin-bottom: 6px;
+      }
+      .promo-prev small {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--mut);
+        margin-bottom: 4px;
+      }
+      /* tournament */
+      .tn-hero {
+        border-color: color-mix(in srgb, #f59e0b 40%, var(--line));
+      }
+      .tn-hero .hero-a .in {
+        min-width: 200px;
+      }
+      .tn-grid {
+        grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+      }
+      .tn-grid > div > .card + .card {
+        margin-top: 16px;
+      }
+      .tn-p {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: inherit;
+        text-decoration: none;
+        min-width: 0;
+      }
+      .tn-p span {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .tn-dq td {
+        opacity: 0.55;
+      }
+      .tn-dq td:last-child {
+        opacity: 1;
+      }
+      .btn.dan-o {
+        color: var(--dn);
+        border-color: color-mix(in srgb, var(--dn) 40%, var(--line));
+      }
+      .btn.dan-o:hover {
+        background: var(--dn-soft);
+      }
+      .tn-prizes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .tn-prizes div {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 12px;
+        border-radius: 10px;
+        background: var(--panel2);
+        border: 1px solid var(--line);
+      }
+      .tn-prizes div:nth-child(-n + 3) {
+        border-color: color-mix(in srgb, #f59e0b 45%, var(--line));
+        background: color-mix(in srgb, #f59e0b 9%, var(--panel2));
+      }
+      button.li {
+        width: 100%;
+        background: none;
+        border-left: 0;
+        border-right: 0;
+        border-top: 0;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+        font: inherit;
+      }
+      button.li:hover b {
+        color: var(--brand);
+      }
+      .ic-b {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        color: #fbbf24;
+        background: color-mix(in srgb, #f59e0b 14%, transparent);
+        flex: none;
+      }
+      .ic-b svg {
+        width: 18px;
+        height: 18px;
+      }
+      /* online now */
+      .onl-card {
+        margin-bottom: 16px;
+      }
+      .onl {
+        display: flex;
+        gap: 22px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .onl-l {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 240px;
+      }
+      .onl-big {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .onl-big b {
+        font-size: 34px;
+        letter-spacing: -0.02em;
+      }
+      .onl-big > span:last-child {
+        color: var(--mut);
+      }
+      .onl-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #22c55e;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+        animation: onlP 1.8s infinite;
+      }
+      .onl-dot.idle {
+        background: var(--mut);
+        animation: none;
+      }
+      @keyframes onlP {
+        0% {
+          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+        }
+        100% {
+          box-shadow: 0 0 0 12px rgba(34, 197, 94, 0);
+        }
+      }
+      .onl-s {
+        display: flex;
+        gap: 18px;
+      }
+      .onl-s div {
+        display: flex;
+        flex-direction: column;
+      }
+      .onl-s b {
+        font-size: 18px;
+      }
+      .onl-s small {
+        color: var(--mut);
+        font-size: 11.5px;
+      }
+      .onl-r {
+        flex: 1;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        min-width: 0;
+      }
+      .onl-u {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 12px 5px 5px;
+        border-radius: 99px;
+        border: 1px solid var(--line);
+        background: var(--panel2);
+        color: inherit;
+        text-decoration: none;
+        max-width: 200px;
+      }
+      .onl-u:hover {
+        border-color: color-mix(in srgb, #22c55e 45%, var(--line));
+      }
+      .onl-u span {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        line-height: 1.15;
+      }
+      .onl-u b,
+      .onl-u small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .onl-u small {
+        color: #22c55e;
+        font-size: 11px;
+      }
+      /* gift to everyone switch */
+      .gall {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 6px 0 10px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: var(--panel2);
+        cursor: pointer;
+        text-transform: none;
+        letter-spacing: 0;
+        font-size: 14px;
+      }
+      .gall input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .gall .sw {
+        flex: none;
+        width: 40px;
+        height: 23px;
+        border-radius: 99px;
+        background: var(--line2);
+        position: relative;
+        transition: background 0.18s;
+      }
+      .gall .sw::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 17px;
+        height: 17px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.18s;
+      }
+      .gall input:checked + .sw {
+        background: var(--vg, var(--brand));
+      }
+      .gall input:checked + .sw::after {
+        transform: translateX(17px);
+      }
+      .gall span:last-child {
+        display: flex;
+        flex-direction: column;
+      }
+      .gall small {
+        color: var(--mut);
+        font-size: 12px;
+      }
+      .upk[hidden] {
+        display: none;
+      }
+      @media (max-width: 900px) {
+        .tn-grid {
+          grid-template-columns: 1fr;
+        }
+        .tn-grid > div > .card:first-child {
+          margin-top: 16px;
+        }
+        .onl-l {
+          min-width: 0;
+          width: 100%;
+        }
+      }
 </style>
   </head>
   <body>
@@ -2177,6 +2581,8 @@
         gifts: ['#ff8fc7', '#db2777', NF('<rect class="f" x="3" y="7.5" width="18" height="4.5" rx="1.4"/><rect x="3" y="7.5" width="18" height="4.5" rx="1.4"/><path d="M4.8 12v7.2a1.3 1.3 0 0 0 1.3 1.3h11.8a1.3 1.3 0 0 0 1.3-1.3V12M12 7.5v13"/><path d="M12 7.5C10.8 4.4 6.8 3.5 6.8 6s3.4 1.5 5.2 1.5zM12 7.5c1.2-3.1 5.2-4 5.2-1.5S13.8 7.5 12 7.5z"/>')],
         transactions: ['#4fe3ff', '#0891b2', NF('<circle class="f" cx="12" cy="12" r="9"/><path d="M7 9.5h9.5l-2.6-2.6M17 14.5H7.5l2.6 2.6"/>')],
         content: ['#ffe066', '#e3a008', NF('<path class="f" d="M6 3.5h8.5L19 8v11.2a1.3 1.3 0 0 1-1.3 1.3H6.3A1.3 1.3 0 0 1 5 19.2V4.8A1.3 1.3 0 0 1 6.3 3.5z"/><path d="M6.3 3.5h8.2L19 8v11.2a1.3 1.3 0 0 1-1.3 1.3H6.3A1.3 1.3 0 0 1 5 19.2V4.8a1.3 1.3 0 0 1 1.3-1.3z"/><path d="M14.5 3.5V8H19M8.5 12.5h7M8.5 16h4.5"/>')],
+        promos: ['#bef264', '#65a30d', NF('<path class="f" d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4z"/><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4z"/><path d="M14 6v2.2M14 10.9v2.2M14 15.8V18M7.5 10.5h3M7.5 13.5h2"/>')],
+        tourney: ['#ffd166', '#ef4444', NF('<path class="f" d="M7 4h10v5.5a5 5 0 0 1-10 0z"/><path d="M7 4h10v5.5a5 5 0 0 1-10 0z"/><path d="M17 5.5h2.5v1.3a3.2 3.2 0 0 1-2.9 3.2M7 5.5H4.5v1.3a3.2 3.2 0 0 0 2.9 3.2M12 14.5v3M8.5 20.5h7M9.5 20.5l.6-3h3.8l.6 3"/>')],
         analytics: ['#6ef09a', '#16a34a', NF('<path class="f" d="M3.5 17.5 8.5 12l3.5 3 8.5-9v14.5h-17z"/><path d="M3.5 17.5 8.5 12l3.5 3 8.5-9"/><path d="M16 6h4.5v4.5M3.5 20.5h17"/>')],
         site: ['#8fc2ff', '#2563eb', NF('<path d="M4 7h16M4 12h16M4 17h16"/><circle class="k" cx="9" cy="7" r="2.4"/><circle class="k" cx="15.5" cy="12" r="2.4"/><circle class="k" cx="7" cy="17" r="2.4"/>')],
         admins: ['#ff8aa0', '#e11d48', NF('<path class="f" d="M12 3 19.5 5.8v5.8c0 4.5-3.1 8-7.5 9.4-4.4-1.4-7.5-4.9-7.5-9.4V5.8z"/><path d="M12 3 19.5 5.8v5.8c0 4.5-3.1 8-7.5 9.4-4.4-1.4-7.5-4.9-7.5-9.4V5.8z"/><path d="m12 8.2 1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z"/>')],
@@ -2233,6 +2639,10 @@
         back: I('<path d="M15 5l-7 7 7 7"/>'),
         key: I('<circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M16 7l2 2M14 9l2 2"/>'),
         edit: I('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>'),
+        dl: I('<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/>'),
+        copy: I('<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>'),
+        ticket: I('<path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4z"/><path d="M14 6v2M14 11v2M14 16v2"/>'),
+        trophy: I('<path d="M7 4h10v5.5a5 5 0 0 1-10 0z"/><path d="M17 5.5h2.5v1.3a3.2 3.2 0 0 1-2.9 3.2M7 5.5H4.5v1.3a3.2 3.2 0 0 0 2.9 3.2M12 14.5v3M8.5 20.5h7M9.5 20.5l.6-3h3.8l.6 3"/>'),
         trash: I('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'),
         eye: I(
           '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>'
@@ -2254,6 +2664,11 @@
         not_configured: 'Admin code isn’t set up on the server yet.',
         disabled: 'This admin account is disabled.',
         bad_code: 'Wrong code.',
+        bad_code_fmt: 'Code must be 3–24 letters, numbers, - or _',
+        code_taken: 'That code already exists. Pick another.',
+        bad_max: 'Max uses must be at least 1.',
+        need_reason: 'Add a reason.',
+        slow_down: 'Slow down — wait a minute and try again.',
         setup_done: 'Setup is already finished. Sign in instead.',
         weak_password: 'Password must be at least 10 characters.',
         bad_username: 'Username: 3–20 letters, numbers, _ . or -',
@@ -2668,6 +3083,8 @@
         ['dashboard', 'Dashboard', IC.dash, 'moderator'],
         ['users', 'Users', IC.users, 'moderator'],
         ['gifts', 'Gifts', IC.gift, 'moderator'],
+        ['promos', 'Promo codes', IC.ticket, 'moderator'],
+        ['tourney', 'Tournament', IC.trophy, 'moderator'],
         ['transactions', 'Transactions', IC.tx, 'moderator'],
         ['content', 'Content', IC.content, 'moderator'],
         ['analytics', 'Analytics', IC.chart, 'moderator'],
@@ -2834,11 +3251,13 @@
       ${k('', IC.tx, 'Shop purchases', num(s.purchases), `${num(s.catalog)} gifts on sale`, 'purchases')}
       ${k('c2', IC.gift, 'Admin gifts given', num(s.grants), 'Items and coins from staff')}
       ${k('c4', IC.users, 'Friendships', num(s.friendships), `${num(s.content)} live posts`)}</div>
+      <div class="card onl-card"><div class="card-h"><h3>Online now</h3><span class="small muted">Updates every 30 seconds</span></div><div class="onl" id="onl">${skeleton(2)}</div></div>
       <div class="grid g2"><div class="card"><div class="card-h"><h3>New users · 30 days</h3>${legend([{ name: 'Signups', color: col(1) }])}</div><div class="chart" id="c1"></div></div>
       <div class="card"><div class="card-h"><h3>Active users · 30 days</h3>${legend([{ name: 'Active', color: col(2) }])}</div><div class="chart" id="c2"></div></div></div>
       <div class="grid g2" style="margin-top:16px"><div class="card"><div class="card-h"><h3>Top players</h3><a href="#/users" class="small">All users</a></div><div class="list">${(s.top || []).length ? s.top.map((t, i) => `<div class="li"><span class="mono muted" style="width:18px">${i + 1}</span>${avatar(t.name)}<div class="t"><b>${esc(t.name)}</b><small>@${esc(t.username)}</small></div><span class="mono ${cls(t.return_pct)}">${pct(t.return_pct)}</span></div>`).join('') : '<div class="empty">No ranked players yet.</div>'}</div></div>
       <div class="card"><div class="card-h"><h3>Recent admin activity</h3>${audit ? '<a href="#/audit" class="small">Audit log</a>' : ''}</div><div class="list">${audit ? (audit.rows.length ? audit.rows.map(a => `<div class="li"><span class="dot" style="background:var(--brand)"></span><div class="t"><b>${esc(actLabel(a.action))}${a.target_label ? ' · ' + esc(a.target_label) : ''}</b><small>${esc(a.admin_name || 'system')} · ${ago(a.created_at)}</small></div></div>`).join('') : '<div class="empty">Nothing yet.</div>') : '<div class="empty">Admins and owners can see the audit log.</div>'}</div></div></div>`;
           $('#rf').onclick = () => this.render(v);
+          paintOnline();
           this.charts();
         },
         charts() {
@@ -2878,6 +3297,12 @@
         gift_edit: 'Edited gift',
         gift_remove: 'Removed gift',
         gift_give: 'Gave gift',
+        gift_all: 'Gifted every player',
+        promo_create: 'Created promo code',
+        promo_update: 'Edited promo code',
+        promo_delete: 'Deleted promo code',
+        tourney_dq: 'Disqualified from tournament',
+        tourney_undq: 'Reinstated in tournament',
         maintenance_on: 'Turned ON maintenance',
         maintenance_off: 'Turned off maintenance',
         features_change: 'Changed features',
@@ -2898,11 +3323,23 @@
         render(v) {
           const st = this.st;
           v.innerHTML =
-            head('Users', 'Everyone with an online PAPERBULL account.') +
+            head('Users', 'Everyone with an online PAPERBULL account.', `<button class="btn" id="uCsv">${IC.dl || ''}Export CSV</button>`) +
             `<div class="card"><div class="tools">
       <input class="in" id="uq" placeholder="Search username or name" value="${esc(st.q)}">
       <div class="tabs" id="ust">${['all', 'active', 'suspended', 'banned', 'deleted'].map(s => `<button data-s="${s}" class="${st.status === s ? 'on' : ''}">${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}</div>
       <select class="in" id="uper" aria-label="Rows per page">${[10, 25, 50, 100].map(n => `<option ${n === st.per ? 'selected' : ''}>${n}</option>`).join('')}</select></div><div id="ut">${skeleton(6)}</div></div>`;
+          $('#uCsv').onclick = async () => {
+            const b = $('#uCsv');
+            b.disabled = true;
+            b.textContent = 'Exporting…';
+            try {
+              await exportUsers(st);
+            } catch (e) {
+              toast(e.message, 'err');
+            }
+            b.disabled = false;
+            b.innerHTML = 'Export CSV';
+          };
           $('#uq').oninput = debounce(e => {
             st.q = e.target.value;
             st.page = 1;
@@ -3189,7 +3626,8 @@
           wide: true,
           body: `
     <div class="f"><span>Recipients <b class="upk-n" id="gN0">0 selected</b></span>
-      <div class="upk"><div class="upk-top"><div class="upk-s">${IC.search}<input class="in" id="gU" placeholder="Search players by name or username" autocomplete="off"></div>
+      ${can('admin') ? `<label class="gall"><input type="checkbox" id="gEvery"><span class="sw"></span><span><b>Send to every player</b><small>Everyone with an active account gets it</small></span></label>` : ''}
+      <div class="upk" id="gPick"><div class="upk-top"><div class="upk-s">${IC.search}<input class="in" id="gU" placeholder="Search players by name or username" autocomplete="off"></div>
         <button type="button" class="btn sm" id="gAll">Select all shown</button></div>
         <div class="chips upk-c" id="gC"></div>
         <div class="upk-l" id="gD"><div class="empty small">Loading players…</div></div></div></div>
@@ -3287,6 +3725,11 @@
               refresh();
             };
             load();
+            if ($('#gEvery', ov))
+              $('#gEvery', ov).onchange = e => {
+                $('#gPick', ov).hidden = e.target.checked;
+                $('#gN0', ov).textContent = e.target.checked ? 'Everyone' : picked.length + ' selected';
+              };
             const sync = () => {
               const custom = !$('#gW', ov).value;
               $('#gCustom', ov).hidden = !custom;
@@ -3299,11 +3742,12 @@
             sync();
           },
           onOk: async ov => {
-            if (!picked.length) throw new Error('Add at least one recipient.');
+            const every = $('#gEvery', ov) && $('#gEvery', ov).checked;
+            if (!every && !picked.length) throw new Error('Add at least one recipient.');
             const cid = $('#gW', ov).value || null,
               k = $('#gK', ov).value;
-            const r = await A('pba_grant', {
-              p_users: picked.map(p => p.id),
+            const r = await A(every ? 'pba_grant_all' : 'pba_grant', {
+              ...(every ? {} : { p_users: picked.map(p => p.id) }),
               p_catalog_id: cid ? +cid : null,
               p_kind: cid ? null : k,
               p_amount: cid || k === 'item' ? null : +$('#gA', ov).value,
@@ -3341,6 +3785,351 @@
             : c.kind === 'xp'
               ? `${num(c.amount)} XP`
               : `Item: ${(GAME_ITEMS.find(i => i[0] === c.item_id) || [0, 0, c.item_id])[2]}`;
+
+      /* ---------- promo codes ---------- */
+      const promoState = {
+        live: '<span class="pill p-ok"><i></i>Live</span>',
+        off: '<span class="pill p-mut"><i></i>Off</span>',
+        expired: '<span class="pill p-warn"><i></i>Expired</span>',
+        used_up: '<span class="pill p-info"><i></i>Used up</span>',
+      };
+      const randCode = () => {
+        const w = ['BULL', 'MOON', 'ROCKET', 'GOLD', 'DIAMOND', 'PAPER', 'TRADE', 'CANDLE', 'PUMP', 'STONKS'];
+        return w[Math.floor(Math.random() * w.length)] + Math.floor(100 + Math.random() * 900);
+      };
+      const localInput = s => {
+        if (!s) return '';
+        const d = new Date(s);
+        return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      };
+      VIEWS.promos = {
+        st: { q: '', show: 'all' },
+        render(v) {
+          v.innerHTML =
+            head(
+              'Promo codes',
+              'Codes players type in the game to get coins, cash, XP or items. Each player can use a code once.',
+              can('admin') ? `<button class="btn pri" id="pNew">${IC.plus}New code</button>` : ''
+            ) +
+            `<div class="kpis" id="pK">${Array.from({ length: 4 }, () => `<div class="kpi">${skeleton(2)}</div>`).join('')}</div>
+      <div class="card"><div class="tools"><input class="in" id="pq" placeholder="Search codes"><div class="tabs" id="pshow">${[
+        ['all', 'All'],
+        ['live', 'Live'],
+        ['done', 'Ended'],
+        ['off', 'Off'],
+      ]
+        .map(([k, l]) => `<button data-s="${k}" class="${this.st.show === k ? 'on' : ''}">${l}</button>`)
+        .join('')}</div></div><div id="pt">${skeleton(4)}</div></div>`;
+          if ($('#pNew')) $('#pNew').onclick = () => this.edit(null);
+          $('#pq').oninput = debounce(e => {
+            this.st.q = e.target.value.toLowerCase();
+            this.paint();
+          }, 150);
+          $$('#pshow button').forEach(
+            b =>
+              (b.onclick = () => {
+                this.st.show = b.dataset.s;
+                $$('#pshow button').forEach(x => x.classList.toggle('on', x === b));
+                this.paint();
+              })
+          );
+          this.load();
+        },
+        async load() {
+          try {
+            this.rows = await A('pba_promos');
+          } catch (e) {
+            $('#pt').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+            return;
+          }
+          const r = this.rows,
+            uses = r.reduce((s, p) => s + p.uses, 0),
+            coins = r.filter(p => p.kind === 'coins').reduce((s, p) => s + p.uses * p.amount, 0);
+          $('#pK').innerHTML = `
+      <div class="kpi"><small><span class="ic">${IC.ticket}</span>Codes</small><b class="mono">${num(r.length)}</b><em>${num(r.filter(p => p.state === 'live').length)} live right now</em></div>
+      <div class="kpi c2"><small><span class="ic">${IC.users}</span>Redemptions</small><b class="mono">${num(uses)}</b><em>all time</em></div>
+      <div class="kpi c3"><small><span class="ic">${IC.coin}</span>Coins given</small><b class="mono">${num(coins)}</b><em>through coin codes</em></div>
+      <div class="kpi c4"><small><span class="ic">${IC.pulse}</span>Most used</small><b class="mono" style="font-size:20px">${r.length ? esc([...r].sort((a, b) => b.uses - a.uses)[0].code) : '—'}</b><em>${r.length ? num(Math.max(...r.map(p => p.uses))) + ' uses' : 'no codes yet'}</em></div>`;
+          this.paint();
+        },
+        paint() {
+          const box = $('#pt'),
+            st = this.st;
+          if (!box) return;
+          const rows = (this.rows || []).filter(
+            p =>
+              (st.show === 'all' ||
+                (st.show === 'live' && p.state === 'live') ||
+                (st.show === 'done' && (p.state === 'expired' || p.state === 'used_up')) ||
+                (st.show === 'off' && p.state === 'off')) &&
+              (!st.q || (p.code + ' ' + p.name).toLowerCase().includes(st.q))
+          );
+          if (!rows.length) {
+            box.innerHTML = `<div class="empty">${IC.ticket}<p>${(this.rows || []).length ? 'No codes match.' : 'No promo codes yet.'}</p>${can('admin') && !(this.rows || []).length ? '<button class="btn pri" id="pNew2">Create your first code</button>' : ''}</div>`;
+            if ($('#pNew2')) $('#pNew2').onclick = () => this.edit(null);
+            return;
+          }
+          box.innerHTML = `<div class="promo-grid">${rows
+            .map(p => {
+              const cap = p.max_uses ? Math.min(100, (p.uses / p.max_uses) * 100) : 0;
+              return `<div class="promo ${p.state}">
+          <div class="promo-top"><button class="promo-code mono" data-cp="${esc(p.code)}" title="Copy code">${esc(p.code)}<span>${IC.copy}</span></button>${promoState[p.state] || ''}</div>
+          <div class="promo-rw"><b>${esc(kindLabel(p))}</b><span class="muted small">${esc(p.name)}</span></div>
+          <div class="promo-use"><div class="promo-bar"><i style="width:${p.max_uses ? cap : 100}%" class="${p.max_uses ? '' : 'inf'}"></i></div>
+            <span class="small mono">${num(p.uses)}${p.max_uses ? ' / ' + num(p.max_uses) : ''} used</span></div>
+          <div class="promo-meta small muted"><span>${p.expires_at ? (new Date(p.expires_at) < new Date() ? 'Ended ' : 'Ends ') + dt(p.expires_at) : 'Never expires'}</span><span>by ${esc(p.created_by || '—')}</span></div>
+          ${p.recent && p.recent.length ? `<div class="promo-rec small">${p.recent.map(r => `<span title="${esc(dt(r.at))}">@${esc(r.username)}</span>`).join('')}</div>` : ''}
+          ${can('admin') ? `<div class="promo-act"><button class="btn sm" data-ed="${p.id}">${IC.edit || ''}Edit</button><button class="btn sm" data-tg="${p.id}">${p.active ? 'Turn off' : 'Turn on'}</button><button class="btn sm icon" data-rm="${p.id}" title="Delete" aria-label="Delete">${IC.trash}</button></div>` : ''}
+        </div>`;
+            })
+            .join('')}</div>`;
+          const byId = id => this.rows.find(p => p.id === +id);
+          $$('[data-cp]', box).forEach(
+            b =>
+              (b.onclick = async () => {
+                try {
+                  await navigator.clipboard.writeText(b.dataset.cp);
+                  toast('Copied ' + b.dataset.cp);
+                } catch (e) {
+                  toast(b.dataset.cp);
+                }
+              })
+          );
+          $$('[data-ed]', box).forEach(b => (b.onclick = () => this.edit(byId(b.dataset.ed))));
+          $$('[data-tg]', box).forEach(
+            b =>
+              (b.onclick = async () => {
+                const p = byId(b.dataset.tg);
+                try {
+                  await act(A('pba_promo_save', { p: { ...p, active: !p.active } }), p.active ? 'Code turned off' : 'Code is live');
+                  this.load();
+                } catch (e) {}
+              })
+          );
+          $$('[data-rm]', box).forEach(
+            b =>
+              (b.onclick = async () => {
+                const p = byId(b.dataset.rm);
+                const ok = await confirmBox({
+                  title: 'Delete ' + p.code + '?',
+                  text: `Players won’t be able to use <b>${esc(p.code)}</b> anymore. Gifts already given stay with the players.`,
+                  ok: 'Delete code',
+                });
+                if (!ok) return;
+                try {
+                  await act(A('pba_promo_delete', { p_id: p.id }), 'Code deleted');
+                  this.load();
+                } catch (e) {}
+              })
+          );
+        },
+        edit(p) {
+          const kinds = [
+            ['coins', 'Coins'],
+            ['cash', 'Virtual cash ($)'],
+            ['xp', 'XP'],
+            ['item', 'Game item'],
+          ];
+          const x = p || { code: randCode(), name: '', kind: 'coins', amount: 500, max_uses: 100, active: true };
+          modal({
+            title: p ? 'Edit ' + p.code : 'New promo code',
+            ok: p ? 'Save code' : 'Create code',
+            wide: true,
+            body: `<div class="grid g2" style="gap:0 12px">
+        <label class="f"><span>Code (players type this)</span><div style="display:flex;gap:8px"><input class="in mono" id="pc" maxlength="24" value="${esc(x.code)}" style="text-transform:uppercase;flex:1"><button type="button" class="btn" id="pRand" title="Make a random code">Random</button></div></label>
+        <label class="f"><span>Name (shown when they redeem)</span><input class="in" id="pn" maxlength="60" value="${esc(x.name)}" placeholder="e.g. Launch week bonus"></label>
+        <label class="f"><span>Reward</span><select class="in" id="pk">${kinds.map(k => `<option value="${k[0]}" ${x.kind === k[0] ? 'selected' : ''}>${k[1]}</option>`).join('')}</select></label>
+        <label class="f" id="paw"><span>Amount</span><input class="in" id="pa" type="number" min="1" step="any" value="${x.amount || 500}"></label>
+        <label class="f" id="piw" hidden><span>Item</span><select class="in" id="pi">${itemOptions(x.item_id)}</select></label>
+        <label class="f"><span>Max uses (empty = unlimited)</span><input class="in" id="pm" type="number" min="1" value="${x.max_uses || ''}" placeholder="Unlimited"></label>
+        <label class="f"><span>Expires (empty = never)</span><input class="in" id="pe" type="datetime-local" value="${localInput(x.expires_at)}"></label>
+        <label class="f"><span>Status</span><select class="in" id="ps"><option value="1" ${x.active ? 'selected' : ''}>Live — players can use it</option><option value="0" ${x.active ? '' : 'selected'}>Off</option></select></label></div>
+        <label class="f"><span>Message (optional, shown in the game)</span><input class="in" id="pmsg" maxlength="200" value="${esc(x.message || '')}" placeholder="Thanks for playing PAPERBULL!"></label>
+        <div class="promo-prev" id="pPrev"></div><div class="err"></div>`,
+            onMount: ov => {
+              const sync = () => {
+                const it = $('#pk', ov).value === 'item';
+                $('#piw', ov).hidden = !it;
+                $('#paw', ov).hidden = it;
+                const code = $('#pc', ov).value.toUpperCase().trim() || 'CODE';
+                const rw = it
+                  ? kindLabel({ kind: 'item', item_id: $('#pi', ov).value })
+                  : kindLabel({ kind: $('#pk', ov).value, amount: +$('#pa', ov).value });
+                $('#pPrev', ov).innerHTML = `<small>Preview</small><div><span class="mono">${esc(code)}</span> → <b>${esc(rw)}</b>${$('#pm', ov).value ? ` · first ${num($('#pm', ov).value)} players` : ' · unlimited players'}</div>`;
+              };
+              $('#pRand', ov).onclick = () => {
+                $('#pc', ov).value = randCode();
+                sync();
+              };
+              ['#pk', '#pa', '#pi', '#pc', '#pm'].forEach(s => {
+                $(s, ov).addEventListener('input', sync);
+                $(s, ov).addEventListener('change', sync);
+              });
+              sync();
+            },
+            onOk: async ov => {
+              const kind = $('#pk', ov).value,
+                amt = +$('#pa', ov).value,
+                item = $('#pi', ov).value;
+              const name =
+                $('#pn', ov).value.trim() ||
+                (kind === 'item' ? kindLabel({ kind, item_id: item }).replace('Item: ', '') : kindLabel({ kind, amount: amt }));
+              const exp = $('#pe', ov).value;
+              await A('pba_promo_save', {
+                p: {
+                  id: p ? p.id : null,
+                  code: $('#pc', ov).value,
+                  name,
+                  kind,
+                  amount: kind === 'item' ? null : amt,
+                  item_id: kind === 'item' ? item : null,
+                  max_uses: $('#pm', ov).value || null,
+                  expires_at: exp ? new Date(exp).toISOString() : null,
+                  message: $('#pmsg', ov).value,
+                  active: $('#ps', ov).value === '1',
+                },
+              });
+              toast(p ? 'Code saved' : 'Code created — share it with your players!');
+              this.load();
+            },
+          });
+        },
+      };
+
+      /* ---------- tournament ---------- */
+      const leftTxt = s => {
+        const ms = new Date(s) - Date.now();
+        if (ms <= 0) return 'ended';
+        const d = Math.floor(ms / 864e5),
+          h = Math.floor((ms % 864e5) / 36e5),
+          m = Math.floor((ms % 36e5) / 6e4);
+        return d ? `${d}d ${h}h left` : h ? `${h}h ${m}m left` : `${m}m left`;
+      };
+      const wk = s => 'Week of ' + new Date(s + 'T00:00:00Z').toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      VIEWS.tourney = {
+        season: null,
+        render(v) {
+          v.innerHTML =
+            head('Tournament', 'The weekly trading tournament. Everyone starts with $100,000 and the top 10 win coins.', `<button class="btn" id="tRf">Refresh</button>`) +
+            `<div id="tB">${skeleton(6)}</div>`;
+          $('#tRf').onclick = () => this.load();
+          this.load();
+        },
+        async load() {
+          const box = $('#tB');
+          let d;
+          try {
+            d = await A('pba_tourney', { p_season: this.season });
+          } catch (e) {
+            box.innerHTML = `<div class="card empty">${esc(e.message)}</div>`;
+            return;
+          }
+          this.d = d;
+          const pool = d.prizes.reduce((s, x) => s + x, 0);
+          const opts = [[d.current, 'This week (live)']].concat(d.seasons.filter(s => s.season !== d.current).map(s => [s.season, wk(s.season)]));
+          box.innerHTML = `
+      <section class="hero tn-hero"><div class="hero-t"><span class="hero-k" style="${d.live ? '' : 'color:var(--mut)'}"><i style="${d.live ? '' : 'background:var(--mut);box-shadow:none;animation:none'}"></i>${d.live ? 'Live now' : 'Finished'} · ${esc(wk(d.season))}</span>
+        <h2>${d.live ? esc(leftTxt(d.ends)) : 'Final standings'}</h2><p><b class="mono">${num(d.players)}</b> player${d.players === 1 ? '' : 's'} · <b class="mono">${num(pool)}</b> coins in prizes${d.live ? ` · <b class="mono">${num(d.trades_week)}</b> trades this week` : ''}</p></div>
+        <div class="hero-a"><select class="in" id="tSeason" aria-label="Pick a week">${opts.map(([s, l]) => `<option value="${s}" ${s === d.season ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></section>
+      <div class="grid g2 tn-grid"><div class="card"><div class="card-h"><h3>${d.live ? 'Live standings' : 'Results'}</h3>${d.live && d.dq_count ? `<span class="pill p-dn"><i></i>${num(d.dq_count)} disqualified</span>` : ''}</div>
+        ${d.rows.length ? `<div class="tw"><table><thead><tr><th>#</th><th>Player</th><th class="r">Value</th><th class="r">Return</th><th class="r">${d.live ? 'Trades' : 'Prize'}</th>${d.live && can('admin') ? '<th class="r"></th>' : ''}</tr></thead><tbody>
+        ${d.rows
+          .map(
+            r => `<tr class="${r.dq ? 'tn-dq' : ''}"><td class="mono">${r.dq ? '—' : r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] : r.rank || '—'}</td>
+          <td><a href="#/user/${esc(r.user_id)}" class="tn-p">${avatar(r.name || r.username)}<span><b>${esc(r.name || r.username)}</b><small class="muted">@${esc(r.username)}${r.dq ? ' · DQ: ' + esc(r.dq_reason || '') : r.status !== 'active' ? ' · ' + esc(r.status) : ''}</small></span></a></td>
+          <td class="r mono">${usd(r.value)}</td><td class="r mono ${cls(r.ret)}">${pct(r.ret)}</td>
+          <td class="r mono">${d.live ? num(r.trades) + (r.trades < 3 && !r.dq ? ' <span class="muted small" title="Needs 3 trades to win a prize">*</span>' : '') : r.prize ? num(r.prize) + ' 🪙' : '—'}</td>
+          ${d.live && can('admin') ? `<td class="r">${r.dq ? `<button class="btn sm" data-undq="${esc(r.user_id)}">Reinstate</button>` : `<button class="btn sm dan-o" data-dq="${esc(r.user_id)}" data-n="${esc(r.username)}">Disqualify</button>`}</td>` : ''}</tr>`
+          )
+          .join('')}</tbody></table></div>${d.live ? '<p class="small muted" style="margin:10px 0 0">* Needs at least 3 trades to win a prize.</p>' : ''}` : `<div class="empty">${IC.trophy}<p>No one has joined ${d.live ? 'this week yet' : 'that week'}.</p></div>`}</div>
+        <div><div class="card"><div class="card-h"><h3>Prizes</h3></div><div class="tn-prizes">${d.prizes.map((p, i) => `<div><span class="mono">#${i + 1}</span><b class="mono">${num(p)} 🪙</b></div>`).join('')}</div></div>
+        <div class="card"><div class="card-h"><h3>Past weeks</h3></div><div class="list">${d.seasons.length ? d.seasons.map(s => `<button class="li tn-past" data-s="${s.season}"><span class="ic-b">${IC.trophy}</span><div class="t"><b>${esc(wk(s.season))}</b><small>${s.winner ? '🥇 @' + esc(s.winner) : 'No winner'} · ${num(s.players)} player${s.players === 1 ? '' : 's'}</small></div><span class="mono small">${num(s.paid)} 🪙</span></button>`).join('') : '<div class="empty small">The first week hasn’t finished yet.</div>'}</div></div></div></div>`;
+          $('#tSeason').onchange = e => {
+            this.season = e.target.value === d.current ? null : e.target.value;
+            this.load();
+          };
+          $$('.tn-past', box).forEach(
+            b =>
+              (b.onclick = () => {
+                this.season = b.dataset.s;
+                this.load();
+              })
+          );
+          $$('[data-dq]', box).forEach(
+            b =>
+              (b.onclick = async () => {
+                const ok = await confirmBox({
+                  title: 'Disqualify @' + b.dataset.n + '?',
+                  text: 'They’ll be removed from this week’s standings and can’t win a prize. Their account stays open.',
+                  ok: 'Disqualify',
+                  reason: true,
+                });
+                if (!ok) return;
+                if (!ok.reason) return toast('Add a reason so you remember why.', 'err');
+                try {
+                  await act(A('pba_tourney_dq', { p_user: b.dataset.dq, p_dq: true, p_reason: ok.reason }), 'Player disqualified');
+                  this.load();
+                } catch (e) {}
+              })
+          );
+          $$('[data-undq]', box).forEach(
+            b =>
+              (b.onclick = async () => {
+                try {
+                  await act(A('pba_tourney_dq', { p_user: b.dataset.undq, p_dq: false }), 'Player is back in the tournament');
+                  this.load();
+                } catch (e) {}
+              })
+          );
+        },
+      };
+
+      /* ---------- users CSV export ---------- */
+      async function exportUsers(st) {
+        const all = [];
+        for (let page = 1; page <= 200; page++) {
+          const r = await A('pba_users', { p_q: st.q, p_status: st.status, p_sort: st.sort, p_dir: st.dir, p_page: page, p_per: 100 });
+          all.push(...r.rows);
+          if (all.length >= r.total || !r.rows.length) break;
+        }
+        if (!all.length) return toast('No users to export.', 'err');
+        const keys = Object.keys(all[0]).filter(k => all.some(u => u[k] !== null && typeof u[k] !== 'object'));
+        const q = v => {
+          const s = v == null ? '' : String(v);
+          return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        };
+        const csv = [keys.join(',')].concat(all.map(u => keys.map(k => q(u[k])).join(','))).join('\n');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        a.download = `paperbull-users-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(a.href);
+          a.remove();
+        }, 500);
+        toast(`Exported ${num(all.length)} users`);
+      }
+
+      /* ---------- online now (dashboard) ---------- */
+      async function paintOnline() {
+        const box = $('#onl');
+        if (!box) return;
+        let o;
+        try {
+          o = await A('pba_online');
+        } catch (e) {
+          box.innerHTML = `<div class="empty small">${esc(e.message)}</div>`;
+          return;
+        }
+        if (!$('#onl')) return;
+        box.innerHTML = `<div class="onl-l"><div class="onl-big"><span class="onl-dot${o.now ? '' : ' idle'}"></span><b class="mono">${num(o.now)}</b><span>playing right now</span></div>
+        <div class="onl-s"><div><b class="mono">${num(o.m15)}</b><small>last 15 min</small></div><div><b class="mono">${num(o.h1)}</b><small>last hour</small></div><div><b class="mono">${num(o.today)}</b><small>today</small></div></div></div>
+        <div class="onl-r">${o.rows.length ? o.rows.map(u => `<a href="#/user/${esc(u.id)}" class="onl-u" title="${esc(u.name || u.username)} · ${esc(ago(u.last_seen))}">${avatar(u.name || u.username)}<span><b>${esc(u.name || u.username)}</b><small>${esc(ago(u.last_seen))}</small></span></a>`).join('') : '<div class="empty small">Nobody in the last 15 minutes.</div>'}</div>`;
+      }
+      setInterval(() => {
+        if ($('#onl') && document.visibilityState === 'visible') paintOnline();
+      }, 30000);
 
       /* ---------- gifts catalog ---------- */
       VIEWS.gifts = {

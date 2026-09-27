@@ -21216,7 +21216,10 @@ ${id === 'gold' ? `${R} h1,${R} .card.hero [data-b="total"]{color:var(--amber)!i
     const r = r2.apply(this, arguments);
     try {
       paintNews();
-      if (document.body.dataset.screen === 'shop') paintShop();
+      if (document.body.dataset.screen === 'shop') {
+        paintShop();
+        paintRedeem();
+      }
     } catch (e) {
       console.error(e);
     }
@@ -21279,6 +21282,70 @@ ${id === 'gold' ? `${R} h1,${R} .card.hero [data-b="total"]{color:var(--amber)!i
     });
   }
 
+  /* ---------- promo codes ---------- */
+  const PROMO_ERR = {
+    bad_promo: 'That code doesn’t exist. Check the spelling.',
+    promo_expired: 'That code has expired.',
+    promo_used_up: 'That code has been used up. Watch for the next one!',
+    promo_already: 'You already used that code.',
+    slow_down: 'Too many tries. Wait a bit and try again.',
+    auth: 'Log in again to use codes.',
+  };
+  async function redeem(code, btn, msg) {
+    code = String(code || '').trim().toUpperCase();
+    if (!code) return;
+    if (!linked()) {
+      msg.className = 'pb-rd-msg err';
+      msg.textContent = 'Log in to use promo codes.';
+      document.getElementById('authBtn')?.click();
+      return;
+    }
+    btn.disabled = true;
+    const t = btn.textContent;
+    btn.textContent = '…';
+    msg.textContent = '';
+    try {
+      const r = await rpc('pb_redeem', { p_token: C.s.token, p_code: code });
+      if (r && r.error) throw new Error(PROMO_ERR[r.error] || r.error);
+      msg.className = 'pb-rd-msg ok';
+      msg.textContent = 'Code accepted! Unwrapping your reward…';
+      const inp = document.getElementById('pbRdIn');
+      if (inp) inp.value = '';
+      await claimGrants();
+    } catch (e) {
+      msg.className = 'pb-rd-msg err';
+      msg.textContent = PROMO_ERR[e.message] || e.message || 'Could not reach the server.';
+      SFX && SFX.play && SFX.play('error');
+    }
+    btn.disabled = false;
+    btn.textContent = t;
+  }
+  function paintRedeem() {
+    const v = document.getElementById('view');
+    if (!v || document.getElementById('pbRedeem')) return;
+    const anchor = v.querySelector(':scope > .pg-h');
+    const html = `<section class="card pb-rd" id="pbRedeem"><div class="pb-rd-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4z"/><path d="M14 6v2.2M14 10.9v2.2M14 15.8V18"/></svg></div>
+      <div class="pb-rd-t"><b>Have a promo code?</b><small>Type it in for free coins, cash or items.</small></div>
+      <form class="pb-rd-f" id="pbRdF" autocomplete="off"><input id="pbRdIn" maxlength="24" placeholder="ENTER CODE" aria-label="Promo code" autocapitalize="characters" spellcheck="false"><button class="btn primary" id="pbRdGo" type="submit">Redeem</button></form>
+      <div class="pb-rd-msg" id="pbRdMsg" role="status"></div></section>`;
+    if (anchor) anchor.insertAdjacentHTML('afterend', html);
+    else v.insertAdjacentHTML('afterbegin', html);
+    document.getElementById('pbRdF').onsubmit = e => {
+      e.preventDefault();
+      redeem(document.getElementById('pbRdIn').value, document.getElementById('pbRdGo'), document.getElementById('pbRdMsg'));
+    };
+  }
+  window.PBRedeem = code => {
+    go('shop');
+    setTimeout(() => {
+      const i = document.getElementById('pbRdIn');
+      if (i) {
+        i.value = code || '';
+        i.focus();
+      }
+    }, 120);
+  };
+
   /* ---------- gift shop inside the Shop page ---------- */
   async function loadCat(force) {
     if (!force && SITE.cat && Date.now() - SITE.catAt < 60000) return SITE.cat;
@@ -21315,7 +21382,7 @@ ${id === 'gold' ? `${R} h1,${R} .card.hero [data-b="total"]{color:var(--amber)!i
     }
     const g = document.getElementById('pbGs');
     if (!g) return;
-    if (!cat.length) {
+    if (!Array.isArray(cat) || !cat.length) {
       box.remove();
       return;
     }
@@ -27274,6 +27341,91 @@ html:not(.dark):not(#_):not(#_) .pg-h .pg-ic.tinted {
 html:not(#_):not(#_) .pg-h .pg-ic.tinted svg {
   stroke: currentColor !important;
   color: inherit !important;
+}
+
+/* ---------- promo code box (Shop) ---------- */
+.pb-rd {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 16px 18px !important;
+  border: 1px dashed color-mix(in srgb, #84cc16 55%, transparent) !important;
+  background:
+    radial-gradient(420px 140px at 0% 0%, rgba(132, 204, 22, 0.14), transparent 70%),
+    var(--panel) !important;
+}
+.pb-rd-ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, #bef264, #65a30d);
+  box-shadow: 0 8px 20px -8px #65a30d;
+}
+.pb-rd-ic svg {
+  width: 24px;
+  height: 24px;
+}
+.pb-rd-t {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.pb-rd-t b {
+  font-size: 15px;
+}
+.pb-rd-t small {
+  color: var(--muted, #8d92a3);
+}
+.pb-rd-f {
+  display: flex;
+  gap: 8px;
+}
+.pb-rd-f input {
+  width: 170px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line2, #2a2a33);
+  background: var(--bg2, rgba(255, 255, 255, 0.04));
+  color: inherit;
+  font: 700 15px/1 ui-monospace, 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pb-rd-f input:focus {
+  outline: none;
+  border-color: #84cc16;
+  box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.2);
+}
+.pb-rd-msg {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  font-weight: 650;
+}
+.pb-rd-msg:empty {
+  display: none;
+}
+.pb-rd-msg.ok {
+  color: #22c55e;
+}
+.pb-rd-msg.err {
+  color: #ef4444;
+}
+@media (max-width: 640px) {
+  .pb-rd {
+    grid-template-columns: auto 1fr;
+  }
+  .pb-rd-f {
+    grid-column: 1 / -1;
+  }
+  .pb-rd-f input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
 }
 
 </style>
