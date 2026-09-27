@@ -15049,6 +15049,14 @@ function init() {
       `<circle cx="24" cy="25" r="9" fill="#ffc6f0"/><ellipse cx="24" cy="25" rx="17" ry="5" fill="none" stroke="#ffe27a" stroke-width="2.6" transform="rotate(-18 24 25)"/><circle cx="10" cy="11" r="1.4" fill="${W}"/><circle cx="38" cy="10" r="1.8" fill="${W}"/><circle cx="37" cy="39" r="1.2" fill="${W}"/>`,
     ],
     [
+      'space',
+      'Space',
+      'Deep space, twinkling stars and shooting stars',
+      pal(234, 60, 188),
+      ['#3b2a8f', '#050716'],
+      `<path d="M24 7c6 4 8.5 11 8.5 17.5L28.5 30h-9l-4-5.5C15.5 18 18 11 24 7z" fill="${W}"/><circle cx="24" cy="18.5" r="3.3" fill="#3b2a8f"/><circle cx="24" cy="18.5" r="1.7" fill="#5ee7ff"/><path d="M19.5 24.5 14 29.5l1.5 3.5 5-3M28.5 24.5l5.5 5-1.5 3.5-5-3" fill="#5ee7ff"/><path d="M20.5 31.5c0 4 1.6 7.5 3.5 9.5 1.9-2 3.5-5.5 3.5-9.5z" fill="#ffb52e"/><path d="M22.4 31.5c0 2.6.7 4.9 1.6 6.3.9-1.4 1.6-3.7 1.6-6.3z" fill="#fff4c2"/><circle cx="9" cy="11" r="1.3" fill="${W}"/><circle cx="39" cy="14" r="1.6" fill="${W}"/><circle cx="37.5" cy="38" r="1.1" fill="${W}"/><circle cx="10" cy="36" r="0.9" fill="${W}"/>`,
+    ],
+    [
       'desert',
       'Desert',
       'Sandy, sunny, steady',
@@ -15215,6 +15223,7 @@ ${R} .stats-wrap{background:${mixA(g[0], L ? 10 : 14)}!important;border-color:${
     arctic: [SANS, SANS, 6, 4, 'outline', 'grid', 0, 0],
     volcano: [COND, COND, 2, 2, 'hard', 'stripes', 1, 0],
     galaxy: [SANS, SANS, 20, 999, 'glass', 'stars', 0, 1],
+    space: [SANS, COND, 18, 999, 'glow', 'stars', 1, 1],
     desert: [SANS, SERIF, 10, 8, 'outline', 'dunes', 0, 0],
     gold: [SANS, DIDOT, 4, 2, 'double', 'lines', 1, 0],
     candy: [ROUND, ROUND, 28, 999, 'candy', 'dots', 0, 0],
@@ -15338,6 +15347,38 @@ ${id === 'paper' ? `${R} .card.hero [data-b="total"]{font-style:italic}${R} .btn
 ${id === 'gold' ? `${R} h1,${R} .card.hero [data-b="total"]{color:var(--amber)!important;-webkit-text-fill-color:var(--amber)!important}` : ''}
 `;
   }
+  /* ---------- Space: moving starfield, nebula, ringed planet, shooting stars ---------- */
+  {
+    const R = 'html[data-theme="space"]:not(#_)';
+    const planet = svg(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360'><defs><radialGradient id='p' cx='38%' cy='34%' r='70%'><stop offset='0' stop-color='#b9a4ff'/><stop offset='.45' stop-color='#6a4de0'/><stop offset='1' stop-color='#140a3d'/></radialGradient><linearGradient id='r' x1='0' x2='1'><stop offset='0' stop-color='#5ee7ff' stop-opacity='0'/><stop offset='.5' stop-color='#5ee7ff' stop-opacity='.75'/><stop offset='1' stop-color='#ffb52e' stop-opacity='0'/></linearGradient></defs><ellipse cx='180' cy='188' rx='168' ry='38' fill='none' stroke='url(#r)' stroke-width='7' transform='rotate(-16 180 188)' opacity='.55'/><circle cx='180' cy='180' r='92' fill='url(#p)'/><path d='M104 150c40 10 110 6 150-12M96 186c52 12 120 10 166-8M112 222c40 8 94 6 130-8' stroke='#fff' stroke-opacity='.09' stroke-width='9' fill='none' stroke-linecap='round'/><path d='M14 196C60 214 300 180 346 170' stroke='url(#r)' stroke-width='7' fill='none' transform='rotate(-16 180 188)' opacity='.9'/></svg>`
+    );
+    const stars2 = `radial-gradient(1.4px 1.4px at 8% 12%,#fff 50%,transparent 55%),radial-gradient(1.8px 1.8px at 64% 22%,#bfefff 50%,transparent 55%),radial-gradient(1.2px 1.2px at 30% 58%,#fff 50%,transparent 55%),radial-gradient(2.2px 2.2px at 86% 74%,#ffe7b0 50%,transparent 55%),radial-gradient(1px 1px at 47% 88%,#fff 50%,transparent 55%),radial-gradient(1.6px 1.6px at 18% 84%,#d6c9ff 50%,transparent 55%)`;
+    css += `
+${R}{--bg:#04050f!important;--bg2:#070a1c!important;--panel:#0b0f26!important;--panel2:#11163a!important;--line:#1d2350!important;--line2:#2a3170!important;--amber:#5ee7ff!important;--violet:#a78bfa!important}
+${R} body::after{background:radial-gradient(900px 560px at 8% -6%,rgba(124,77,255,.32),transparent 62%),radial-gradient(760px 520px at 100% 30%,rgba(34,211,238,.16),transparent 60%),radial-gradient(900px 600px at 40% 115%,rgba(236,72,153,.16),transparent 60%),#04050f!important}
+${R} body::before{animation:spDrift 160s linear infinite;opacity:.75!important}
+${R}::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:${stars2};background-size:420px 420px;animation:spTwinkle 4.5s ease-in-out infinite alternate,spDrift2 220s linear infinite}
+${R}::after{content:'';position:fixed;z-index:0;pointer-events:none;width:320px;height:320px;right:-70px;bottom:-60px;background:${planet} center/contain no-repeat;opacity:.55;filter:drop-shadow(0 0 40px rgba(124,77,255,.45));animation:spFloat 18s ease-in-out infinite}
+${R} #app::before,${R} #app::after{content:'';position:fixed;z-index:-1;pointer-events:none;top:12%;left:-20%;width:180px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95));filter:drop-shadow(0 0 6px #5ee7ff);transform:rotate(-24deg);opacity:0;animation:spShoot 9s ease-in 2s infinite}
+${R} #app::after{top:38%;width:120px;animation-duration:13s;animation-delay:6.5s}
+${R} .card,${R} .tile,${R} .stock-card,${R} .pack-card,${R} .promo,${R} .bk-card,${R} .stat-card{background:linear-gradient(180deg,rgba(17,22,58,.82),rgba(9,12,34,.86))!important;backdrop-filter:blur(6px);border-color:rgba(94,231,255,.22)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 0 28px -14px rgba(94,231,255,.55)!important}
+${R} .card.hero{background:radial-gradient(520px 220px at 100% 0%,rgba(167,139,250,.35),transparent 70%),radial-gradient(420px 220px at 0% 100%,rgba(94,231,255,.18),transparent 70%),linear-gradient(180deg,#121845,#0a0d2a)!important}
+${R} .card.hero [data-b="total"]{color:#f4fbff!important;-webkit-text-fill-color:#f4fbff!important;text-shadow:0 0 22px rgba(94,231,255,.45)!important;filter:none!important}
+${R} .btn.primary{background:linear-gradient(95deg,#5ee7ff,#7c4dff)!important;color:#fff!important;border:0!important;box-shadow:0 8px 24px -8px rgba(124,77,255,.8)!important}
+${R} #nav{background:#05071a!important;border-color:rgba(94,231,255,.18)!important}
+${R} #nav a.on{color:#5ee7ff!important}
+${R} #topWrap{background:rgba(4,5,15,.78)!important;backdrop-filter:blur(12px)}
+${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
+@keyframes spDrift{from{background-position:0 0}to{background-position:-520px 260px}}
+@keyframes spDrift2{from{background-position:0 0}to{background-position:420px -840px}}
+@keyframes spTwinkle{0%{opacity:.35}100%{opacity:1}}
+@keyframes spFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-16px) rotate(4deg)}}
+@keyframes spShoot{0%{opacity:0;transform:translate(0,0) rotate(-24deg)}3%{opacity:1}12%{opacity:0;transform:translate(95vw,-42vh) rotate(-24deg)}100%{opacity:0;transform:translate(95vw,-42vh) rotate(-24deg)}}
+@media (max-width:640px){${R}::after{width:200px;height:200px;right:-60px;bottom:70px;opacity:.4}}
+@media (prefers-reduced-motion:reduce){${R}::before,${R}::after,${R} body::before,${R} #app::before,${R} #app::after{animation:none!important}${R} #app::before,${R} #app::after{display:none}}
+`;
+  }
   const st = document.createElement('style');
   st.id = 'themesPlus';
   st.textContent = css;
@@ -15399,7 +15440,7 @@ ${id === 'gold' ? `${R} h1,${R} .card.hero [data-b="total"]{color:var(--amber)!i
       const c = p || { bg: '#0b0b10', tx: '#f3f4f8', amber: '#ff9a26', up: '#22d67a' };
       return `<button class="th-card ${cur === id ? 'on' : ''}" data-th="${id}" style="--pbg:${id === 'classic' ? 'radial-gradient(160px 90px at 85% 0%,rgba(122,76,255,.35),transparent 70%),#0b0b10' : c.bg};--ptx:${c.tx};--pac:${c.amber};--pup:${c.up}">${cur === id ? '<span class="th-on">Active</span>' : ''}${logo(id, g, art)}<b>${name}</b><small>${tag}</small><span class="th-bar"></span></button>`;
     };
-    el.innerHTML = `<section class="card"><div class="th-head"><div><h2 style="margin:0">Themes</h2><p style="color:var(--mut);margin:6px 0 0">20 themes. Tap one to restyle the whole site.</p></div><button class="th-sur" id="thRandom">Surprise me</button></div><div class="th-grid" id="thGrid">${THEMES.map(card).join('')}</div></section>`;
+    el.innerHTML = `<section class="card"><div class="th-head"><div><h2 style="margin:0">Themes</h2><p style="color:var(--mut);margin:6px 0 0">${THEMES.length} themes. Tap one to restyle the whole site.</p></div><button class="th-sur" id="thRandom">Surprise me</button></div><div class="th-grid" id="thGrid">${THEMES.map(card).join('')}</div></section>`;
     el.querySelector('#thRandom').onclick = () => {
       const pool = THEMES.filter(t => t[0] !== cur),
         t = pool[Math.floor(Math.random() * pool.length)];
@@ -27426,6 +27467,29 @@ html:not(#_):not(#_) .pg-h .pg-ic.tinted svg {
     width: auto;
     min-width: 0;
   }
+}
+
+/* ---------- holdings rows: long details never run into the value ---------- */
+#pHold .hrow {
+  gap: 10px;
+}
+#pHold .hrow .l {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#pHold .hrow .l > span {
+  min-width: 0;
+  overflow: hidden;
+}
+#pHold .hrow .l small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#pHold .hrow .rt {
+  flex: none;
+  text-align: right;
 }
 
 </style>
