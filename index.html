@@ -21329,6 +21329,13 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   }
   gear();
   setTimeout(gear, 400);
+  // the sidebar Settings button used to be wired by Learn Mode; wire it here for good
+  document.addEventListener('click', e => {
+    const b = e.target.closest('#settingsBtn');
+    if (!b) return;
+    e.preventDefault();
+    go('settings');
+  });
   paintIcons();
   setTimeout(paintIcons, 500);
   setInterval(paintIcons, 3000);
@@ -27891,6 +27898,16 @@ html:not(#_):not(#_) .pg-h .pg-ic.tinted svg {
   border: 1px solid color-mix(in srgb, var(--dn) 30%, transparent) !important;
   flex: 0 0 auto;
   padding-inline: 12px !important;
+}
+
+/* the settings gear stays visible on every phone (the dark/light toggle lives in Settings too) */
+@media (max-width: 420px) {
+  #top .pb-gear {
+    display: grid !important;
+  }
+  #top .mode-btn {
+    display: none !important;
+  }
 }
 
 </style>
