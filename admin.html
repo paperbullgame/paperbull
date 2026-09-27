@@ -1014,6 +1014,62 @@
         opacity: 0.5;
         cursor: not-allowed;
       }
+      .qa {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin: 0 0 16px;
+      }
+      .qa-l {
+        grid-column: 1 / -1;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mut);
+      }
+      .qa-l em {
+        font-style: normal;
+        font-weight: 500;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+      .qa-b {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        column-gap: 10px;
+        align-items: center;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--tx);
+        font: inherit;
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+        transition: border-color 0.15s, transform 0.15s, background 0.15s;
+      }
+      .qa-b:hover {
+        border-color: var(--brand);
+        transform: translateY(-1px);
+      }
+      .qa-b .ni {
+        grid-row: 1 / 3;
+      }
+      .qa-b b {
+        font-size: 13.5px;
+      }
+      .qa-b small {
+        font-size: 11.5px;
+        color: var(--mut);
+      }
+      @media (max-width: 900px) {
+        .qa {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
       .live {
         display: flex;
         align-items: center;
@@ -3535,6 +3591,13 @@
           v.innerHTML =
             head('Dashboard', 'A live look at PAPERBULL.', `<button class="btn" id="rf">Refresh</button>`) +
             hero +
+            (can('admin')
+              ? `<div class="qa"><span class="qa-l">Quick controls <em>· reach every open game instantly</em></span>
+        <button class="qa-b" data-qa="price">${navIco('market')}<b>Set a stock price</b><small>Jump any ticker to a new price</small></button>
+        <button class="qa-b" data-qa="add">${navIco('market')}<b>Add a stock</b><small>List a new company or coin</small></button>
+        <a class="qa-b" href="#/shop">${navIco('shop')}<b>Shop prices</b><small>Discount or pull any item</small></a>
+        <a class="qa-b" href="#/site">${navIco('site')}<b>Events &amp; settings</b><small>2× coins, bonuses, volatility</small></a></div>`
+              : '') +
             `<div class="kpis">
       ${k('', IC.users, 'Total users', num(s.users), `${num(s.banned)} banned · ${num(s.suspended)} suspended`)}
       ${k('c2', IC.pulse, 'Active users (24h)', num(s.active_24h), `${num(s.active_7d)} this week`, 'active')}
@@ -3551,6 +3614,14 @@
       <div class="grid g2" style="margin-top:16px"><div class="card"><div class="card-h"><h3>Top players</h3><a href="#/users" class="small">All users</a></div><div class="list">${(s.top || []).length ? s.top.map((t, i) => `<div class="li"><span class="mono muted" style="width:18px">${i + 1}</span>${avatar(t.name)}<div class="t"><b>${esc(t.name)}</b><small>@${esc(t.username)}</small></div><span class="mono ${cls(t.return_pct)}">${pct(t.return_pct)}</span></div>`).join('') : '<div class="empty">No ranked players yet.</div>'}</div></div>
       <div class="card"><div class="card-h"><h3>Recent admin activity</h3>${audit ? '<a href="#/audit" class="small">Audit log</a>' : ''}</div><div class="list">${audit ? (audit.rows.length ? audit.rows.map(a => `<div class="li"><span class="dot" style="background:var(--brand)"></span><div class="t"><b>${esc(actLabel(a.action))}${a.target_label ? ' · ' + esc(a.target_label) : ''}</b><small>${esc(a.admin_name || 'system')} · ${ago(a.created_at)}</small></div></div>`).join('') : '<div class="empty">Nothing yet.</div>') : '<div class="empty">Admins and owners can see the audit log.</div>'}</div></div></div>`;
           $('#rf').onclick = () => this.render(v);
+          $$('[data-qa]', v).forEach(
+            b =>
+              (b.onclick = () => {
+                VIEWS.market.rows = VIEWS.market.rows || [];
+                if (b.dataset.qa === 'price') VIEWS.market.priceFor('');
+                else VIEWS.market.edit(null, true);
+              })
+          );
           paintOnline();
           paintFeed();
           this.charts();
@@ -5304,7 +5375,7 @@
           try {
             this.rows = await A('pba_market');
           } catch (e) {
-            $('#mkBox').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+            if ($('#mkBox')) $('#mkBox').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
             return;
           }
           this.paint();
@@ -5465,7 +5536,7 @@
             const s = await A('pba_site');
             this.ov = s.items || {};
           } catch (e) {
-            $('#shBox').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+            if ($('#shBox')) $('#shBox').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
             return;
           }
           this.paint();

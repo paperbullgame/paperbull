@@ -5116,7 +5116,10 @@ function checkMargin(sym, t, quiet) {
   if (!r.ok) return;
   acct.flags.marginCall = true;
   if (quiet) FF.fills.push(r.trade);
-  else toast(`Margin call: ${sym} doubled, so your short was closed. ${fmtSigned(r.trade.pnl)}`, 'err');
+  else {
+    toast(`Margin call: ${sym} doubled, so your short was closed. ${fmtSigned(r.trade.pnl)}`, 'err');
+    if (window.PBNotify) PBNotify(`Margin call on ${sym}`, `Your short was closed. ${fmtSigned(r.trade.pnl)}`);
+  }
 }
 function addNews(item, quiet) {
   NEWS.unshift(item);
@@ -5125,10 +5128,12 @@ function addNews(item, quiet) {
     FF.news++;
     return;
   }
-  const held = item.sym && acct.positions[item.sym],
-    viewing = item.sym && viewingSym === item.sym;
-  if (held || viewing) SFX.play('news');
-  if (held || viewing) toast(`${item.sym ? item.sym + ': ' : ''}${item.text}`, 'news', item.up ? '📈' : '📉');
+  const held = item.sym && (acct.positions[item.sym] || (acct.shorts && acct.shorts[item.sym])),
+    viewing = item.sym && viewingSym === item.sym,
+    alert = (held || viewing) && settings.nNews !== false;
+  if (alert) SFX.play('news');
+  if (alert) toast(`${item.sym ? item.sym + ': ' : ''}${item.text}`, 'news', item.up ? '📈' : '📉');
+  if (held && item.mega && window.PBNotify) PBNotify(`${item.sym}: ${item.up ? 'big move up' : 'big move down'}`, item.text);
   newsDirty = true;
   needRender = true;
 }
@@ -6022,11 +6027,13 @@ function checkOrders(sym, t, quiet) {
       if (quiet) {
         if (r.ok) FF.fills.push(r.trade);
       } else if (r.ok) {
-        toast(
-          `Limit ${o.side} filled: ${fmtQty(o.qty)} ${sym} @ ${fmtUSD(a.price)} — ${tradeQuip(r.trade)}`,
-          'ok'
-        );
-      } else toast(`Limit order cancelled — ${r.msg}`, 'err');
+        if (settings.nOrders !== false)
+          toast(
+            `Limit ${o.side} filled: ${fmtQty(o.qty)} ${sym} @ ${fmtUSD(a.price)} — ${tradeQuip(r.trade)}`,
+            'ok'
+          );
+        if (window.PBNotify) PBNotify(`Limit ${o.side} filled`, `${fmtQty(o.qty)} ${sym} @ ${fmtUSD(a.price)}`);
+      } else if (settings.nOrders !== false) toast(`Limit order cancelled — ${r.msg}`, 'err');
     }
   }
 }
@@ -7232,7 +7239,7 @@ function sparkSVG(a, w = 72, h = 28) {
 function newsHTML(n, fresh) {
   const imp = `<span class="im ${n.up ? 'pos' : 'neg'}">${n.up ? '▲' : '▼'} ${fmtPct(n.pct, 1).replace(/^[+-]/, '')}</span>`;
   const tag = n.sym
-    ? `<span class="sy" data-go="asset/${n.sym}" tabindex="0" role="link">${esc(n.sym)}</span>`
+    ? `${assetIcon(n.sym).replace('tk-badge', 'tk-badge sm')}<span class="sy" data-go="asset/${n.sym}" tabindex="0" role="link">${esc(n.sym)}</span>`
     : `<span class="sy macro">${n.group === 'crypto' ? 'CRYPTO' : 'MARKET'}</span>`;
   return `<div class="news${fresh ? ' fresh' : ''}">${tag}<span class="tx">${esc(n.text)}<small>${timeAgo(n.t * 1000)}</small></span>${imp}</div>`;
 }
@@ -8306,7 +8313,7 @@ const Portfolio = {
       ? acct.orders
           .map(
             o =>
-              `<div class="orow"><span class="side-tag ${o.side}">${o.side.toUpperCase()}</span><span class="d"><b>${esc(o.sym)}</b> <span class="mono">${fmtQty(o.qty)} @ ${fmtUSD(o.limit)}</span><small>now ${fmtUSD(priceOf(o.sym))} · placed ${fmtDateTime(o.t)}</small></span><button class="btn sm ghost" data-cancel="${o.id}">Cancel</button></div>`
+              `<div class="orow"><span class="side-tag ${o.side}">${o.side.toUpperCase()}</span>${assetIcon(o.sym).replace('tk-badge', 'tk-badge sm')}<span class="d"><b>${esc(o.sym)}</b> <span class="mono">${fmtQty(o.qty)} @ ${fmtUSD(o.limit)}</span><small>now ${fmtUSD(priceOf(o.sym))} · placed ${fmtDateTime(o.t)}</small></span><button class="btn sm ghost" data-cancel="${o.id}">Cancel</button></div>`
           )
           .join('')
       : '<div class="empty">No open orders. Place a limit order from any asset page.</div>';
@@ -8330,7 +8337,7 @@ const Portfolio = {
     $('#pHist').innerHTML = list.length
       ? list
           .map(
-            t => `<div class="trow"><span class="side-tag ${t.side}">${t.side.toUpperCase()}</span>
+            t => `<div class="trow"><span class="side-tag ${t.side}">${t.side.toUpperCase()}</span>${assetIcon(t.sym).replace('tk-badge', 'tk-badge sm')}
       <span class="d"><b>${esc(t.sym)}</b> <span class="mono">${fmtQty(t.qty)} @ ${fmtUSD(t.price)}</span><small>${fmtDateTime(t.t)} · ${t.kind}</small></span>
       <span class="v">${fmtUSD(t.value, 2)}${t.pnl != null ? `<small class="${cls(t.pnl)}">${fmtSigned(t.pnl)}</small>` : ''}</span></div>`
           )
@@ -8377,7 +8384,7 @@ function confirmReset() {
 /* ---------- LEADERBOARD ---------- */
 const Ranks = {
   mount(v) {
-    v.innerHTML = `<section class="card"><div class="card-h"><h3>Leaderboard · % return</h3><span class="muted small">${esc(Leaderboard.label)}</span></div><div id="rkPod" class="podium"></div><div id="rkList"><div class="empty">Loading…</div></div></section>
+    v.innerHTML = `<section class="card"><div class="card-h"><h3>Leaderboard · % return</h3><span class="muted small">${esc(Leaderboard.label)}</span></div><div id="rkPod" class="podium"></div><div id="rkList"><div class="pb-skel"><i></i><i></i><i></i><i></i><i></i></div></div></section>
       <p class="muted small" style="text-align:center;margin:4px 0 14px">Bots started with $100,000 the moment you did and never trade. Beat them all for <b>Bot Slayer</b>. Friends can sign up for their own account on this device.</p>`;
     submitLeaderboard(true);
     this.render();
@@ -8879,14 +8886,15 @@ function checkDailyLogin() {
   const bonus = coinGain((GAME.daily_bonus + 10 * Math.min(acct.login.streak - 1, 10)) * (1 + petPerk('loginPct')));
   acct.coins += bonus;
   saveAcct(true);
-  setTimeout(
-    () =>
-      toast(
-        `Daily bonus: +${bonus} coins${acct.login.streak > 1 ? ` · ${acct.login.streak}-day streak` : ''}`,
-        'xp'
-      ),
-    1200
-  );
+  if (settings.nDaily !== false)
+    setTimeout(
+      () =>
+        toast(
+          `Daily bonus: +${bonus} coins${acct.login.streak > 1 ? ` · ${acct.login.streak}-day streak` : ''}`,
+          'xp'
+        ),
+      1200
+    );
 }
 function itemFace(it, big) {
   const c = big ? ' big' : '';
@@ -13999,6 +14007,111 @@ function init() {
   saveMarket();
 }
 /* SHOP-PLUS:START */
+/* =====================================================================
+   LOGOS — every stock and coin gets its own logo, everywhere.
+   Real companies and coins load their real logo; everything else (the
+   2,000 generated names, admin-added tickers, offline) gets a brand mark
+   that is generated from the ticker: same mark every time, on every
+   screen, no image requests. Marks are cached per ticker.
+   ===================================================================== */
+(() => {
+  const CACHE = new Map(),
+    FAIL = new Set();
+  const h32 = s => {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+    return h >>> 0;
+  };
+  /* ---- color helpers: shift each ticker's hue a little so no two neighbours look the same ---- */
+  const hex2hsl = hex => {
+    const n = parseInt(hex.slice(1), 16),
+      r = ((n >> 16) & 255) / 255,
+      g = ((n >> 8) & 255) / 255,
+      b = (n & 255) / 255,
+      mx = Math.max(r, g, b),
+      mn = Math.min(r, g, b),
+      l = (mx + mn) / 2;
+    let hh = 0,
+      s = 0;
+    if (mx !== mn) {
+      const d = mx - mn;
+      s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+      hh = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      hh *= 60;
+    }
+    return [hh, s * 100, l * 100];
+  };
+  const hsl = (h, s, l) => `hsl(${Math.round(((h % 360) + 360) % 360)} ${Math.round(s)}% ${Math.round(l)}%)`;
+  function tint(sym) {
+    const [a, b] = SECTOR_TINT[sectorOf(sym)] || SECTOR_TINT.Tech,
+      k = h32(sym),
+      dh = (k % 29) - 14, // ±14° hue
+      dl = ((k >> 5) % 9) - 4; // ±4% lightness
+    const A = hex2hsl(a),
+      B = hex2hsl(b);
+    return [hsl(A[0] + dh, A[1], A[2] + dl), hsl(B[0] + dh, B[1], B[2] + dl)];
+  }
+  /* ---- monogram: initials of the name, or the ticker when it's short ---- */
+  const SKIP = new Set(['THE', 'AND', 'OF', 'ETF', 'INC', 'CO', 'CORP', 'LTD', 'PLC', 'GROUP', 'HOLDINGS', 'AG', 'SA', 'NV']);
+  function mono(a) {
+    if (GLYPH[a.sym]) return GLYPH[a.sym];
+    if (a.sym.length <= 2) return a.sym;
+    const w = String(a.name || a.sym)
+      .split(/[\s\-–]+/)
+      .map(x => x.replace(/[^A-Za-z0-9]/g, ''))
+      .filter(x => x && !SKIP.has(x.toUpperCase()));
+    if (w.length >= 2) return (w[0][0] + w[1][0]).toUpperCase();
+    if (w.length === 1 && w[0].length >= 2) return w[0].slice(0, 1).toUpperCase() + (a.sym.length > 3 ? '' : a.sym.slice(1, 2));
+    return a.sym.slice(0, 2);
+  }
+  /* ---- twelve mark styles: a geometric device + the monogram ---- */
+  const W = '#fff';
+  const txt = (L, y = 20, s) =>
+    `<text x="20" y="${y}" dy=".36em" text-anchor="middle" font-size="${s || (L.length > 1 ? 15 : 18)}" font-weight="800" letter-spacing="-.5" fill="${W}">${L}</text>`;
+  const STY = [
+    L => `<circle cx="20" cy="20" r="14" fill="${W}" fill-opacity=".14"/><circle cx="20" cy="20" r="14" fill="none" stroke="${W}" stroke-opacity=".55" stroke-width="1.6"/>${txt(L)}`,
+    L => `<rect x="9" y="9" width="22" height="22" rx="5" transform="rotate(45 20 20)" fill="${W}" fill-opacity=".14" stroke="${W}" stroke-opacity=".5" stroke-width="1.5"/>${txt(L, 20, L.length > 1 ? 13 : 16)}`,
+    L => `<path d="M20 5l13 7.5v15L20 35 7 27.5v-15z" fill="${W}" fill-opacity=".14" stroke="${W}" stroke-opacity=".55" stroke-width="1.5" stroke-linejoin="round"/>${txt(L)}`,
+    L => `<path d="M0 40L40 0v40z" fill="#000" fill-opacity=".18"/><path d="M0 40L40 0" stroke="${W}" stroke-opacity=".35" stroke-width="1.2"/>${txt(L)}`,
+    L => `<circle cx="20" cy="20" r="13" fill="none" stroke="${W}" stroke-opacity=".9" stroke-width="3.2"/><circle cx="20" cy="20" r="13" fill="none" stroke="#000" stroke-opacity=".15" stroke-width="5.5"/>${txt(L, 20, L.length > 1 ? 12.5 : 15)}`,
+    L => `<rect x="6" y="26" width="4" height="8" rx="1.2" fill="${W}" fill-opacity=".5"/><rect x="11.5" y="21" width="4" height="13" rx="1.2" fill="${W}" fill-opacity=".7"/><rect x="17" y="15" width="4" height="19" rx="1.2" fill="${W}" fill-opacity=".95"/>${txt(L, 18, L.length > 1 ? 13 : 16).replace('x="20"', 'x="29"')}`,
+    L => `<path d="M10 14l10-8 10 8" fill="none" stroke="${W}" stroke-opacity=".9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${txt(L, 26, L.length > 1 ? 14 : 17)}`,
+    L => `<path d="M20 5l12 4.5v9.5c0 7-5 12.5-12 15.5-7-3-12-8.5-12-15.5V9.5z" fill="${W}" fill-opacity=".14" stroke="${W}" stroke-opacity=".55" stroke-width="1.5" stroke-linejoin="round"/>${txt(L, 19)}`,
+    L => `<path d="M20 5c9 6 14 12 14 19a14 14 0 0 1-28 0c0-7 5-13 14-19z" fill="${W}" fill-opacity=".14" stroke="${W}" stroke-opacity=".55" stroke-width="1.5"/>${txt(L, 23)}`,
+    L => `<path d="M20 7l14 24H6z" fill="${W}" fill-opacity=".14" stroke="${W}" stroke-opacity=".55" stroke-width="1.5" stroke-linejoin="round"/>${txt(L, 25, L.length > 1 ? 12.5 : 15)}`,
+    L => `<path d="M5 30l9-9 6 5 8-10 7 4" fill="none" stroke="${W}" stroke-opacity=".5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>${txt(L, 17)}`,
+    L => `<rect x="4" y="4" width="32" height="32" rx="9" fill="none" stroke="${W}" stroke-opacity=".5" stroke-width="1.6"/><rect x="9" y="9" width="22" height="22" rx="6" fill="${W}" fill-opacity=".14"/>${txt(L, 20, L.length > 1 ? 13 : 16)}`,
+  ];
+  window.brandMark = function (sym) {
+    const a = SIM[sym] || { sym, name: sym };
+    const key = sym + '|' + a.name;
+    let m = CACHE.get(key);
+    if (m) return m;
+    const k = h32(a.name + '/' + sym),
+      L = esc(mono(a));
+    m = `<svg class="bm" viewBox="0 0 40 40" aria-hidden="true">${STY[k % STY.length](L)}</svg>`;
+    CACHE.set(key, m);
+    return m;
+  };
+  const REAL = new Set(UNIVERSE.map(u => u[0]));
+  window.__lf = img => {
+    // remember tickers that have no real logo so we never ask twice
+    const s = img.getAttribute('data-s');
+    if (s) FAIL.add(s);
+    img.remove();
+  };
+  assetIcon = function (sym, big) {
+    const A = SIM[sym],
+      [a, b] = tint(sym),
+      real = A && !A.lite && !A.admin && REAL.has(sym) && logosOn() && !FAIL.has(sym),
+      url = real ? (A.type === 'stock' ? LOGO_URL.replace('{SYM}', sym) : COIN_LOGO_URL.replace('{sym}', sym.toLowerCase())) : '';
+    const img = url
+      ? `<img src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-s="${esc(sym)}" onload="this.classList.add('ok')" onerror="__lf(this)">`
+      : '';
+    return `<span class="aic tk-badge bm-w${big ? ' lg' : ''}" style="--ta:${a};--tb:${b}" aria-hidden="true" data-sym="${esc(sym)}">${brandMark(sym)}${img}</span>`;
+  };
+})();
+
 /* ===================== SHOP & PETS EXPANSION ===================== */
 (function () {
   const pt = (cx, cy, r, a) => `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
@@ -21374,6 +21487,23 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   setInterval(paintIcons, 3000);
 })();
 
+/* page transition: replay a short rise-in whenever the screen changes */
+(() => {
+  let last = document.body.dataset.screen;
+  const mo = new MutationObserver(() => {
+    const k = document.body.dataset.screen;
+    if (k === last) return;
+    last = k;
+    const v = document.getElementById('view');
+    if (!v) return;
+    v.classList.remove('pg-in');
+    void v.offsetWidth;
+    v.classList.add('pg-in');
+    v.addEventListener('animationend', () => v.classList.remove('pg-in'), { once: true });
+  });
+  mo.observe(document.body, { attributes: true, attributeFilter: ['data-screen'] });
+})();
+
 /* =====================================================================
    ONLINE — accounts that work on any device, cloud saves,
    a global leaderboard, friends and coin gifts (Supabase RPCs).
@@ -21463,6 +21593,9 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     too_big: 'Save is too big to upload.',
     feature_off: 'That feature is turned off right now.',
     not_available: 'That gift isn’t available anymore.',
+    no_coins: 'You don’t have enough coins for that.',
+    already_claimed: 'You already claimed this one.',
+    slow_down: 'Slow down a little and try again in a minute.',
   };
   window.PBCloud = { rpc, C };
 
@@ -21642,8 +21775,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   };
 
   /* ---------------- gifts from friends ---------------- */
+  let claiming = false,
+    grantsBusy = false;
   async function claim() {
-    if (!linked()) return;
+    if (!linked() || claiming) return; // one claim at a time, so a gift can never be counted twice
+    claiming = true;
     try {
       const g = await rpc('pb_gifts_claim', { p_token: C.s.token });
       if (g && g.length) {
@@ -21657,6 +21793,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       }
     } catch (e) {
       authFail(e);
+    } finally {
+      claiming = false;
     }
   }
 
@@ -21734,7 +21872,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     <span class="rk-av">${avatarArt(r.avatar || 'av_bull')}</span><span class="who"><b>${E(r.name || r.username)}</b> ${r.me ? '<span class="sim-pill">YOU</span>' : ''}<small>@${E(r.username)}${r.level ? ` · LV ${r.level}` : ''}${r.trades != null ? ` · ${(r.trades || 0).toLocaleString()} trades` : ''}</small></span>
     <span class="ret"><span class="${cls(r.return_pct)}">${fmtPct(r.return_pct)}</span><small>${fmtUSD(r.value, 0)}</small></span></div>`;
   function cardHTML() {
-    return `<section class="card ol-card" id="olCard"><div class="card-h"><h3>Online leaderboard</h3><span class="muted small ol-fair">Real players, updated live</span><div class="seg" id="olTabs"><button data-t="global" class="${C.tab === 'global' ? 'on' : ''}">Global</button><button data-t="friends" class="${C.tab === 'friends' ? 'on' : ''}">Friends</button></div></div><div id="olBody"><div class="empty">Loading…</div></div></section>`;
+    return `<section class="card ol-card" id="olCard"><div class="card-h"><h3>Online leaderboard</h3><span class="muted small ol-fair">Real players, updated live</span><div class="seg" id="olTabs"><button data-t="global" class="${C.tab === 'global' ? 'on' : ''}">Global</button><button data-t="friends" class="${C.tab === 'friends' ? 'on' : ''}">Friends</button></div></div><div id="olBody"><div class="pb-skel"><i></i><i></i><i></i><i></i></div></div></section>`;
   }
   async function loadLB(force) {
     if (!force && C.lb && Date.now() - C.lbAt < 20000) return C.lb;
@@ -22154,16 +22292,24 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     }
     return g.name;
   }
+  const seenGrants = new Set(Store.get('pb2.grantsSeen', []) || []);
   async function claimGrants() {
-    if (!linked()) return;
+    if (!linked() || grantsBusy) return;
+    grantsBusy = true;
     let list;
     try {
       list = await rpc('pb_grants_claim', { p_token: C.s.token });
     } catch (e) {
       authFail(e);
       return;
+    } finally {
+      grantsBusy = false;
     }
-    if (!list || !list.length) return;
+    // belt and braces: never apply the same grant id twice on this device
+    list = (list || []).filter(g => !seenGrants.has(g.id));
+    if (!list.length) return;
+    for (const g of list) seenGrants.add(g.id);
+    Store.set('pb2.grantsSeen', [...seenGrants].slice(-300));
     const got = list.map(g => ({ g, what: apply(g) }));
     saveAcct(true);
     if (typeof recordHistory === 'function')
@@ -22269,7 +22415,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if (!box) {
       const anchor = v.querySelector(':scope > .pg-h') || null;
       const html =
-        '<section class="card" id="pbGiftShop"><div class="card-h"><h3>Gift shop</h3><span class="muted small">Special offers from the PAPERBULL team</span></div><div class="pb-gs" id="pbGs"><div class="empty">Loading…</div></div></section>';
+        '<section class="card" id="pbGiftShop"><div class="card-h"><h3>Gift shop</h3><span class="muted small">Special offers from the PAPERBULL team</span></div><div class="pb-gs" id="pbGs"><div class="pb-skel row"><i></i><i></i><i></i></div></div></section>';
       if (anchor) anchor.insertAdjacentHTML('afterend', html);
       else v.insertAdjacentHTML('afterbegin', html);
       box = document.getElementById('pbGiftShop');
@@ -22287,19 +22433,29 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       box.remove();
       return;
     }
+    loadClaimed();
     g.innerHTML =
       cat
-        .map(
-          c => `<div class="pb-gi"><div class="pb-gi-t"><b>${E(c.name)}</b>${c.description ? `<small>${E(c.description)}</small>` : ''}</div><span class="pb-gi-k">${E(kindText(c))}</span>
-      <button class="btn ${c.price ? '' : 'primary'} sm" data-buy="${c.id}">${c.price ? coinHTML(c.price) : 'Free'}</button></div>`
-        )
+        .map(c => {
+          const got = !c.price && claimedFree.has(c.id),
+            short = c.price && acct.coins < c.price;
+          return `<div class="pb-gi ${got ? 'got' : ''}"><div class="pb-gi-t"><b>${E(c.name)}</b>${c.description ? `<small>${E(c.description)}</small>` : ''}</div><span class="pb-gi-k">${E(kindText(c))}</span>
+      ${got ? '<span class="pb-gi-got">✓ Claimed</span>' : `<button class="btn ${c.price ? '' : 'primary'} sm ${short ? 'short' : ''}" data-buy="${c.id}" ${short ? `title="You need ${(c.price - acct.coins).toLocaleString()} more coins"` : ''}>${c.price ? coinHTML(c.price) : 'Free'}</button>`}</div>`;
+        })
         .join('') +
       (linked()
         ? ''
         : `<p class="muted small" style="margin:8px 2px 0">${acct.user ? '<button class="linkish" data-ol="connect">Connect your account</button> to buy gifts.' : '<button class="linkish" data-ol="signup">Sign up</button> to buy gifts.'}</p>`);
   }
+  let buying = false;
+  const cfKey = () => 'pb2.freeGot.' + ((C.s && C.s.u) || 'x');
+  const claimedFree = new Set();
+  const loadClaimed = () => {
+    claimedFree.clear();
+    for (const id of Store.get(cfKey(), []) || []) claimedFree.add(id);
+  };
   document.addEventListener('click', async e => {
-    const b = e.target.closest('[data-buy]');
+    const b = e.target.closest('#pbGs [data-buy]');
     if (!b) return;
     if (!linked()) {
       if (acct.user) connectDialog();
@@ -22307,15 +22463,21 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       return;
     }
     const c = (SITE.cat || []).find(x => x.id === +b.dataset.buy);
-    if (!c) return;
+    if (!c || b.disabled || buying) return;
     if (acct.coins < c.price) {
-      toast(`You need ${c.price.toLocaleString()} coins for that.`, 'err');
+      toast(`You need ${(c.price - acct.coins).toLocaleString()} more coins for that.`, 'err');
       return;
     }
     b.disabled = true;
+    buying = true;
     try {
       const it = await rpc('pb_buy', { p_token: C.s.token, p_id: c.id });
-      acct.coins -= it.price;
+      if (!(+it.price >= 0) || +it.price > acct.coins) throw new Error('Price changed. Try again.');
+      acct.coins -= +it.price;
+      if (!+it.price) {
+        claimedFree.add(c.id);
+        Store.set(cfKey(), [...claimedFree]);
+      }
       const what = apply(it);
       bumpCoins();
       saveAcct(true);
@@ -22326,10 +22488,17 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     } catch (ex) {
       toast(ex.message, 'err');
       authFail(ex);
+      if (ex.code === 'already_claimed') {
+        claimedFree.add(c.id);
+        Store.set(cfKey(), [...claimedFree]);
+      }
       SITE.catAt = 0;
       paintShop();
+    } finally {
+      buying = false;
     }
     b.disabled = false;
+    if (document.getElementById('pbGs')) paintShop();
   });
 
   Object.assign(window.PBCloud, { push, claim, paint, syncSite, claimGrants, paintShop });
@@ -22548,19 +22717,23 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     lastPing = 0,
     syncT = 0,
     state = 'off';
-  const myTag = { v: '' };
-  (async () => {
-    // a short hash of the username key so per-player pings can be matched without sending names around
+  const myTag = { v: '', u: null };
+  // a short hash of the username key so per-player pings can be matched without sending names around
+  async function tagFor() {
+    const u = Cloud.C.s && Cloud.C.s.u;
+    if (u === myTag.u) return;
+    myTag.u = u;
+    myTag.v = '';
+    if (!u || !(window.crypto && crypto.subtle)) return;
     try {
-      if (Cloud.C.s && Cloud.C.s.u && crypto.subtle) {
-        const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(Cloud.C.s.u).toLowerCase()));
-        myTag.v = [...new Uint8Array(d)]
-          .slice(0, 4)
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('');
-      }
+      const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(u).toLowerCase()));
+      myTag.v = [...new Uint8Array(d)]
+        .slice(0, 4)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
     } catch (e) {}
-  })();
+  }
+  tagFor();
   const setState = s => {
     if (state === s) return;
     state = s;
@@ -22623,7 +22796,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   function onPing(p) {
     lastPing = Date.now();
     const k = p.k || 'site';
-    if ((k === 'grant' || k === 'user') && p.u && myTag.v && p.u !== myTag.v) return; // for someone else
+    tagFor();
+    if ((k === 'grant' || k === 'user') && p.u && myTag.v && myTag.u === (Cloud.C.s && Cloud.C.s.u) && p.u !== myTag.v) return; // for someone else
     clearTimeout(pend);
     pend = setTimeout(() => resync(k), 250 + Math.random() * 400); // tiny spread so 1,000 tabs don't hit at once
   }
@@ -22663,6 +22837,1164 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if ((state !== 'on' && idle > 12000) || idle > 120000) resync('site');
   }, 4000);
   window.PBLive = { state: () => state, resync, applyMarket, applyItems, applyGame, setPrice };
+})();
+
+/* ===================== REVEAL FX: pack-opening + egg-hatching choreography ===================== */
+/* Overrides PackOpen.show/deal/flip and Hatch.show. Public behaviour (ids, classes, this.cards/p/flipped,
+   close()) is unchanged; only the motion is richer. Every timer re-checks isConnected so closing the
+   overlay mid-animation never throws. Honours prefers-reduced-motion (no particles/rays, plain fades). */
+(function () {
+  if (typeof PackOpen === 'undefined' || typeof Hatch === 'undefined') return;
+  const RM = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const q = (s, r) => (r || document).querySelector(s);
+  const qa = (s, r) => [...(r || document).querySelectorAll(s)];
+  const later = (ms, fn) => setTimeout(fn, ms);
+  const alive = el => !!(el && el.isConnected);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pickOne = a => a[(Math.random() * a.length) | 0];
+  const GOLD = '#ffd35a';
+  const MAX_P = 20;
+
+  /* ---------- fx layer helpers ---------- */
+  const layerOf = () => q('#packRoot .rfx-layer');
+  function center(el, layer) {
+    const r = el.getBoundingClientRect(),
+      l = layer.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - l.left, y: r.top + r.height / 2 - l.top };
+  }
+  function fx(cls, at, styles, ttl) {
+    const layer = layerOf();
+    if (!alive(layer) || RM()) return null;
+    const n = document.createElement('i');
+    n.className = 'rfx-fx ' + cls;
+    n.style.cssText = `left:${at.x}px;top:${at.y}px;${styles || ''}`;
+    layer.appendChild(n);
+    later(ttl || 1000, () => n.remove());
+    return n;
+  }
+  /* lightweight spark particles: CSS-animated spans driven by custom properties, removed when done */
+  function sparks(at, o) {
+    const layer = layerOf();
+    if (!alive(layer) || RM()) return;
+    const n = Math.min(MAX_P, o.n || 16),
+      max = o.max || 860,
+      frag = document.createDocumentFragment(),
+      nodes = [];
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + rand(-0.35, 0.35),
+        d = (o.spread || 120) * rand(0.5, 1.05),
+        sz = (o.size || 8) * rand(0.6, 1.3),
+        s = document.createElement('i');
+      s.className = 'rfx-p' + (Math.random() < (o.stars ?? 0.35) ? ' star' : '');
+      s.style.cssText =
+        `left:${at.x}px;top:${at.y}px;width:${sz.toFixed(1)}px;height:${sz.toFixed(1)}px;margin:${(-sz / 2).toFixed(1)}px 0 0 ${(-sz / 2).toFixed(1)}px;` +
+        `--dx:${(Math.cos(a) * d).toFixed(1)}px;--dy:${(Math.sin(a) * d - (o.lift || 0)).toFixed(1)}px;--s:${rand(0.3, 1).toFixed(2)};` +
+        `--c:${pickOne(o.colors)};--d:${rand(o.min || 480, max) | 0}ms;--r:${rand(0, 360) | 0}deg`;
+      frag.appendChild(s);
+      nodes.push(s);
+    }
+    layer.appendChild(frag);
+    later(max + 80, () => nodes.forEach(s => s.remove()));
+  }
+  function burst(at, color, o) {
+    o = o || {};
+    fx('rfx-ring', at, `--c:${color}`, 700);
+    fx('rfx-burst', at, `--c:${color}`, 900);
+    sparks(at, {
+      n: o.n || 18,
+      colors: o.colors || [color, '#fff', GOLD],
+      spread: o.spread || 130,
+      size: o.size || 9,
+      lift: 10,
+      stars: 0.35,
+    });
+  }
+  function screenFlash(color) {
+    const layer = layerOf();
+    if (!alive(layer) || RM()) return;
+    const n = document.createElement('i');
+    n.className = 'rfx-flash';
+    n.style.cssText = `--c:${color}`;
+    layer.appendChild(n);
+    later(700, () => n.remove());
+  }
+  /* WAAPI tweens composited on top of whatever CSS animation is running (composite:add) */
+  function tween(el, kf, opt) {
+    if (!alive(el) || RM() || !el.animate) return null;
+    try {
+      return el.animate(kf, Object.assign({ fill: 'none', composite: 'add' }, opt));
+    } catch (e) {
+      return null;
+    }
+  }
+  const pop = el =>
+    tween(
+      el,
+      [
+        { transform: 'translateY(0) scale(1)' },
+        { transform: 'translateY(-9px) scale(1.07)', offset: 0.4 },
+        { transform: 'translateY(0) scale(1)' },
+      ],
+      { duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)' }
+    );
+  const bounce = el =>
+    tween(
+      el,
+      [
+        { transform: 'translateY(0)', easing: 'ease-out' },
+        { transform: 'translateY(-14px)', offset: 0.28, easing: 'ease-in' },
+        { transform: 'translateY(0)', offset: 0.56, easing: 'ease-out' },
+        { transform: 'translateY(-6px)', offset: 0.76, easing: 'ease-in' },
+        { transform: 'translateY(0)' },
+      ],
+      { duration: 980 }
+    );
+  const spring = el =>
+    tween(
+      el,
+      [
+        { transform: 'scale(.3)' },
+        { transform: 'scale(1.14)', offset: 0.55 },
+        { transform: 'scale(.96)', offset: 0.78 },
+        { transform: 'scale(1)' },
+      ],
+      { duration: 560, easing: 'ease-out' }
+    );
+
+  /* ======================= PACK OPENING ======================= */
+  PackOpen.show = function (p, cards) {
+    const root = q('#packRoot');
+    this.cards = cards;
+    this.p = p;
+    this.flipped = 0;
+    root.innerHTML = `<div class="pk-stage rfx-stage">
+      <div class="pk-pack svgp rfx-pack" id="pkPack" style="--a:${p.art[0]};--b:${p.art[1]}" tabindex="0" role="button" aria-label="Open pack"><i class="rfx-glow"></i>${packSVG(p, 1)}<b>${esc(p.name)}</b><small>${p.blurb}</small><i class="rfx-seam"></i><i class="rfx-fill"></i></div>
+      <p class="pk-hint">Tap the pack to open</p>
+      <div class="pk-cards" id="pkCards"></div>
+      <div class="pk-actions" id="pkActions"></div></div><div class="rfx-layer" aria-hidden="true"></div>`;
+    root.classList.add('open');
+    const pack = q('#pkPack');
+    const open = () => {
+      if (pack.classList.contains('opening')) return;
+      const rm = RM();
+      pack.classList.add('opening');
+      if (!rm)
+        later(430, () => {
+          const layer = layerOf();
+          if (!alive(pack) || !layer) return;
+          burst(center(pack, layer), p.art[0], { colors: [p.art[0], p.art[1], '#fff', GOLD], n: 18, spread: 150 });
+        });
+      later(rm ? 160 : 640, () => {
+        if (!alive(pack) || !q('#pkCards')) return; // overlay closed (or replaced) meanwhile
+        pack.remove();
+        q('#packRoot .pk-hint')?.remove();
+        this.deal();
+      });
+    };
+    pack.onclick = open;
+    pack.onkeydown = e => {
+      if (e.key === 'Enter' || e.key === ' ') open();
+    };
+  };
+
+  PackOpen.deal = function () {
+    const box = q('#pkCards');
+    if (!box) return;
+    const n = this.cards.length;
+    box.innerHTML =
+      '<i class="rfx-under" aria-hidden="true"></i>' +
+      this.cards
+        .map(
+          ({ it, note }, i) =>
+            `<button class="pk-card r-${it.r} rfx-card" data-i="${i}" style="--rc:${RARITY[it.r].color};--fan:${((i - (n - 1) / 2) * 4).toFixed(1)}deg;animation-delay:${i * 70}ms" aria-label="Reveal card">` +
+            (it.r === 'e' || it.r === 'l' ? '<i class="rfx-pulse"></i>' : '') +
+          `<span class="pk-inner"><span class="pk-back">${packBack()}</span>` +
+            `<span class="pk-front"><span class="rar">${RARITY[it.r].name}</span>${itemFace(it)}<b>${esc(it.name)}</b><small>${TYPE_LABEL[it.type]}</small><em>${esc(note)}</em><i class="rfx-holo"></i><i class="rfx-sweep"></i></span></span></button>`
+        )
+        .join('');
+    qa('.pk-card', box).forEach(b => (b.onclick = () => this.flip(b)));
+    this.actions();
+  };
+
+  /* slowly rotating rarity rays *underneath* the cards row, centred on a card (siblings occlude them) */
+  function raysUnder(b, rc) {
+    const under = q('#pkCards .rfx-under');
+    if (!alive(under) || RM()) return;
+    const r = document.createElement('i');
+    r.className = 'rfx-rays';
+    r.innerHTML = '<i></i>';
+    r.style.cssText = `--rc:${rc};left:${b.offsetLeft + b.offsetWidth / 2}px;top:${b.offsetTop + b.offsetHeight / 2}px;width:${Math.round(b.offsetWidth * 2.5)}px;height:${Math.round(b.offsetHeight * 1.8)}px`;
+    under.appendChild(r);
+  }
+
+  function crownBest(cards) {
+    const box = q('#pkCards');
+    if (!alive(box) || PackOpen.cards !== cards) return; // closed, or a different pack is open now
+    let best = null,
+      bi = -1;
+    qa('.pk-card', box).forEach(b => {
+      const c = cards[+b.dataset.i],
+        i = c ? RORDER.indexOf(c.it.r) : -1;
+      if (i > bi) {
+        bi = i;
+        best = b;
+      }
+    });
+    if (!best || bi < 1) return; // an all-common pack has no stand-out card
+    best.classList.add('rfx-best');
+    bounce(best);
+  }
+
+  PackOpen.flip = function (b) {
+    const card = this.cards && this.cards[+b.dataset.i];
+    if (!b.isConnected || !card || b.classList.contains('flipped')) return; // pack was closed before a queued flip ran
+    b.classList.add('flipped');
+    this.flipped++;
+    const it = card.it,
+      rc = RARITY[it.r].color;
+    pop(b);
+    if (it.r === 'l') raysUnder(b, rc);
+    if (it.r === 'l' || it.r === 'e') confetti();
+    SFX.play(it.r === 'l' ? 'legend' : it.r === 'e' || it.r === 'r' ? 'rare' : 'flip');
+    if (it.r === 'e' || it.r === 'l')
+      later(230, () => {
+        const layer = layerOf();
+        if (!alive(b) || !layer) return;
+        const at = center(b, layer);
+        if (it.r === 'l') {
+          screenFlash(rc);
+          fx('rfx-ring', at, `--c:${rc}`, 700);
+        }
+        sparks(at, {
+          n: it.r === 'l' ? 12 : 7,
+          colors: it.r === 'l' ? [GOLD, '#fff', '#ffb224'] : [rc, '#fff', '#d8c8ff'],
+          spread: it.r === 'l' ? 120 : 85,
+          size: 7,
+          stars: 0.6,
+          min: 520,
+          max: 900,
+          lift: 20,
+        });
+      });
+    this.actions();
+    if (this.flipped >= this.cards.length) {
+      const cards = this.cards;
+      later(620, () => crownBest(cards));
+    }
+  };
+
+  /* ======================= EGG HATCHING ======================= */
+  const CRACKS =
+    '<path class="k1" pathLength="1" d="M8 23l5 5 6-6"/>' +
+    '<path class="k2" pathLength="1" d="M24 27l5-5 5 5M29 22l1.2-4"/>' +
+    '<path class="k3" pathLength="1" d="M4 25.5l4-2.5M19 22l5 5M34 27l2-2.5M13 28l-1.2 4"/>';
+
+  Hatch.show = function (egg, pet, note) {
+    const root = q('#packRoot'),
+      rc = RARITY[pet.r].color,
+      [sa, sb] = egg.shell;
+    root.innerHTML = `<div class="pk-stage rfx-stage rfx-hatch"><div class="hatch-egg rfx-egg" id="hEgg" tabindex="0" role="button" aria-label="Hatch egg"><i class="rfx-eggglow"></i><span class="rfx-eggbox"><span class="rfx-half rfx-top">${eggFace(egg, true)}</span><span class="rfx-half rfx-bot">${eggFace(egg, true)}</span><svg class="rfx-cracks" viewBox="0 0 40 50" aria-hidden="true">${CRACKS}</svg></span></div><p class="pk-hint">Tap the egg</p><div id="hOut"></div></div><div class="rfx-layer" aria-hidden="true"></div>`;
+    root.classList.add('open');
+    let taps = 0;
+    const el = q('#hEgg'),
+      box = q('.rfx-eggbox', el);
+    const tap = () => {
+      if (taps >= 3) return;
+      taps++;
+      el.classList.add('k' + taps);
+      box.classList.remove('w1', 'w2', 'w3');
+      void box.offsetWidth;
+      box.classList.add('w' + taps);
+      SFX.play('flip');
+      const rm = RM();
+      if (taps < 3) {
+        if (!rm) {
+          const layer = layerOf();
+          if (layer) sparks(center(el, layer), { n: 3 + taps, colors: [sa, sb, '#fff'], spread: 46, size: 5, stars: 0.2, min: 380, max: 620, lift: 6 });
+        }
+        return;
+      }
+      el.classList.add('crack');
+      if (!rm) {
+        later(200, () => {
+          if (!alive(el)) return;
+          el.classList.add('rfx-split');
+        });
+        later(260, () => {
+          const layer = layerOf();
+          if (!alive(el) || !layer) return;
+          burst(center(el, layer), rc, { colors: [sa, sb, '#fff', rc], n: 18, spread: 140, size: 8 });
+        });
+      }
+      later(rm ? 220 : 620, () => {
+        if (!alive(el) || !q('#hOut')) return; // overlay closed (or replaced) meanwhile
+        el.remove();
+        q('#packRoot .pk-hint')?.remove();
+        q('#hOut').innerHTML =
+          `<div class="hatched rfx-hatched r-${pet.r}" style="--rc:${rc}"><span class="rfx-petwrap"><i class="rfx-rays"><i></i></i><span class="pet-big">${petArt(pet.id)}</span></span><span class="rar" style="color:${rc}">${RARITY[pet.r].name} pet</span><b>${esc(pet.name)}</b><small>${esc(PERK_TEXT[pet.perk](pet.base))}</small><p class="muted small">${esc(note)}</p></div>
+          <div class="pk-actions"><button class="btn primary" id="hDone">Say hi</button></div>`;
+        const petEl = q('#hOut .pet-big');
+        spring(petEl);
+        if (!rm && (pet.r === 'l' || pet.r === 'e'))
+          later(320, () => {
+            const layer = layerOf();
+            if (!alive(petEl) || !layer) return;
+            if (pet.r === 'l') screenFlash(rc);
+            sparks(center(petEl, layer), {
+              n: pet.r === 'l' ? 12 : 8,
+              colors: [rc, '#fff', GOLD],
+              spread: pet.r === 'l' ? 130 : 90,
+              size: 7,
+              stars: 0.6,
+              min: 520,
+              max: 900,
+              lift: 20,
+            });
+          });
+        SFX.play(pet.r === 'l' ? 'legend' : pet.r === 'c' ? 'win' : 'rare');
+        confetti();
+        q('#hDone').onclick = () => {
+          root.classList.remove('open');
+          root.innerHTML = '';
+          go('pets');
+        };
+      });
+    };
+    el.onclick = tap;
+    el.onkeydown = e => {
+      if (e.key === 'Enter' || e.key === ' ') tap();
+    };
+  };
+})();
+
+/* ===================== LIVE BG: drifting market lines behind the whole app ===================== */
+/* One fixed canvas behind #app (z-index 0, pointer-events none). A faint static grid (CSS background on the
+   canvas, color set here), a few price-chart polylines with a soft wash that scroll left and grow new points,
+   and a handful of drifting dots/glints. Colors come from the active theme (--brand or --amber, --up, --dn,
+   --tx, --bg) and are re-read when <html>/<body> class, data-theme or style change (MutationObserver).
+   Cheap by design: <=30fps, DPR capped at 1.5, no per-frame allocations, paused when the tab is hidden,
+   one static frame under prefers-reduced-motion, hidden on the Space theme (it has its own sky).
+   API: window.LiveBG = { set(on), on(), repaint(), frame(dt), running(), frames() }; setting: settings.liveBg (default true). */
+(function () {
+  if (typeof document === 'undefined' || !document.body) return;
+  const doc = document,
+    root = doc.documentElement;
+  const cv = doc.createElement('canvas');
+  cv.id = 'liveBg';
+  cv.setAttribute('aria-hidden', 'true');
+  const ctx = cv.getContext('2d', { alpha: true });
+  if (!ctx) return;
+  doc.body.insertBefore(cv, doc.body.firstChild);
+
+  /* ---------- tunables ---------- */
+  const FPS = 30,
+    STEP = 1000 / FPS,
+    MAX_DPR = 1.5,
+    SEG = 22, // px between chart points
+    MAX_PTS = 200,
+    N_LINES = 4,
+    N_PARTS = 30,
+    N_GLINTS = 6;
+  // area wash under each line = 3 stacked flat fills (cheap in software raster, reads like a gradient)
+  const WASH_D = [0.4, 0.8, 1.25], // depth below the band centre, in band half-heights
+    WASH_A = [0.5, 0.3, 0.2]; // share of the wash alpha per layer
+
+  /* ---------- state (allocated once) ---------- */
+  let W = 0,
+    H = 0,
+    dpr = 1,
+    raf = 0,
+    last = 0,
+    dirty = true,
+    needSize = true,
+    frames = 0,
+    t = 0; // seconds
+  const RMQ = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const reduced = () => !!(RMQ && RMQ.matches);
+  const isSpace = () => root.dataset.theme === 'space';
+  const wantOn = () => !(typeof settings === 'object' && settings && settings.liveBg === false);
+
+  // theme colors as rgb triplets + prebuilt rgba() strings (built on theme change, never per frame)
+  const col = {
+    dark: true,
+    k: 1, // intensity multiplier (1 dark, .6 light)
+    line: ['', '', '', ''],
+    wash: [null, null, null, null], // [3 rgba strings] per line color (accent, up, dn, ink)
+    part: '',
+    glint: '',
+  };
+
+  // chart lines: each a Float32Array of normalized y values in [-1,1] around its band
+  const lines = [];
+  for (let i = 0; i < N_LINES; i++)
+    lines.push({
+      y: new Float32Array(MAX_PTS),
+      n: 0,
+      off: 0, // 0..1 fraction of a segment scrolled
+      spd: 0, // px/s
+      base: 0, // band centre (fraction of H)
+      amp: 0, // band half-height (fraction of H)
+      vol: 0, // step volatility (fraction of amp)
+      lw: 1,
+      ci: i, // color index
+      trend: 0,
+    });
+  // particles: x,y,vx,vy,size,phase,tw (twinkle speed)
+  const P = new Float32Array(N_PARTS * 7);
+  const G = new Float32Array(N_GLINTS * 7);
+
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
+  /* ---------- colors ---------- */
+  function parseColor(str, fb) {
+    try {
+      ctx.fillStyle = '#010203';
+      ctx.fillStyle = str;
+      const s = ctx.fillStyle;
+      if (s === '#010203' && str.replace(/\s/g, '') !== '#010203') return fb;
+      if (s[0] === '#')
+        return [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
+      const m = /rgba?\(([^)]+)\)/.exec(s);
+      if (m) {
+        const p = m[1].split(',');
+        return [parseFloat(p[0]), parseFloat(p[1]), parseFloat(p[2])];
+      }
+    } catch (e) {}
+    return fb;
+  }
+  const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a.toFixed(3)})`;
+  function readTheme() {
+    let cs;
+    try {
+      cs = getComputedStyle(doc.body);
+    } catch (e) {
+      cs = null;
+    }
+    const v = n => (cs ? cs.getPropertyValue(n).trim() : '');
+    const themed = !!root.dataset.theme;
+    // classic: the design brand color; site themes: their own accent (--amber) first
+    const accentStr = themed ? v('--amber') || v('--brand') : v('--brand') || v('--amber');
+    const bg = parseColor(v('--bg'), [10, 11, 14]);
+    const lum = 0.2126 * bg[0] + 0.7152 * bg[1] + 0.0722 * bg[2];
+    const dark = lum < 128;
+    const ink = parseColor(v('--tx'), dark ? [236, 238, 242] : [22, 23, 26]);
+    const accent = parseColor(accentStr || '#ffb224', [255, 178, 36]);
+    const up = parseColor(v('--up'), [34, 196, 126]);
+    const dn = parseColor(v('--dn'), [240, 82, 90]);
+    col.dark = dark;
+    col.k = dark ? 1 : 0.6;
+    const k = col.k;
+    // the grid is a static CSS background on the canvas element (no per-frame cost); only its color is set here
+    try {
+      cv.style.setProperty('--lbg-grid', rgba(ink, 0.05 * k));
+    } catch (e) {}
+    const cs4 = [accent, up, dn, ink];
+    const la = [0.13, 0.1, 0.085, 0.07];
+    for (let i = 0; i < 4; i++) {
+      col.line[i] = rgba(cs4[i], la[i] * k);
+      const fa = la[i] * 0.42 * k;
+      col.wash[i] = [rgba(cs4[i], fa * WASH_A[0]), rgba(cs4[i], fa * WASH_A[1]), rgba(cs4[i], fa * WASH_A[2])];
+    }
+    col.part = rgba(ink, 1);
+    col.glint = rgba(accent, 1);
+    dirty = false;
+  }
+
+  /* ---------- geometry ---------- */
+  function seedLine(L, i) {
+    const bands = [0.22, 0.42, 0.6, 0.8];
+    L.base = bands[i] + rnd(-0.03, 0.03);
+    L.amp = rnd(0.05, 0.085);
+    L.vol = rnd(0.16, 0.28);
+    L.spd = rnd(11, 24) * (i % 2 ? 1 : 0.8);
+    L.lw = i === 0 ? 1.4 : 1.1;
+    L.trend = 0;
+    L.y[0] = rnd(-0.3, 0.3);
+    L.n = 1;
+  }
+  function nextVal(L) {
+    // random walk with drift and mean reversion, clamped to the band
+    const prev = L.y[L.n - 1];
+    if (Math.random() < 0.04) L.trend = rnd(-0.12, 0.12);
+    let v = prev + (Math.random() - 0.5) * L.vol + L.trend - prev * 0.06;
+    if (v > 1) v = 1 - (v - 1) * 0.5;
+    else if (v < -1) v = -1 - (v + 1) * 0.5;
+    return v;
+  }
+  function growLine(L, n) {
+    while (L.n < n) {
+      L.y[L.n] = nextVal(L);
+      L.n++;
+    }
+  }
+  function seedParticle(A, i, glint) {
+    const o = i * 7;
+    A[o] = rnd(0, W);
+    A[o + 1] = rnd(0, H);
+    A[o + 2] = rnd(2, 7); // vx px/s
+    A[o + 3] = -rnd(1.5, 5); // vy px/s
+    A[o + 4] = glint ? rnd(3, 5) : rnd(0.7, 1.7);
+    A[o + 5] = rnd(0, Math.PI * 2);
+    A[o + 6] = glint ? rnd(0.5, 1.1) : rnd(0.35, 0.9);
+  }
+  function resize() {
+    W = window.innerWidth || root.clientWidth || 1;
+    H = window.innerHeight || root.clientHeight || 1;
+    dpr = Math.min(MAX_DPR, Math.max(1, window.devicePixelRatio || 1));
+    const pw = Math.round(W * dpr),
+      ph = Math.round(H * dpr);
+    if (cv.width !== pw || cv.height !== ph) {
+      cv.width = pw;
+      cv.height = ph;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const need = Math.min(MAX_PTS, Math.ceil(W / SEG) + 3);
+    for (let i = 0; i < N_LINES; i++) {
+      const L = lines[i];
+      if (!L.n) seedLine(L, i);
+      growLine(L, need);
+      L.n = need;
+    }
+    needSize = false;
+  }
+  function seedAll() {
+    for (let i = 0; i < N_LINES; i++) seedLine(lines[i], i);
+    for (let i = 0; i < N_PARTS; i++) seedParticle(P, i, false);
+    for (let i = 0; i < N_GLINTS; i++) seedParticle(G, i, true);
+  }
+
+  /* ---------- simulation ---------- */
+  function advance(dt) {
+    t += dt;
+    for (let i = 0; i < N_LINES; i++) {
+      const L = lines[i];
+      L.off += (L.spd * dt) / SEG;
+      while (L.off >= 1) {
+        L.off -= 1;
+        L.y.copyWithin(0, 1, L.n);
+        L.y[L.n - 1] = nextVal(L);
+      }
+    }
+    drift(P, N_PARTS, dt);
+    drift(G, N_GLINTS, dt);
+  }
+  function drift(A, n, dt) {
+    for (let i = 0; i < n; i++) {
+      const o = i * 7;
+      let x = A[o] + A[o + 2] * dt,
+        y = A[o + 1] + A[o + 3] * dt;
+      if (x > W + 6) x = -6;
+      if (y < -6) {
+        y = H + 6;
+        x = rnd(0, W);
+      }
+      A[o] = x;
+      A[o + 1] = y;
+    }
+  }
+
+  /* ---------- drawing ---------- */
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // chart lines
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    for (let i = 0; i < N_LINES; i++) {
+      const L = lines[i],
+        n = L.n,
+        ys = L.y,
+        cy = L.base * H,
+        a = L.amp * H,
+        x0 = -L.off * SEG;
+      // area wash: three stacked flat fills of decreasing depth (soft falloff, no gradient shader)
+      const wash = col.wash[L.ci],
+        xe = x0 + (n - 1) * SEG;
+      for (let s = 0; s < 3; s++) {
+        const yb = cy + a * WASH_D[s];
+        ctx.fillStyle = wash[s];
+        ctx.beginPath();
+        ctx.moveTo(x0, cy - ys[0] * a);
+        for (let j = 1; j < n; j++) ctx.lineTo(x0 + j * SEG, cy - ys[j] * a);
+        ctx.lineTo(xe, yb);
+        ctx.lineTo(x0, yb);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // stroke
+      ctx.strokeStyle = col.line[L.ci];
+      ctx.lineWidth = L.lw;
+      ctx.beginPath();
+      ctx.moveTo(x0, cy - ys[0] * a);
+      for (let j = 1; j < n; j++) ctx.lineTo(x0 + j * SEG, cy - ys[j] * a);
+      ctx.stroke();
+    }
+    // particles: tiny dots twinkling
+    for (let i = 0; i < N_PARTS; i++) {
+      const o = i * 7,
+        tw = 0.5 + 0.5 * Math.sin(t * P[o + 6] + P[o + 5]);
+      ctx.globalAlpha = (0.04 + 0.1 * tw) * col.k;
+      ctx.fillStyle = col.part;
+      ctx.beginPath();
+      ctx.arc(P[o], P[o + 1], P[o + 4], 0, 6.2832);
+      ctx.fill();
+    }
+    // glints: small 4-point crosses in the accent color
+    ctx.fillStyle = col.glint;
+    for (let i = 0; i < N_GLINTS; i++) {
+      const o = i * 7,
+        tw = 0.5 + 0.5 * Math.sin(t * G[o + 6] + G[o + 5]),
+        s = G[o + 4] * (0.6 + 0.4 * tw),
+        x = G[o],
+        y = G[o + 1];
+      ctx.globalAlpha = (0.05 + 0.2 * tw * tw) * col.k;
+      ctx.fillRect(x - s, y - 0.5, s * 2, 1);
+      ctx.fillRect(x - 0.5, y - s, 1, s * 2);
+    }
+    ctx.globalAlpha = 1;
+    frames++;
+  }
+
+  function frame(dt) {
+    if (needSize) resize();
+    if (dirty) readTheme();
+    advance(dt);
+    draw();
+  }
+
+  /* ---------- loop control ---------- */
+  function loop(ts) {
+    raf = requestAnimationFrame(loop);
+    if (ts - last < STEP - 1) return;
+    const dt = last ? Math.min(0.1, (ts - last) / 1000) : 1 / FPS;
+    last = ts;
+    frame(dt);
+  }
+  const active = () => wantOn() && !isSpace() && !doc.hidden && !reduced();
+  function start() {
+    if (raf) return;
+    last = 0;
+    raf = requestAnimationFrame(loop);
+  }
+  function stop() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+  }
+  function apply() {
+    const on = wantOn() && !isSpace();
+    cv.hidden = !on;
+    if (!on) return stop();
+    if (active()) start();
+    else {
+      stop();
+      if (reduced()) frame(0); // one static frame, no motion
+    }
+  }
+  function repaint() {
+    dirty = true;
+    needSize = true;
+    if (cv.hidden) return apply();
+    frame(0);
+    apply();
+  }
+
+  /* ---------- wiring ---------- */
+  window.addEventListener(
+    'resize',
+    () => {
+      needSize = true;
+      if (!raf && !cv.hidden && !doc.hidden) frame(0); // paused (reduced motion): redraw the static frame
+    },
+    { passive: true }
+  );
+  doc.addEventListener('visibilitychange', () => (doc.hidden ? stop() : apply()));
+  if (RMQ && RMQ.addEventListener) RMQ.addEventListener('change', apply);
+  else if (RMQ && RMQ.addListener) RMQ.addListener(apply);
+  try {
+    const mo = new MutationObserver(() => {
+      dirty = true; // theme / dark mode / accent changed: colors are re-read on the next frame
+      apply();
+    });
+    mo.observe(root, { attributes: true, attributeFilter: ['class', 'data-theme', 'style'] });
+    mo.observe(doc.body, { attributes: true, attributeFilter: ['class', 'style'] });
+  } catch (e) {}
+
+  window.LiveBG = {
+    set(on) {
+      on = on !== false;
+      try {
+        if (typeof settings === 'object' && settings) {
+          settings.liveBg = on;
+          if (typeof saveSettings === 'function') saveSettings();
+        }
+      } catch (e) {}
+      apply();
+      return on;
+    },
+    on: () => wantOn(),
+    repaint,
+    frame, // draw one frame (dt seconds) — used by tests / perf checks
+    running: () => !!raf,
+    frames: () => frames,
+  };
+
+  seedAll();
+  resize();
+  apply();
+})();
+
+/* =====================================================================
+   SETTINGS — one organized place for everything: Account, Game,
+   Appearance (themes live here), Notifications, Data & about.
+   Replaces the themes-only settings page; the theme picker is kept.
+   ===================================================================== */
+(() => {
+  if (typeof Settings === 'undefined') return;
+  const themesMount = Settings.mount; // themes-plus picker (+ pro-polish's logo switch)
+  const SEC = [
+    ['account', 'Account', '<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/>'],
+    ['game', 'Game', '<rect x="3" y="7" width="18" height="11" rx="4"/><path d="M8 11v3M6.5 12.5h3M15 12h.01M17.5 11h.01"/>'],
+    ['look', 'Appearance', '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18c-2 0-2-2-1-3s1-3-1-3-3-1-3-3 2-3 5-3 3-3 0-6z"/>'],
+    ['alerts', 'Notifications', '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>'],
+    ['data', 'Data & about', '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'],
+  ];
+  const I = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const sw = (id, on, label) =>
+    `<label class="st-sw" aria-label="${esc(label || '')}"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}><i></i></label>`;
+  const row = (t, d, ctl, extra = '') =>
+    `<div class="st-row ${extra}"><div class="st-t"><b>${t}</b>${d ? `<small>${d}</small>` : ''}</div><div class="st-c">${ctl}</div></div>`;
+  const seg = (id, opts, cur) =>
+    `<div class="seg st-seg" id="${id}">${opts.map(([v, l]) => `<button data-v="${v}" class="${cur === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+
+  /* ---- browser notifications (only when the tab is in the background) ---- */
+  window.PBNotify = function (title, body) {
+    try {
+      if (settings.nDesktop !== true || !('Notification' in window) || Notification.permission !== 'granted') return;
+      if (document.visibilityState === 'visible') return;
+      const n = new Notification('PAPERBULL · ' + title, { body, icon: 'icon-192.png', tag: 'pb-' + title.slice(0, 24) });
+      n.onclick = () => {
+        try {
+          window.focus();
+        } catch (e) {}
+        n.close();
+      };
+      setTimeout(() => n.close(), 8000);
+    } catch (e) {}
+  };
+  /* ---- pet reminders: once an hour at most ---- */
+  let petNagAt = 0;
+  setInterval(() => {
+    try {
+      if (settings.nPets === false || !acct || !acct.pets || !acct.pets.active) return;
+      const p = acct.pets.list.find(x => x.uid === acct.pets.active);
+      if (!p || p.mood >= MOOD_MIN || Date.now() - petNagAt < 3600000) return;
+      petNagAt = Date.now();
+      toast(`${p.name} is too sad to help you. Feed them on the Pets screen.`, 'news', '🐾');
+    } catch (e) {}
+  }, 60000);
+
+  Settings.section = 'account';
+  Settings.open = function (sec) {
+    Settings.section = sec || 'account';
+    go('settings');
+  };
+  Settings.mount = function (el) {
+    // the theme picker re-mounts itself after a pick: re-render the whole page instead of just its box
+    if (el && el.__pbThemes) {
+      const v = document.getElementById('view'),
+        y = window.scrollY;
+      if (v && typeof current !== 'undefined' && current === Settings) {
+        Settings.mount(v);
+        window.scrollTo(0, y);
+      }
+      return;
+    }
+    const u = typeof Auth !== 'undefined' && Auth.user ? Auth.user() : null;
+    const lv = levelInfo(acct.xp || 0);
+    const who = window.BuckAI && BuckAI.who ? BuckAI.who() : { name: 'Buck' };
+    const ind = settings.chartInd || { vol: true, ma20: false, ma50: false };
+    const others = (settings.playerIds || []).filter(id => id !== acct.id);
+    const lb = Store.get(KEY.lb, {});
+    const nperm = 'Notification' in window ? Notification.permission : 'unsupported';
+    el.innerHTML = `<div class="st-wrap">
+  <nav class="st-nav" aria-label="Settings sections">${SEC.map(([id, l, ic]) => `<button data-sec="${id}" class="${Settings.section === id ? 'on' : ''}">${I(ic)}<span>${l}</span></button>`).join('')}</nav>
+  <div class="st-body">
+    <section class="card st-sec" id="st-account"><div class="st-h"><h2>Account</h2><p>Who you’re playing as, and how your progress is kept safe.</p></div>
+      <div class="st-player"><div class="avatar emoji" data-go="shop" role="link" tabindex="0" title="Change avatar in the Shop">${avatarArt(myAvatar())}</div>
+        <div class="st-pt"><b>${esc(acct.name)}</b><small>Level ${lv.level} · ${esc(myTitle())}${u ? ` · @${esc(u.u)}` : ' · guest'}</small></div>
+        <button class="btn sm" id="stRename">Rename</button></div>
+      ${others.length ? `<div class="st-row"><div class="st-t"><b>Switch player</b><small>Other players saved on this device.</small></div><div class="st-c st-players">${others.map(id => `<button class="btn sm" data-sw="${esc(id)}">${esc(lb[id]?.name || 'Player')}</button>`).join('')}</div></div>` : ''}
+      <div id="stSave">${typeof saveProgressCard === 'function' ? saveProgressCard() : ''}</div>
+      ${row('Reset this player', `Start over with ${fmtUSD(CONFIG.STARTING_CASH, 0)}. Coins and your collection are kept.`, '<button class="btn sm danger" id="stReset">Reset account…</button>')}
+    </section>
+
+    <section class="card st-sec" id="st-game"><div class="st-h"><h2>Game</h2><p>How trading and charts behave.</p></div>
+      ${row('One-tap trading', 'Skip the review step and place orders instantly.', sw('stOneTap', !!settings.oneTap, 'One-tap trading'))}
+      ${row('Pro mode', 'Advanced order types, heatmap, options-style tools and a denser layout.', sw('stPro', !!settings.advanced, 'Pro mode'))}
+      ${row('Default chart', 'Used when you open a stock.', `<select class="txt st-sel" id="stChart">${CHART_MODES.map(([v, l]) => `<option value="${v}" ${(settings.chartStyle || 'area') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
+      ${row('Chart overlays', 'Shown on every price chart.', `<div class="st-chk"><label><input type="checkbox" data-ind="vol" ${ind.vol !== false ? 'checked' : ''}> Volume</label><label><input type="checkbox" data-ind="ma20" ${ind.ma20 ? 'checked' : ''}> MA 20</label><label><input type="checkbox" data-ind="ma50" ${ind.ma50 ? 'checked' : ''}> MA 50</label></div>`)}
+      ${row('AI assistant', `You’re chatting with <b>${esc(who.name)}</b>. 22 personalities to pick from.`, '<button class="btn sm" id="stAI">Change</button>')}
+      ${row('Sound effects', 'Little blips for trades, headlines and pack pulls.', sw('stSound', settings.sound !== false, 'Sound effects'))}
+    </section>
+
+    <section class="card st-sec" id="st-look"><div class="st-h"><h2>Appearance</h2><p>Make it yours.</p></div>
+      ${row('Look', 'Classic is the clean graphite look. Terminal is the dark trading-desk look.', seg('stLook', [['classic', 'Classic'], ['terminal', 'Terminal']], isClassic() ? 'classic' : 'terminal'))}
+      ${row('Dark mode', isClassic() ? 'Auto follows your device setting.' : 'Terminal is always dark.', seg('stMode', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']], settings.mode || 'auto'))}
+      ${row('Live background', 'Faint market lines and particles behind the app. Off = a bit less battery.', sw('stBg', !window.LiveBG || LiveBG.on(), 'Live background'))}
+      ${row('Real company logos', 'Shows real logos for real companies and coins, loaded live. Prices stay simulated.', sw('stLogos', settings.logos !== false, 'Real company logos'))}
+      <div id="stThemes" class="st-themes"></div>
+    </section>
+
+    <section class="card st-sec" id="st-alerts"><div class="st-h"><h2>Notifications</h2><p>In-game alerts are the little cards at the top. Browser notifications only fire while the tab is in the background.</p></div>
+      ${row('Headline alerts', 'When news hits a stock you hold or are looking at.', sw('stNNews', settings.nNews !== false, 'Headline alerts'))}
+      ${row('Order fills', 'When a limit order fills or gets cancelled.', sw('stNOrders', settings.nOrders !== false, 'Order fills'))}
+      ${row('Daily bonus & streaks', 'Your login bonus and streak savers.', sw('stNDaily', settings.nDaily !== false, 'Daily bonus'))}
+      ${row('Pet reminders', 'A nudge when your companion is too sad to help.', sw('stNPets', settings.nPets !== false, 'Pet reminders'))}
+      ${row('Browser notifications', nperm === 'unsupported' ? 'Not supported in this browser.' : nperm === 'denied' ? 'Blocked in your browser settings for this site.' : 'Order fills, margin calls and big moves on stocks you hold, even when you’re in another tab.', nperm === 'unsupported' || nperm === 'denied' ? '<span class="muted small">Unavailable</span>' : sw('stNDesk', settings.nDesktop === true && nperm === 'granted', 'Browser notifications'))}
+    </section>
+
+    <section class="card st-sec" id="st-data"><div class="st-h"><h2>Data & about</h2><p>Your save lives in this browser${u ? ' and in your online account' : ''}. Save codes are under <b>Account</b>.</p></div>
+      ${row('Clear this device', 'Removes every player, setting and cached market from this browser. Online accounts are not deleted.', '<button class="btn sm danger" id="stWipe">Clear data…</button>')}
+      <div class="st-about"><b>${APP_NAME}</b> is a game. Virtual money, a simulated market, made-up headlines — no real trades, no real funds, no real market data. Prices start near real-world ballpark levels and then move on their own.
+        <small>Made by Taylan Gurcan · ${ASSETS.length.toLocaleString()} assets · ${(typeof THEMES !== 'undefined' ? THEMES.length : 0) || ''} themes</small></div>
+    </section>
+  </div></div>`;
+
+    /* ---- themes picker (existing component) mounted inside Appearance ---- */
+    try {
+      const tmp = document.createElement('div');
+      tmp.__pbThemes = true;
+      tmp.hidden = true;
+      document.body.appendChild(tmp); // in the document so the wrapped mounts can find their elements
+      themesMount.call(Settings, tmp);
+      tmp.remove();
+      tmp.querySelector('.lg-set')?.remove(); // we render our own logo switch
+      const card = tmp.querySelector('.card');
+      if (card) {
+        card.classList.add('st-themecard');
+        el.querySelector('#stThemes').appendChild(card);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    /* ---- nav ---- */
+    const nav = el.querySelector('.st-nav');
+    const secs = [...el.querySelectorAll('.st-sec')];
+    const setOn = id => {
+      Settings.section = id;
+      nav.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.sec === id));
+    };
+    nav.onclick = e => {
+      const b = e.target.closest('[data-sec]');
+      if (!b) return;
+      setOn(b.dataset.sec);
+      const s = el.querySelector('#st-' + b.dataset.sec);
+      const top = s.getBoundingClientRect().top + window.scrollY - (innerWidth < 900 ? 118 : 84);
+      window.scrollTo({ top, behavior: 'smooth' });
+    };
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        es => {
+          const vis = es.filter(x => x.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+          if (vis) nav.querySelectorAll('button').forEach(b => b.classList.toggle('on', 'st-' + b.dataset.sec === vis.target.id));
+        },
+        { rootMargin: '-30% 0px -55% 0px' }
+      );
+      secs.forEach(s => io.observe(s));
+    }
+    if (Settings.section && Settings.section !== 'account') {
+      const s = el.querySelector('#st-' + Settings.section);
+      if (s) setTimeout(() => window.scrollTo({ top: s.getBoundingClientRect().top + window.scrollY - (innerWidth < 900 ? 118 : 84) }), 30);
+    }
+
+    /* ---- handlers ---- */
+    const $$e = (s, r = el) => [...r.querySelectorAll(s)];
+    const on = (id, f) => {
+      const x = el.querySelector('#' + id);
+      if (x) x.onchange = e => f(e.target.checked, e.target);
+    };
+    el.querySelector('#stRename').onclick = () =>
+      modal({
+        title: 'Rename player',
+        confirm: 'Save',
+        html: `<input class="txt" id="nm" maxlength="24" value="${esc(acct.name)}" aria-label="Player name">`,
+        onMount: r => r.querySelector('#nm').focus(),
+        onConfirm: r => {
+          const n = r.querySelector('#nm').value.trim();
+          if (!n) return false;
+          acct.name = n;
+          saveAcct(true);
+          if (typeof submitLeaderboard === 'function') submitLeaderboard(true);
+          router();
+        },
+      });
+    $$e('[data-sw]').forEach(b => (b.onclick = () => switchPlayer(b.dataset.sw)));
+    if (typeof bindSaveCard === 'function') bindSaveCard();
+    el.querySelector('#stReset').onclick = () => confirmReset();
+    on('stOneTap', v => {
+      settings.oneTap = v;
+      saveSettings();
+      toast(v ? 'One-tap trading on — orders go straight through' : 'One-tap trading off', 'ok');
+    });
+    on('stPro', v => {
+      settings.advanced = v;
+      saveSettings();
+      if (window.PBSetAdvanced) PBSetAdvanced(v);
+      toast(v ? 'Pro mode on' : 'Pro mode off', 'ok');
+    });
+    el.querySelector('#stChart').onchange = e => {
+      settings.chartStyle = e.target.value;
+      saveSettings();
+      toast(`Charts open as ${CHART_MODES.find(m => m[0] === e.target.value)[1].toLowerCase()}`, 'ok');
+    };
+    $$e('[data-ind]').forEach(
+      c =>
+        (c.onchange = () => {
+          (settings.chartInd ||= { vol: true, ma20: false, ma50: false })[c.dataset.ind] = c.checked;
+          saveSettings();
+        })
+    );
+    el.querySelector('#stAI').onclick = () => window.BuckAI && BuckAI.picker && BuckAI.picker();
+    on('stSound', v => {
+      settings.sound = v;
+      saveSettings();
+      if (v) SFX.play('flip');
+    });
+    $$e('#stLook button').forEach(
+      b =>
+        (b.onclick = () => {
+          settings.look = b.dataset.v;
+          saveSettings();
+          applyLook();
+          if (typeof Markets !== 'undefined') Markets.view = null;
+          router();
+        })
+    );
+    $$e('#stMode button').forEach(b => (b.onclick = () => setMode(b.dataset.v)));
+    on('stBg', v => {
+      if (window.LiveBG) LiveBG.set(v);
+      else {
+        settings.liveBg = v;
+        saveSettings();
+      }
+    });
+    on('stLogos', v => {
+      settings.logos = v;
+      saveSettings();
+      needRender = true;
+      toast(v ? 'Real logos on' : 'Real logos off', 'ok');
+    });
+    const simple = (id, key) =>
+      on(id, v => {
+        settings[key] = v;
+        saveSettings();
+      });
+    simple('stNNews', 'nNews');
+    simple('stNOrders', 'nOrders');
+    simple('stNDaily', 'nDaily');
+    simple('stNPets', 'nPets');
+    on('stNDesk', async (v, input) => {
+      if (!v) {
+        settings.nDesktop = false;
+        saveSettings();
+        return;
+      }
+      try {
+        const p = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+        if (p === 'granted') {
+          settings.nDesktop = true;
+          saveSettings();
+          toast('Browser notifications on — you’ll hear about fills while you’re in another tab', 'ok');
+        } else {
+          input.checked = false;
+          settings.nDesktop = false;
+          saveSettings();
+          toast(p === 'denied' ? 'Notifications are blocked for this site in your browser.' : 'Notifications not enabled.', 'err');
+        }
+      } catch (e) {
+        input.checked = false;
+      }
+    });
+    el.querySelector('#stWipe').onclick = () =>
+      modal({
+        title: 'Clear this device?',
+        confirm: 'Clear everything',
+        danger: true,
+        html: `This removes <b>every player, setting and cached market</b> from this browser and reloads the game. Online accounts stay safe on the server — you can log back in.<br><br>Type <b>CLEAR</b> to confirm.<input class="txt" id="wipeT" autocomplete="off" style="margin-top:10px">`,
+        onConfirm: r => {
+          if (r.querySelector('#wipeT').value.trim().toUpperCase() !== 'CLEAR') return false;
+          try {
+            localStorage.clear();
+            sessionStorage.clear();
+          } catch (e) {}
+          location.reload();
+        },
+      });
+  };
+})();
+
+/* =====================================================================
+   SHOP FX — nicer item cards, clear prices and ownership, sale tags
+   when the admin panel lowers a price, and a coin-fly animation when
+   you buy something. Works on top of the existing Shop screen.
+   ===================================================================== */
+(() => {
+  if (typeof Shop === 'undefined') return;
+  const TYPE_DESC = {
+    theme: 'Accent color for the whole app',
+    skin: 'Candle colors on every chart',
+    avatar: 'Your picture on the leaderboard',
+    title: 'Shown under your name',
+  };
+  const RANK = { c: 0, r: 1, e: 2, l: 3 };
+  // what an item costs without admin overrides, so we can show sales
+  const basePrice = it =>
+    ['power', 'egg', 'treat'].includes(it.type) ? it.price : isCosmetic(it) ? COSMETIC_PRICE[it.r] : null;
+  const saleOf = it => {
+    const b = basePrice(it),
+      p = itemPrice(it);
+    return b && p != null && p < b ? Math.round((1 - p / b) * 100) : 0;
+  };
+  const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- coin fly ---------- */
+  let lastTap = null;
+  document.addEventListener('pointerdown', e => (lastTap = e.target.closest('button, .pack-card, [data-buy], [data-buyc], [data-deal], [data-pack]')), true);
+  function flyCoins(from, n) {
+    if (reduce() || !from || !from.isConnected) return;
+    const to = document.querySelector('#shopCoins .coin') || document.querySelector('.coin-chip .coin');
+    if (!to) return;
+    const a = from.getBoundingClientRect(),
+      b = to.getBoundingClientRect();
+    const k = Math.max(4, Math.min(10, Math.round(Math.log10(n + 10) * 3)));
+    for (let i = 0; i < k; i++) {
+      const c = document.createElement('i');
+      c.className = 'coin sfx-fly';
+      c.style.left = a.left + a.width / 2 - 9 + 'px';
+      c.style.top = a.top + a.height / 2 - 9 + 'px';
+      document.body.appendChild(c);
+      const dx = b.left + b.width / 2 - (a.left + a.width / 2),
+        dy = b.top + b.height / 2 - (a.top + a.height / 2),
+        mx = dx * 0.5 + (Math.random() - 0.5) * 120,
+        my = Math.min(dy, 0) - 60 - Math.random() * 60;
+      const an = c.animate(
+        [
+          { transform: 'translate(0,0) scale(.6)', opacity: 0 },
+          { transform: `translate(${mx * 0.3}px,${my * 0.6}px) scale(1.1)`, opacity: 1, offset: 0.25 },
+          { transform: `translate(${mx}px,${my}px) scale(1)`, opacity: 1, offset: 0.55 },
+          { transform: `translate(${dx}px,${dy}px) scale(.5)`, opacity: 0.2 },
+        ],
+        { duration: 620 + i * 40, delay: i * 35, easing: 'cubic-bezier(.3,.6,.3,1)', fill: 'both' }
+      );
+      an.onfinish = () => c.remove();
+    }
+    setTimeout(() => {
+      const t = document.getElementById('shopCoins');
+      if (t) {
+        t.classList.remove('sfx-bump');
+        void t.offsetWidth;
+        t.classList.add('sfx-bump');
+      }
+    }, 560);
+  }
+  function popCard(el) {
+    if (!el || reduce()) return;
+    el.animate([{ transform: 'scale(1)' }, { transform: 'scale(.95)' }, { transform: 'scale(1.04)' }, { transform: 'scale(1)' }], {
+      duration: 380,
+      easing: 'cubic-bezier(.3,.7,.3,1.3)',
+    });
+  }
+  const wrapSpend = (name, fn) =>
+    function () {
+      const before = acct.coins,
+        src = lastTap;
+      const r = fn.apply(this, arguments);
+      const spent = before - acct.coins;
+      if (spent > 0) {
+        flyCoins(src, spent);
+        popCard(src && src.closest('.col-item, .deal, .pu-row, .pack-card, .sfx-card'));
+      } else if (src && src.isConnected && !reduce() && (() => { try { return src.matches('.short, .sfx-pack:has(.sfx-need), .luck-btn'); } catch (e) { return false; } })() && before === acct.coins)
+        src.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration: 240 });
+      return r;
+    };
+  buyItem = wrapSpend('buyItem', buyItem);
+  buyPack = wrapSpend('buyPack', buyPack);
+  if (typeof buyLuck === 'function') buyLuck = wrapSpend('buyLuck', buyLuck);
+
+  /* ---------- decorate the shop after every render ---------- */
+  function decorate() {
+    const coins = acct.coins;
+    // packs: rarity glow, can't-afford state, sale tag
+    for (const b of document.querySelectorAll('#packs [data-pack]')) {
+      const p = PACK[b.dataset.pack];
+      if (!p) continue;
+      b.classList.add('sfx-pack');
+      b.dataset.g = p.guarantee || 'c';
+      b.style.setProperty('--acc', p.accent || p.art[0]);
+      const pr = b.querySelector('.pc-price');
+      if (pr && !b.querySelector('.sfx-need') && coins < p.price)
+        pr.insertAdjacentHTML('afterend', `<span class="sfx-need">Need ${(p.price - coins).toLocaleString()} more</span>`);
+      if (p.price0 && p.price < p.price0 && !b.querySelector('.sfx-sale'))
+        b.insertAdjacentHTML('afterbegin', `<span class="sfx-sale">−${Math.round((1 - p.price / p.price0) * 100)}%</span>`);
+    }
+    // daily deals: ribbon
+    for (const d of document.querySelectorAll('#deals .deal')) {
+      d.classList.add('sfx-card');
+      if (!d.querySelector('.sfx-rib') && d.querySelector('[data-deal]')) d.insertAdjacentHTML('afterbegin', `<span class="sfx-rib">−${Math.round(DEAL_OFF * 100)}%</span>`);
+      const btn = d.querySelector('[data-deal]');
+      if (btn) {
+        const it = ITEM[btn.dataset.deal],
+          p = Math.round(itemPrice(it) * (1 - DEAL_OFF));
+        btn.classList.toggle('short', coins < p);
+      }
+    }
+    // power-ups: owned counter + sale + short
+    for (const r of document.querySelectorAll('#powers .pu-row')) {
+      const buy = r.querySelector('[data-buy]');
+      if (!buy) continue;
+      const it = ITEM[buy.dataset.buy];
+      buy.classList.toggle('short', coins < itemPrice(it));
+      const s = saleOf(it);
+      if (s && !r.querySelector('.sfx-sale')) r.querySelector('.d b')?.insertAdjacentHTML('afterend', ` <span class="sfx-sale in">−${s}%</span>`);
+    }
+    // collection: descriptions, owned/equipped badges, sale, short
+    for (const c of document.querySelectorAll('#colGrid .col-item')) {
+      const btn = c.querySelector('[data-eq], [data-buyc]'),
+        id = btn ? btn.dataset.eq || btn.dataset.buyc : null;
+      const it = id ? ITEM[id] : ITEMS.find(i => i.type === Shop.tab && acct.equip[i.type] === i.id && c.querySelector('b')?.textContent === i.name);
+      if (!it) continue;
+      c.classList.add('sfx-card');
+      c.dataset.r = it.r;
+      if (!c.querySelector('.sfx-desc')) c.querySelector('small')?.insertAdjacentHTML('afterend', `<span class="sfx-desc">${TYPE_DESC[it.type] || ''}</span>`);
+      if (owns(it.id) && !c.querySelector('.sfx-own')) c.insertAdjacentHTML('afterbegin', `<span class="sfx-own">${acct.equip[it.type] === it.id ? 'Equipped' : 'Owned'}</span>`);
+      if (btn && btn.dataset.buyc) {
+        btn.classList.toggle('short', coins < itemPrice(it));
+        const s = saleOf(it);
+        if (s && !c.querySelector('.sfx-sale')) c.insertAdjacentHTML('afterbegin', `<span class="sfx-sale">−${s}%</span>`);
+      }
+    }
+  }
+  const r0 = Shop.render,
+    rc0 = Shop.renderCollection;
+  Shop.render = function () {
+    const r = r0.apply(this, arguments);
+    try {
+      decorate();
+    } catch (e) {
+      console.error(e);
+    }
+    return r;
+  };
+  Shop.renderCollection = function () {
+    const r = rc0.apply(this, arguments);
+    try {
+      decorate();
+    } catch (e) {
+      console.error(e);
+    }
+    return r;
+  };
+  window.PBShopFX = { flyCoins, decorate };
 })();
 
 /* SHOP-PLUS:END */
@@ -28354,6 +29686,1302 @@ html:not(#_):not(#_) .pg-h .pg-ic.tinted svg {
     gap: 4px 8px;
     padding: 8px 12px;
     font-size: 12.5px;
+  }
+}
+
+/* ===== stock logos: generated brand marks + real logos (src/logos.js) ===== */
+.aic.tk-badge.bm-w {
+  font-size: 0;
+  line-height: 0;
+}
+.tk-badge .bm {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  font-family: var(--sans);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+.tk-badge img {
+  z-index: 1;
+}
+.aic.tk-badge.sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+.news .aic.sm {
+  margin-right: 2px;
+}
+.trow .aic.sm,
+.orow .aic.sm {
+  margin-right: 8px;
+}
+.trow,
+.orow {
+  align-items: center;
+}
+
+/* ===== loading skeletons ===== */
+.pb-skel {
+  display: grid;
+  gap: 10px;
+  padding: 6px 2px;
+}
+.pb-skel.row {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+.pb-skel i {
+  display: block;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--panel2) 0%, color-mix(in srgb, var(--tx) 8%, var(--panel2)) 45%, var(--panel2) 90%);
+  background-size: 220% 100%;
+  animation: pbShimmer 1.3s ease-in-out infinite;
+}
+.pb-skel.row i {
+  height: 84px;
+}
+.pb-skel i:nth-child(2) { width: 92%; animation-delay: 0.08s; }
+.pb-skel i:nth-child(3) { width: 96%; animation-delay: 0.16s; }
+.pb-skel i:nth-child(4) { width: 88%; animation-delay: 0.24s; }
+.pb-skel i:nth-child(5) { width: 94%; animation-delay: 0.32s; }
+@keyframes pbShimmer {
+  0% { background-position: 120% 0; }
+  100% { background-position: -100% 0; }
+}
+/* ===== page transitions: a short rise-in when you switch screens ===== */
+#view.pg-in {
+  animation: pgIn 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes pgIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #view.pg-in { animation: none; }
+  .pb-skel i { animation: none; }
+}
+
+/* markets filter row scrolls sideways on phones: fade the edge so it reads as scrollable */
+@media (max-width: 600px) {
+  .mk-row {
+    -webkit-mask-image: linear-gradient(90deg, #000 86%, transparent);
+    mask-image: linear-gradient(90deg, #000 86%, transparent);
+    padding-right: 28px;
+  }
+}
+
+</style>
+<style id="pbShopFx">
+/* ===== Shop polish (src/shop-fx.js) ===== */
+.packs {
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)) !important;
+}
+.pack-card.sfx-pack {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  cursor: pointer;
+}
+.pack-card.sfx-pack::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  width: 120px;
+  height: 120px;
+  margin-left: -60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--acc) 55%, transparent), transparent 68%);
+  opacity: 0.28;
+  z-index: -1;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+.pack-card.sfx-pack[data-g='e']::before {
+  opacity: 0.4;
+}
+.pack-card.sfx-pack[data-g='l']::before {
+  opacity: 0.55;
+}
+.pack-card.sfx-pack .pc-art {
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1.3);
+}
+@media (hover: hover) {
+  .pack-card.sfx-pack:hover::before {
+    opacity: 0.7;
+    transform: scale(1.15);
+  }
+  .pack-card.sfx-pack:hover .pc-art {
+    transform: translateY(-4px) rotate(-3deg) scale(1.05);
+  }
+}
+.pack-card.sfx-pack:active .pc-art {
+  transform: scale(0.96);
+}
+.pack-card.sfx-pack .pc-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px 11px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent);
+  font-weight: 700;
+}
+.pack-card.sfx-pack .pc-price.short {
+  background: transparent;
+  border-color: var(--line2);
+  opacity: 0.7;
+}
+.sfx-need {
+  font-size: 10.5px;
+  color: var(--mut);
+  margin-top: 2px;
+}
+.sfx-sale {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(135deg, #ff4d6d, #ff7a1a);
+  box-shadow: 0 2px 8px rgba(255, 77, 109, 0.35);
+}
+.sfx-sale.in {
+  position: static;
+  display: inline-block;
+  vertical-align: 1px;
+}
+.sfx-rib {
+  position: absolute;
+  top: 10px;
+  right: -26px;
+  z-index: 2;
+  width: 92px;
+  padding: 3px 0;
+  text-align: center;
+  transform: rotate(40deg);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #1a1000;
+  background: linear-gradient(90deg, #ffd166, #ffb224);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.deal.sfx-card,
+.col-item.sfx-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+@media (hover: hover) {
+  .deal.sfx-card:hover,
+  .col-item.sfx-card:not(.locked):hover {
+    transform: translateY(-2px);
+  }
+}
+.col-item.sfx-card {
+  border: 1px solid color-mix(in srgb, var(--rc) 22%, var(--line)) !important;
+}
+.col-item.sfx-card[data-r='l'] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rc) 35%, transparent), 0 0 18px color-mix(in srgb, var(--rc) 12%, transparent);
+}
+.col-item.sfx-card.on {
+  border-color: var(--up) !important;
+  box-shadow: inset 0 0 0 1px var(--up);
+}
+.col-item.sfx-card.locked .face {
+  filter: grayscale(0.6) opacity(0.65);
+}
+.col-item.sfx-card.locked:hover .face {
+  filter: none;
+}
+.sfx-desc {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: var(--mut);
+  opacity: 0.85;
+  margin: 1px 0 4px;
+  text-align: center;
+}
+.sfx-own {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--up);
+  background: color-mix(in srgb, var(--up) 14%, transparent);
+}
+.btn.short {
+  opacity: 0.55;
+  filter: saturate(0.4);
+}
+.pb-gi.got {
+  opacity: 0.75;
+}
+.pb-gi-got {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--up);
+  white-space: nowrap;
+}
+#shopCoins.sfx-bump {
+  animation: sfxBump 0.45s cubic-bezier(0.3, 0.7, 0.3, 1.4);
+}
+@keyframes sfxBump {
+  40% {
+    transform: scale(1.12);
+    color: var(--amber);
+  }
+}
+.coin.sfx-fly {
+  position: fixed;
+  z-index: 200;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+@media (max-width: 520px) {
+  .packs {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .sfx-rib {
+    right: -30px;
+    top: 8px;
+  }
+}
+
+</style>
+<style id="pbSettings">
+/* ===== Settings page (src/settings.js) ===== */
+.st-wrap {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.st-nav {
+  position: sticky;
+  top: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.st-nav button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: 0;
+  background: transparent;
+  color: var(--mut);
+  font: inherit;
+  font-weight: 600;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.st-nav button svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.st-nav button:hover {
+  background: var(--panel2);
+  color: var(--tx);
+}
+.st-nav button.on {
+  background: color-mix(in srgb, var(--amber) 14%, var(--panel2));
+  color: var(--tx);
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+.st-body {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.st-sec {
+  scroll-margin-top: 84px;
+}
+.st-h {
+  margin-bottom: 6px;
+}
+.st-h h2 {
+  margin: 0;
+  font-size: 19px;
+}
+.st-h p {
+  margin: 4px 0 0;
+  color: var(--mut);
+  font-size: 13px;
+}
+.st-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.st-row:first-of-type {
+  border-top: 0;
+}
+.st-h + .st-row,
+.st-player + .st-row {
+  border-top: 1px solid var(--line);
+}
+.st-t {
+  min-width: 0;
+}
+.st-t b {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.st-t small {
+  display: block;
+  color: var(--mut);
+  font-size: 12.5px;
+  margin-top: 2px;
+  line-height: 1.35;
+  max-width: 62ch;
+}
+.st-c {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.st-players {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 50%;
+}
+.st-sw {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 27px;
+  flex: none;
+  cursor: pointer;
+}
+.st-sw input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.st-sw i {
+  position: absolute;
+  inset: 0;
+  border-radius: 99px;
+  background: var(--line2);
+  transition: background 0.18s;
+}
+.st-sw i::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1.2);
+}
+.st-sw input:checked + i {
+  background: var(--up);
+}
+.st-sw input:checked + i::after {
+  transform: translateX(19px);
+}
+.st-sw input:focus-visible + i {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+.st-sel {
+  width: auto;
+  min-width: 150px;
+  margin: 0;
+}
+.st-chk {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.st-chk label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.st-chk input {
+  accent-color: var(--amber);
+  width: 16px;
+  height: 16px;
+}
+.st-player {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0 14px;
+}
+.st-player .avatar {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  cursor: pointer;
+}
+.st-pt {
+  flex: 1;
+  min-width: 0;
+}
+.st-pt b {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.st-pt small {
+  display: block;
+  color: var(--mut);
+  font-size: 12.5px;
+}
+#stSave .card {
+  margin: 8px 0 4px;
+  background: var(--panel2);
+  box-shadow: none;
+}
+.st-themes {
+  margin-top: 14px;
+}
+.st-themes .card.st-themecard {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.st-themes .th-head h2 {
+  font-size: 16px;
+}
+.st-about {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--panel2);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mut);
+}
+.st-about b {
+  color: var(--amber);
+}
+.st-about small {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+@media (max-width: 900px) {
+  .st-wrap {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .st-nav {
+    position: sticky;
+    top: 60px;
+    z-index: 5;
+    flex-direction: row;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 5px;
+    border-radius: 14px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .st-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .st-nav button {
+    flex: none;
+    padding: 8px 11px;
+    font-size: 12.5px;
+    box-shadow: none !important;
+  }
+  .st-nav button.on {
+    background: var(--amber);
+    color: #1a1000;
+  }
+  .st-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .st-c,
+  .st-players {
+    width: 100%;
+    max-width: none;
+    justify-content: space-between;
+  }
+  .st-chk {
+    justify-content: flex-start;
+  }
+  .st-sel {
+    width: 100%;
+  }
+  .st-sec {
+    scroll-margin-top: 118px;
+  }
+}
+.st-t small b {
+  display: inline;
+  font-size: inherit;
+  color: var(--tx);
+}
+@media (max-width: 900px) {
+  .st-row:has(> .st-c > .st-sw),
+  .st-row:has(> .st-c > .btn:only-child) {
+    flex-direction: row;
+    align-items: center;
+  }
+  .st-row:has(> .st-c > .st-sw) .st-c,
+  .st-row:has(> .st-c > .btn:only-child) .st-c {
+    width: auto;
+  }
+}
+
+</style>
+<style id="pbLiveBg">
+/* ===== LIVE BG — one fixed canvas behind the app (drifting market lines, grid, glints) =====
+   Sits above the page background (body / body::before sky) and below #app (z-index 1).
+   Never takes pointer events, never affects layout. Hidden on the Space theme (it has its own sky). */
+#liveBg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  contain: strict;
+  /* static faint grid, painted by CSS (color set by the script from the theme's --tx) */
+  background-image:
+    linear-gradient(var(--lbg-grid, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, var(--lbg-grid, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+#liveBg[hidden],
+html[data-theme='space'] #liveBg {
+  display: none;
+}
+/* #app must be its own layer above the canvas (classic and site themes already do this; this covers the rest) */
+body > #app {
+  position: relative;
+  z-index: 1;
+}
+
+</style>
+<style id="pbReveal">
+/* ===== REVEAL FX — pack opening + egg hatching choreography (scoped to #packRoot) =====
+   Transform/opacity only. One-shot particles are DOM spans removed after they finish. */
+#packRoot.open {
+  overflow-x: hidden;
+}
+#packRoot .rfx-stage {
+  position: relative;
+}
+/* rays/pulses extend past a card; clip them at the cards box (+margin) so the overlay never gains scroll range */
+#packRoot .rfx-stage .pk-cards {
+  position: relative;
+  padding: 48px 0;
+  margin: -48px 0;
+  overflow: clip;
+  overflow-clip-margin: 16px;
+  pointer-events: none; /* the padded box overlaps the hint/actions; only the cards themselves take taps */
+}
+#packRoot .rfx-stage .pk-card {
+  pointer-events: auto;
+}
+#packRoot .rfx-under {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+#packRoot .rfx-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+#packRoot .rfx-fx,
+#packRoot .rfx-p {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ---------- pack: escalating shake, rising glow, light seam, burst ---------- */
+#packRoot .rfx-pack {
+  will-change: transform;
+}
+#packRoot .rfx-pack .rfx-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 170%;
+  height: 130%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #fff 0%,
+    var(--a) 16%,
+    color-mix(in srgb, var(--a) 55%, transparent) 40%,
+    transparent 68%
+  );
+  transform: translate(-50%, -50%) scale(0.5);
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+#packRoot .rfx-pack .rfx-seam {
+  position: absolute;
+  left: 50%;
+  top: 9%;
+  bottom: 15%;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, transparent, #fff 22%, #fff 78%, transparent);
+  box-shadow:
+    0 0 10px 2px rgba(255, 255, 255, 0.85),
+    0 0 28px 9px color-mix(in srgb, var(--a) 65%, #fff);
+  transform: scaleY(0);
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+#packRoot .rfx-pack .rfx-fill {
+  position: absolute;
+  inset: -12% -8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgba(255, 255, 255, 0.75) 32%, transparent 70%);
+  opacity: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+#packRoot .pk-pack.rfx-pack.opening {
+  animation:
+    rfxShake 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) both,
+    rfxPackOut 0.2s 0.46s ease-in forwards;
+}
+#packRoot .rfx-pack.opening .rfx-glow {
+  animation: rfxGlow 0.5s ease-in forwards;
+}
+#packRoot .rfx-pack.opening .rfx-seam {
+  animation: rfxSeam 0.4s 0.08s ease-in forwards;
+}
+#packRoot .rfx-pack.opening .rfx-fill {
+  animation: rfxFill 0.22s 0.36s ease-out forwards;
+}
+#packRoot .rfx-pack.opening ~ .pk-hint {
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+@keyframes rfxShake {
+  0% {
+    transform: rotate(0) scale(1);
+  }
+  12% {
+    transform: rotate(-3deg) scale(1.01);
+  }
+  24% {
+    transform: rotate(3deg) scale(1.02);
+  }
+  36% {
+    transform: rotate(-5deg) scale(1.04);
+  }
+  48% {
+    transform: rotate(6deg) scale(1.05);
+  }
+  60% {
+    transform: rotate(-8deg) scale(1.07);
+  }
+  72% {
+    transform: rotate(9deg) scale(1.09);
+  }
+  84% {
+    transform: rotate(-10deg) scale(1.11);
+  }
+  100% {
+    transform: rotate(0) scale(1.14);
+  }
+}
+@keyframes rfxPackOut {
+  from {
+    transform: scale(1.14);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+@keyframes rfxGlow {
+  to {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.9;
+  }
+}
+@keyframes rfxSeam {
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+@keyframes rfxFill {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- one-shot burst pieces (live in .rfx-layer) ---------- */
+#packRoot .rfx-ring {
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow:
+    0 0 18px 4px var(--c),
+    inset 0 0 12px 2px var(--c);
+  animation: rfxRing 0.62s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+@keyframes rfxRing {
+  from {
+    transform: scale(0.15);
+    opacity: 1;
+  }
+  to {
+    transform: scale(3.6);
+    opacity: 0;
+  }
+}
+#packRoot .rfx-burst {
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, transparent 0deg, var(--c) 6deg, transparent 12deg);
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 8%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 8%, transparent 100%);
+  animation: rfxBurstRays 0.75s cubic-bezier(0.1, 0.7, 0.3, 1) forwards;
+}
+@keyframes rfxBurstRays {
+  0% {
+    transform: scale(0.2) rotate(0deg);
+    opacity: 0;
+  }
+  22% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.55) rotate(28deg);
+    opacity: 0;
+  }
+}
+#packRoot .rfx-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 45%,
+    color-mix(in srgb, var(--c) 40%, #fff) 0%,
+    color-mix(in srgb, var(--c) 40%, transparent) 38%,
+    transparent 78%
+  );
+  opacity: 0;
+  animation: rfxFlash 0.6s ease-out forwards;
+}
+@keyframes rfxFlash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.62;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+#packRoot .rfx-p {
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 6px var(--c);
+  transform: translate(0, 0) scale(0.3);
+  animation: rfxSpark var(--d, 700ms) cubic-bezier(0.1, 0.75, 0.25, 1) forwards;
+}
+#packRoot .rfx-p.star {
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+@keyframes rfxSpark {
+  0% {
+    transform: translate(0, 0) scale(0.3) rotate(0deg);
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), calc(var(--dy) + 34px)) scale(var(--s)) rotate(var(--r));
+    opacity: 0;
+  }
+}
+
+/* ---------- cards: staggered spring deal with a slight fan ---------- */
+#packRoot .pk-card {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+  animation: rfxDeal 0.58s cubic-bezier(0.2, 1.25, 0.35, 1) both;
+  will-change: transform;
+}
+@keyframes rfxDeal {
+  from {
+    transform: translateY(90px) rotate(var(--fan, 0deg)) scale(0.35);
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+#packRoot .pk-inner {
+  transition: transform 0.5s cubic-bezier(0.35, 1.15, 0.45, 1);
+  z-index: 1;
+}
+/* holographic sheen + shimmer sweep live inside the front face */
+#packRoot .rfx-holo,
+#packRoot .rfx-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+#packRoot .rfx-holo {
+  opacity: 0.35;
+}
+#packRoot .r-r .rfx-holo {
+  opacity: 0.55;
+}
+#packRoot .r-e .rfx-holo {
+  opacity: 0.7;
+}
+#packRoot .r-l .rfx-holo {
+  opacity: 0.9;
+}
+#packRoot .rfx-holo::before {
+  content: '';
+  position: absolute;
+  inset: -30% -60%;
+  background: linear-gradient(
+    112deg,
+    transparent 34%,
+    rgba(255, 255, 255, 0.13) 42%,
+    rgba(120, 230, 255, 0.2) 47%,
+    rgba(255, 150, 240, 0.17) 52%,
+    rgba(255, 235, 150, 0.15) 57%,
+    transparent 66%
+  );
+  animation: rfxHolo 4.6s ease-in-out infinite alternate;
+}
+@keyframes rfxHolo {
+  from {
+    transform: translateX(-22%);
+  }
+  to {
+    transform: translateX(22%);
+  }
+}
+#packRoot .rfx-sweep::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: -70%;
+  width: 55%;
+  background: linear-gradient(100deg, transparent 0%, color-mix(in srgb, var(--rc) 55%, #fff) 50%, transparent 100%);
+  opacity: 0;
+  transform: skewX(-14deg) translateX(0);
+}
+#packRoot .pk-card.flipped:not(.r-c) .rfx-sweep::before {
+  animation: rfxSweep 0.8s 0.26s cubic-bezier(0.3, 0.6, 0.3, 1) both;
+}
+#packRoot .pk-card.flipped.r-l .rfx-sweep::before {
+  animation-duration: 0.7s;
+  animation-iteration-count: 2;
+}
+@keyframes rfxSweep {
+  0% {
+    transform: skewX(-14deg) translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: skewX(-14deg) translateX(400%);
+    opacity: 0;
+  }
+}
+/* epic pulse ring (behind the card) */
+#packRoot .rfx-pulse {
+  position: absolute;
+  inset: -3px;
+  border-radius: 17px;
+  box-shadow:
+    0 0 0 2px var(--rc),
+    0 0 26px 8px color-mix(in srgb, var(--rc) 60%, transparent);
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+#packRoot .pk-card.flipped .rfx-pulse {
+  animation: rfxPulse 1s 0.25s ease-out 2;
+}
+@keyframes rfxPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  25% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+/* rarity rays (legendary card, hatched pet) */
+#packRoot .rfx-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 250%;
+  height: 180%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+  --ro: 0.75;
+}
+#packRoot .rfx-rays > i {
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--rc) 80%, #fff) 9deg,
+    transparent 18deg
+  );
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 100%);
+  animation: rfxSpin 16s linear infinite;
+}
+#packRoot .rfx-under .rfx-rays {
+  animation: rfxRaysIn 0.8s 0.15s ease-out forwards;
+}
+@keyframes rfxRaysIn {
+  to {
+    opacity: var(--ro, 0.75);
+  }
+}
+@keyframes rfxSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* best card of the pack */
+#packRoot .pk-card.rfx-best::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 19px;
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--rc) 45%, transparent),
+    0 0 30px 6px color-mix(in srgb, var(--rc) 55%, transparent);
+  opacity: 0;
+  animation: rfxIn 0.6s ease-out forwards;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes rfxIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- egg: wobble harder per tap, crack lines, split shell ---------- */
+#packRoot .rfx-egg {
+  position: relative;
+  padding: 8px 28px;
+}
+#packRoot .rfx-egg.crack {
+  animation: float 2.4s ease-in-out infinite;
+}
+#packRoot .rfx-eggglow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 210px;
+  height: 210px;
+  margin: -105px 0 0 -105px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #ffd27a 22%, color-mix(in srgb, #ffd27a 50%, transparent) 42%, transparent 66%);
+  opacity: 0;
+  transition: opacity 0.35s;
+  z-index: -1;
+  pointer-events: none;
+}
+#packRoot .rfx-egg.k1 .rfx-eggglow {
+  opacity: 0.2;
+}
+#packRoot .rfx-egg.k2 .rfx-eggglow {
+  opacity: 0.42;
+}
+#packRoot .rfx-egg.k3 .rfx-eggglow {
+  opacity: 0.8;
+}
+#packRoot .rfx-eggbox {
+  position: relative;
+  display: block;
+  width: 70px;
+  height: 96px;
+  transform-origin: 50% 85%;
+}
+#packRoot .rfx-half {
+  position: absolute;
+  inset: 0;
+  display: block;
+  will-change: transform;
+}
+#packRoot .rfx-half .face {
+  width: 70px;
+}
+#packRoot .rfx-top {
+  clip-path: polygon(0 0, 100% 0, 100% 48.2%, 85% 53.7%, 72.5% 44.5%, 60% 53.7%, 47.5% 44.5%, 32.5% 55.5%, 20% 46.3%, 0 51.8%);
+}
+#packRoot .rfx-bot {
+  clip-path: polygon(0 51.8%, 20% 46.3%, 32.5% 55.5%, 47.5% 44.5%, 60% 53.7%, 72.5% 44.5%, 85% 53.7%, 100% 48.2%, 100% 100%, 0 100%);
+}
+#packRoot .rfx-cracks {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 70px;
+  height: 88px;
+  overflow: visible;
+  pointer-events: none;
+}
+#packRoot .rfx-cracks path {
+  fill: none;
+  stroke: rgba(50, 28, 8, 0.8);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+#packRoot .rfx-egg.k1 .rfx-cracks .k1,
+#packRoot .rfx-egg.k2 .rfx-cracks .k2,
+#packRoot .rfx-egg.k3 .rfx-cracks .k3 {
+  animation: rfxCrack 0.28s ease-out forwards;
+}
+@keyframes rfxCrack {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+#packRoot .rfx-eggbox.w1 {
+  animation: rfxWob1 0.4s ease-out;
+}
+#packRoot .rfx-eggbox.w2 {
+  animation: rfxWob2 0.4s ease-out;
+}
+#packRoot .rfx-eggbox.w3 {
+  animation: rfxWob3 0.32s ease-out;
+}
+@keyframes rfxWob1 {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  55% {
+    transform: rotate(5deg);
+  }
+  80% {
+    transform: rotate(-2deg);
+  }
+}
+@keyframes rfxWob2 {
+  0%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  20% {
+    transform: rotate(-11deg) scale(1.04);
+  }
+  45% {
+    transform: rotate(10deg) scale(1.05);
+  }
+  70% {
+    transform: rotate(-6deg) scale(1.03);
+  }
+}
+@keyframes rfxWob3 {
+  0% {
+    transform: rotate(0) scale(1);
+  }
+  20% {
+    transform: rotate(-16deg) scale(1.07);
+  }
+  45% {
+    transform: rotate(15deg) scale(1.1);
+  }
+  70% {
+    transform: rotate(-8deg) scale(1.12);
+  }
+  100% {
+    transform: rotate(0) scale(1.14);
+  }
+}
+#packRoot .rfx-egg.rfx-split .rfx-eggbox {
+  transform: scale(1.14);
+}
+#packRoot .rfx-egg.rfx-split .rfx-top {
+  animation: rfxTop 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+#packRoot .rfx-egg.rfx-split .rfx-bot {
+  animation: rfxBot 0.48s ease-in forwards;
+}
+#packRoot .rfx-egg.rfx-split .rfx-cracks {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+@keyframes rfxTop {
+  to {
+    transform: translate(-10px, -92px) rotate(-28deg);
+    opacity: 0;
+  }
+}
+@keyframes rfxBot {
+  to {
+    transform: translateY(36px) scale(1.02, 0.9);
+    opacity: 0;
+  }
+}
+
+/* ---------- hatched card: spring in with rarity rays behind the pet ---------- */
+#packRoot .rfx-hatched {
+  position: relative;
+  overflow: hidden;
+  animation: rfxHatchIn 0.55s cubic-bezier(0.2, 1.25, 0.35, 1) both;
+}
+@keyframes rfxHatchIn {
+  from {
+    transform: translateY(26px) scale(0.72);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+#packRoot .rfx-petwrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+#packRoot .rfx-petwrap .rfx-rays {
+  width: 280px;
+  height: 280px;
+  --ro: 0.45;
+  animation: rfxRaysIn 0.9s 0.25s ease-out forwards;
+}
+#packRoot .rfx-petwrap .rfx-rays > i {
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 0%, rgba(0, 0, 0, 0.5) 40%, transparent 82%);
+  mask-image: radial-gradient(circle closest-side, #000 0%, rgba(0, 0, 0, 0.5) 40%, transparent 82%);
+}
+#packRoot .rfx-hatched.r-c .rfx-petwrap .rfx-rays {
+  --ro: 0.2;
+}
+#packRoot .rfx-hatched.r-e .rfx-petwrap .rfx-rays {
+  --ro: 0.55;
+}
+#packRoot .rfx-hatched.r-l .rfx-petwrap .rfx-rays {
+  --ro: 0.7;
+}
+#packRoot .rfx-petwrap .pet-big {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- reduced motion: no particles/rays/sheens, keep simple fades ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #packRoot .rfx-layer,
+  #packRoot .rfx-rays,
+  #packRoot .rfx-holo,
+  #packRoot .rfx-sweep,
+  #packRoot .rfx-pulse,
+  #packRoot .rfx-glow,
+  #packRoot .rfx-seam,
+  #packRoot .rfx-fill,
+  #packRoot .rfx-eggglow {
+    display: none !important;
+  }
+  #packRoot .pk-card.rfx-best::after {
+    animation: none;
+    opacity: 1;
   }
 }
 
