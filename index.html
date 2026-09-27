@@ -21910,6 +21910,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       SITE.maintenance = s.maintenance || { on: false };
       SITE.features = s.features || {};
       SITE.content = s.content || [];
+      SITE.events = s.events || { coin_mult: 1, xp_mult: 1 };
       applySite();
     } catch (e) {
       /* offline: keep playing with the last known settings */
@@ -21976,6 +21977,24 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
           );
       }
     } else if (bx) bx.remove();
+    // live event banner (2× coins etc.)
+    const ev = SITE.events || {},
+      evOn = ev && (ev.coin_mult > 1 || ev.xp_mult > 1) && (!ev.until || new Date(ev.until) > Date.now()),
+      ex = document.getElementById('pbEvent');
+    if (evOn) {
+      const parts = [];
+      if (ev.coin_mult > 1) parts.push(`${ev.coin_mult}× coins`);
+      if (ev.xp_mult > 1) parts.push(`${ev.xp_mult}× XP`);
+      const h = `<span class="ev-ic">⚡</span><b>${E(ev.label || 'Live event')}</b><span>${parts.join(' · ')}${ev.until ? ' · ends ' + new Date(ev.until).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}</span>`;
+      if (ex) {
+        if (ex.innerHTML !== h) ex.innerHTML = h;
+      } else {
+        const tw = document.getElementById('pbBanner') || document.getElementById('topWrap');
+        if (tw) tw.insertAdjacentHTML('afterend', `<div id="pbEvent">${h}</div>`);
+      }
+    } else if (ex) ex.remove();
+    // one-time popups from the team
+    showPopup();
     paintNews();
     // if the current page just got switched off, go home
     const cur = ((typeof curRoute !== 'undefined' && curRoute) || 'home').split('/')[0];
@@ -21985,6 +22004,43 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       toast('That part of PAPERBULL is turned off right now.', 'err');
     }
   }
+  // Popups wait until the player is actually in the game (gate closed, no other
+  // modal up) and then show once per content version. Retries briefly so a popup
+  // that arrives while the daily-bonus modal is open still shows a moment later.
+  let popT = 0;
+  function showPopup() {
+    clearTimeout(popT);
+    const pop = SITE.content.find(c => c.kind === 'popup' && !dismissed(c));
+    if (!pop || SITE.maintenance.on) return;
+    const b = document.body;
+    if (b.classList.contains('gated') || document.querySelector('#modalRoot.open') || document.querySelector('#packRoot.open')) {
+      popT = setTimeout(showPopup, 1500);
+      return;
+    }
+    try {
+      localStorage.setItem(dKey(pop), '1');
+    } catch (e) {}
+    modal({
+      title: pop.title,
+      confirm: 'Got it',
+      cancel: '',
+      html: `<div class="pb-pop">${typeof buckSVG === 'function' ? buckSVG('happy') : ''}<p>${E(pop.body || '').replace(/\n/g, '<br>')}</p></div>`,
+    });
+  }
+  const evMult = k => {
+    const ev = SITE.events;
+    if (!ev || (ev.until && new Date(ev.until) <= Date.now())) return 1;
+    return Math.max(1, +ev[k] || 1);
+  };
+  const cg0 = coinGain;
+  coinGain = function (n, fromTrade) {
+    return Math.round(cg0.call(this, n, fromTrade) * evMult('coin_mult'));
+  };
+  const ax0 = addXP;
+  addXP = function (n) {
+    return ax0.call(this, n * evMult('xp_mult'));
+  };
+  window.PBEventMult = evMult;
   const dKey = c => 'pb2.dis.' + c.id + '.' + c.updated_at;
   const dismissed = c => {
     try {
@@ -22048,19 +22104,21 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
 
   /* ---------- rewards ---------- */
   function apply(g) {
-    const amt = +g.amount || 0;
+    const amt = +g.amount || 0,
+      sign = amt < 0 ? '−' : '';
     if (g.kind === 'coins') {
-      acct.coins += Math.round(amt);
+      acct.coins = Math.max(0, acct.coins + Math.round(amt));
       bumpCoins();
-      return `${Math.round(amt).toLocaleString()} coins`;
+      return `${sign}${Math.abs(Math.round(amt)).toLocaleString()} coins`;
     }
     if (g.kind === 'cash') {
-      acct.cash += amt;
-      return `${fmtUSD(amt, 0)} virtual cash`;
+      acct.cash = Math.max(0, acct.cash + amt);
+      return `${sign}${fmtUSD(Math.abs(amt), 0)} virtual cash`;
     }
     if (g.kind === 'xp') {
-      addXP(Math.round(amt));
-      return `${Math.round(amt).toLocaleString()} XP`;
+      if (amt > 0) addXP(Math.round(amt));
+      else acct.xp = Math.max(0, acct.xp + Math.round(amt));
+      return `${sign}${Math.abs(Math.round(amt)).toLocaleString()} XP`;
     }
     if (g.kind === 'item') {
       const it = typeof ITEM !== 'undefined' && ITEM[g.item_id];
@@ -22093,11 +22151,12 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     SFX.play('coin');
     needRender = true;
     const msgs = list.map(g => g.message).filter(Boolean);
+    const neg = list.every(g => +g.amount < 0 && g.kind !== 'item');
     modal({
-      title: 'A gift from the PAPERBULL team',
-      confirm: 'Nice!',
+      title: neg ? 'Account adjustment' : 'A gift from the PAPERBULL team',
+      confirm: neg ? 'Okay' : 'Nice!',
       cancel: '',
-      html: `<div class="buck-intro">${buckSVG('cool')}<p>“Someone up there likes you.”</p></div>
+      html: `<div class="buck-intro">${buckSVG(neg ? 'sad' : 'cool')}<p>${neg ? '“The team made a change to your account.”' : '“Someone up there likes you.”'}</p></div>
       <ul class="pb-gotlist">${got.map(x => `<li><b>${E(x.g.name)}</b><span>${E(x.what)}</span></li>`).join('')}</ul>${msgs.length ? `<p class="muted small">${msgs.map(E).join('<br>')}</p>` : ''}`,
     });
   }
@@ -27920,6 +27979,49 @@ html:not(#_):not(#_) .pg-h .pg-ic.tinted svg {
   }
   #top .mode-btn {
     display: none !important;
+  }
+}
+
+/* ---------- live event banner + popups ---------- */
+#pbEvent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, rgba(255, 138, 28, 0.18), rgba(124, 77, 255, 0.14));
+  border-bottom: 1px solid color-mix(in srgb, var(--amber) 35%, transparent);
+  font-size: 13.5px;
+}
+#pbEvent b {
+  color: var(--amber);
+}
+#pbEvent > span:last-child {
+  color: var(--mut);
+}
+.ev-ic {
+  font-size: 16px;
+}
+.pb-pop {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.pb-pop svg {
+  width: 56px;
+  height: 56px;
+  flex: none;
+}
+.pb-pop p {
+  margin: 0;
+  line-height: 1.5;
+  white-space: normal;
+}
+@media (max-width: 600px) {
+  #pbEvent {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    padding: 8px 12px;
+    font-size: 12.5px;
   }
 }
 

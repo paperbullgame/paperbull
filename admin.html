@@ -2525,6 +2525,154 @@
           width: 100%;
         }
       }
+      /* admin v3 */
+      .tags {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      .tag {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 99px;
+        background: var(--brand-soft);
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .tag.sm {
+        padding: 1px 7px;
+        font-size: 10.5px;
+        vertical-align: 1px;
+      }
+      .tag.warn {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      .tools2 {
+        margin-top: -6px;
+      }
+      .tools2 .in {
+        max-width: 220px;
+      }
+      .astrip {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 12px;
+      }
+      .astrip i {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        background: var(--panel2);
+        border: 1px solid var(--line);
+      }
+      .astrip i.on {
+        background: var(--up);
+        border-color: var(--up);
+      }
+      .astrip span {
+        margin-left: 6px;
+      }
+      .dash-live {
+        margin-bottom: 16px;
+      }
+      .feed {
+        display: flex;
+        flex-direction: column;
+        max-height: 300px;
+        overflow: auto;
+      }
+      .fi {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--line);
+        color: inherit;
+        text-decoration: none;
+        font-size: 13.5px;
+      }
+      .fi:last-child {
+        border-bottom: 0;
+      }
+      .fi:hover b {
+        color: var(--brand);
+      }
+      .fic {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: var(--panel2);
+        flex: none;
+        font-size: 14px;
+      }
+      .fit {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .fi small {
+        flex: none;
+      }
+      .sec-h {
+        font-size: 18px;
+        margin: 22px 0 12px;
+        letter-spacing: -0.02em;
+      }
+      .bars {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .bar {
+        display: grid;
+        grid-template-columns: 120px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+      }
+      .bar i {
+        display: block;
+        height: 10px;
+        border-radius: 5px;
+        background: var(--panel2);
+        overflow: hidden;
+      }
+      .bar i b {
+        display: block;
+        height: 100%;
+        border-radius: 5px;
+        min-width: 2px;
+      }
+      .ev-card.live {
+        border-color: color-mix(in srgb, var(--up) 45%, var(--line)) !important;
+      }
+      .li a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .li a:hover {
+        color: var(--brand);
+      }
+      a.li {
+        color: inherit;
+        text-decoration: none;
+      }
+      @media (max-width: 720px) {
+        .bar {
+          grid-template-columns: 90px 1fr auto;
+        }
+        .tools2 .in {
+          max-width: none;
+        }
+      }
 </style>
   </head>
   <body>
@@ -2535,7 +2683,7 @@
       const API = 'https://amnbnuabxoxhggidlhcn.supabase.co/rest/v1/rpc/';
       const ANON =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtbmJudWFieG94aGdnaWRsaGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjc5ODAsImV4cCI6MjEwNTYwMzk4MH0.WwHTYzYEwKtW2_fjoyPiltnxI331-Ve5IGolTpavISo';
-      const GAME_ITEMS = [["th_amber", "theme", "Amber"], ["th_mint", "theme", "Mint"], ["th_ice", "theme", "Ice"], ["th_violet", "theme", "Ultraviolet"], ["th_rose", "theme", "Rose"], ["th_gold", "theme", "24K Gold"], ["sk_classic", "skin", "Classic"], ["sk_retro", "skin", "Retro Terminal"], ["sk_mono", "skin", "Monochrome"], ["sk_ocean", "skin", "Deep Ocean"], ["sk_neon", "skin", "Neon Nights"], ["sk_lava", "skin", "Lava"], ["av_bull", "avatar", "Bull"], ["av_bear", "avatar", "Bear"], ["av_fox", "avatar", "Fox"], ["av_frog", "avatar", "Frog"], ["av_shark", "avatar", "Shark"], ["av_wolf", "avatar", "Wolf"], ["av_ape", "avatar", "Ape"], ["av_rocket", "avatar", "Rocket"], ["av_diamond", "avatar", "Diamond"], ["av_robot", "avatar", "Algo"], ["av_whale", "avatar", "Whale"], ["av_crown", "avatar", "Crown"], ["ti_rookie", "title", "Rookie"], ["ti_dip", "title", "Dip Buyer"], ["ti_hodl", "title", "HODLer"], ["ti_chart", "title", "Chart Wizard"], ["ti_degen", "title", "Certified Degen"], ["ti_hands", "title", "Diamond Hands"], ["ti_wolf", "title", "Wolf of Sim Street"], ["ti_oracle", "title", "The Oracle"], ["ti_whale", "title", "Market Whale"], ["co_s", "coins", "Coin Pouch"], ["co_m", "coins", "Coin Sack"], ["co_l", "coins", "Coin Vault"], ["th_lime", "theme", "Lime"], ["th_coral", "theme", "Coral"], ["th_teal", "theme", "Lagoon"], ["th_sakura", "theme", "Sakura"], ["th_ruby", "theme", "Ruby"], ["sk_sunset", "skin", "Sunset"], ["sk_matrix", "skin", "The Matrix"], ["sk_candy", "skin", "Cotton Candy"], ["sk_arctic", "skin", "Arctic"], ["sk_vapor", "skin", "Vaporwave"], ["av_cowboy", "avatar", "Cowboy"], ["av_panda", "avatar", "Panda"], ["av_koala", "avatar", "Koala"], ["av_lion", "avatar", "Lion"], ["av_tiger", "avatar", "Tiger"], ["av_ninja", "avatar", "Ninja"], ["av_hero", "avatar", "Hero"], ["av_trex", "avatar", "T-Rex"], ["av_alien", "avatar", "Alien"], ["av_wizard", "avatar", "Wizard"], ["ti_bag", "title", "Bag Holder"], ["ti_moon", "title", "Moon Boy"], ["ti_tape", "title", "Tape Reader"], ["ti_fomo", "title", "FOMO Survivor"], ["ti_tiger", "title", "Paper Tiger"], ["ti_candle", "title", "Candle Whisperer"], ["ti_bearw", "title", "Bear Whisperer"], ["ti_stonk", "title", "Stonk Lord"], ["th_sky", "theme", "Sky"], ["th_peach", "theme", "Peach"], ["th_lav", "theme", "Lavender"], ["th_forest", "theme", "Forest"], ["th_aurora", "theme", "Aurora"], ["th_diamond", "theme", "Diamond"], ["sk_forest", "skin", "Forest Floor"], ["sk_berry", "skin", "Berry"], ["sk_ice", "skin", "Glacier"], ["sk_fire", "skin", "Wildfire"], ["sk_galaxy", "skin", "Galaxy"], ["sk_gold", "skin", "Solid Gold"], ["av_chef", "avatar", "Chef"], ["av_pirate", "avatar", "Pirate"], ["av_dj", "avatar", "DJ"], ["av_detective", "avatar", "Detective"], ["av_pumpkin", "avatar", "Pumpkin"], ["av_ghost", "avatar", "Ghost"], ["av_viking", "avatar", "Viking"], ["av_astro", "avatar", "Astronaut"], ["ti_paper", "title", "Paper Hands"], ["ti_bhsl", "title", "Buy High, Sell Low"], ["ti_doodle", "title", "Chart Doodler"], ["ti_rider", "title", "Trend Rider"], ["ti_green", "title", "Green Day Hero"], ["ti_wick", "title", "Wick Watcher"], ["ti_pattern", "title", "Pattern Master"], ["ti_tamer", "title", "Bull Tamer"], ["ti_sensei", "title", "Candle Sensei"], ["ti_legend2", "title", "Market Legend"], ["ti_goat", "title", "The GOAT Trader"], ["ti_glitch", "title", "Infinite Money Glitch"]];
+      const GAME_ITEMS = [["th_amber", "theme", "Amber"], ["th_mint", "theme", "Mint"], ["th_ice", "theme", "Ice"], ["th_violet", "theme", "Ultraviolet"], ["th_rose", "theme", "Rose"], ["th_gold", "theme", "24K Gold"], ["sk_classic", "skin", "Classic"], ["sk_retro", "skin", "Retro Terminal"], ["sk_mono", "skin", "Monochrome"], ["sk_ocean", "skin", "Deep Ocean"], ["sk_neon", "skin", "Neon Nights"], ["sk_lava", "skin", "Lava"], ["av_bull", "avatar", "Bull"], ["av_bear", "avatar", "Bear"], ["av_fox", "avatar", "Fox"], ["av_frog", "avatar", "Frog"], ["av_shark", "avatar", "Shark"], ["av_wolf", "avatar", "Wolf"], ["av_ape", "avatar", "Ape"], ["av_rocket", "avatar", "Rocket"], ["av_diamond", "avatar", "Diamond"], ["av_robot", "avatar", "Algo"], ["av_whale", "avatar", "Whale"], ["av_crown", "avatar", "Crown"], ["ti_rookie", "title", "Rookie"], ["ti_dip", "title", "Dip Buyer"], ["ti_hodl", "title", "HODLer"], ["ti_chart", "title", "Chart Wizard"], ["ti_degen", "title", "Certified Degen"], ["ti_hands", "title", "Diamond Hands"], ["ti_wolf", "title", "Wolf of Sim Street"], ["ti_oracle", "title", "The Oracle"], ["ti_whale", "title", "Market Whale"], ["co_s", "coins", "Coin Pouch"], ["co_m", "coins", "Coin Sack"], ["co_l", "coins", "Coin Vault"], ["th_lime", "theme", "Lime"], ["th_coral", "theme", "Coral"], ["th_teal", "theme", "Lagoon"], ["th_sakura", "theme", "Sakura"], ["th_ruby", "theme", "Ruby"], ["sk_sunset", "skin", "Sunset"], ["sk_matrix", "skin", "The Matrix"], ["sk_candy", "skin", "Cotton Candy"], ["sk_arctic", "skin", "Arctic"], ["sk_vapor", "skin", "Vaporwave"], ["av_cowboy", "avatar", "Cowboy"], ["av_panda", "avatar", "Panda"], ["av_koala", "avatar", "Koala"], ["av_lion", "avatar", "Lion"], ["av_tiger", "avatar", "Tiger"], ["av_ninja", "avatar", "Ninja"], ["av_hero", "avatar", "Hero"], ["av_trex", "avatar", "T-Rex"], ["av_alien", "avatar", "Alien"], ["av_wizard", "avatar", "Wizard"], ["ti_bag", "title", "Bag Holder"], ["ti_moon", "title", "Moon Boy"], ["ti_tape", "title", "Tape Reader"], ["ti_fomo", "title", "FOMO Survivor"], ["ti_tiger", "title", "Paper Tiger"], ["ti_candle", "title", "Candle Whisperer"], ["ti_bearw", "title", "Bear Whisperer"], ["ti_stonk", "title", "Stonk Lord"], ["th_sky", "theme", "Sky"], ["th_peach", "theme", "Peach"], ["th_lav", "theme", "Lavender"], ["th_forest", "theme", "Forest"], ["th_aurora", "theme", "Aurora"], ["th_diamond", "theme", "Diamond"], ["sk_forest", "skin", "Forest Floor"], ["sk_berry", "skin", "Berry"], ["sk_ice", "skin", "Glacier"], ["sk_fire", "skin", "Wildfire"], ["sk_galaxy", "skin", "Galaxy"], ["sk_gold", "skin", "Solid Gold"], ["av_chef", "avatar", "Chef"], ["av_pirate", "avatar", "Pirate"], ["av_dj", "avatar", "DJ"], ["av_detective", "avatar", "Detective"], ["av_pumpkin", "avatar", "Pumpkin"], ["av_ghost", "avatar", "Ghost"], ["av_viking", "avatar", "Viking"], ["av_astro", "avatar", "Astronaut"], ["ti_paper", "title", "Paper Hands"], ["ti_bhsl", "title", "Buy High, Sell Low"], ["ti_doodle", "title", "Chart Doodler"], ["ti_rider", "title", "Trend Rider"], ["ti_green", "title", "Green Day Hero"], ["ti_wick", "title", "Wick Watcher"], ["ti_pattern", "title", "Pattern Master"], ["ti_tamer", "title", "Bull Tamer"], ["ti_sensei", "title", "Candle Sensei"], ["ti_legend2", "title", "Market Legend"], ["ti_goat", "title", "The GOAT Trader"], ["ti_glitch", "title", "Infinite Money Glitch"], ["egg_speckled", "egg", "Speckled Egg"], ["egg_lucky", "egg", "Lucky Egg"], ["egg_mystery", "egg", "Mystery Egg"], ["egg_coin", "egg", "Coin Egg"], ["egg_scholar", "egg", "Scholar Egg"], ["egg_idle", "egg", "Idle Egg"], ["egg_ember", "egg", "Ember Egg"], ["egg_ocean", "egg", "Ocean Egg"], ["egg_jade", "egg", "Jade Egg"], ["egg_obsidian", "egg", "Obsidian Egg"], ["egg_rainbow", "egg", "Rainbow Egg"]];
       const LOGO = "<svg viewBox=\"0 0 64 64\"><defs><linearGradient id=\"pbLgA\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffb52e\"/><stop offset=\"1\" stop-color=\"#ff5e1a\"/></linearGradient></defs><rect width=\"64\" height=\"64\" rx=\"15\" fill=\"url(#pbLgA)\"/><path d=\"M13.5 14.5c.6 8.4 5.6 12.5 12.5 12.5h12c6.9 0 11.9-4.1 12.5-12.5\" stroke=\"#fff\" stroke-width=\"5.2\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M21.2 25.5h21.6l-3.6 18.2c-1 4.9-3.8 7.8-7.2 7.8s-6.2-2.9-7.2-7.8z\" fill=\"#fff\"/><path d=\"M28.3 30.5v13.5M35.7 27.5v12.5\" stroke=\"#16c784\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><rect x=\"26.5\" y=\"33\" width=\"3.6\" height=\"8.5\" rx=\"1.3\" fill=\"#16c784\"/><rect x=\"33.9\" y=\"29.8\" width=\"3.6\" height=\"8\" rx=\"1.3\" fill=\"#16c784\"/></svg>";
 
       /* ================= helpers ================= */
@@ -2564,6 +2712,13 @@
           : '—';
       const dday = s =>
         s ? new Date(s).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+      function leftIn(s) {
+        const d = (new Date(s) - Date.now()) / 1000;
+        if (d <= 0) return 'a moment';
+        if (d < 3600) return Math.ceil(d / 60) + ' min';
+        if (d < 86400) return Math.round(d / 3600) + 'h';
+        return Math.round(d / 86400) + 'd';
+      }
       function ago(s) {
         if (!s) return 'never';
         const d = (Date.now() - new Date(s)) / 1000;
@@ -2668,6 +2823,10 @@
         code_taken: 'That code already exists. Pick another.',
         bad_max: 'Max uses must be at least 1.',
         need_reason: 'Add a reason.',
+        bad_new_code: 'The new code must be 5 to 12 digits.',
+        same_code: 'That’s the same code as now.',
+        bad_tag: 'Tags can only use letters, numbers, spaces, - and _ (max 20 characters).',
+        too_many_tags: 'Max 12 tags per player.',
         slow_down: 'Slow down — wait a minute and try again.',
         setup_done: 'Setup is already finished. Sign in instead.',
         weak_password: 'Password must be at least 10 characters.',
@@ -3084,7 +3243,6 @@
         ['users', 'Users', IC.users, 'moderator'],
         ['gifts', 'Gifts', IC.gift, 'moderator'],
         ['promos', 'Promo codes', IC.ticket, 'moderator'],
-        ['tourney', 'Tournament', IC.trophy, 'moderator'],
         ['transactions', 'Transactions', IC.tx, 'moderator'],
         ['content', 'Content', IC.content, 'moderator'],
         ['analytics', 'Analytics', IC.chart, 'moderator'],
@@ -3251,13 +3409,15 @@
       ${k('', IC.tx, 'Shop purchases', num(s.purchases), `${num(s.catalog)} gifts on sale`, 'purchases')}
       ${k('c2', IC.gift, 'Admin gifts given', num(s.grants), 'Items and coins from staff')}
       ${k('c4', IC.users, 'Friendships', num(s.friendships), `${num(s.content)} live posts`)}</div>
-      <div class="card onl-card"><div class="card-h"><h3>Online now</h3><span class="small muted">Updates every 30 seconds</span></div><div class="onl" id="onl">${skeleton(2)}</div></div>
+      <div class="grid g2 dash-live"><div class="card onl-card"><div class="card-h"><h3>Online now</h3><span class="small muted">Updates every 30 seconds</span></div><div class="onl" id="onl">${skeleton(2)}</div></div>
+      <div class="card"><div class="card-h"><h3>Live feed</h3><span class="small muted">What players are doing</span></div><div class="feed" id="feed">${skeleton(4)}</div></div></div>
       <div class="grid g2"><div class="card"><div class="card-h"><h3>New users · 30 days</h3>${legend([{ name: 'Signups', color: col(1) }])}</div><div class="chart" id="c1"></div></div>
       <div class="card"><div class="card-h"><h3>Active users · 30 days</h3>${legend([{ name: 'Active', color: col(2) }])}</div><div class="chart" id="c2"></div></div></div>
       <div class="grid g2" style="margin-top:16px"><div class="card"><div class="card-h"><h3>Top players</h3><a href="#/users" class="small">All users</a></div><div class="list">${(s.top || []).length ? s.top.map((t, i) => `<div class="li"><span class="mono muted" style="width:18px">${i + 1}</span>${avatar(t.name)}<div class="t"><b>${esc(t.name)}</b><small>@${esc(t.username)}</small></div><span class="mono ${cls(t.return_pct)}">${pct(t.return_pct)}</span></div>`).join('') : '<div class="empty">No ranked players yet.</div>'}</div></div>
       <div class="card"><div class="card-h"><h3>Recent admin activity</h3>${audit ? '<a href="#/audit" class="small">Audit log</a>' : ''}</div><div class="list">${audit ? (audit.rows.length ? audit.rows.map(a => `<div class="li"><span class="dot" style="background:var(--brand)"></span><div class="t"><b>${esc(actLabel(a.action))}${a.target_label ? ' · ' + esc(a.target_label) : ''}</b><small>${esc(a.admin_name || 'system')} · ${ago(a.created_at)}</small></div></div>`).join('') : '<div class="empty">Nothing yet.</div>') : '<div class="empty">Admins and owners can see the audit log.</div>'}</div></div></div>`;
           $('#rf').onclick = () => this.render(v);
           paintOnline();
+          paintFeed();
           this.charts();
         },
         charts() {
@@ -3301,8 +3461,14 @@
         promo_create: 'Created promo code',
         promo_update: 'Edited promo code',
         promo_delete: 'Deleted promo code',
-        tourney_dq: 'Disqualified from tournament',
-        tourney_undq: 'Reinstated in tournament',
+        user_kick: 'Forced logout',
+        user_lb_hide: 'Hid from leaderboard',
+        user_lb_show: 'Showed on leaderboard',
+        user_adjust: 'Adjusted balance',
+        badwords_change: 'Changed blocked words',
+        events_change: 'Changed live event',
+        code_change: 'Changed the access code',
+        sessions_revoked: 'Signed out all admins',
         maintenance_on: 'Turned ON maintenance',
         maintenance_off: 'Turned off maintenance',
         features_change: 'Changed features',
@@ -3319,15 +3485,48 @@
 
       /* ---------- users ---------- */
       VIEWS.users = {
-        st: { q: '', status: 'all', sort: 'created_at', dir: 'desc', page: 1, per: 25 },
+        st: { q: '', status: 'all', sort: 'created_at', dir: 'desc', page: 1, per: 25, joined: '', seen: '', tag: '' },
         render(v) {
           const st = this.st;
           v.innerHTML =
-            head('Users', 'Everyone with an online PAPERBULL account.', `<button class="btn" id="uCsv">${IC.dl || ''}Export CSV</button>`) +
+            head(
+              'Users',
+              'Everyone with an online PAPERBULL account.',
+              `${can('admin') ? `<button class="btn" id="uGiftAll">${IC.gift}Gift everyone shown</button>` : ''}<button class="btn" id="uCsv">${IC.dl || ''}Export CSV</button>`
+            ) +
             `<div class="card"><div class="tools">
       <input class="in" id="uq" placeholder="Search username or name" value="${esc(st.q)}">
       <div class="tabs" id="ust">${['all', 'active', 'suspended', 'banned', 'deleted'].map(s => `<button data-s="${s}" class="${st.status === s ? 'on' : ''}">${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}</div>
-      <select class="in" id="uper" aria-label="Rows per page">${[10, 25, 50, 100].map(n => `<option ${n === st.per ? 'selected' : ''}>${n}</option>`).join('')}</select></div><div id="ut">${skeleton(6)}</div></div>`;
+      <select class="in" id="uper" aria-label="Rows per page">${[10, 25, 50, 100].map(n => `<option ${n === st.per ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+      <div class="tools tools2">
+      <select class="in" id="uJoined" aria-label="Joined"><option value="">Joined: any time</option><option value="today" ${st.joined === 'today' ? 'selected' : ''}>Joined today</option><option value="week" ${st.joined === 'week' ? 'selected' : ''}>Joined this week</option><option value="month" ${st.joined === 'month' ? 'selected' : ''}>Joined this month</option></select>
+      <select class="in" id="uSeen" aria-label="Last seen"><option value="">Last seen: any</option><option value="today" ${st.seen === 'today' ? 'selected' : ''}>Played today</option><option value="week" ${st.seen === 'week' ? 'selected' : ''}>Played this week</option><option value="inactive" ${st.seen === 'inactive' ? 'selected' : ''}>Inactive 7+ days</option><option value="gone" ${st.seen === 'gone' ? 'selected' : ''}>Gone 30+ days</option></select>
+      <input class="in" id="uTag" list="uTags" placeholder="Tag" value="${esc(st.tag)}" style="max-width:160px"><datalist id="uTags">${['VIP', 'Streamer', 'Suspicious', 'Friend', 'Tester', 'Whale'].map(t => `<option value="${t}">`).join('')}</datalist>
+      <span class="muted small" id="uCount"></span></div><div id="ut">${skeleton(6)}</div></div>`;
+          if ($('#uGiftAll'))
+            $('#uGiftAll').onclick = async () => {
+              const b = $('#uGiftAll');
+              b.disabled = true;
+              try {
+                const all = await fetchAllUsers(st, 500);
+                const list = all.filter(u => u.status !== 'deleted').map(u => ({ id: u.id, username: u.username }));
+                if (!list.length) toast('No users match these filters.', 'err');
+                else giveDialog(list, () => this.load());
+              } catch (e) {
+                toast(e.message, 'err');
+              }
+              b.disabled = false;
+            };
+          const refilter = () => {
+            st.joined = $('#uJoined').value;
+            st.seen = $('#uSeen').value;
+            st.tag = $('#uTag').value.trim();
+            st.page = 1;
+            this.load();
+          };
+          $('#uJoined').onchange = refilter;
+          $('#uSeen').onchange = refilter;
+          $('#uTag').oninput = debounce(refilter, 250);
           $('#uCsv').onclick = async () => {
             const b = $('#uCsv');
             b.disabled = true;
@@ -3374,18 +3573,22 @@
               p_dir: st.dir,
               p_page: st.page,
               p_per: st.per,
+              p_joined: st.joined || null,
+              p_seen: st.seen || null,
+              p_tag: st.tag || null,
             });
           } catch (e) {
             box.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
             return;
           }
+          if ($('#uCount')) $('#uCount').textContent = `${num(r.total)} match`;
           const th = (k, l, r2) =>
             `<th class="s ${st.sort === k ? st.dir : ''} ${r2 ? 'r' : ''}" data-k="${k}">${l}</th>`;
           box.innerHTML = r.rows.length
             ? `<div class="tw"><table><thead><tr>${th('username', 'User')}${th('status', 'Status')}${th('return_pct', 'Return', 1)}${th('value', 'Value', 1)}${th('level', 'Level', 1)}${th('trades', 'Trades', 1)}${th('coins', 'Coins', 1)}${th('created_at', 'Joined')}${th('last_seen', 'Last seen')}</tr></thead>
       <tbody>${r.rows
         .map(
-          u => `<tr class="click" data-id="${u.id}"><td><div class="who">${avatar(u.name)}<div><b>${esc(u.name)}</b><small>@${esc(u.username)}</small></div></div></td><td>${statusPill(u.status)}</td>
+          u => `<tr class="click" data-id="${u.id}"><td><div class="who">${avatar(u.name)}<div><b>${esc(u.name)}${(u.tags || []).map(t => ` <span class="tag sm">${esc(t)}</span>`).join('')}${u.lb_hidden ? ' <span class="tag sm warn">hidden</span>' : ''}</b><small>@${esc(u.username)}</small></div></div></td><td>${statusPill(u.status)}</td>
         <td class="r mono ${cls(u.return_pct)}">${pct(u.return_pct)}</td><td class="r mono">${usd(u.value)}</td><td class="r mono">${u.level}</td><td class="r mono">${num(u.trades)}</td><td class="r mono">${num(u.coins)}</td><td>${dday(u.created_at)}</td><td>${ago(u.last_seen)}</td></tr>`
         )
         .join('')}</tbody></table></div>${pager(r.total, r.page, r.per)}`
@@ -3431,7 +3634,10 @@
           const acts = [
             btn('edit', IC.edit + 'Edit', '', 'admin'),
             btn('give', IC.gift + 'Give gift', '', 'admin'),
+            btn('adjust', IC.coin + 'Adjust balance', '', 'admin'),
             btn('pw', IC.key + 'Reset password', '', 'admin'),
+            u.status !== 'deleted' ? btn('kick', IC.out + 'Force logout', '', 'moderator') : '',
+            u.status !== 'deleted' ? btn(u.lb_hidden ? 'lb_show' : 'lb_hide', IC.trophy + (u.lb_hidden ? 'Show on leaderboard' : 'Hide from leaderboard'), '', 'admin') : '',
             u.status === 'active' ? btn('suspend', 'Suspend', '', 'moderator') : '',
             u.status === 'suspended' ? btn('unsuspend', 'Lift suspension', '', 'moderator') : '',
             u.status !== 'banned' && u.status !== 'deleted' ? btn('ban', IC.ban + 'Ban', 'dan', 'admin') : '',
@@ -3443,13 +3649,14 @@
           ].join('');
           const posRows = p && p.positions ? Object.entries(p.positions) : [];
           v.innerHTML = `<a href="#/users" class="btn ghost sm" style="margin-bottom:12px">${IC.back}All users</a>
-      <div class="card"><div class="prof">${avatar(u.name)}<div style="flex:1;min-width:0"><h2>${esc(u.name)} ${statusPill(u.status)}</h2><div class="muted">@${esc(u.username)} · joined ${dday(u.created_at)} · last seen ${ago(u.last_seen)}</div>
+      <div class="card"><div class="prof">${avatar(u.name)}<div style="flex:1;min-width:0"><h2>${esc(u.name)} ${statusPill(u.status)}${u.lb_hidden ? ' <span class="pill p-warn"><i></i>Hidden from leaderboard</span>' : ''}</h2><div class="muted">@${esc(u.username)} · joined ${dday(u.created_at)} · last seen ${ago(u.last_seen)}</div>
+        ${(u.tags || []).length ? `<div class="tags">${u.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
         ${u.status_reason ? `<div class="small" style="margin-top:4px">Reason: ${esc(u.status_reason)}${u.suspended_until ? ` · until ${dt(u.suspended_until)}` : ''}</div>` : ''}</div></div>
         <div class="stats"><div class="stat"><small>Total return</small><b class="mono ${cls(u.return_pct)}">${pct(u.return_pct)}</b></div><div class="stat"><small>Account value</small><b class="mono">${usd(u.value)}</b></div>
           <div class="stat"><small>Level</small><b class="mono">${u.level}</b></div><div class="stat"><small>Trades</small><b class="mono">${num(u.trades)}</b></div><div class="stat"><small>Coins</small><b class="mono">${num(u.coins)}</b></div><div class="stat"><small>Friends</small><b class="mono">${num(d.friends)}</b></div></div>
         <div class="actbar">${acts || '<span class="muted small">Your role can view this account but not change it.</span>'}</div></div>
       <div class="grid g2" style="margin-top:16px">
-        <div class="card"><div class="card-h"><h3>Account activity</h3></div>${d.events.length ? `<div class="tl">${d.events.map(e => `<div class="e"><b>${esc(evLabel(e))}</b><small>${dt(e.created_at)}</small></div>`).join('')}</div>` : '<div class="empty">No activity yet.</div>'}</div>
+        <div class="card"><div class="card-h"><h3>Account activity</h3><span class="muted small">Last 14 days</span></div>${activityStrip(d.events)}${d.events.length ? `<div class="tl">${d.events.map(e => `<div class="e"><b>${esc(evLabel(e))}</b><small>${dt(e.created_at)}</small></div>`).join('')}</div>` : '<div class="empty">No activity yet.</div>'}</div>
         <div><div class="card"><div class="card-h"><h3>Details</h3></div><dl class="kv"><dt>User ID</dt><dd class="mono small">${esc(u.id)}</dd><dt>Title</dt><dd>${esc(u.title || '—')}</dd><dt>Admin note</dt><dd>${esc(u.note || '—')}</dd>
           <dt>Cash</dt><dd class="mono">${p ? usd(p.cash) : '—'}</dd><dt>Holdings</dt><dd>${
             posRows.length
@@ -3495,18 +3702,50 @@
           if (a === 'edit')
             return modal({
               title: `Edit ${who}`,
-              body: `<label class="f"><span>Display name</span><input class="in" id="eN" maxlength="24" value="${esc(u.name)}"></label><label class="f"><span>Admin note (only staff see this)</span><textarea class="in" id="eO" maxlength="1000">${esc(u.note || '')}</textarea></label><div class="err"></div>`,
+              body: `<label class="f"><span>Display name</span><input class="in" id="eN" maxlength="24" value="${esc(u.name)}"></label>
+              <label class="f"><span>Tags (comma separated, staff only)</span><input class="in" id="eT" maxlength="200" value="${esc((u.tags || []).join(', '))}" placeholder="VIP, Streamer, Suspicious"></label>
+              <div class="chips" style="margin:-6px 0 12px">${['VIP', 'Streamer', 'Suspicious', 'Friend', 'Tester', 'Whale'].map(t => `<button type="button" class="btn sm" data-tag="${t}">+ ${t}</button>`).join('')}</div>
+              <label class="f"><span>Admin note (only staff see this)</span><textarea class="in" id="eO" maxlength="1000">${esc(u.note || '')}</textarea></label><div class="err"></div>`,
+              onMount: ov =>
+                $$('[data-tag]', ov).forEach(
+                  b =>
+                    (b.onclick = () => {
+                      const i = $('#eT', ov),
+                        cur = i.value.split(',').map(x => x.trim()).filter(Boolean);
+                      if (!cur.includes(b.dataset.tag)) cur.push(b.dataset.tag);
+                      i.value = cur.join(', ');
+                    })
+                ),
               onOk: async ov => {
                 await A('pba_user_update', {
                   p_id: u.id,
                   p_name: $('#eN', ov).value,
                   p_note: $('#eO', ov).value,
+                  p_tags: [...new Set($('#eT', ov).value.split(',').map(x => x.trim()).filter(Boolean))].slice(0, 12),
                 });
                 toast('User updated');
                 re();
               },
             });
           if (a === 'give') return giveDialog([{ id: u.id, username: u.username }], re);
+          if (a === 'adjust')
+            return modal({
+              title: `Adjust balance for ${who}`,
+              ok: 'Apply adjustment',
+              body: `<p class="small muted" style="margin:0 0 12px">Add or take away coins, cash or XP. Negative amounts take away. It applies the next time they play, and shows up in their game as an account adjustment with your reason.</p>
+              <div class="grid g2" style="gap:0 12px"><label class="f"><span>What</span><select class="in" id="ajK"><option value="coins">Coins</option><option value="cash">Virtual cash ($)</option><option value="xp">XP</option></select></label>
+              <label class="f"><span>Amount (use − to take away)</span><input class="in mono" id="ajA" type="number" step="any" placeholder="e.g. 500 or -250"></label></div>
+              <div class="chips" style="margin:-6px 0 12px">${[500, 5000, -500, -5000].map(v => `<button type="button" class="btn sm" data-v="${v}">${v > 0 ? '+' : ''}${num(v)}</button>`).join('')}</div>
+              <label class="f"><span>Reason (shown to the player)</span><input class="in" id="ajR" maxlength="200" placeholder="e.g. Refund for the shop bug"></label><div class="err"></div>`,
+              onMount: ov => $$('[data-v]', ov).forEach(b => (b.onclick = () => ($('#ajA', ov).value = b.dataset.v))),
+              onOk: async ov => {
+                const amt = +$('#ajA', ov).value;
+                if (!amt) throw new Error('Enter an amount.');
+                await A('pba_adjust', { p_id: u.id, p_kind: $('#ajK', ov).value, p_amount: amt, p_reason: $('#ajR', ov).value });
+                toast(`${amt > 0 ? 'Credited' : 'Took away'} ${num(Math.abs(amt))} ${$('#ajK', ov).value}. They’ll see it next time they play.`);
+                re();
+              },
+            });
           if (a === 'pw')
             return modal({
               title: `Reset password for ${who}`,
@@ -3519,6 +3758,27 @@
               },
             });
           const cfg = {
+            kick: {
+              title: `Force logout ${who}?`,
+              text: 'They’re signed out on every device right now. They can log back in normally.',
+              ok: 'Force logout',
+              done: 'Signed out everywhere',
+              danger: false,
+            },
+            lb_hide: {
+              title: `Hide ${who} from the leaderboard?`,
+              text: 'They keep playing normally but stop showing up on the global leaderboard. Use this for suspicious returns.',
+              ok: 'Hide',
+              done: 'Hidden from the leaderboard',
+              danger: false,
+            },
+            lb_show: {
+              title: `Show ${who} on the leaderboard again?`,
+              text: 'They’ll be ranked with everyone else.',
+              ok: 'Show',
+              done: 'Back on the leaderboard',
+              danger: false,
+            },
             suspend: {
               title: `Suspend ${who}?`,
               text: 'They’ll be signed out and can’t log in until the suspension ends.',
@@ -3587,8 +3847,21 @@
           } catch (e) {}
         },
       };
+      function activityStrip(events) {
+        const days = new Set((events || []).filter(e => ['active', 'signup', 'login'].includes(e.kind)).map(e => new Date(e.created_at).toDateString()));
+        const out = [];
+        for (let i = 13; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const on = days.has(d.toDateString());
+          out.push(`<i class="${on ? 'on' : ''}" title="${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}${on ? ' · played' : ''}"></i>`);
+        }
+        const n = [...days].filter(x => Date.now() - new Date(x) < 14 * 864e5).length;
+        return `<div class="astrip">${out.join('')}<span class="small muted">${n} of 14 days</span></div>`;
+      }
       const EV = {
         signup: 'Created account',
+        promo: 'Redeemed a promo code',
         login: 'Logged in',
         active: 'Played',
         purchase: 'Bought from the gift shop',
@@ -3604,7 +3877,9 @@
               ? `: ${num(e.detail.coins)} coins to @${e.detail.to}`
               : e.kind === 'grant_claimed'
                 ? ` (${e.detail.count})`
-                : ''
+                : e.kind === 'promo'
+                  ? `: ${esc(e.detail.code)}`
+                  : ''
           : '');
 
       /* ---------- give gifts ---------- */
@@ -3996,119 +4271,37 @@
         },
       };
 
-      /* ---------- tournament ---------- */
-      const leftTxt = s => {
-        const ms = new Date(s) - Date.now();
-        if (ms <= 0) return 'ended';
-        const d = Math.floor(ms / 864e5),
-          h = Math.floor((ms % 864e5) / 36e5),
-          m = Math.floor((ms % 36e5) / 6e4);
-        return d ? `${d}d ${h}h left` : h ? `${h}h ${m}m left` : `${m}m left`;
-      };
-      const wk = s => 'Week of ' + new Date(s + 'T00:00:00Z').toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: 'UTC' });
-      VIEWS.tourney = {
-        season: null,
-        render(v) {
-          v.innerHTML =
-            head('Tournament', 'The weekly trading tournament. Everyone starts with $100,000 and the top 10 win coins.', `<button class="btn" id="tRf">Refresh</button>`) +
-            `<div id="tB">${skeleton(6)}</div>`;
-          $('#tRf').onclick = () => this.load();
-          this.load();
-        },
-        async load() {
-          const box = $('#tB');
-          let d;
-          try {
-            d = await A('pba_tourney', { p_season: this.season });
-          } catch (e) {
-            box.innerHTML = `<div class="card empty">${esc(e.message)}</div>`;
-            return;
-          }
-          this.d = d;
-          const pool = d.prizes.reduce((s, x) => s + x, 0);
-          const opts = [[d.current, 'This week (live)']].concat(d.seasons.filter(s => s.season !== d.current).map(s => [s.season, wk(s.season)]));
-          box.innerHTML = `
-      <section class="hero tn-hero"><div class="hero-t"><span class="hero-k" style="${d.live ? '' : 'color:var(--mut)'}"><i style="${d.live ? '' : 'background:var(--mut);box-shadow:none;animation:none'}"></i>${d.live ? 'Live now' : 'Finished'} · ${esc(wk(d.season))}</span>
-        <h2>${d.live ? esc(leftTxt(d.ends)) : 'Final standings'}</h2><p><b class="mono">${num(d.players)}</b> player${d.players === 1 ? '' : 's'} · <b class="mono">${num(pool)}</b> coins in prizes${d.live ? ` · <b class="mono">${num(d.trades_week)}</b> trades this week` : ''}</p></div>
-        <div class="hero-a"><select class="in" id="tSeason" aria-label="Pick a week">${opts.map(([s, l]) => `<option value="${s}" ${s === d.season ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></section>
-      <div class="grid g2 tn-grid"><div class="card"><div class="card-h"><h3>${d.live ? 'Live standings' : 'Results'}</h3>${d.live && d.dq_count ? `<span class="pill p-dn"><i></i>${num(d.dq_count)} disqualified</span>` : ''}</div>
-        ${d.rows.length ? `<div class="tw"><table><thead><tr><th>#</th><th>Player</th><th class="r">Value</th><th class="r">Return</th><th class="r">${d.live ? 'Trades' : 'Prize'}</th>${d.live && can('admin') ? '<th class="r"></th>' : ''}</tr></thead><tbody>
-        ${d.rows
-          .map(
-            r => `<tr class="${r.dq ? 'tn-dq' : ''}"><td class="mono">${r.dq ? '—' : r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] : r.rank || '—'}</td>
-          <td><a href="#/user/${esc(r.user_id)}" class="tn-p">${avatar(r.name || r.username)}<span><b>${esc(r.name || r.username)}</b><small class="muted">@${esc(r.username)}${r.dq ? ' · DQ: ' + esc(r.dq_reason || '') : r.status !== 'active' ? ' · ' + esc(r.status) : ''}</small></span></a></td>
-          <td class="r mono">${usd(r.value)}</td><td class="r mono ${cls(r.ret)}">${pct(r.ret)}</td>
-          <td class="r mono">${d.live ? num(r.trades) + (r.trades < 3 && !r.dq ? ' <span class="muted small" title="Needs 3 trades to win a prize">*</span>' : '') : r.prize ? num(r.prize) + ' 🪙' : '—'}</td>
-          ${d.live && can('admin') ? `<td class="r">${r.dq ? `<button class="btn sm" data-undq="${esc(r.user_id)}">Reinstate</button>` : `<button class="btn sm dan-o" data-dq="${esc(r.user_id)}" data-n="${esc(r.username)}">Disqualify</button>`}</td>` : ''}</tr>`
-          )
-          .join('')}</tbody></table></div>${d.live ? '<p class="small muted" style="margin:10px 0 0">* Needs at least 3 trades to win a prize.</p>' : ''}` : `<div class="empty">${IC.trophy}<p>No one has joined ${d.live ? 'this week yet' : 'that week'}.</p></div>`}</div>
-        <div><div class="card"><div class="card-h"><h3>Prizes</h3></div><div class="tn-prizes">${d.prizes.map((p, i) => `<div><span class="mono">#${i + 1}</span><b class="mono">${num(p)} 🪙</b></div>`).join('')}</div></div>
-        <div class="card"><div class="card-h"><h3>Past weeks</h3></div><div class="list">${d.seasons.length ? d.seasons.map(s => `<button class="li tn-past" data-s="${s.season}"><span class="ic-b">${IC.trophy}</span><div class="t"><b>${esc(wk(s.season))}</b><small>${s.winner ? '🥇 @' + esc(s.winner) : 'No winner'} · ${num(s.players)} player${s.players === 1 ? '' : 's'}</small></div><span class="mono small">${num(s.paid)} 🪙</span></button>`).join('') : '<div class="empty small">The first week hasn’t finished yet.</div>'}</div></div></div></div>`;
-          $('#tSeason').onchange = e => {
-            this.season = e.target.value === d.current ? null : e.target.value;
-            this.load();
-          };
-          $$('.tn-past', box).forEach(
-            b =>
-              (b.onclick = () => {
-                this.season = b.dataset.s;
-                this.load();
-              })
-          );
-          $$('[data-dq]', box).forEach(
-            b =>
-              (b.onclick = async () => {
-                const ok = await confirmBox({
-                  title: 'Disqualify @' + b.dataset.n + '?',
-                  text: 'They’ll be removed from this week’s standings and can’t win a prize. Their account stays open.',
-                  ok: 'Disqualify',
-                  reason: true,
-                });
-                if (!ok) return;
-                if (!ok.reason) return toast('Add a reason so you remember why.', 'err');
-                try {
-                  await act(A('pba_tourney_dq', { p_user: b.dataset.dq, p_dq: true, p_reason: ok.reason }), 'Player disqualified');
-                  this.load();
-                } catch (e) {}
-              })
-          );
-          $$('[data-undq]', box).forEach(
-            b =>
-              (b.onclick = async () => {
-                try {
-                  await act(A('pba_tourney_dq', { p_user: b.dataset.undq, p_dq: false }), 'Player is back in the tournament');
-                  this.load();
-                } catch (e) {}
-              })
-          );
-        },
-      };
-
       /* ---------- users CSV export ---------- */
-      async function exportUsers(st) {
+      async function fetchAllUsers(st, max = 20000) {
         const all = [];
         for (let page = 1; page <= 200; page++) {
-          const r = await A('pba_users', { p_q: st.q, p_status: st.status, p_sort: st.sort, p_dir: st.dir, p_page: page, p_per: 100 });
+          const r = await A('pba_users', { p_q: st.q, p_status: st.status, p_sort: st.sort, p_dir: st.dir, p_page: page, p_per: 100, p_joined: st.joined || null, p_seen: st.seen || null, p_tag: st.tag || null });
           all.push(...r.rows);
-          if (all.length >= r.total || !r.rows.length) break;
+          if (all.length >= r.total || !r.rows.length || all.length >= max) break;
         }
-        if (!all.length) return toast('No users to export.', 'err');
-        const keys = Object.keys(all[0]).filter(k => all.some(u => u[k] !== null && typeof u[k] !== 'object'));
+        return all;
+      }
+      function downloadCSV(rows, name) {
+        if (!rows.length) return toast('Nothing to export.', 'err');
+        const keys = Object.keys(rows[0]).filter(k => rows.some(u => u[k] !== null && typeof u[k] !== 'object'));
         const q = v => {
           const s = v == null ? '' : String(v);
           return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
         };
-        const csv = [keys.join(',')].concat(all.map(u => keys.map(k => q(u[k])).join(','))).join('\n');
+        const csv = [keys.join(',')].concat(rows.map(u => keys.map(k => q(u[k])).join(','))).join('\n');
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-        a.download = `paperbull-users-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.download = `paperbull-${name}-${new Date().toISOString().slice(0, 10)}.csv`;
         document.body.appendChild(a);
         a.click();
         setTimeout(() => {
           URL.revokeObjectURL(a.href);
           a.remove();
         }, 500);
-        toast(`Exported ${num(all.length)} users`);
+        toast(`Exported ${num(rows.length)} rows`);
+      }
+      async function exportUsers(st) {
+        downloadCSV((await fetchAllUsers(st)).map(u => ({ ...u, tags: (u.tags || []).join(' ') })), 'users');
       }
 
       /* ---------- online now (dashboard) ---------- */
@@ -4127,8 +4320,37 @@
         <div class="onl-s"><div><b class="mono">${num(o.m15)}</b><small>last 15 min</small></div><div><b class="mono">${num(o.h1)}</b><small>last hour</small></div><div><b class="mono">${num(o.today)}</b><small>today</small></div></div></div>
         <div class="onl-r">${o.rows.length ? o.rows.map(u => `<a href="#/user/${esc(u.id)}" class="onl-u" title="${esc(u.name || u.username)} · ${esc(ago(u.last_seen))}">${avatar(u.name || u.username)}<span><b>${esc(u.name || u.username)}</b><small>${esc(ago(u.last_seen))}</small></span></a>`).join('') : '<div class="empty small">Nobody in the last 15 minutes.</div>'}</div>`;
       }
+      const FEEDL = {
+        signup: e => `joined PAPERBULL`,
+        active: e => `played today`,
+        login: e => `logged in`,
+        promo: e => `redeemed <b>${esc(e.d && e.d.code)}</b>`,
+        grant_claimed: e => `collected ${e.d && e.d.count ? e.d.count + ' ' : ''}staff gift${e.d && e.d.count === 1 ? '' : 's'}`,
+        purchase: e => `bought <b>${esc(e.d.item)}</b> for ${num(e.d.price)} coins`,
+        gift: e => `sent ${num(e.d.coins)} coins to <b>@${esc(e.d.to)}</b>`,
+        friend: e => `became friends with <b>@${esc(e.d.with)}</b>`,
+      };
+      const FEEDI = { signup: '✨', active: '🎮', login: '🔑', promo: '🎟️', grant_claimed: '🎁', purchase: '🛒', gift: '💝', friend: '🤝' };
+      async function paintFeed() {
+        const box = $('#feed');
+        if (!box) return;
+        let rows;
+        try {
+          rows = await A('pba_events', { p_per: 30 });
+        } catch (e) {
+          box.innerHTML = `<div class="empty small">${esc(e.message)}</div>`;
+          return;
+        }
+        if (!$('#feed')) return;
+        box.innerHTML = rows.length
+          ? rows.map(e => `<a class="fi" href="#/user/${esc(e.uid)}"><span class="fic">${FEEDI[e.k] || '•'}</span><span class="fit"><b>${esc(e.username)}</b> ${(FEEDL[e.k] || (() => esc(e.k)))(e)}</span><small class="muted">${ago(e.t)}</small></a>`).join('')
+          : '<div class="empty small">Nothing yet. Events show up here as players play.</div>';
+      }
       setInterval(() => {
-        if ($('#onl') && document.visibilityState === 'visible') paintOnline();
+        if ($('#onl') && document.visibilityState === 'visible') {
+          paintOnline();
+          paintFeed();
+        }
       }, 30000);
 
       /* ---------- gifts catalog ---------- */
@@ -4345,7 +4567,7 @@
         render(v) {
           const st = this.st;
           v.innerHTML =
-            head('Transactions', 'Every gift-shop purchase, friend gift and staff gift.') +
+            head('Transactions', 'Every gift-shop purchase, friend gift and staff gift.', `<button class="btn" id="tCsv">${IC.dl}Export CSV</button>`) +
             `<div class="card"><div class="tools"><input class="in" id="tq" placeholder="Search username or item" value="${esc(st.q)}"><div class="tabs" id="tk">${[
               ['all', 'All'],
               ['purchase', 'Purchases'],
@@ -4354,6 +4576,22 @@
             ]
               .map(([k, l]) => `<button data-k="${k}" class="${st.kind === k ? 'on' : ''}">${l}</button>`)
               .join('')}</div></div><div id="tt">${skeleton(6)}</div></div>`;
+          $('#tCsv').onclick = async () => {
+            const b = $('#tCsv');
+            b.disabled = true;
+            try {
+              const all = [];
+              for (let page = 1; page <= 100; page++) {
+                const r = await A('pba_transactions', { p_kind: st.kind, p_q: st.q, p_page: page, p_per: 100 });
+                all.push(...r.rows);
+                if (all.length >= r.total || !r.rows.length) break;
+              }
+              downloadCSV(all, 'transactions');
+            } catch (e) {
+              toast(e.message, 'err');
+            }
+            b.disabled = false;
+          };
           $('#tq').oninput = debounce(e => {
             st.q = e.target.value;
             st.page = 1;
@@ -4449,13 +4687,20 @@
               (this.st.status === 'all' || c.status === this.st.status) &&
               (!this.st.q || (c.title + ' ' + (c.body || '')).toLowerCase().includes(this.st.q))
           );
-          const KL = { announcement: 'Announcement', banner: 'Top banner', news: 'News post' };
+          const KL = { announcement: 'Announcement', banner: 'Top banner', news: 'News post', popup: 'Popup' };
+          const when = c => {
+            const now = Date.now();
+            if (c.status !== 'published') return '<span class="pill p-mut"><i></i>Hidden</span>';
+            if (c.starts_at && new Date(c.starts_at) > now) return `<span class="pill p-info"><i></i>Scheduled</span><div class="small muted">${dt(c.starts_at)}</div>`;
+            if (c.expires_at && new Date(c.expires_at) <= now) return `<span class="pill p-warn"><i></i>Expired</span><div class="small muted">${dt(c.expires_at)}</div>`;
+            return `<span class="pill p-ok"><i></i>Live</span>${c.expires_at ? `<div class="small muted">until ${dt(c.expires_at)}</div>` : ''}`;
+          };
           box.innerHTML = rows.length
             ? `<div class="tw"><table><thead><tr><th>Post</th><th>Type</th><th>Status</th><th>Updated</th><th class="r">Actions</th></tr></thead><tbody>${rows
                 .map(
                   c => `<tr>
       <td style="white-space:normal;min-width:220px"><b>${c.pinned ? '<span title="Pinned">📌</span> ' : ''}${esc(c.title)}</b><div class="small muted">${esc((c.body || '').slice(0, 110))}${(c.body || '').length > 110 ? '…' : ''}</div></td><td>${KL[c.kind]}</td>
-      <td>${c.status === 'published' ? '<span class="pill p-ok"><i></i>Live</span>' : '<span class="pill p-mut"><i></i>Hidden</span>'}</td><td>${ago(c.updated_at)}<div class="small muted">by ${esc(c.created_by || '—')}</div></td>
+      <td>${when(c)}</td><td>${ago(c.updated_at)}<div class="small muted">by ${esc(c.created_by || '—')}</div></td>
       <td class="r"><div style="display:inline-flex;gap:6px"><button class="btn sm" data-ed="${c.id}">Edit</button><button class="btn sm" data-tg="${c.id}">${c.status === 'published' ? 'Hide' : 'Publish'}</button>${can('admin') ? `<button class="btn sm icon" data-rm="${c.id}" title="Delete permanently" aria-label="Delete permanently">${IC.trash}</button>` : ''}</div></td></tr>`
                 )
                 .join('')}</tbody></table></div>`
@@ -4505,12 +4750,15 @@
         ['announcement', 'Announcement (home screen card)'],
         ['banner', 'Top banner (every page)'],
         ['news', 'News post (market wire)'],
+        ['popup', 'Popup (shown once to every player)'],
       ]
         .map(k => `<option value="${k[0]}" ${c.kind === k[0] ? 'selected' : ''}>${k[1]}</option>`)
         .join('')}</select></label>
       <label class="f"><span>Status</span><select class="in" id="pS"><option value="published" ${c.status === 'published' ? 'selected' : ''}>Published</option><option value="hidden" ${c.status === 'hidden' ? 'selected' : ''}>Hidden (draft)</option></select></label></div>
       <label class="f"><span>Title</span><input class="in" id="pT" maxlength="120" value="${esc(c.title)}"></label>
       <label class="f"><span>Body</span><textarea class="in" id="pB" maxlength="4000" rows="6">${esc(c.body || '')}</textarea></label>
+      <div class="grid g2" style="gap:0 12px"><label class="f"><span>Goes live (empty = right away)</span><input class="in" id="pFrom" type="datetime-local" value="${localInput(c.starts_at)}"></label>
+      <label class="f"><span>Expires (empty = never)</span><input class="in" id="pTo" type="datetime-local" value="${localInput(c.expires_at)}"></label></div>
       <label class="feat" style="border:0;padding:4px 0"><span class="t"><b>Pin to the top</b><small>Pinned posts show first</small></span><span class="sw"><input type="checkbox" id="pP" ${c.pinned ? 'checked' : ''}><span></span></span></label><div class="err"></div>`,
             onOk: async ov => {
               const p = {
@@ -4519,6 +4767,8 @@
                 body: $('#pB', ov).value,
                 status: $('#pS', ov).value,
                 pinned: $('#pP', ov).checked,
+                starts_at: $('#pFrom', ov).value ? new Date($('#pFrom', ov).value).toISOString() : null,
+                expires_at: $('#pTo', ov).value ? new Date($('#pTo', ov).value).toISOString() : null,
               };
               if (!n) p.id = c.id;
               await A('pba_content_save', { p });
@@ -4547,13 +4797,25 @@
               })
           );
           try {
-            this.s = await A('pba_stats', { p_days: this.days });
+            [this.s, this.r, this.e] = await Promise.all([A('pba_stats', { p_days: this.days }), A('pba_retention'), A('pba_economy')]);
           } catch (e) {
             v.insertAdjacentHTML('beforeend', `<div class="card empty">${esc(e.message)}</div>`);
             return;
           }
           const s = this.s,
+            r = this.r,
+            e = this.e,
             sum = k => s.series.reduce((a, d) => a + (+d[k] || 0), 0);
+          const pc = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '—');
+          const bk = e.buckets || {},
+            bTot = Object.values(bk).reduce((a, x) => a + (+x || 0), 0) || 1;
+          const sources = [
+            ['Shop purchases', e.spent_shop, col(1)],
+            ['Staff gifts', e.granted, col(2)],
+            ['Promo codes', e.promo_coins, col(4)],
+            ['Friend gifts', e.gifted, col(3)],
+          ];
+          const sTot = sources.reduce((a, x) => a + (+x[1] || 0), 0) || 1;
           v.innerHTML =
             head(
               'Analytics',
@@ -4573,6 +4835,26 @@
           { name: 'Staff gifts', color: col(2) },
         ])}</div><div class="chart" id="a3"></div></div>
         <div class="card"><div class="card-h"><h3>Revenue (coins spent)</h3>${legend([{ name: 'Coins', color: col(3) }])}</div><div class="chart" id="a4"></div></div></div>
+      <h2 class="sec-h">Retention</h2>
+      <div class="kpis"><div class="kpi c4"><small><span class="ic">${IC.users}</span>Day-1 retention</small><b class="mono">${pc(r.d1.kept, r.d1.n)}</b><em>${num(r.d1.kept)} of ${num(r.d1.n)} came back the next day</em></div>
+        <div class="kpi c2"><small><span class="ic">${IC.pulse}</span>Day-7 retention</small><b class="mono">${pc(r.d7.kept, r.d7.n)}</b><em>${num(r.d7.kept)} of ${num(r.d7.n)} played again within a week</em></div>
+        <div class="kpi"><small><span class="ic">${IC.chart}</span>Stickiness (DAU/MAU)</small><b class="mono">${pc(r.stickiness.dau, r.stickiness.mau)}</b><em>${num(r.stickiness.dau)} today · ${num(r.stickiness.mau)} this month</em></div>
+        <div class="kpi c5"><small><span class="ic">${IC.new}</span>Returning share today</small><b class="mono">${pc(Math.max(0, (r.dau.at(-1) || {}).n - (r.dau.at(-1) || {}).new), (r.dau.at(-1) || {}).n)}</b><em>of today’s players were not new</em></div></div>
+      <div class="card"><div class="card-h"><h3>Daily players · 30 days</h3>${legend([
+        { name: 'New', color: col(4) },
+        { name: 'Returning', color: col(2) },
+      ])}</div><div class="chart" id="a5"></div></div>
+      <h2 class="sec-h">Economy</h2>
+      <div class="kpis"><div class="kpi c3"><small><span class="ic">${IC.coin}</span>Coins in circulation</small><b class="mono">${num(e.coins_total)}</b><em>held by active players</em></div>
+        <div class="kpi"><small><span class="ic">${IC.coin}</span>Average balance</small><b class="mono">${num(e.coins_avg)}</b><em>median ${num(e.coins_median)}</em></div>
+        <div class="kpi c2"><small><span class="ic">${IC.tx}</span>Coins spent in shop</small><b class="mono">${num(e.spent_shop)}</b><em>all time</em></div>
+        <div class="kpi c4"><small><span class="ic">${IC.chart}</span>Average account value</small><b class="mono">$${num(e.value_avg)}</b><em>players with at least one trade</em></div></div>
+      <div class="grid g2"><div class="card"><div class="card-h"><h3>Where coins move</h3></div>
+        <div class="bars">${sources.map(([l, n2, c]) => `<div class="bar"><span>${l}</span><i><b style="width:${Math.round((n2 / sTot) * 100)}%;background:${c}"></b></i><span class="mono">${num(n2)}</span></div>`).join('')}</div>
+        <div class="card-h" style="margin-top:14px"><h3>Who holds the coins</h3></div>
+        <div class="bars">${[['Under 100', bk.b0], ['100 – 1k', bk.b1], ['1k – 10k', bk.b2], ['10k – 100k', bk.b3], ['100k+', bk.b4]].map(([l, n2]) => `<div class="bar"><span>${l}</span><i><b style="width:${Math.round(((n2 || 0) / bTot) * 100)}%;background:var(--brand)"></b></i><span class="mono">${num(n2 || 0)} player${n2 === 1 ? '' : 's'}</span></div>`).join('')}</div></div>
+        <div><div class="card"><div class="card-h"><h3>Richest players</h3><span class="small muted">by coins</span></div><div class="list">${(e.richest || []).map((u, i) => `<a class="li" href="#/user/${esc(u.id)}"><span class="mono muted" style="width:18px">${i + 1}</span>${avatar(u.name)}<div class="t"><b>${esc(u.name)}</b><small>@${esc(u.username)}</small></div><span class="mono">${num(u.coins)} 🪙</span></a>`).join('') || '<div class="empty small">No players yet.</div>'}</div></div>
+        <div class="card"><div class="card-h"><h3>Suspicious returns</h3><span class="small muted">Over 500%, or over 100% with under 5 trades</span></div><div class="list">${(e.sus || []).length ? e.sus.map(u => `<div class="li">${avatar(u.name)}<div class="t"><b><a href="#/user/${esc(u.id)}">${esc(u.name)}</a>${u.lb_hidden ? ' <span class="tag sm warn">hidden</span>' : ''}</b><small>@${esc(u.username)} · ${num(u.trades)} trades</small></div><span class="mono pos">${pct(u.return_pct)}</span>${can('admin') && !u.lb_hidden ? `<button class="btn sm" data-hide="${esc(u.id)}" data-n="${esc(u.username)}">Hide</button>` : ''}</div>`).join('') : '<div class="empty small">Nothing looks off. 🎉</div>'}</div></div></div></div>
       <div class="card" style="margin-top:16px"><div class="card-h"><h3>Account status</h3></div><div class="stats" style="margin:0">${[
         ['Active', s.users - s.banned - s.suspended, 'pos'],
         ['Suspended', s.suspended, ''],
@@ -4590,11 +4872,33 @@
                 this.render(v);
               })
           );
+          $$('[data-hide]', v).forEach(
+            b =>
+              (b.onclick = async () => {
+                const ok = await confirmBox({ title: `Hide @${b.dataset.n} from the leaderboard?`, text: 'They keep playing but stop being ranked. You can undo this on their profile.', ok: 'Hide', danger: false });
+                if (!ok) return;
+                try {
+                  await act(A('pba_user_status', { p_id: b.dataset.hide, p_action: 'lb_hide' }), 'Hidden from the leaderboard');
+                  this.render(v);
+                } catch (e) {}
+              })
+          );
           this.charts();
         },
         charts() {
-          const s = this.s;
+          const s = this.s,
+            r = this.r;
           if (!s || !$('#a1')) return;
+          if (r && $('#a5'))
+            chart($('#a5'), {
+              labels: r.dau.map(d => new Date(d.day + 'T12:00').toLocaleDateString([], { month: 'short', day: 'numeric' })),
+              type: 'bar',
+              stacked: true,
+              series: [
+                { name: 'New', color: col(4), data: r.dau.map(d => d.new) },
+                { name: 'Returning', color: col(2), data: r.dau.map(d => Math.max(0, d.n - d.new)) },
+              ],
+            });
           const L = s.series.map(d =>
             new Date(d.day + 'T12:00').toLocaleDateString([], { month: 'short', day: 'numeric' })
           );
@@ -4628,13 +4932,11 @@
       const FEATS = [
         ['shop', 'Shop and gift shop', 'Packs, cosmetics and staff gifts for sale'],
         ['pets', 'Pets', 'Eggs, hatching and pet bonuses'],
-        ['garden', 'Stock Garden', 'Planting and harvesting'],
         ['bank', 'Banks', 'Savings, loans and CDs'],
         ['learn', 'Trading Academy', 'The 20 trading courses on the Learn page'],
         ['pro', 'Pro mode', 'Advanced chart tools and replay'],
-        ['buck', 'Buck AI', 'The in-game market assistant'],
+        ['buck', 'AI assistant', 'Buck and the other in-game market assistants'],
         ['news', 'News Desk', 'Economic calendar and macro reports'],
-        ['tourney', 'Weekly tournament', 'Server-run trading contest with coin prizes'],
         ['online', 'Online leaderboard', 'Global rankings on the Ranks page'],
         ['friends', 'Friends', 'Adding friends'],
         ['gifts', 'Friend gifts', 'Sending coins to friends'],
@@ -4655,7 +4957,11 @@
           }
           const m = s.maintenance,
             f = s.features,
+            ev = s.events || { coin_mult: 1, xp_mult: 1 },
+            evLive = s.live && s.live.events && (s.live.events.coin_mult > 1 || s.live.events.xp_mult > 1),
+            bw = s.badwords || [],
             ro = !can('admin');
+          const mLiveOn = s.live ? !!s.live.maintenance.on : !!m.on;
           v.innerHTML =
             head(
               'Site controls',
@@ -4663,10 +4969,22 @@
             ) +
             `
       <div class="card danger-zone"><div class="card-h"><h3>Emergency maintenance</h3>${m._updated_by ? `<span class="small muted">Last change by ${esc(m._updated_by)} · ${ago(m._updated_at)}</span>` : ''}</div>
-        <div class="mbig ${m.on ? 'on' : ''}">${IC.power}<div class="t"><b>${m.on ? 'The site is in maintenance mode' : 'The site is open'}</b><div class="small muted">${m.on ? 'Players see the message below instead of the game.' : 'Turn this on to lock everyone out while you fix something.'}</div></div>
-          ${ro ? '' : `<button class="btn ${m.on ? 'pri' : 'dan'}" id="mT">${m.on ? 'Reopen the site' : 'Shut down the site'}</button>`}</div>
+        <div class="mbig ${mLiveOn ? 'on' : ''}">${IC.power}<div class="t"><b>${mLiveOn ? 'The site is in maintenance mode' : 'The site is open'}</b><div class="small muted">${mLiveOn ? `Players see the message below instead of the game.${m.until ? ` Reopens automatically ${dt(m.until)}.` : ''}` : 'Turn this on to lock everyone out while you fix something.'}</div></div>
+          ${ro ? '' : `<button class="btn ${mLiveOn ? 'pri' : 'dan'}" id="mT">${mLiveOn ? 'Reopen the site' : 'Shut down the site'}</button>`}</div>
+        ${ro || mLiveOn ? '' : `<label class="f"><span>Reopen automatically after</span><select class="in" id="mFor"><option value="">Only when I reopen it</option><option value="15">15 minutes</option><option value="30" selected>30 minutes</option><option value="60">1 hour</option><option value="120">2 hours</option><option value="360">6 hours</option></select></label>`}
         <label class="f"><span>Message players see</span><textarea class="in" id="mM" maxlength="300" rows="2" ${ro ? 'disabled' : ''}>${esc(m.message || '')}</textarea></label>
         ${ro ? '' : '<button class="btn" id="mS">Save message</button>'}</div>
+      <div class="card ev-card ${evLive ? 'live' : ''}"><div class="card-h"><h3>Live event</h3>${evLive ? `<span class="pill p-ok"><i></i>Running${ev.until ? ' · ends ' + dt(ev.until) : ''}</span>` : '<span class="small muted">Boost the whole game for a while</span>'}</div>
+        <p class="small muted" style="margin:0 0 12px">Multiply the coins and XP every player earns. Great for weekends, launches or saying sorry after downtime. Players see a banner in the game while it runs.</p>
+        <div class="grid g2" style="gap:0 12px"><label class="f"><span>Coins</span><select class="in" id="evC" ${ro ? 'disabled' : ''}>${[1, 1.5, 2, 3, 5].map(x => `<option value="${x}" ${+ev.coin_mult === x ? 'selected' : ''}>${x}× coins</option>`).join('')}</select></label>
+        <label class="f"><span>XP</span><select class="in" id="evX" ${ro ? 'disabled' : ''}>${[1, 1.5, 2, 3, 5].map(x => `<option value="${x}" ${+ev.xp_mult === x ? 'selected' : ''}>${x}× XP</option>`).join('')}</select></label>
+        <label class="f"><span>Banner text</span><input class="in" id="evL" maxlength="60" value="${esc(ev.label || '')}" placeholder="Double coins weekend!" ${ro ? 'disabled' : ''}></label>
+        <label class="f"><span>Ends</span><input class="in" id="evU" type="datetime-local" value="${localInput(ev.until)}" ${ro ? 'disabled' : ''}></label></div>
+        ${ro ? '' : `<div class="chips" style="margin:-6px 0 12px">${[['2 hours', 2], ['Rest of today', 'eod'], ['24 hours', 24], ['This weekend', 'wk']].map(([l, v]) => `<button type="button" class="btn sm" data-evq="${v}">${l}</button>`).join('')}</div><div style="display:flex;gap:8px"><button class="btn pri" id="evSave">${evLive ? 'Update event' : 'Start event'}</button>${evLive ? '<button class="btn dan" id="evEnd">End now</button>' : ''}</div>`}</div>
+      <div class="card"><div class="card-h"><h3>Blocked words</h3><span class="small muted">${bw.length} word${bw.length === 1 ? '' : 's'}</span></div>
+        <p class="small muted" style="margin:0 0 10px">Usernames and display names containing any of these are rejected. One word per line, not case sensitive.</p>
+        <textarea class="in mono" id="bwT" rows="5" placeholder="badword&#10;anotherone" ${ro ? 'disabled' : ''}>${esc(bw.join('\n'))}</textarea>
+        ${ro ? '' : '<button class="btn" id="bwS" style="margin-top:10px">Save blocked words</button>'}</div>
       <div class="card"><div class="card-h"><h3>Features</h3>${f._updated_by ? `<span class="small muted">Last change by ${esc(f._updated_by)} · ${ago(f._updated_at)}</span>` : ''}</div>
         ${FEATS.map(([k, l, d]) => `<div class="feat"><div class="t"><b>${l}</b><small>${d}</small></div><span class="pill ${f[k] !== false ? 'p-ok' : 'p-mut'}" id="fp-${k}">${f[k] !== false ? 'On' : 'Off'}</span><label class="sw" aria-label="${esc(l)}"><input type="checkbox" data-f="${k}" ${f[k] !== false ? 'checked' : ''} ${ro ? 'disabled' : ''}><span></span></label></div>`).join('')}
         ${ro ? '<p class="small muted">Moderators can view these settings. Admins and owners can change them.</p>' : ''}</div>`;
@@ -4687,15 +5005,64 @@
                   danger: false,
                 });
             if (!r) return;
+            const mins = on && $('#mFor') ? +$('#mFor').value : 0;
             try {
               await act(
-                A('pba_site_set', { p_key: 'maintenance', p_value: { on, message: $('#mM').value } }),
-                on ? 'Maintenance mode is ON' : 'The site is open again'
+                A('pba_site_set', {
+                  p_key: 'maintenance',
+                  p_value: { on, message: $('#mM').value, until: mins ? new Date(Date.now() + mins * 60000).toISOString() : null },
+                }),
+                on ? (mins ? `Maintenance mode is ON · reopens in ${mins >= 60 ? mins / 60 + 'h' : mins + ' min'}` : 'Maintenance mode is ON') : 'The site is open again'
               );
               refreshMaint();
               this.render(v);
             } catch (e) {}
           };
+          $$('[data-evq]', v).forEach(
+            b =>
+              (b.onclick = () => {
+                const q = b.dataset.evq,
+                  d = new Date();
+                if (q === 'eod') d.setHours(23, 59, 0, 0);
+                else if (q === 'wk') {
+                  d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7) - (d.getDay() === 0 ? 7 : 0));
+                  d.setHours(23, 59, 0, 0);
+                  if (d < new Date()) d.setDate(d.getDate() + 7);
+                } else d.setTime(d.getTime() + +q * 3600000);
+                $('#evU').value = localInput(d.toISOString());
+              })
+          );
+          if ($('#evSave'))
+            $('#evSave').onclick = async () => {
+              const c = +$('#evC').value,
+                x = +$('#evX').value;
+              if (c === 1 && x === 1) return toast('Pick at least one multiplier above 1×.', 'err');
+              if (!$('#evU').value) return toast('Set when the event ends.', 'err');
+              try {
+                await act(
+                  A('pba_site_set', {
+                    p_key: 'events',
+                    p_value: { coin_mult: c, xp_mult: x, label: $('#evL').value, until: new Date($('#evU').value).toISOString() },
+                  }),
+                  'Live event is running. Players see it within a minute.'
+                );
+                this.render(v);
+              } catch (e) {}
+            };
+          if ($('#evEnd'))
+            $('#evEnd').onclick = async () => {
+              try {
+                await act(A('pba_site_set', { p_key: 'events', p_value: { coin_mult: 1, xp_mult: 1 } }), 'Event ended');
+                this.render(v);
+              } catch (e) {}
+            };
+          if ($('#bwS'))
+            $('#bwS').onclick = async () => {
+              const words = $('#bwT').value.split(/[\n,]+/).map(x => x.trim()).filter(Boolean);
+              try {
+                await act(A('pba_site_set', { p_key: 'badwords', p_value: words }), `Saved ${words.length} blocked word${words.length === 1 ? '' : 's'}`);
+              } catch (e) {}
+            };
           $('#mS').onclick = async () => {
             try {
               await act(
@@ -4748,6 +5115,12 @@
               `<button class="btn pri" id="nA">${IC.plus}Add admin</button>`
             ) +
             `<div class="card" id="aT">${skeleton(4)}</div>
+      <div class="grid g2"><div class="card"><div class="card-h"><h3>Access code</h3><span class="small muted">The code everyone types to get in</span></div>
+        <p class="small muted" style="margin:0 0 10px">Digits only, 5 to 12 long. A longer code is much harder to guess. Everyone who signs in later will need the new one.</p>
+        <label class="f"><span>Current code</span><input class="in mono" id="cc0" inputmode="numeric" autocomplete="off"></label>
+        <div class="grid g2" style="gap:0 12px"><label class="f"><span>New code</span><input class="in mono" id="cc1" inputmode="numeric" autocomplete="off"></label><label class="f"><span>Confirm new code</span><input class="in mono" id="cc2" inputmode="numeric" autocomplete="off"></label></div>
+        <div class="err" id="ccErr"></div><button class="btn pri" id="ccGo">Change code</button></div>
+      <div class="card"><div class="card-h"><h3>Active admin sessions</h3><button class="btn sm dan" id="soAll">Sign out everyone else</button></div><div id="sess">${skeleton(3)}</div></div></div>
       <div class="card"><div class="card-h"><h3>What each role can do</h3></div><div class="tw"><table><thead><tr><th>Permission</th><th>Moderator</th><th>Admin</th><th>Owner</th></tr></thead><tbody>
       ${[
         ['View dashboard, users, analytics, transactions', 1, 1, 1],
@@ -4771,7 +5144,46 @@
         )
         .join('')}</tbody></table></div></div>`;
           $('#nA').onclick = () => this.edit(null);
+          $('#ccGo').onclick = async () => {
+            const er = $('#ccErr');
+            er.textContent = '';
+            const a = $('#cc0').value.trim(),
+              b = $('#cc1').value.trim(),
+              c = $('#cc2').value.trim();
+            if (!/^[0-9]{5,12}$/.test(b)) return (er.textContent = 'The new code must be 5 to 12 digits.');
+            if (b !== c) return (er.textContent = 'The new codes don’t match.');
+            const ok = await confirmBox({ title: 'Change the access code?', text: `From now on the code is <b class="mono">${esc(b)}</b>. Write it down somewhere safe.`, ok: 'Change code', danger: false });
+            if (!ok) return;
+            try {
+              await A('pba_code_set', { p_current: a, p_new: b });
+              toast('Access code changed');
+              $('#cc0').value = $('#cc1').value = $('#cc2').value = '';
+            } catch (e) {
+              er.textContent = e.message;
+            }
+          };
+          $('#soAll').onclick = async () => {
+            const ok = await confirmBox({ title: 'Sign out every other admin?', text: 'Everyone except you has to enter the code again. Do this if you think the code leaked, then change it above.', ok: 'Sign them out' });
+            if (!ok) return;
+            try {
+              const r = await act(A('pba_logout_all'), 'Other sessions signed out');
+              this.sessions();
+            } catch (e) {}
+          };
+          this.sessions();
           this.load();
+        },
+        async sessions() {
+          const box = $('#sess');
+          if (!box) return;
+          try {
+            const rows = await A('pba_sessions');
+            box.innerHTML = rows.length
+              ? `<div class="list">${rows.map(r => `<div class="li">${avatar(r.admin)}<div class="t"><b>${esc(r.admin)} ${r.current ? '<span class="pill p-brand">This device</span>' : ''}</b><small>${esc(r.role)} · signed in ${ago(r.created_at)} · expires in ${leftIn(r.expires_at)}</small></div></div>`).join('')}</div>`
+              : '<div class="empty small">No active sessions.</div>';
+          } catch (e) {
+            box.innerHTML = `<div class="empty small">${esc(e.message)}</div>`;
+          }
         },
         async load() {
           const box = $('#aT');
@@ -4880,7 +5292,8 @@
           v.innerHTML =
             head(
               'Audit log',
-              'Every admin action: who did it, what changed and when. Entries can’t be edited or deleted.'
+              'Every admin action: who did it, what changed and when. Entries can’t be edited or deleted.',
+              `<button class="btn" id="lCsv">${IC.dl}Export CSV</button>`
             ) +
             `<div class="card"><div class="tools"><input class="in" id="lq" placeholder="Search admin, action or target" value="${esc(st.q)}">
       <select class="in" id="la">${[
@@ -4891,10 +5304,28 @@
         ['maintenance', 'Maintenance'],
         ['features', 'Features'],
         ['admin_', 'Admin accounts'],
+        ['promo_', 'Promo codes'],
         ['login', 'Sign-ins'],
+        ['code_', 'Access code'],
       ]
         .map(([k, l]) => `<option value="${k}" ${st.action === k ? 'selected' : ''}>${l}</option>`)
         .join('')}</select></div><div id="lt">${skeleton(6)}</div></div>`;
+          $('#lCsv').onclick = async () => {
+            const b = $('#lCsv');
+            b.disabled = true;
+            try {
+              const all = [];
+              for (let page = 1; page <= 100; page++) {
+                const r = await A('pba_audit', { p_q: st.q, p_action: st.action, p_page: page, p_per: 100 });
+                all.push(...r.rows);
+                if (all.length >= r.total || !r.rows.length) break;
+              }
+              downloadCSV(all.map(x => ({ ...x, details: x.details ? JSON.stringify(x.details) : '' })), 'audit');
+            } catch (e) {
+              toast(e.message, 'err');
+            }
+            b.disabled = false;
+          };
           $('#lq').oninput = debounce(e => {
             st.q = e.target.value;
             st.page = 1;
