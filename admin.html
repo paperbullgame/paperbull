@@ -1999,6 +1999,128 @@
       .nav a.on .ni svg .k {
         fill: var(--n2);
       }
+      /* gift recipient picker */
+      .upk {
+        margin: 6px 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel2);
+        overflow: hidden;
+      }
+      .upk-n {
+        margin-left: 6px;
+        color: var(--brand);
+        text-transform: none;
+        letter-spacing: 0;
+      }
+      .upk-top {
+        display: flex;
+        gap: 8px;
+        padding: 10px;
+        border-bottom: 1px solid var(--line);
+      }
+      .upk-s {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+      }
+      .upk-s svg {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        width: 16px;
+        height: 16px;
+        transform: translateY(-50%);
+        color: var(--mut);
+        pointer-events: none;
+      }
+      .upk-s .in {
+        padding-left: 34px;
+        width: 100%;
+      }
+      .upk-c:not(:empty) {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line);
+        max-height: 76px;
+        overflow: auto;
+      }
+      .upk-l {
+        max-height: 280px;
+        overflow: auto;
+        overscroll-behavior: contain;
+      }
+      .upk-r {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 12px;
+        border: 0;
+        border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+        background: none;
+        color: var(--tx);
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.12s;
+      }
+      .upk-r:hover {
+        background: color-mix(in srgb, var(--brand) 6%, transparent);
+      }
+      .upk-r.on {
+        background: var(--brand-soft);
+      }
+      .upk-x {
+        flex: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        border: 1.5px solid var(--line2);
+        display: grid;
+        place-items: center;
+        transition:
+          background 0.12s,
+          border-color 0.12s;
+      }
+      .upk-r.on .upk-x {
+        background: var(--vg, var(--brand));
+        border-color: transparent;
+      }
+      .upk-r.on .upk-x::after {
+        content: '';
+        width: 9px;
+        height: 5px;
+        border: 2px solid #1b1206;
+        border-top: 0;
+        border-right: 0;
+        transform: translateY(-1px) rotate(-45deg);
+      }
+      .upk-t {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .upk-t b,
+      .upk-t small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .upk-t small {
+        color: var(--mut);
+      }
+      .upk-more {
+        width: 100%;
+        padding: 10px;
+        border: 0;
+        background: none;
+        color: var(--brand);
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .upk .empty {
+        padding: 22px 12px;
+      }
 </style>
   </head>
   <body>
@@ -3066,8 +3188,11 @@
           ok: 'Give gift',
           wide: true,
           body: `
-    <label class="f"><span>Recipients</span><div class="pick"><input class="in" id="gU" placeholder="Type a username to add" autocomplete="off"><div class="drop" id="gD" hidden></div></div></label>
-    <div class="chips" id="gC" style="margin:-4px 0 12px"></div>
+    <div class="f"><span>Recipients <b class="upk-n" id="gN0">0 selected</b></span>
+      <div class="upk"><div class="upk-top"><div class="upk-s">${IC.search}<input class="in" id="gU" placeholder="Search players by name or username" autocomplete="off"></div>
+        <button type="button" class="btn sm" id="gAll">Select all shown</button></div>
+        <div class="chips upk-c" id="gC"></div>
+        <div class="upk-l" id="gD"><div class="empty small">Loading players…</div></div></div></div>
     <label class="f"><span>What to give</span><select class="in" id="gW"><option value="">Custom gift…</option>${cat.map(c => `<option value="${c.id}">${esc(c.name)} · ${esc(kindLabel(c))}</option>`).join('')}</select></label>
     <div id="gCustom" class="grid g2" style="gap:0 12px"><label class="f"><span>Gift name</span><input class="in" id="gN" maxlength="60" placeholder="e.g. Welcome bonus"></label>
       <label class="f"><span>Type</span><select class="in" id="gK">${kinds.map(k => `<option value="${k[0]}">${k[1]}</option>`).join('')}</select></label>
@@ -3091,36 +3216,77 @@
                 chips();
               }
             };
-            const drop = $('#gD', ov);
-            $('#gU', ov).oninput = debounce(async e => {
-              const q = e.target.value.trim();
-              if (q.length < 2) {
-                drop.hidden = true;
-                return;
-              }
-              try {
-                const r = await A('pba_users', { p_q: q, p_status: 'all', p_per: 8 });
-                drop.innerHTML =
-                  r.rows
-                    .filter(u => u.status !== 'deleted')
+            const list = $('#gD', ov);
+            let rows = [],
+              page = 1,
+              total = 0,
+              q = '',
+              seq = 0;
+            const isOn = id => picked.some(p => p.id === id);
+            const paintList = () => {
+              list.innerHTML = rows.length
+                ? rows
                     .map(
-                      u =>
-                        `<button type="button" data-u='${esc(JSON.stringify({ id: u.id, username: u.username }))}'>${avatar(u.name)}<span><b>${esc(u.name)}</b> <span class="muted">@${esc(u.username)}</span></span></button>`
+                      u => `<button type="button" class="upk-r${isOn(u.id) ? ' on' : ''}" data-id="${esc(u.id)}">
+                <span class="upk-x" aria-hidden="true"></span>${avatar(u.name || u.username)}
+                <span class="upk-t"><b>${esc(u.name || u.username)}</b><small>@${esc(u.username)}</small></span>
+                ${u.status && u.status !== 'active' ? `<span class="pill p-mut">${esc(u.status)}</span>` : ''}
+                <span class="mono small muted">${u.coins != null ? num(u.coins) + ' 🪙' : ''}</span></button>`
                     )
-                    .join('') || '<div class="empty small">No match</div>';
-                drop.hidden = false;
-              } catch (ex) {}
-            }, 250);
-            drop.onclick = e => {
-              const b = e.target.closest('[data-u]');
-              if (!b) return;
-              const u = JSON.parse(b.dataset.u);
-              if (!picked.some(p => p.id === u.id)) picked.push(u);
-              chips();
-              drop.hidden = true;
-              $('#gU', ov).value = '';
-              $('#gU', ov).focus();
+                    .join('') +
+                  (rows.length < total
+                    ? `<button type="button" class="upk-more" id="gMore">Show more (${num(total - rows.length)} left)</button>`
+                    : '')
+                : `<div class="empty small">${q ? 'No players match “' + esc(q) + '”.' : 'No players yet.'}</div>`;
+              $('#gN0', ov).textContent = picked.length + ' selected';
             };
+            const load = async (more = false) => {
+              const my = ++seq;
+              page = more ? page + 1 : 1;
+              try {
+                const r = await A('pba_users', { p_q: q, p_status: 'all', p_page: page, p_per: 40 });
+                if (my !== seq) return;
+                const got = r.rows.filter(u => u.status !== 'deleted');
+                rows = more ? rows.concat(got) : got;
+                total = r.total != null ? r.total : rows.length;
+                paintList();
+              } catch (ex) {
+                if (my === seq) list.innerHTML = `<div class="empty small">${esc(ex.message)}</div>`;
+              }
+            };
+            const refresh = () => {
+              chips();
+              paintList();
+            };
+            $('#gC', ov).addEventListener('click', () => setTimeout(paintList));
+            $('#gU', ov).oninput = debounce(e => {
+              q = e.target.value.trim();
+              load();
+            }, 250);
+            $('#gU', ov).onkeydown = e => {
+              if (e.key === 'Enter') e.preventDefault();
+            };
+            list.onclick = e => {
+              if (e.target.closest('#gMore')) return load(true);
+              const b = e.target.closest('[data-id]');
+              if (!b) return;
+              const u = rows.find(x => String(x.id) === b.dataset.id);
+              if (!u) return;
+              const i = picked.findIndex(p => p.id === u.id);
+              if (i >= 0) picked.splice(i, 1);
+              else picked.push({ id: u.id, username: u.username });
+              refresh();
+            };
+            $('#gAll', ov).onclick = () => {
+              const all = rows.length && rows.every(u => isOn(u.id));
+              rows.forEach(u => {
+                const i = picked.findIndex(p => p.id === u.id);
+                if (all && i >= 0) picked.splice(i, 1);
+                else if (!all && i < 0) picked.push({ id: u.id, username: u.username });
+              });
+              refresh();
+            };
+            load();
             const sync = () => {
               const custom = !$('#gW', ov).value;
               $('#gCustom', ov).hidden = !custom;
