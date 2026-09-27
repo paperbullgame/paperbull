@@ -6493,6 +6493,258 @@ ${id === 'gold' ? `${R} h1,${R} .card.hero [data-b="total"]{color:var(--amber)!i
   paintIcons(); setTimeout(paintIcons, 500); setInterval(paintIcons, 3000);
 })();
 
+/* =====================================================================
+   ONLINE — accounts that work on any device, cloud saves,
+   a global leaderboard, friends and coin gifts (Supabase RPCs).
+   ===================================================================== */
+(() => {
+  const API = 'https://amnbnuabxoxhggidlhcn.supabase.co/rest/v1/rpc/';
+  const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtbmJudWFieG94aGdnaWRsaGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjc5ODAsImV4cCI6MjEwNTYwMzk4MH0.WwHTYzYEwKtW2_fjoyPiltnxI331-Ve5IGolTpavISo';
+  const SK = 'pb2.cloud';
+  const C = { s: Store.get(SK, null), dirty: false, lastPush: 0, lastOk: 0, pushing: false, lb: null, fr: null, tab: 'global', lbAt: 0, frAt: 0, err: '' };
+  const E = s => esc(s);
+
+  class CloudErr extends Error { constructor(code, msg) { super(msg || code); this.code = code; } }
+  async function rpc(fn, args, opt = {}) {
+    let r;
+    try {
+      r = await fetch(API + fn, { method: 'POST', headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}), keepalive: !!opt.keepalive });
+    } catch (e) { throw new CloudErr('network', 'Can’t reach the PAPERBULL server. Check your internet.'); }
+    const txt = await r.text(); let j = null; try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
+    if (!r.ok) { const code = (j && j.message) || 'error'; throw new CloudErr(code, MSG[code] || 'Server error: ' + code); }
+    if (j && j.error) throw new CloudErr(j.error, MSG[j.error] || j.error);
+    return j;
+  }
+  const MSG = {
+    taken: 'That username is already taken. Pick another one.', bad_username: 'Username: 3–20 letters, numbers, _ . or -', bad_password: 'Password must be at least 6 characters.',
+    no_user: 'No player with that username.', wrong_password: 'Wrong password.', locked: 'Too many wrong passwords. Try again in 5 minutes.', auth: 'Your online session expired. Log in again.',
+    self: 'That’s you!', not_friends: 'You can only gift coins to friends.', daily_limit: 'You can gift up to 500 coins a day.', bad_amount: 'Pick 1 to 500 coins.', too_many: 'Too many pending friend requests.', too_big: 'Save is too big to upload.',
+  };
+  window.PBCloud = { rpc, C };
+
+  const setSess = (u, token) => { C.s = { u, token }; Store.set(SK, C.s); };
+  const clearSess = () => { C.s = null; Store.set(SK, null); try { localStorage.removeItem(SK); } catch (e) {} };
+  const linked = () => !!(C.s && acct && acct.user && acct.user === C.s.u);
+  function authFail(e) { if (e && e.code === 'auth') { clearSess(); refreshUI(); } }
+
+  /* ---------------- stats + save ---------------- */
+  function stats() {
+    const v = valuation();
+    return { name: acct.name, avatar: myAvatar(), title: myTitle(), return_pct: v.ret, value: v.total, level: levelInfo(acct.xp).level, trades: acct.flags.cheat ? 0 : acct.trades.length };
+  }
+  async function push(force) {
+    if (!linked() || C.pushing) return;
+    if (!force && (!C.dirty || Date.now() - C.lastPush < 25000)) return;
+    C.pushing = true; C.dirty = false; C.lastPush = Date.now();
+    try {
+      acct._t ||= Date.now();
+      await rpc('pb_push', { p_token: C.s.token, p_save: acct, p_save_t: acct._t, p_stats: stats() });
+      C.lastOk = Date.now(); C.err = '';
+    } catch (e) { C.dirty = true; C.err = e.message; authFail(e); }
+    C.pushing = false; paintStatus();
+  }
+  const sa0 = saveAcct;
+  saveAcct = function () { if (acct) { acct._t = Date.now(); C.dirty = true; } return sa0.apply(this, arguments); };
+
+  /* ---------------- sign up / log in go through the server too ---------------- */
+  const su0 = Auth.signUp.bind(Auth), li0 = Auth.logIn.bind(Auth);
+  Auth.signUp = async function (name, pw, keep) {
+    name = String(name || '').trim(); const k = name.toLowerCase();
+    if (!Auth.validName(name)) throw new Error('Username: 3–20 letters, numbers, _ . or -');
+    if (Auth.db().users[k]) throw new Error('That username is taken on this device. Try logging in.');
+    if (pw.length < 6) throw new Error('Password must be at least 6 characters.');
+    let cloud = null;
+    try { cloud = await rpc('pb_signup', { p_username: name, p_password: pw }); }
+    catch (e) { if (e.code !== 'network') throw new Error(e.message); }
+    const id = await su0(name, pw, keep);
+    if (cloud) { setSess(k, cloud.token); setTimeout(() => push(true), 400); }
+    return id;
+  };
+  Auth.logIn = async function (name, pw) {
+    const k = String(name || '').trim().toLowerCase(), localRec = Auth.db().users[k];
+    let id = null, localErr = null, cloud = null, cloudErr = null;
+    if (localRec) { try { id = await li0(name, pw); } catch (e) { localErr = e; } }
+    try { cloud = await rpc('pb_login', { p_username: k, p_password: pw }); } catch (e) { cloudErr = e; }
+
+    if (cloudErr && cloudErr.code === 'no_user' && id) {   // an older device-only account: put it online now
+      try { const s = await rpc('pb_signup', { p_username: localRec.u, p_password: pw }); setSess(k, s.token); setTimeout(() => push(true), 400); } catch (e) {}
+      return id;
+    }
+    if (cloud && cloud.token) {
+      setSess(k, cloud.token);
+      const cs = cloud.save, ct = +cloud.save_t || 0;
+      const d = Auth.db();
+      if (!id) {   // new device (or the password changed somewhere else): rebuild the local account from the cloud
+        id = (localRec && localRec.id) || (cs && cs.id) || uid();
+        const salt = randSalt(), alg = pwAlg();
+        d.users[k] = { u: cloud.user.username, id, salt, alg, hash: await hashPw(pw, salt, alg), created: Date.now() };
+        Auth.saveDb(d);
+        settings.playerIds = [...new Set([...settings.playerIds, id])]; saveSettings();
+      }
+      const local = Store.get(KEY.player(id), null);
+      if (cs && (!local || ct > (local._t || 0))) {
+        const a = Object.assign({}, cs, { id, user: k });
+        Store.set(KEY.player(id), a);
+        if (acct && acct.id === id) acct = normalizeAcct(a);
+      } else if (!local) {
+        const a = newAccount(cloud.user.username, id); a.user = k; normalizeAcct(a); Store.set(KEY.player(id), a);
+      }
+      setTimeout(() => push(true), 1500);
+      return id;
+    }
+    if (id) return id;   // offline, but the device account works
+    if (cloudErr && cloudErr.code !== 'network') throw new Error(cloudErr.message);
+    if (localErr) throw localErr;
+    throw new Error(cloudErr ? cloudErr.message : 'Could not log in.');
+  };
+  const lo0 = logOut;
+  logOut = function () {
+    const s = C.s;
+    if (linked()) { try { rpc('pb_push', { p_token: s.token, p_save: acct, p_save_t: acct._t || Date.now(), p_stats: stats() }).catch(() => {}); } catch (e) {} }
+    if (s) setTimeout(() => rpc('pb_logout', { p_token: s.token }).catch(() => {}), 800);
+    clearSess();
+    return lo0.apply(this, arguments);
+  };
+
+  /* ---------------- gifts from friends ---------------- */
+  async function claim() {
+    if (!linked()) return;
+    try {
+      const g = await rpc('pb_gifts_claim', { p_token: C.s.token });
+      if (g && g.length) {
+        const tot = g.reduce((s, x) => s + x.coins, 0);
+        acct.coins += tot; bumpCoins(); saveAcct(true); SFX.play('coin');
+        const who = [...new Set(g.map(x => '@' + x.from))].join(', ');
+        toast(`Gift: +${tot} coins from ${who}`, 'xp');
+      }
+    } catch (e) { authFail(e); }
+  }
+
+  /* ---------------- login screen + profile copy ---------------- */
+  const gr0 = Gate.render;
+  Gate.render = function () {
+    const r = gr0.apply(this, arguments);
+    const note = document.querySelector('#authGate .ag-note'); if (note) note.innerHTML = 'Your account is saved online, so you can log in on <b>any phone or computer</b> with the same username and password.';
+    const sub = document.querySelector('#authGate .ag-brand small'); if (sub && this.mode === 'signup') sub.textContent = 'It takes 10 seconds. Play on any device.';
+    return r;
+  };
+  const spc0 = saveProgressCard;
+  saveProgressCard = function () {
+    let h = spc0.apply(this, arguments);
+    const line = `<p class="small ol-line" id="olStatus">${statusHTML()}</p>`;
+    return h.replace('</div>', '</div>' + line).replace('saves automatically to this account in this browser', 'saves to your account and syncs online');
+  };
+  function statusHTML() {
+    if (!acct || !acct.user) return '<span class="ol-dot off"></span>Guest: sign up to save online and join the global leaderboard.';
+    if (!linked()) return '<span class="ol-dot off"></span>Not synced online yet. <button class="linkish" data-ol="connect">Connect</button>';
+    if (C.err) return `<span class="ol-dot warn"></span>Offline: ${E(C.err)}. We’ll keep trying.`;
+    return `<span class="ol-dot on"></span>Synced online as <b>@${E(C.s.u)}</b>${C.lastOk ? ' · ' + new Date(C.lastOk).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''}`;
+  }
+  function paintStatus() { const el = document.getElementById('olStatus'); if (el) el.innerHTML = statusHTML(); }
+
+  function connectDialog() {
+    if (!acct || !acct.user) return Gate.show('signup');
+    const name = Auth.db().users[acct.user]?.u || acct.user;
+    modal({ title: 'Put your account online', confirm: 'Connect', html: `Enter the password for <b>${E(name)}</b> to sync this account online. Then you can log in on any device and show up on the global leaderboard.<input class="txt" type="password" id="olPw" placeholder="Password" autocomplete="current-password" style="margin-top:12px"><div class="ag-err" id="olErr"></div>`,
+      onConfirm: r => {
+        const pw = $('#olPw', r).value, er = $('#olErr', r);
+        Auth.logIn(name, pw).then(() => { $('#modalRoot').classList.remove('open'); $('#modalRoot').innerHTML = ''; toast('Your account is online now', 'ok'); refreshUI(); })
+          .catch(e => { er.textContent = e.message; });
+        return false;
+      } });
+  }
+
+  /* ---------------- ranks: global + friends ---------------- */
+  const row = (r, i) => `<div class="rk ol-rk ${r.me ? 'me' : ''}"><span class="n"${r.rank === 1 ? ' style="color:var(--amber)"' : ''}>${r.rank || i + 1}</span>
+    <span class="rk-av">${avatarArt(r.avatar || 'av_bull')}</span><span class="who"><b>${E(r.name || r.username)}</b> ${r.me ? '<span class="sim-pill">YOU</span>' : ''}<small>@${E(r.username)} · LV ${r.level || 1} · ${(r.trades || 0).toLocaleString()} trades</small></span>
+    <span class="ret"><span class="${cls(r.return_pct)}">${fmtPct(r.return_pct)}</span><small>${fmtUSD(r.value, 0)}</small></span></div>`;
+  function cardHTML() {
+    return `<section class="card ol-card" id="olCard"><div class="card-h"><h3>Online leaderboard</h3><div class="seg" id="olTabs"><button data-t="global" class="${C.tab === 'global' ? 'on' : ''}">Global</button><button data-t="friends" class="${C.tab === 'friends' ? 'on' : ''}">Friends</button></div></div><div id="olBody"><div class="empty">Loading…</div></div></section>`;
+  }
+  async function loadLB(force) {
+    if (!force && C.lb && Date.now() - C.lbAt < 20000) return C.lb;
+    C.lb = await rpc('pb_leaderboard', { p_token: linked() ? C.s.token : null, p_limit: 50 }); C.lbAt = Date.now(); return C.lb;
+  }
+  async function loadFR(force) {
+    if (!linked()) return null;
+    if (!force && C.fr && Date.now() - C.frAt < 15000) return C.fr;
+    C.fr = await rpc('pb_friends', { p_token: C.s.token }); C.frAt = Date.now(); return C.fr;
+  }
+  function joinCTA() {
+    if (!acct.user) return `<div class="ol-cta"><b>Join the global leaderboard</b><p class="muted small">Make a free account to compete with real players, add friends and play on any device.</p><button class="btn primary sm" data-ol="signup">Sign up</button></div>`;
+    if (!linked()) return `<div class="ol-cta"><b>You’re not online yet</b><p class="muted small">Connect your account to show up here and add friends.</p><button class="btn primary sm" data-ol="connect">Connect</button></div>`;
+    return '';
+  }
+  async function paint(force) {
+    const body = document.getElementById('olBody'); if (!body) return;
+    try {
+      if (C.tab === 'global') {
+        const lb = await loadLB(force); if (!document.getElementById('olBody')) return;
+        const top = lb.top || [], me = lb.me, inTop = top.some(r => r.me);
+        body.innerHTML = `${joinCTA()}<p class="muted small ol-sub">${(lb.players || 0).toLocaleString()} players ranked by total return${me ? ` · you’re <b>#${me.rank}</b>` : ''}</p>
+          ${top.length ? top.map(row).join('') : '<div class="empty">No one is ranked yet. Make a trade and be the first!</div>'}
+          ${me && !inTop ? `<div class="ol-gap">⋯</div>${row(me)}` : ''}`;
+      } else {
+        if (!linked()) { body.innerHTML = joinCTA() || ''; return; }
+        const f = await loadFR(force); if (!document.getElementById('olBody')) return;
+        const left = Math.max(0, 500 - (f.sent_today || 0));
+        const mine = { username: C.s.u, name: acct.name, avatar: myAvatar(), level: levelInfo(acct.xp).level, trades: acct.trades.length, return_pct: valuation().ret, value: valuation().total, me: true };
+        const list = [...(f.friends || []), mine].sort((a, b) => b.return_pct - a.return_pct).map((r, i) => ({ ...r, rank: i + 1 }));
+        body.innerHTML = `<form class="ol-add" id="olAdd"><input class="txt" id="olName" maxlength="20" placeholder="Add a friend by username" autocomplete="off" autocapitalize="off"><button class="btn primary sm">Add</button></form><div class="ag-err" id="olAddErr"></div>
+          ${(f.incoming || []).length ? `<small class="ol-h">Friend requests</small>${f.incoming.map(r => `<div class="ol-req"><span class="rk-av">${avatarArt(r.avatar || 'av_bull')}</span><b>${E(r.name)}</b><small>@${E(r.username)}</small><button class="btn primary sm" data-acc="${E(r.username)}">Accept</button><button class="btn sm" data-dec="${E(r.username)}">Decline</button></div>`).join('')}` : ''}
+          <small class="ol-h">Friends · you can gift ${left} more coins today</small>
+          ${list.length > 1 ? list.map((r, i) => row(r, i).replace('</span></div>', `</span>${r.me ? '' : `<button class="btn sm ol-gift" data-gift="${E(r.username)}" ${left ? '' : 'disabled'}>Gift</button>`}</div>`)).join('') : '<div class="empty">No friends yet. Add someone by their username. They’ll see your request next time they play.</div>'}
+          ${(f.outgoing || []).length ? `<small class="ol-h">Waiting for them to accept</small><p class="muted small">${f.outgoing.map(r => '@' + E(r.username)).join(', ')}</p>` : ''}`;
+        const form = document.getElementById('olAdd');
+        form.onsubmit = async e => {
+          e.preventDefault(); const n = $('#olName').value.trim(), er = $('#olAddErr'); er.textContent = ''; if (!n) return;
+          try { const r = await rpc('pb_friend_add', { p_token: C.s.token, p_username: n }); toast(r.status === 'accepted' ? `You and @${n} are now friends` : `Friend request sent to @${n}`, 'ok'); paint(true); }
+          catch (ex) { er.textContent = ex.message; authFail(ex); }
+        };
+      }
+    } catch (e) { body.innerHTML = `${joinCTA()}<div class="block-msg">Couldn’t load: ${E(e.message)}</div>`; authFail(e); }
+  }
+  function giftDialog(u) {
+    const left = Math.max(0, 500 - ((C.fr && C.fr.sent_today) || 0));
+    modal({ title: `Gift coins to @${u}`, confirm: 'Send gift', html: `They’ll get the coins next time they open the game. It doesn’t cost you anything; you can send up to 500 a day (${left} left).
+      <div class="seg ol-amt" style="margin-top:12px">${[50, 100, 250, 500].map((c, i) => `<button data-c="${c}" class="${i === 1 ? 'on' : ''}" ${c > left ? 'disabled' : ''}>${c}</button>`).join('')}</div><div class="ag-err" id="gfErr"></div>`,
+      onMount: r => $$('[data-c]', r).forEach(b => b.onclick = () => $$('[data-c]', r).forEach(x => x.classList.toggle('on', x === b))),
+      onConfirm: r => {
+        const c = +($('[data-c].on', r) || {}).dataset?.c || 100;
+        rpc('pb_gift', { p_token: C.s.token, p_username: u, p_coins: Math.min(c, left) }).then(() => { $('#modalRoot').classList.remove('open'); $('#modalRoot').innerHTML = ''; toast(`Sent ${Math.min(c, left)} coins to @${u}`, 'ok'); SFX.play('coin'); paint(true); })
+          .catch(e => { $('#gfErr', r).textContent = e.message; });
+        return false;
+      } });
+  }
+  document.addEventListener('click', e => {
+    const t = e.target;
+    const ol = t.closest('[data-ol]'); if (ol) { e.preventDefault(); if (ol.dataset.ol === 'signup') Gate.show('signup'); else connectDialog(); return; }
+    const tab = t.closest('#olTabs [data-t]'); if (tab) { C.tab = tab.dataset.t; $$('#olTabs [data-t]').forEach(b => b.classList.toggle('on', b === tab)); paint(); return; }
+    const acc = t.closest('[data-acc]'), dec = t.closest('[data-dec]');
+    if (acc || dec) { const u = (acc || dec).dataset[acc ? 'acc' : 'dec']; rpc('pb_friend_respond', { p_token: C.s.token, p_username: u, p_accept: !!acc }).then(() => { toast(acc ? `You and @${u} are friends now` : 'Request declined', 'ok'); paint(true); }).catch(ex => toast(ex.message, 'err')); return; }
+    const g = t.closest('[data-gift]'); if (g) { giftDialog(g.dataset.gift); return; }
+  });
+  const rm0 = Ranks.mount;
+  Ranks.mount = function (v) {
+    const r = rm0.apply(this, arguments);
+    try {
+      v.insertAdjacentHTML('afterbegin', cardHTML());
+      const h = v.querySelector('.card:not(.ol-card) .card-h h3'); if (h) h.textContent = 'This device · % return';
+      const p = [...v.querySelectorAll(':scope > p.muted')].pop(); if (p) p.innerHTML = p.innerHTML.replace('Friends can sign up for their own account on this device.', 'Play online to race real players above.');
+      paint();
+    } catch (e) { console.error(e); }
+    return r;
+  };
+  function refreshUI() { paintStatus(); if (document.getElementById('olBody')) paint(true); }
+
+  Object.assign(window.PBCloud, { push, claim, paint });
+  /* ---------------- timers ---------------- */
+  setInterval(() => { push(false); }, 10000);
+  setInterval(() => { claim(); if (document.getElementById('olBody') && document.visibilityState === 'visible') paint(); }, 45000);
+  setTimeout(() => { claim(); push(true); }, 4000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && C.dirty) push(true); });
+})();
+
 /* SHOP-PLUS:END */
 init();
 </script>
@@ -8958,6 +9210,23 @@ html.dark .ei,html:not(.classic) .ei{--c:hsl(var(--h,250) 85% 72%);--b:hsl(var(-
 .th-prev .a{fill:color-mix(in srgb,var(--pup) 20%,transparent)}
 .th-prev .tp-btn{position:absolute;right:8px;top:6px;width:18px;height:7px;border-radius:4px;background:var(--pac)}
 .th-card{min-height:0!important}
+
+/* ---------- online leaderboard + friends ---------- */
+.ol-card .card-h{flex-wrap:wrap;gap:10px}
+.ol-sub{margin:0 0 8px}
+.ol-cta{display:grid;gap:4px;justify-items:start;padding:14px;border-radius:12px;background:color-mix(in srgb,var(--amber) 9%,transparent);border:1px solid color-mix(in srgb,var(--amber) 22%,transparent);margin-bottom:12px}
+html.classic .ol-cta{background:var(--brand-soft,#efebff);border-color:transparent}
+.ol-cta p{margin:0 0 6px}
+.ol-gap{text-align:center;color:var(--dim);padding:2px 0}
+.ol-rk{align-items:center}
+.ol-rk .ol-gift{margin-left:8px;flex:none}
+.ol-add{display:flex;gap:8px;margin-bottom:4px}.ol-add .txt{flex:1;min-width:0;margin:0!important}
+.ol-h{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:14px 2px 6px}
+.ol-req{display:grid;grid-template-columns:auto 1fr auto auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--line)}
+.ol-req .rk-av{grid-row:1/3}.ol-req b{font-size:14px}.ol-req small{grid-column:2;color:var(--mut)}.ol-req .btn{grid-row:1/3}
+.ol-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.ol-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex:none}.ol-dot.on{background:var(--up)}.ol-dot.warn{background:var(--amber)}
+.ol-amt button[disabled]{opacity:.35}
 
 </style>
 <!-- LEARN-MODE:END -->
