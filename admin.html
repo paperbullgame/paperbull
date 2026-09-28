@@ -10738,5 +10738,44 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
 
       boot();
     </script>
+
+    <style id="mobCards">
+      @media (max-width: 720px) {
+        .tw { margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+        .tw table, .tw tbody, .tw tr, .tw td { display: block; width: 100%; }
+        .tw thead { display: none; }
+        .tw tr { border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px; margin: 0 0 10px; background: var(--panel2); }
+        .tw tr:hover { background: var(--panel2); }
+        .tw td { border: 0 !important; padding: 6px 0 !important; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: right; white-space: normal !important; min-width: 0; }
+        .tw td > * { min-width: 0; }
+        .tw td[data-l]::before { content: attr(data-l); flex: none; color: var(--mut); font-size: 12px; font-weight: 600; text-align: left; }
+        .tw td:first-child { justify-content: flex-start; text-align: left; font-size: 14.5px; }
+        .tw td:first-child::before { display: none; }
+        .tw td:empty { display: none; }
+        .tw td .row-act, .tw td:last-child { flex-wrap: wrap; }
+        .tw td:last-child:not([data-l]) { justify-content: flex-end; padding-top: 8px !important; }
+        .ab-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+        .ab-grid > * { padding: 10px !important; min-width: 0; }
+        .ab-grid small, .ab-grid p { font-size: 11.5px; }
+      }
+    </style>
+    <script>
+      (function () {
+        function label() {
+          document.querySelectorAll('.tw table').forEach(function (t) {
+            var hs = [].map.call(t.querySelectorAll('thead th'), function (h) { return h.textContent.replace(/[▲▼↑↓]/g, '').trim(); });
+            if (!hs.length) return;
+            t.querySelectorAll('tbody tr').forEach(function (tr) {
+              [].forEach.call(tr.children, function (td, i) {
+                if (td.tagName === 'TD' && !td.hasAttribute('data-l') && hs[i] && td.colSpan < 2) td.setAttribute('data-l', hs[i]);
+              });
+            });
+          });
+        }
+        var q = 0;
+        new MutationObserver(function () { if (!q) q = requestAnimationFrame(function () { q = 0; label(); }); }).observe(document.body, { childList: true, subtree: true });
+        label();
+      })();
+    </script>
   </body>
 </html>
