@@ -14189,25 +14189,41 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
   };
   const REAL = new Set(UNIVERSE.map(u => u[0]));
   Object.assign(SECTOR_TINT, { Utilities: ['#5fb3ff', '#1d3f73'], Materials: ['#c9a36a', '#5a4020'], Altcoin: ['#8f8cff', '#2c2a6e'] });
+  // second logo source (Parqet) for stocks: used when FMP fails, and first for the few where FMP only has a blurry favicon
+  const PQ_URL = 'https://assets.parqet.com/logos/symbol/{SYM}?format=png',
+    PQ_FIRST = new Set(['FANG', 'VTR', 'UTHR', 'STRL', 'WPC', 'IT']),
+    NO_LOGO = new Set(['VMRK']), // brand-new listing, no public logo anywhere yet
+    ALT = new Map();
   window.__lf = img => {
+    const s = img.getAttribute('data-s'),
+      alt = img.getAttribute('data-alt');
+    if (alt && !img.dataset.tried) {
+      img.dataset.tried = '1';
+      if (s) ALT.set(s, alt); // next render goes straight to the source that works
+      img.src = alt;
+      return;
+    }
     // remember tickers that have no real logo so we never ask twice
-    const s = img.getAttribute('data-s');
     if (s) FAIL.add(s);
     img.remove();
   };
   assetIcon = function (sym, big) {
     const A = SIM[sym],
       [a, b] = tint(sym),
-      real = A && !A.admin && !A.legacy && (A.real || (!A.lite && REAL.has(sym))) && logosOn() && !FAIL.has(sym),
+      real = A && !A.admin && !A.legacy && !NO_LOGO.has(sym) && (A.real || A.fund || (!A.lite && REAL.has(sym))) && logosOn() && !FAIL.has(sym),
+      tk = sym.replace('.', '-'),
+      fmp = LOGO_URL.replace('{SYM}', tk),
+      pq = PQ_URL.replace('{SYM}', tk),
+      stock = A && A.type === 'stock',
       url = !real
         ? ''
-        : A.type === 'stock'
-          ? LOGO_URL.replace('{SYM}', sym.replace('.', '-'))
+        : stock
+          ? ALT.get(sym) || (PQ_FIRST.has(sym) ? pq : fmp)
           : A.img
             ? 'https://coin-images.coingecko.com/coins/images/' + A.img.replace(/^(\d+)\//, '$1/small/')
             : COIN_LOGO_URL.replace('{sym}', sym.toLowerCase());
     const img = url
-      ? `<img src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-s="${esc(sym)}" onload="this.classList.add('ok')" onerror="__lf(this)">`
+      ? `<img src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-s="${esc(sym)}"${stock && !ALT.has(sym) ? ` data-alt="${esc(url === pq ? fmp : pq)}"` : ''} onload="this.classList.add('ok')" onerror="__lf(this)">`
       : '';
     return `<span class="aic tk-badge bm-w${big ? ' lg' : ''}" style="--ta:${a};--tb:${b}" aria-hidden="true" data-sym="${esc(sym)}">${brandMark(sym)}${img}</span>`;
   };
