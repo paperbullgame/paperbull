@@ -16994,6 +16994,631 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   document.head.appendChild(st);
 })();
 
+/* =====================================================================
+   EXOTIC ART — the Exotic pets (admin-only rarity) and pet mutations.
+   Self-contained: used by the game AND the admin panel for previews.
+   Every exotic is a 64×64 SVG built from a shared kit of glowing parts,
+   with a pulsing aura, orbiting sparkles and animated features.
+   ===================================================================== */
+(() => {
+  const ST = (o, c, a = 1) => `<stop offset="${o}" stop-color="${c}" stop-opacity="${a}"/>`;
+  const RG = (id, stops, cx = 0.4, cy = 0.32, r = 0.85) => `<radialGradient id="${id}" cx="${cx}" cy="${cy}" r="${r}">${stops.join('')}</radialGradient>`;
+  const LG = (id, stops, x2 = 0, y2 = 1) => `<linearGradient id="${id}" x1="0" y1="0" x2="${x2}" y2="${y2}">${stops.join('')}</linearGradient>`;
+  const MIR = s => `${s}<g transform="translate(64 0) scale(-1 1)">${s}</g>`;
+  const star4 = (x, y, r, c, o = 1) => `<path d="M${x} ${y - r}Q${x + r * 0.18} ${y - r * 0.18} ${x + r} ${y}Q${x + r * 0.18} ${y + r * 0.18} ${x} ${y + r}Q${x - r * 0.18} ${y + r * 0.18} ${x - r} ${y}Q${x - r * 0.18} ${y - r * 0.18} ${x} ${y - r}z" fill="${c}" opacity="${o}"/>`;
+  const lighten = (hex, amt) => {
+    const n = parseInt(hex.slice(1), 16),
+      f = s => Math.round(((n >> s) & 255) + (255 - ((n >> s) & 255)) * amt);
+    return '#' + ((1 << 24) | (f(16) << 16) | (f(8) << 8) | f(0)).toString(16).slice(1);
+  };
+  const HX = 32,
+    HY = 37,
+    HR = 19; // head
+
+  /* ---------------- feature kit ---------------- */
+  const F = {
+    wings: (d, k) => ({
+      back: `<g class="xa-flap">${MIR(`<path d="M17 36C6 34 0 24 2 12c4 5 8 7 12 8-3-6-3-12 0-17 3 7 7 12 11 16z" fill="url(#w${k})" stroke="${d.c3}" stroke-opacity=".5" stroke-width="1"/><path d="M6 22q6 5 12 6M9 14q4 7 10 10" stroke="#fff" stroke-opacity=".35" stroke-width="1.2" fill="none"/>`)}</g>`,
+      defs: LG(`w${k}`, [ST(0, lighten(d.c3, 0.5)), ST(1, d.c1)]),
+    }),
+    batwings: (d, k) => ({
+      back: `<g class="xa-flap">${MIR(`<path d="M18 34L1 14l4 13-5 2 8 6-4 7 14-3z" fill="url(#w${k})" stroke="${d.c3}" stroke-opacity=".6" stroke-width="1" stroke-linejoin="round"/><path d="M17 33L6 20M16 36L3 29" stroke="${d.c3}" stroke-opacity=".6" stroke-width="1"/>`)}</g>`,
+      defs: LG(`w${k}`, [ST(0, d.c2), ST(1, d.c1)]),
+    }),
+    crystalwings: (d, k) => ({
+      back: `<g class="xa-flap">${MIR(`<path d="M18 36L2 26 6 10l8 12 2-18 6 20z" fill="url(#w${k})" stroke="#fff" stroke-opacity=".7" stroke-width=".9" stroke-linejoin="round"/><path d="M6 10l10 24M16 4l2 28" stroke="#fff" stroke-opacity=".45" stroke-width=".8"/>`)}</g>`,
+      defs: LG(`w${k}`, [ST(0, '#ffffff', 0.9), ST(0.5, d.c3, 0.8), ST(1, d.c1, 0.9)], 1, 1),
+    }),
+    flames: (d, k) => ({
+      back: `<g class="xa-flick"><path d="M32 1c4 8 10 10 8 18 4-4 6-8 6-12 6 8 5 18-1 23H19c-6-5-7-15-1-23 0 4 2 8 6 12-2-8 4-10 8-18z" fill="url(#f${k})"/><path d="M32 9c3 6 6 8 5 14h-10c-1-6 2-8 5-14z" fill="#fff6c8" opacity=".85"/></g>`,
+      defs: LG(`f${k}`, [ST(0, '#fff3a0'), ST(0.45, d.c3), ST(1, d.c1)]),
+    }),
+    horns: d => ({
+      top: MIR(`<path d="M21 24C15 18 13 10 17 3c1 7 5 11 9 17z" fill="${d.c3}" stroke="#fff" stroke-opacity=".4" stroke-width=".8"/><path d="M18 8l3 2M17 13l4 2" stroke="#fff" stroke-opacity=".5" stroke-width="1"/>`),
+    }),
+    bullhorns: d => ({
+      top: MIR(`<path d="M19 27C9 28 2 21 3 10c4 7 10 10 19 11z" fill="${d.c3}" stroke="${d.c2}" stroke-opacity=".6" stroke-width="1"/><path d="M5 14q4 5 11 7" stroke="#fff" stroke-opacity=".55" stroke-width="1.2" fill="none"/>`),
+    }),
+    antlers: d => ({
+      top: MIR(`<path d="M24 22C20 14 18 8 20 2M20 10l-6-4M21 15l-7 0" stroke="${d.c3}" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="14" cy="6" r="2.4" fill="#ffb7d5"/><circle cx="20" cy="2.5" r="2" fill="#ffd1e6"/><circle cx="13" cy="15" r="2" fill="#ff9cc6"/>`),
+    }),
+    crown: () => ({
+      top: `<path d="M20 22l1-12 6 6 5-10 5 10 6-6 1 12z" fill="url(#gold)" stroke="#a86b00" stroke-width="1" stroke-linejoin="round"/><circle cx="32" cy="15" r="2" fill="#ff3d6e"/><circle cx="24.5" cy="18" r="1.4" fill="#3de0ff"/><circle cx="39.5" cy="18" r="1.4" fill="#3de0ff"/>`,
+      defs: LG('gold', [ST(0, '#fff3b0'), ST(1, '#f0a400')]),
+    }),
+    halo: () => ({
+      top: `<g class="xa-bob"><ellipse cx="32" cy="9" rx="12" ry="3.4" fill="none" stroke="#fff3b0" stroke-width="3" opacity=".45"/><ellipse cx="32" cy="9" rx="12" ry="3.4" fill="none" stroke="#ffd34d" stroke-width="1.6"/></g>`,
+    }),
+    ears: d => ({
+      back: MIR(`<path d="M17 28L15 6l14 14z" fill="${d.c1}" stroke="${d.c3}" stroke-opacity=".7" stroke-width="1"/><path d="M18 22l-1-11 7 7z" fill="${d.c3}" opacity=".8"/>`),
+    }),
+    longears: d => ({
+      back: MIR(`<ellipse cx="23" cy="12" rx="5.5" ry="15" fill="${d.c1}" transform="rotate(-12 23 12)"/><ellipse cx="23" cy="13" rx="2.6" ry="10" fill="${d.c3}" opacity=".8" transform="rotate(-12 23 13)"/>`),
+    }),
+    roundears: d => ({
+      back: MIR(`<circle cx="15" cy="21" r="8" fill="${d.c1}" stroke="${d.c3}" stroke-opacity=".6"/><circle cx="15.5" cy="21.5" r="4.4" fill="${d.c3}" opacity=".7"/>`),
+    }),
+    tails9: (d, k) => {
+      let s = '';
+      for (let i = 0; i < 9; i++) {
+        const a = -84 + i * 21;
+        s += `<g transform="rotate(${a} 32 44)"><path d="M32 44C27 34 26 20 32 8c6 12 5 26 0 36z" fill="url(#t${k})" stroke="${d.c3}" stroke-opacity=".4" stroke-width=".8"/></g>`;
+      }
+      return { back: `<g class="xa-sway">${s}</g>`, defs: LG(`t${k}`, [ST(0, d.c3), ST(0.35, lighten(d.c1, 0.3)), ST(1, d.c1)]) };
+    },
+    fins: d => ({
+      back: `${MIR(`<path d="M15 38C5 36 1 28 3 20c5 4 9 8 14 10z" fill="${d.c3}" opacity=".9"/><path d="M6 25l8 7M5 31l9 3" stroke="#fff" stroke-opacity=".5" stroke-width="1"/>`)}<path d="M26 20c1-8 4-13 9-17 0 7 1 12 3 17z" fill="${d.c3}"/>`,
+    }),
+    tentacles: d => ({
+      back: `<g class="xa-sway">${[14, 22, 32, 42, 50]
+        .map((x, i) => `<path d="M${x} 48c${i % 2 ? 3 : -3} 5 ${i % 2 ? -4 : 4} 9 ${i % 2 ? 1 : -1} 14" stroke="${d.c3}" stroke-width="3.2" stroke-linecap="round" fill="none" opacity=".9"/>`)
+        .join('')}</g>`,
+    }),
+    mane: d => {
+      let p = '';
+      for (let i = 0; i < 32; i++) {
+        const a = (i / 32) * Math.PI * 2,
+          r = i % 2 ? 22 : 29;
+        p += `${i ? 'L' : 'M'}${(HX + Math.cos(a) * r).toFixed(1)} ${(HY - 2 + Math.sin(a) * r).toFixed(1)}`;
+      }
+      return { back: `<path d="${p}z" fill="${d.c3}" stroke="${lighten(d.c3, 0.4)}" stroke-width="1" stroke-linejoin="round" class="xa-pulse2"/>` };
+    },
+    spikes: d => ({
+      top: `<path d="M24 22l2-14 5 12zM31 19l3-17 4 17zM38 22l5-12 1 13z" fill="${lighten(d.c3, 0.35)}" stroke="#fff" stroke-opacity=".8" stroke-width=".8" stroke-linejoin="round"/><path d="M33 4l-1 14" stroke="#fff" stroke-opacity=".7" stroke-width=".8"/>`,
+    }),
+    gills: d => ({
+      back: MIR(`<g class="xa-sway"><path d="M16 30Q6 26 3 20M15 35Q5 34 1 30M16 40Q7 42 3 40" stroke="${d.c3}" stroke-width="3.4" stroke-linecap="round" fill="none"/><circle cx="3" cy="20" r="2.2" fill="${lighten(d.c3, 0.4)}"/><circle cx="1.5" cy="30" r="2.2" fill="${lighten(d.c3, 0.4)}"/><circle cx="3" cy="40" r="2.2" fill="${lighten(d.c3, 0.4)}"/></g>`),
+    }),
+    crest: d => ({
+      top: `<path d="M26 22c-2-8 0-14 6-19-1 6 1 9 4 11 1-4 3-6 6-7-2 5-1 10 0 15z" fill="${d.c3}" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>`,
+    }),
+    hood: d => ({
+      back: `<path d="M32 12C14 12 8 30 10 46c4 6 10 8 22 8s18-2 22-8c2-16-4-34-22-34z" fill="${d.c2}" stroke="${d.c3}" stroke-width="1.4"/><path d="M20 26q12-8 24 0" stroke="${d.c3}" stroke-width="1.6" fill="none" opacity=".8"/>`,
+    }),
+    wisps: d => ({
+      back: `<g class="xa-sway" opacity=".8"><path d="M18 50c-2 6 2 10-2 13M32 54c0 5 3 7 0 10M46 50c2 6-2 10 2 13" stroke="${d.c3}" stroke-width="4" stroke-linecap="round" fill="none"/></g>`,
+    }),
+    bolts: () => ({
+      front: `<path d="M13 36l5-4-2 4 5-3M51 36l-5-4 2 4-5-3" stroke="#fff36b" stroke-width="1.6" fill="none" stroke-linejoin="round" class="xa-blink"/>`,
+    }),
+    eye3: d => ({
+      front: `<ellipse cx="32" cy="26" rx="2.6" ry="3.4" fill="${d.eye}"/><ellipse cx="32" cy="26" rx="1" ry="2.6" fill="#10061a"/><circle cx="32" cy="26" r="5" fill="${d.eye}" opacity=".25" class="xa-pulse"/>`,
+    }),
+    tusks: () => ({ front: MIR(`<path d="M26 47q-1 5 2 8 0-4 1-7z" fill="#fff8e6"/>`) }),
+    moon: () => ({ top: `<path d="M44 6a8 8 0 1 0 6 12 6.5 6.5 0 1 1-6-12z" fill="#fff4c4" class="xa-bob"/>` }),
+    orbit: d => ({ back: `<g class="xa-spin2"><ellipse cx="32" cy="36" rx="30" ry="9" fill="none" stroke="${d.c3}" stroke-width="1.4" opacity=".7" transform="rotate(-18 32 36)"/><circle cx="4" cy="42" r="2.4" fill="${lighten(d.c3, 0.5)}"/></g>` }),
+  };
+
+  /* ---------------- head patterns (clipped to the head) ---------------- */
+  const P = {
+    galaxy: d =>
+      `<ellipse cx="26" cy="32" rx="14" ry="6" fill="${d.c3}" opacity=".35" transform="rotate(-20 26 32)"/>` +
+      [
+        [24, 28],
+        [38, 30],
+        [30, 44],
+        [42, 42],
+        [21, 40],
+        [35, 23],
+        [45, 35],
+      ]
+        .map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${i % 3 ? 0.7 : 1.1}" fill="#fff" class="${i % 2 ? 'xa-blink' : ''}"/>`)
+        .join(''),
+    stripes: d => `<path d="M13 30h8M13 38h6M51 30h-8M51 38h-6M28 19l2 6M36 19l-2 6" stroke="${d.c2}" stroke-width="2.6" stroke-linecap="round" opacity=".75"/>`,
+    circuit: d =>
+      `<path d="M14 40h8l3-3h5M50 40h-8l-3-3M24 21v5l3 3M40 21v5l-3 3M19 46h6" stroke="${d.c3}" stroke-width="1.2" fill="none" opacity=".9"/>` +
+      [
+        [30, 37],
+        [39, 37],
+        [27, 29],
+        [37, 29],
+        [25, 46],
+      ]
+        .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.3" fill="${lighten(d.c3, 0.5)}" class="xa-blink"/>`)
+        .join(''),
+    cracks: d => `<path d="M16 32l6 3-2 5 6 2M48 30l-6 4 3 4-5 3M28 20l3 5-2 4M36 52l-2-5 4-3" stroke="${d.c3}" stroke-width="1.8" fill="none" stroke-linejoin="round" class="xa-glow"/>`,
+    spots: d =>
+      [
+        [18, 30, 3],
+        [46, 28, 2.5],
+        [44, 46, 3],
+        [20, 46, 2.2],
+        [32, 22, 2],
+      ]
+        .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${d.c3}" opacity=".85"/>`)
+        .join(''),
+    scales: d => {
+      let s = '';
+      for (let y = 22; y < 56; y += 5) for (let x = 14 + ((y / 5) % 2) * 3; x < 52; x += 6) s += `<path d="M${x - 3} ${y}a3 3 0 0 0 6 0" stroke="${d.c2}" stroke-width=".9" fill="none" opacity=".55"/>`;
+      return s;
+    },
+    crystal: () => `<path d="M14 36l10-14 8 10zM50 36L40 22l-8 10zM24 50l8-12 8 12z" fill="#fff" opacity=".22"/><path d="M24 22l8 10 8-10M32 32v6" stroke="#fff" stroke-opacity=".5" stroke-width=".8" fill="none"/>`,
+    frost: () => `<g stroke="#fff" stroke-width="1" opacity=".75"><path d="M18 28v6M15 31h6M16 29l4 4M20 29l-4 4"/><path d="M46 44v5M43.5 46.5h5"/></g>`,
+    tiger: d => `<path d="M14 34q5-1 8 2M50 34q-5-1-8 2M16 42q4 0 7 3M48 42q-4 0-7 3M32 19v6M27 20l2 5M37 20l-2 5" stroke="${d.c2}" stroke-width="2.4" stroke-linecap="round" fill="none"/>`,
+    glow: d => `<circle cx="32" cy="44" r="9" fill="${d.c3}" opacity=".3" class="xa-pulse"/>`,
+  };
+
+  /* ---------------- faces ---------------- */
+  const EYE = (d, style) => {
+    const e = d.eye,
+      L = [25, 35],
+      R = [39, 35];
+    const glow = `<circle cx="${L[0]}" cy="${L[1]}" r="6" fill="${e}" opacity=".28" class="xa-pulse"/><circle cx="${R[0]}" cy="${R[1]}" r="6" fill="${e}" opacity=".28" class="xa-pulse"/>`;
+    if (style === 'slit')
+      return `${glow}${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="4.2" fill="${e}"/><ellipse cx="${x}" cy="${y}" rx="1" ry="3.4" fill="#12061c"/><circle cx="${x + 1.2}" cy="${y - 1.6}" r=".9" fill="#fff"/>`).join('')}`;
+    if (style === 'angry')
+      return `${glow}${[L, R].map(([x, y], i) => `<ellipse cx="${x}" cy="${y}" rx="3.4" ry="3.2" fill="${e}"/><circle cx="${x}" cy="${y}" r="1.4" fill="#12061c"/><path d="M${x - 4} ${y - (i ? 3 : 6)}L${x + 4} ${y - (i ? 6 : 3)}" stroke="#12061c" stroke-width="1.8" stroke-linecap="round"/>`).join('')}`;
+    if (style === 'visor') return `<rect x="19" y="31" width="26" height="8" rx="4" fill="#0a0f1c"/><rect x="21" y="33" width="22" height="4" rx="2" fill="${e}" class="xa-scan"/>`;
+    if (style === 'cute')
+      return `${glow}${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.8" ry="4.6" fill="#170a26"/><ellipse cx="${x}" cy="${y + 1.5}" rx="2.6" ry="1.6" fill="${e}" opacity=".85"/><circle cx="${x + 1.3}" cy="${y - 1.8}" r="1.4" fill="#fff"/>`).join('')}`;
+    // default: pure glowing orbs
+    return `${glow}${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.4" ry="4" fill="${e}"/><ellipse cx="${x}" cy="${y}" rx="1.8" ry="2.4" fill="#fff" opacity=".9"/>`).join('')}`;
+  };
+  const MOUTH = {
+    smile: `<path d="M28.5 43q3.5 3 7 0" stroke="#12061c" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
+    fangs: `<path d="M27 43q5 3.5 10 0" stroke="#12061c" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M28.6 44l1 2.6 1-2.2M35.4 44l-1 2.6-1-2.2" fill="#fff"/>`,
+    beak: `<path d="M28 41q4-2.4 8 0l-4 6z" fill="#ffc43d" stroke="#b77900" stroke-width=".8"/>`,
+    snout: `<ellipse cx="32" cy="45" rx="7" ry="4.6" fill="#000" opacity=".22"/><ellipse cx="29.5" cy="45" rx="1.2" ry="1.6" fill="#12061c"/><ellipse cx="34.5" cy="45" rx="1.2" ry="1.6" fill="#12061c"/>`,
+    o: `<ellipse cx="32" cy="44.5" rx="2" ry="2.4" fill="#12061c"/>`,
+    none: '',
+  };
+
+  /* ---------------- the exotic roster ----------------
+     el: family (used by themed exotic eggs)  perk/base + perk2/base2: two perks, much stronger than Legendary */
+  const PETS = [
+    { id: 'x_phoenix', name: 'Solar Phoenix', el: 'fire', c1: '#ff5a1f', c2: '#a3140a', c3: '#ffc23d', eye: '#fff36b', f: ['flames', 'wings'], pat: 'glow', eyes: 'orb', mouth: 'beak', perk: 'coinPct', base: 0.9, perk2: 'xpPct', base2: 0.4, desc: 'Reborn from the ashes of every crash.' },
+    { id: 'x_voidcat', name: 'Void Cat', el: 'void', c1: '#2b1250', c2: '#0b0418', c3: '#b35cff', eye: '#d6a8ff', f: ['ears', 'orbit'], pat: 'galaxy', eyes: 'slit', mouth: 'smile', perk: 'packLuck', base: 0.9, perk2: 'coinPct', base2: 0.4, desc: 'Has a whole galaxy where its fur should be.' },
+    { id: 'x_crystaldrake', name: 'Crystal Drake', el: 'sky', c1: '#5fd9ff', c2: '#1a5e9e', c3: '#c9f6ff', eye: '#ffffff', f: ['crystalwings', 'spikes'], pat: 'crystal', eyes: 'slit', mouth: 'fangs', perk: 'passive', base: 220, perk2: 'packLuck', base2: 0.35, desc: 'Grows a new gem for every green day.' },
+    { id: 'x_kitsune', name: 'Nine-Tail Kitsune', el: 'fire', c1: '#fff1f6', c2: '#e56aa0', c3: '#ff7a3d', eye: '#ffb13d', f: ['tails9', 'ears'], pat: 'none', eyes: 'slit', mouth: 'smile', perk: 'xpPct', base: 0.9, perk2: 'loginPct', base2: 0.8, desc: 'Nine tails, nine lucky trades.' },
+    { id: 'x_leviathan', name: 'Leviathan', el: 'water', c1: '#1f6fd6', c2: '#0a1f54', c3: '#3de7d0', eye: '#9dfff2', f: ['fins', 'tentacles'], pat: 'scales', eyes: 'orb', mouth: 'fangs', perk: 'coinPct', base: 1.1, perk2: 'passive', base2: 90, desc: 'Swallows whales. Eats bears for breakfast.' },
+    { id: 'x_goldbull', name: 'Golden Bull', el: 'earth', c1: '#ffcb3d', c2: '#b37400', c3: '#fff2b0', eye: '#ff3d3d', f: ['bullhorns', 'crown'], pat: 'glow', eyes: 'angry', mouth: 'snout', perk: 'coinPct', base: 1.3, perk2: 'loginPct', base2: 1.0, desc: 'The king of every bull run.' },
+    { id: 'x_neonwolf', name: 'Neon Wolf', el: 'tech', c1: '#121a2e', c2: '#05070f', c3: '#2de2ff', eye: '#2de2ff', f: ['ears', 'bolts'], pat: 'circuit', eyes: 'slit', mouth: 'fangs', perk: 'newsSense', base: 0.6, perk2: 'xpPct', base2: 0.5, desc: 'Howls at the ticker tape.' },
+    { id: 'x_seraph', name: 'Seraph Owl', el: 'sky', c1: '#fffaf0', c2: '#d8c08a', c3: '#ffd84d', eye: '#6fd3ff', f: ['wings', 'halo'], pat: 'none', eyes: 'orb', mouth: 'beak', perk: 'newsSense', base: 0.7, perk2: 'packTimer', base2: 0.5, desc: 'Sees every headline before it lands.' },
+    { id: 'x_magmagolem', name: 'Magma Golem', el: 'fire', c1: '#3a2a28', c2: '#140c0b', c3: '#ff6a1a', eye: '#ffcf3d', f: ['spikes'], pat: 'cracks', eyes: 'angry', mouth: 'none', perk: 'passive', base: 260, perk2: 'coinPct', base2: 0.35, desc: 'Molten on the inside. Diamond hands on the outside.' },
+    { id: 'x_frostyeti', name: 'Frost Yeti', el: 'water', c1: '#e8f6ff', c2: '#8ab8dc', c3: '#7fd7ff', eye: '#3db4ff', f: ['roundears', 'tusks'], pat: 'frost', eyes: 'cute', mouth: 'o', perk: 'loginPct', base: 1.2, perk2: 'passive', base2: 80, desc: 'Keeps your portfolio ice cold.' },
+    { id: 'x_stormhawk', name: 'Storm Hawk', el: 'sky', c1: '#5a6b8c', c2: '#232c42', c3: '#fff36b', eye: '#fff36b', f: ['wings', 'crest', 'bolts'], pat: 'none', eyes: 'angry', mouth: 'beak', perk: 'xpPct', base: 0.8, perk2: 'newsSense', base2: 0.4, desc: 'Rides the volatility like lightning.' },
+    { id: 'x_shadowbat', name: 'Shadow Bat', el: 'void', c1: '#241733', c2: '#09050e', c3: '#ff2d55', eye: '#ff2d55', f: ['batwings', 'ears'], pat: 'none', eyes: 'orb', mouth: 'fangs', perk: 'packLuck', base: 0.8, perk2: 'xpPct', base2: 0.4, desc: 'Only trades after midnight.' },
+    { id: 'x_cosmicjelly', name: 'Cosmic Jelly', el: 'void', c1: '#7b3cff', c2: '#1d0b4d', c3: '#ff7ae6', eye: '#ffffff', f: ['tentacles', 'orbit'], pat: 'galaxy', eyes: 'cute', mouth: 'o', perk: 'passive', base: 240, perk2: 'packLuck', base2: 0.4, desc: 'Floats between dimensions. Very squishy.' },
+    { id: 'x_rubydragon', name: 'Ruby Dragon', el: 'fire', c1: '#e0114a', c2: '#5c0620', c3: '#ffb13d', eye: '#ffe24d', f: ['batwings', 'horns'], pat: 'scales', eyes: 'slit', mouth: 'fangs', perk: 'coinPct', base: 1.2, perk2: 'packLuck', base2: 0.45, desc: 'Hoards gold. Hoards stocks. Hoards everything.' },
+    { id: 'x_emeraldserpent', name: 'Emerald Serpent', el: 'earth', c1: '#19c26b', c2: '#064d2a', c3: '#b6ff3d', eye: '#fff36b', f: ['hood'], pat: 'scales', eyes: 'slit', mouth: 'fangs', perk: 'xpPct', base: 1.0, perk2: 'coinPct', base2: 0.45, desc: 'Hypnotizes the market into going up.' },
+    { id: 'x_diamondpanda', name: 'Diamond Panda', el: 'earth', c1: '#f4fbff', c2: '#9fb7c9', c3: '#9ae9ff', eye: '#6fd3ff', f: ['roundears', 'spikes'], pat: 'crystal', eyes: 'cute', mouth: 'smile', perk: 'packLuck', base: 1.1, perk2: 'loginPct', base2: 0.8, desc: 'Made of solid diamond. Priceless.' },
+    { id: 'x_cyberfox', name: 'Cyber Fox', el: 'tech', c1: '#b8c3d6', c2: '#4a5670', c3: '#ff3df0', eye: '#ff3df0', f: ['ears'], pat: 'circuit', eyes: 'visor', mouth: 'none', perk: 'packTimer', base: 0.7, perk2: 'coinPct', base2: 0.5, desc: 'Runs on pure algorithmic trading.' },
+    { id: 'x_sakuradeer', name: 'Sakura Stag', el: 'earth', c1: '#f7d9c4', c2: '#b4775a', c3: '#8a5a3c', eye: '#ff7ab6', f: ['antlers', 'roundears'], pat: 'spots', eyes: 'cute', mouth: 'smile', perk: 'loginPct', base: 1.3, perk2: 'xpPct', base2: 0.5, desc: 'Blooms every time you log in.' },
+    { id: 'x_ghostwhale', name: 'Ghost Whale', el: 'water', c1: '#b9e6ff', c2: '#4a7ea8', c3: '#e3f6ff', eye: '#7df9ff', f: ['fins', 'wisps'], pat: 'glow', eyes: 'cute', mouth: 'o', perk: 'coinPct', base: 1.0, perk2: 'packTimer', base2: 0.5, desc: 'A whale so big it went invisible.', ghost: true },
+    { id: 'x_thunderlion', name: 'Thunder Lion', el: 'sky', c1: '#ffb93d', c2: '#a35d00', c3: '#fff36b', eye: '#6fe8ff', f: ['mane', 'bolts'], pat: 'none', eyes: 'angry', mouth: 'fangs', perk: 'coinPct', base: 1.1, perk2: 'xpPct', base2: 0.55, desc: 'Roars louder than a market open.' },
+    { id: 'x_toxicfrog', name: 'Toxic Frog', el: 'void', c1: '#7dff3d', c2: '#1f7a00', c3: '#e8ff3d', eye: '#ff3df0', f: ['crest'], pat: 'spots', eyes: 'orb', mouth: 'smile', perk: 'packLuck', base: 1.0, perk2: 'passive', base2: 100, desc: 'Do not lick. Seriously.' },
+    { id: 'x_moonrabbit', name: 'Moon Rabbit', el: 'sky', c1: '#eef0ff', c2: '#9aa0d6', c3: '#c9b8ff', eye: '#6f7bff', f: ['longears', 'moon'], pat: 'none', eyes: 'cute', mouth: 'smile', perk: 'xpPct', base: 1.0, perk2: 'loginPct', base2: 1.0, desc: 'Takes every coin to the moon.' },
+    { id: 'x_bearking', name: 'Bear King', el: 'earth', c1: '#6b3f24', c2: '#2a150a', c3: '#ff3d3d', eye: '#ff3d3d', f: ['roundears', 'crown'], pat: 'none', eyes: 'angry', mouth: 'fangs', perk: 'newsSense', base: 0.8, perk2: 'coinPct', base2: 0.6, desc: 'Rules every crash. Now he works for you.' },
+    { id: 'x_quantumaxolotl', name: 'Quantum Axolotl', el: 'tech', c1: '#ff9ed2', c2: '#b8337a', c3: '#3dffe0', eye: '#15051a', f: ['gills', 'eye3'], pat: 'glow', eyes: 'cute', mouth: 'smile', perk: 'passive', base: 300, perk2: 'xpPct', base2: 0.5, desc: 'Exists in two portfolios at once.' },
+    { id: 'x_glitchling', name: 'Glitchling', el: 'tech', c1: '#1b1b1b', c2: '#000000', c3: '#39ff88', eye: '#39ff88', f: ['ears', 'eye3', 'bolts'], pat: 'circuit', eyes: 'visor', mouth: 'none', perk: 'packLuck', base: 1.2, perk2: 'packTimer', base2: 0.6, desc: 'ERR0R: t00 p0werful. D0 n0t tr4de.' },
+    { id: 'x_hydra', name: 'Abyss Hydra', el: 'water', c1: '#0e4d4a', c2: '#031a1a', c3: '#6bffd5', eye: '#ff3d6e', f: ['hood', 'horns', 'eye3'], pat: 'scales', eyes: 'slit', mouth: 'fangs', perk: 'coinPct', base: 1.4, perk2: 'newsSense', base2: 0.5, desc: 'Cut off one loss, two gains grow back.' },
+  ];
+
+  /* ---------------- mutations ---------------- */
+  const MUTS = [
+    { id: 'gold', name: 'Golden', mult: 1.5, c: '#ffc53d', w: 16 },
+    { id: 'frozen', name: 'Frozen', mult: 1.3, c: '#7fd7ff', w: 14 },
+    { id: 'inferno', name: 'Inferno', mult: 1.4, c: '#ff6a1a', w: 14 },
+    { id: 'toxic', name: 'Toxic', mult: 1.35, c: '#7dff3d', w: 12 },
+    { id: 'shadow', name: 'Shadow', mult: 1.5, c: '#9b5cff', w: 10 },
+    { id: 'neon', name: 'Neon', mult: 1.45, c: '#ff3df0', w: 10 },
+    { id: 'blood', name: 'Blood Moon', mult: 1.6, c: '#ff1f3d', w: 8 },
+    { id: 'glitch', name: 'Glitched', mult: 1.75, c: '#39ff88', w: 6 },
+    { id: 'rainbow', name: 'Rainbow', mult: 2, c: '#ff7ae6', w: 5 },
+    { id: 'diamond', name: 'Diamond', mult: 2.5, c: '#bff4ff', w: 3 },
+    { id: 'cosmic', name: 'Cosmic', mult: 3, c: '#7b6cff', w: 1.5 },
+    { id: 'celestial', name: 'Celestial', mult: 4, c: '#fff1b0', w: 0.5 },
+  ];
+  const MUT = Object.fromEntries(MUTS.map(m => [m.id, m]));
+  // overlay painted on top of a mutated pet (inside its SVG)
+  const MUT_FX = {
+    gold: `<g class="mx-tw">${star4(12, 16, 3, '#fff6c8')}${star4(52, 22, 2.4, '#ffe27a')}${star4(48, 54, 2.8, '#fff6c8')}</g>`,
+    frozen: `<g opacity=".9"><path d="M8 20l4 2-1 4M56 16l-4 3 1 4" stroke="#e6fbff" stroke-width="1.4" fill="none"/><path d="M20 56l2-5 2 5M40 57l2-6 2 6" fill="#dff7ff"/></g>`,
+    inferno: `<g class="xa-flick"><path d="M12 54c-2-6 2-8 1-12 4 3 5 7 3 12zM52 54c2-6-2-8-1-12-4 3-5 7-3 12z" fill="#ff8a1a" opacity=".9"/></g>`,
+    toxic: `<g class="mx-rise"><circle cx="14" cy="50" r="2.4" fill="#7dff3d" opacity=".8"/><circle cx="50" cy="46" r="1.8" fill="#b6ff3d" opacity=".8"/><circle cx="46" cy="56" r="1.4" fill="#7dff3d" opacity=".8"/></g>`,
+    shadow: `<g class="xa-sway" opacity=".7"><path d="M10 44c4-6 2-12 6-16M54 44c-4-6-2-12-6-16" stroke="#9b5cff" stroke-width="3" stroke-linecap="round" fill="none"/></g>`,
+    neon: '',
+    blood: `<g><path d="M22 20v5M42 19v6" stroke="#ff1f3d" stroke-width="1.8" stroke-linecap="round"/><circle cx="22" cy="26" r="1.4" fill="#ff1f3d"/><circle cx="42" cy="26.5" r="1.4" fill="#ff1f3d"/></g>`,
+    glitch: `<g class="mx-glitch"><rect x="8" y="24" width="14" height="2" fill="#39ff88" opacity=".8"/><rect x="42" y="40" width="16" height="2" fill="#ff3d6e" opacity=".8"/></g>`,
+    rainbow: `<g class="mx-tw">${star4(10, 18, 2.6, '#ff7ae6')}${star4(54, 20, 2.6, '#7ad7ff')}${star4(50, 54, 2.4, '#fff36b')}</g>`,
+    diamond: `<g class="mx-tw">${star4(12, 14, 3.2, '#ffffff')}${star4(54, 18, 2.6, '#dffcff')}${star4(14, 52, 2.2, '#ffffff')}${star4(52, 50, 3, '#dffcff')}</g>`,
+    cosmic: `<g class="xa-spin2"><circle cx="6" cy="32" r="1.6" fill="#fff"/><circle cx="58" cy="30" r="1.2" fill="#c9b8ff"/><circle cx="32" cy="4" r="1.2" fill="#fff"/><circle cx="32" cy="62" r="1.4" fill="#9aa0ff"/></g>`,
+    celestial: `<g class="xa-bob"><ellipse cx="32" cy="7" rx="13" ry="3.2" fill="none" stroke="#fff1b0" stroke-width="2"/></g><g class="mx-tw">${star4(10, 20, 2.6, '#fff1b0')}${star4(54, 22, 2.6, '#fff1b0')}</g>`,
+  };
+
+  /* ---------------- build an exotic's SVG ---------------- */
+  function svg(id) {
+    const d = PETS.find(p => p.id === id);
+    if (!d) return '';
+    const k = id.replace(/[^a-z0-9]/g, '');
+    const back = [],
+      top = [],
+      front = [];
+    let defs =
+      RG(`xa${k}`, [ST(0, d.c3, 0.75), ST(0.55, d.c3, 0.18), ST(1, d.c3, 0)], 0.5, 0.55, 0.5) +
+      RG(`xh${k}`, [ST(0, lighten(d.c1, 0.45)), ST(0.55, d.c1), ST(1, d.c2)]) +
+      `<clipPath id="xc${k}"><circle cx="${HX}" cy="${HY}" r="${HR}"/></clipPath>`;
+    for (const name of d.f) {
+      const r = F[name] ? F[name](d, k) : {};
+      if (r.defs && !defs.includes(r.defs)) defs += r.defs;
+      if (r.back) back.push(r.back);
+      if (r.top) top.push(r.top);
+      if (r.front) front.push(r.front);
+    }
+    const ring = `<g class="xa-spin">${[0, 60, 120, 180, 240, 300]
+      .map((a, i) => {
+        const t = (a * Math.PI) / 180;
+        return star4(+(32 + Math.cos(t) * 29).toFixed(1), +(34 + Math.sin(t) * 27).toFixed(1), i % 2 ? 1.6 : 2.4, i % 2 ? '#fff' : d.c3, 0.95);
+      })
+      .join('')}</g>`;
+    const head =
+      `<circle cx="${HX}" cy="${HY}" r="${HR + 1.8}" fill="${d.c3}" opacity=".35" class="xa-pulse"/>` +
+      `<circle cx="${HX}" cy="${HY}" r="${HR}" fill="url(#xh${k})" stroke="${lighten(d.c3, 0.3)}" stroke-width="1.4"${d.ghost ? ' opacity=".8"' : ''}/>` +
+      (d.pat && P[d.pat] ? `<g clip-path="url(#xc${k})">${P[d.pat](d)}</g>` : '') +
+      `<ellipse cx="25" cy="27" rx="7" ry="3.6" fill="#fff" opacity=".3" transform="rotate(-28 25 27)"/>`;
+    return (
+      `<svg viewBox="0 0 64 64" class="art xart" aria-hidden="true"><defs>${defs}</defs>` +
+      `<circle cx="32" cy="36" r="31" fill="url(#xa${k})" class="xa-pulse"/>${ring}` +
+      back.join('') +
+      head +
+      top.join('') +
+      EYE(d, d.eyes) +
+      (MOUTH[d.mouth] || '') +
+      front.join('') +
+      `</svg>`
+    );
+  }
+  // decorate any pet SVG string with a mutation
+  function mutate(svgStr, mut) {
+    if (!mut || !MUT[mut] || !svgStr) return svgStr;
+    return svgStr.replace('<svg ', `<svg data-mut="${mut}" `).replace(/<\/svg>\s*$/, (MUT_FX[mut] || '') + '</svg>');
+  }
+  window.ExoticArt = { PETS, MUTS, MUT, svg, mutate };
+})();
+
+/* =====================================================================
+   EXOTIC — a new rarity above Legendary that never drops from packs or
+   eggs you can buy. Exotic pets only come from Admin Abuse events and
+   admin gifts. Also: pet MUTATIONS (any pet can mutate: Golden, Frozen,
+   Inferno … Celestial) that change how the pet looks everywhere and
+   multiply its perk. Art lives in exotic-art.js (shared with admin).
+   ===================================================================== */
+(() => {
+  const X = window.ExoticArt;
+  if (!X) return;
+  const MUT = X.MUT;
+  RARITY.x = { name: 'Exotic', color: '#ff3df0', w: 0, dupe: 2000 };
+  Object.assign(TYPE_LABEL, { xpet: 'Exotic pet', serum: 'Mutation serum' });
+
+  /* ---------- pets ---------- */
+  for (const d of X.PETS)
+    if (!PET[d.id]) {
+      const p = { id: d.id, name: d.name, ic: '', r: 'x', perk: d.perk, base: d.base, perk2: d.perk2, base2: d.base2, el: d.el, desc: d.desc, exotic: true };
+      PETS.push(p);
+      PET[d.id] = p;
+      DESIGNS[d.id] = () => X.svg(d.id);
+    }
+  const EXO = X.PETS.map(d => PET[d.id]);
+
+  /* ---------- items (only in the ITEM map: never sold, never in packs or missions) ---------- */
+  const short = id => id.replace(/^x_/, '');
+  const reg = it => (ITEM[it.id] = it);
+  for (const d of X.PETS) {
+    reg({ id: 'xpet_' + short(d.id), type: 'xpet', name: d.name, r: 'x', pet: d.id, desc: d.desc });
+    for (const m of X.MUTS) reg({ id: `xpet_${short(d.id)}_m_${m.id}`, type: 'xpet', name: `${d.name} (${m.name})`, r: 'x', pet: d.id, mut: m.id, desc: d.desc });
+  }
+  const EGGS = [
+    { id: 'egg_x_any', name: 'Exotic Egg', shell: ['#ffd1f7', '#b0228f'], el: null, mut: 0.15, desc: 'Hatches any Exotic pet. 15% chance it comes out mutated.' },
+    { id: 'egg_x_inferno', name: 'Inferno Egg', shell: ['#ffd27a', '#c2260a'], el: 'fire', mut: 0.2, desc: 'A fire Exotic: Phoenix, Kitsune, Ruby Dragon or Magma Golem.' },
+    { id: 'egg_x_abyss', name: 'Abyss Egg', shell: ['#9dfff2', '#0a3d78'], el: 'water', mut: 0.2, desc: 'A sea Exotic: Leviathan, Hydra, Ghost Whale or Frost Yeti.' },
+    { id: 'egg_x_void', name: 'Void Egg', shell: ['#d6a8ff', '#1d0b4d'], el: 'void', mut: 0.2, desc: 'A void Exotic: Void Cat, Shadow Bat, Cosmic Jelly or Toxic Frog.' },
+    { id: 'egg_x_sky', name: 'Celestial Egg', shell: ['#fffbe0', '#c9a44a'], el: 'sky', mut: 0.2, desc: 'A sky Exotic: Seraph Owl, Storm Hawk, Thunder Lion and more.' },
+    { id: 'egg_x_tech', name: 'Cyber Egg', shell: ['#b8ffef', '#16304f'], el: 'tech', mut: 0.2, desc: 'A tech Exotic: Neon Wolf, Cyber Fox, Glitchling or Quantum Axolotl.' },
+    { id: 'egg_x_earth', name: 'Titan Egg', shell: ['#fff0b3', '#6b3f00'], el: 'earth', mut: 0.2, desc: 'An earth Exotic: Golden Bull, Bear King, Diamond Panda and more.' },
+    { id: 'egg_x_mutant', name: 'Mutant Egg', shell: ['#b6ff3d', '#3a0a5c'], el: null, mut: 1, desc: 'Any Exotic pet, and it ALWAYS hatches mutated.' },
+  ];
+  for (const e of EGGS) reg({ ...e, type: 'egg', r: 'x', exotic: true, price: null, hatch: {} });
+  for (const m of X.MUTS) reg({ id: 'mut_' + m.id, type: 'serum', name: `${m.name} Serum`, r: 'x', mut: m.id, desc: `Mutates a pet into ${m.name}: perk ×${m.mult}.` });
+
+  /* ---------- mutations ---------- */
+  const mutMult = p => (p && p.mut && MUT[p.mut] ? MUT[p.mut].mult : 1);
+  function rollMut() {
+    const tot = X.MUTS.reduce((s, m) => s + m.w, 0);
+    let r = Math.random() * tot;
+    for (const m of X.MUTS) if ((r -= m.w) <= 0) return m.id;
+    return 'gold';
+  }
+  const pill = m => (MUT[m] ? `<span class="mut-pill${m === 'rainbow' ? ' rb' : ''}" style="--mc:${MUT[m].c}">${esc(MUT[m].name)}</span>` : '');
+
+  // any owned pet that is mutated is drawn mutated, on every screen
+  const art0 = art;
+  art = function (key) {
+    const s = art0.apply(this, arguments);
+    if (PET[key] && typeof acct !== 'undefined' && acct && acct.pets && acct.pets.list) {
+      const mine = acct.pets.list.find(p => p.id === key);
+      if (mine && mine.mut) return X.mutate(s, mine.mut);
+    }
+    return s;
+  };
+
+  /* ---------- perks: companion + half of the sidekick, now with 2-perk exotics and mutation multipliers ---------- */
+  const strength = p => (1 + 0.12 * (p.lvl - 1)) * (p.prime ? 1.5 : 1) * mutMult(p);
+  const perkOf = (p, kind) => {
+    const d = PET[p.id];
+    if (!d || p.mood < MOOD_MIN || p.mission) return 0;
+    let v = 0;
+    if (d.perk === kind) v += d.base * strength(p);
+    if (d.perk2 === kind) v += d.base2 * strength(p);
+    return v;
+  };
+  petPerk = function (kind) {
+    if (!acct || !acct.pets) return 0;
+    let v = 0;
+    const a = activePet();
+    if (a) v += perkOf(a, kind);
+    const sid = acct.pets.side,
+      s = sid && acct.pets.list.find(p => p.uid === sid);
+    if (s && s !== a && levelInfo(acct.xp).level >= 8) v += 0.5 * perkOf(s, kind);
+    return v;
+  };
+  const perkText = p => {
+    const d = PET[p.id],
+      k = strength(p);
+    return PERK_TEXT[d.perk](d.base * k) + (d.perk2 ? ' · ' + PERK_TEXT[d.perk2](d.base2 * k) : '');
+  };
+
+  /* ---------- giving pets ---------- */
+  function addPet(petId, mut) {
+    const d = PET[petId];
+    const ex = acct.pets.list.find(p => p.id === petId);
+    let note;
+    if (ex) {
+      if (mut && ex.mut !== mut && (!ex.mut || MUT[mut].mult >= MUT[ex.mut].mult)) {
+        ex.mut = mut;
+        note = `${ex.name} mutated into ${MUT[mut].name}! Perk ×${MUT[mut].mult}.`;
+      } else {
+        petGainXP(ex, 300);
+        acct.coins += 2000;
+        bumpCoins();
+        note = `You already have ${ex.name}. It got +300 XP and you got 2,000 coins.`;
+      }
+    } else {
+      const p = { uid: uid(), id: d.id, name: d.name, lvl: 1, xp: 0, mood: 100, lastPet: 0, born: Date.now() };
+      if (mut) p.mut = mut;
+      acct.pets.list.push(p);
+      if (!acct.pets.active) acct.pets.active = p.uid;
+      note = `${mut ? MUT[mut].name + ' ' : ''}Exotic pet! ${acct.pets.active === p.uid ? 'Now your companion.' : 'Make it your companion on the Pets screen.'}`;
+    }
+    saveAcct(true);
+    return { d, note };
+  }
+  let revealQ = [],
+    revealing = false;
+  function reveal(egg, d, note) {
+    revealQ.push([egg, d, note]);
+    if (!revealing) nextReveal();
+  }
+  function nextReveal() {
+    const r = revealQ.shift();
+    if (!r) return (revealing = false);
+    revealing = true;
+    const root = document.getElementById('packRoot');
+    if (root && root.classList.contains('open')) return setTimeout(() => (revealQ.unshift(r), nextReveal()), 1200);
+    Hatch.show(r[0], r[1], r[2]);
+    // continue the queue once this overlay closes
+    const iv = setInterval(() => {
+      if (!document.querySelector('#packRoot.open')) {
+        clearInterval(iv);
+        setTimeout(nextReveal, 300);
+      }
+    }, 500);
+  }
+  // the hatch/reveal card: show both exotic perks, the mutation and its multiplier
+  let lastReveal = null;
+  const mark = (d, mut) => (lastReveal = { d, mut, at: Date.now() });
+  new MutationObserver(() => {
+    const h = document.querySelector('#packRoot .hatched:not([data-x])');
+    if (!h || !lastReveal || Date.now() - lastReveal.at > 120000) return;
+    const { d, mut } = lastReveal;
+    if (!h.textContent.includes(d.name)) return;
+    h.dataset.x = 1;
+    const k = mut ? MUT[mut].mult : 1,
+      sm = h.querySelector('small'),
+      rar = h.querySelector('.rar');
+    if (sm) sm.textContent = PERK_TEXT[d.perk](d.base * k) + (d.perk2 ? ' · ' + PERK_TEXT[d.perk2](d.base2 * k) : '');
+    if (rar && d.r === 'x') rar.innerHTML = '<span class="x-rar">Exotic pet</span>';
+    if (rar && mut) rar.insertAdjacentHTML('afterend', `<span style="margin:4px 0 2px">${pill(mut)}</span>`);
+    if (window.AbuseFX && mut) AbuseFX.flash(MUT[mut].c);
+  }).observe(document.getElementById('packRoot') || document.body, { childList: true, subtree: true });
+
+  function giveExotic(petId, mut, egg) {
+    if (!PET[petId]) return '';
+    const { d, note } = addPet(petId, mut);
+    mark(d, mut);
+    setTimeout(() => reveal(ITEM[egg || (mut ? 'egg_x_mutant' : 'egg_x_any')], d, note), 400);
+    return mut ? `${d.name} (${MUT[mut].name})` : d.name;
+  }
+
+  const g0 = grant;
+  grant = function (it) {
+    if (it && it.type === 'xpet') return giveExotic(it.pet, it.mut);
+    if (it && it.type === 'serum') {
+      acct.inv[it.id] = (acct.inv[it.id] || 0) + 1;
+      return `Mutation serum · you have ${acct.inv[it.id]}`;
+    }
+    if (it && it.exotic && it.type === 'egg') {
+      acct.inv[it.id] = (acct.inv[it.id] || 0) + 1;
+      return `Exotic egg · hatch it on the Pets screen`;
+    }
+    return g0.apply(this, arguments);
+  };
+
+  const h0 = hatchEgg;
+  hatchEgg = function (eggId) {
+    const egg = ITEM[eggId];
+    if (!egg || !egg.exotic) return h0.apply(this, arguments);
+    if (!(acct.inv[eggId] > 0)) return;
+    acct.inv[eggId]--;
+    const pool = EXO.filter(p => !egg.el || p.el === egg.el),
+      d = pick(pool.length ? pool : EXO),
+      mut = Math.random() < egg.mut ? rollMut() : null;
+    const r = addPet(d.id, mut);
+    mark(r.d, mut);
+    Hatch.show(egg, r.d, r.note);
+  };
+
+  function useSerum(serumId, petUid) {
+    const it = ITEM[serumId],
+      p = acct.pets.list.find(x => x.uid === petUid) || activePet();
+    if (!it || !(acct.inv[serumId] > 0) || !p) return false;
+    acct.inv[serumId]--;
+    p.mut = it.mut;
+    saveAcct(true);
+    SFX.play('legend');
+    confetti();
+    if (window.AbuseFX) AbuseFX.flash(MUT[it.mut].c);
+    toast(`${p.name} mutated into ${MUT[it.mut].name}! Perk ×${MUT[it.mut].mult}`, 'xp');
+    if (document.getElementById('petHero')) Pets.render();
+    return true;
+  }
+  function serumModal(serumId) {
+    const it = ITEM[serumId],
+      list = acct.pets.list;
+    if (!list.length) return toast('Hatch a pet first, then use the serum on it', 'err');
+    let sel = acct.pets.active || list[0].uid;
+    modal({
+      title: `Use ${esc(it.name)}?`,
+      confirm: 'Mutate!',
+      html: `<p class="muted small" style="margin:0 0 10px">${esc(it.desc)} It replaces any mutation the pet already has.</p>
+        <div class="pm-pick">${list
+          .map(p => {
+            const d = PET[p.id];
+            return d ? `<button class="pm-pet${p.uid === sel ? ' on' : ''}" data-u="${p.uid}" style="--rc:${RARITY[d.r].color}"><span class="face art-face">${petArt(p.id)}</span><span class="pm-pt"><b>${esc(p.name)}</b><small>${RARITY[d.r].name}${p.mut ? ' · ' + MUT[p.mut].name : ''}</small></span></button>` : '';
+          })
+          .join('')}</div>`,
+      onMount: r =>
+        r.querySelectorAll('[data-u]').forEach(
+          b =>
+            (b.onclick = () => {
+              sel = b.dataset.u;
+              r.querySelectorAll('[data-u]').forEach(x => x.classList.toggle('on', x === b));
+            })
+        ),
+      onConfirm: () => useSerum(serumId, sel),
+    });
+  }
+
+  /* ---------- Pets screen: exotic vault, badges, mutation pills, 2-perk text ---------- */
+  function vault() {
+    let box = document.getElementById('xVault');
+    const eggsCard = document.getElementById('eggs') && document.getElementById('eggs').closest('section');
+    if (!box && eggsCard) {
+      eggsCard.insertAdjacentHTML('beforebegin', '<section class="card" id="xVault"></section>');
+      box = document.getElementById('xVault');
+    }
+    if (!box) return;
+    const eggs = EGGS.filter(e => acct.inv[e.id] > 0),
+      serums = X.MUTS.filter(m => acct.inv['mut_' + m.id] > 0),
+      owned = acct.pets.list.filter(p => PET[p.id] && PET[p.id].r === 'x').length;
+    const h = `<div class="card-h"><h3><span class="x-rar">Exotic</span> vault</h3><span class="muted small">${owned} of ${EXO.length} exotics found</span></div>
+      ${eggs.length ? `<div class="x-eggs">${eggs.map(e => `<div class="col-item x-egg" data-r="x" style="--rc:${e.shell[1]}">${eggFace(ITEM[e.id])}<b>${esc(e.name)}</b><small class="muted">${esc(e.desc)}</small><button class="btn sm primary" data-xhatch="${e.id}">Hatch (${acct.inv[e.id]})</button></div>`).join('')}</div>` : ''}
+      ${serums.length ? `<div class="x-serums">${serums.map(m => `<button class="btn sm x-serum" style="--mc:${m.c}" data-serum="mut_${m.id}"><i></i>${esc(m.name)} Serum ×${acct.inv['mut_' + m.id]}</button>`).join('')}</div>` : ''}
+      ${!eggs.length && !serums.length ? '<p class="x-empty">Exotic pets are the rarest in the game. You can’t buy them: they drop during <b>Admin Abuse</b> events and admin giveaways. Watch for the sky turning red!</p>' : ''}`;
+    if (box._h !== h) {
+      box.innerHTML = h;
+      box._h = h;
+      box.querySelectorAll('[data-xhatch]').forEach(b => (b.onclick = () => hatchEgg(b.dataset.xhatch)));
+      box.querySelectorAll('[data-serum]').forEach(b => (b.onclick = () => serumModal(b.dataset.serum)));
+    }
+  }
+  function decorate() {
+    const hero = document.getElementById('petHero'),
+      a = activePet();
+    if (hero && a && PET[a.id]) {
+      const stage = hero.querySelector('.pet-stage');
+      if (stage) stage.dataset.r = PET[a.id].r;
+      const perk = hero.querySelector('.perk');
+      if (perk && (PET[a.id].perk2 || a.mut)) {
+        const off = a.mood < MOOD_MIN || a.mission;
+        perk.textContent = perkText(a) + (off ? (a.mission ? ' · off, on a mission' : ' · off, too sad') : '');
+      }
+      const line = hero.querySelector('.pet-info .small');
+      if (line && !line.querySelector('.mut-pill') && a.mut) line.insertAdjacentHTML('beforeend', ' ' + pill(a.mut) + ` <span class="muted">perk ×${MUT[a.mut].mult}</span>`);
+      if (line && PET[a.id].r === 'x') line.style.color = '';
+      if (line && PET[a.id].r === 'x' && !line.querySelector('.x-rar')) line.innerHTML = line.innerHTML.replace('Exotic ', '<span class="x-rar">Exotic</span> ');
+    }
+    document.querySelectorAll('#petGrid .col-item').forEach((el, i) => {
+      const d = PETS[i];
+      if (!d) return;
+      const mine = acct.pets.list.find(x => x.id === d.id);
+      if (d.r === 'x') {
+        if (!el.querySelector('.x-tag')) el.insertAdjacentHTML('afterbegin', '<span class="x-tag">EXOTIC</span>');
+        const pm = el.querySelector('.perk-mini');
+        if (pm && d.perk2 && !pm.dataset.x) {
+          pm.dataset.x = 1;
+          pm.textContent = PERK_TEXT[d.perk](d.base) + ' · ' + PERK_TEXT[d.perk2](d.base2);
+        }
+      }
+      if (mine && mine.mut && !el.querySelector('.mut-pill')) el.insertAdjacentHTML('afterbegin', pill(mine.mut));
+    });
+  }
+  const m0 = Pets.mount;
+  Pets.mount = function () {
+    m0.apply(this, arguments);
+    try {
+      vault();
+      decorate();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const r0 = Pets.render;
+  Pets.render = function () {
+    r0.apply(this, arguments);
+    try {
+      vault();
+      decorate();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  window.PBExotic = { PETS: EXO, MUTS: X.MUTS, MUT, EGGS, rollMut, giveExotic, addPet, useSerum, serumModal, pill, perkText };
+})();
+/* keep exotic perk text + badges after the pets-plus 10s refresh */
+(() => {
+  if (!window.PBExotic || !Pets.second) return;
+  const s0 = Pets.second;
+  Pets.second = function () {
+    s0.apply(this, arguments);
+    if (Date.now() % 10000 < 1100 && document.getElementById('petHero')) {
+      const a = activePet();
+      const perk = document.querySelector('#petHero .perk');
+      if (a && perk && PET[a.id] && (PET[a.id].perk2 || a.mut)) perk.textContent = PBExotic.perkText(a) + (a.mood < MOOD_MIN ? ' · off, too sad' : a.mission ? ' · off, on a mission' : '');
+    }
+  };
+})();
+
 /* ===================== ADVANCED MODE · REPLAY · NEWS DESK ===================== */
 (function () {
   const ADV = () => !!settings.advanced;
@@ -22438,6 +23063,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     }
     return g.name;
   }
+  window.PBApplyGrant = apply;
   const seenGrants = new Set(Store.get('pb2.grantsSeen', []) || []);
   async function claimGrants() {
     if (!linked() || grantsBusy) return;
@@ -32452,6 +33078,1754 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     }
     return g0.apply(this, arguments);
   };
+})();
+
+/* =====================================================================
+   ABUSE FX — the "the map goes nuts" engine for Admin Abuse events.
+   One full-screen canvas + a tint layer + a vignette, all click-through,
+   above the app but below modals, packs, toasts and the tutorial.
+   20 effect types. Pauses when the tab is hidden, calms way down for
+   reduced motion, and flashes are short, soft and rate-limited.
+   ===================================================================== */
+(() => {
+  const TYPES = [
+    { id: 'bloodrain', label: 'Blood Rain', ic: '🩸', desc: 'The sky bleeds. Red rain and lightning everywhere.', c1: '#ff2d3d', c2: '#5c0010' },
+    { id: 'thunder', label: 'Thunderstorm', ic: '⛈️', desc: 'Dark clouds, sheets of rain, huge lightning.', c1: '#7fb2ff', c2: '#1b2440' },
+    { id: 'moneyrain', label: 'Money Rain', ic: '💸', desc: 'Cash and coins falling from the sky.', c1: '#3ddc84', c2: '#0b4d2a' },
+    { id: 'meteor', label: 'Meteor Shower', ic: '☄️', desc: 'Flaming meteors streak across the screen.', c1: '#ff9a3d', c2: '#1a0f2e' },
+    { id: 'disco', label: 'Disco Fever', ic: '🪩', desc: 'Spotlights, sparkles and a rainbow party.', c1: '#ff3df0', c2: '#3d8bff' },
+    { id: 'glitch', label: 'System Glitch', ic: '👾', desc: 'The game is breaking. RGB split, static, chaos.', c1: '#39ff88', c2: '#ff3d6e' },
+    { id: 'blizzard', label: 'Blizzard', ic: '🌨️', desc: 'Whiteout. Wind-blown snow and frozen edges.', c1: '#bfe8ff', c2: '#3a6a8f' },
+    { id: 'inferno', label: 'Inferno', ic: '🔥', desc: 'Everything is on fire. Embers and heat.', c1: '#ff6a1a', c2: '#5c1200' },
+    { id: 'void', label: 'Black Hole', ic: '🕳️', desc: 'A black hole opens and swallows the light.', c1: '#9b5cff', c2: '#05010d' },
+    { id: 'midas', label: 'Midas Touch', ic: '👑', desc: 'Everything turns to gold.', c1: '#ffc53d', c2: '#6b4400' },
+    { id: 'toxic', label: 'Toxic Spill', ic: '☢️', desc: 'Acid drips and radioactive bubbles.', c1: '#7dff3d', c2: '#1a3d00' },
+    { id: 'quake', label: 'Earthquake', ic: '🌋', desc: 'The ground shakes and the screen cracks.', c1: '#d4a373', c2: '#3d2410' },
+    { id: 'gravity', label: 'Zero Gravity', ic: '🪐', desc: 'Gravity is off. Everything floats.', c1: '#8ad7ff', c2: '#20164a' },
+    { id: 'mutation', label: 'Mutation Storm', ic: '🧬', desc: 'DNA storm. Every player can mutate a pet!', c1: '#39ffb0', c2: '#6b1fff' },
+    { id: 'cyber', label: 'Neon Cyber', ic: '🌆', desc: 'Synthwave grid, neon and scanlines.', c1: '#ff3df0', c2: '#16e0ff' },
+    { id: 'bull', label: 'Bull Stampede', ic: '🐂', desc: 'Green everywhere. The whole market pumps.', c1: '#1fd67a', c2: '#063d20' },
+    { id: 'bear', label: 'Bear Invasion', ic: '🐻', desc: 'Red candles and claw marks. The market dumps.', c1: '#ff3d3d', c2: '#3d0606' },
+    { id: 'petparade', label: 'Pet Parade', ic: '🐾', desc: 'Hearts, paws and pets everywhere.', c1: '#ff9ed2', c2: '#7a5cff' },
+    { id: 'tornado', label: 'Tornado', ic: '🌪️', desc: 'A tornado rips across the screen.', c1: '#a3b8c9', c2: '#2a3440' },
+    { id: 'moon', label: 'To The Moon', ic: '🚀', desc: 'Warp speed. Rockets. The moon.', c1: '#c9b8ff', c2: '#0a0826' },
+  ];
+  const TYPE = Object.fromEntries(TYPES.map(t => [t.id, t]));
+
+  const doc = document,
+    root = doc.documentElement,
+    RMQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null,
+    reduced = () => !!(RMQ && RMQ.matches) || root.classList.contains('reduce-motion');
+  const R = Math.random,
+    rnd = (a, b) => a + R() * (b - a),
+    TAU = Math.PI * 2;
+
+  let cv = null,
+    ctx = null,
+    tint = null,
+    vig = null,
+    fl = null,
+    W = 0,
+    H = 0,
+    dpr = 1,
+    raf = 0,
+    last = 0,
+    cur = null,
+    fx = null,
+    inten = 1,
+    lastFlash = 0,
+    T = 0;
+
+  /* ---------- sprites (pre-rendered once) ---------- */
+  const SP = {};
+  function sprite(key, w, h, draw) {
+    if (SP[key]) return SP[key];
+    const c = doc.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    draw(c.getContext('2d'), w, h);
+    return (SP[key] = c);
+  }
+  const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  const emo = (e, s) =>
+    sprite('e' + e + s, s, s, (g, w) => {
+      g.font = `${Math.round(s * 0.78)}px ${EMOJI_FONT}`;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(e, w / 2, w / 2 + s * 0.06);
+    });
+  const bill = () =>
+    sprite('bill', 44, 22, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, w, h);
+      gr.addColorStop(0, '#9be7a8');
+      gr.addColorStop(1, '#3ea85a');
+      g.fillStyle = gr;
+      g.beginPath();
+      g.roundRect(1, 1, w - 2, h - 2, 3);
+      g.fill();
+      g.strokeStyle = '#1f6b35';
+      g.lineWidth = 1.4;
+      g.strokeRect(4, 4, w - 8, h - 8);
+      g.fillStyle = '#1f6b35';
+      g.beginPath();
+      g.arc(w / 2, h / 2, 6.5, 0, TAU);
+      g.fill();
+      g.fillStyle = '#bff2c7';
+      g.font = 'bold 10px sans-serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText('$', w / 2, h / 2 + 0.5);
+    });
+  const coin = () =>
+    sprite('coin', 24, 24, (g, w) => {
+      const gr = g.createRadialGradient(9, 8, 1, 12, 12, 12);
+      gr.addColorStop(0, '#fff3b8');
+      gr.addColorStop(0.5, '#ffc53d');
+      gr.addColorStop(1, '#b8740a');
+      g.fillStyle = gr;
+      g.beginPath();
+      g.arc(w / 2, w / 2, 11, 0, TAU);
+      g.fill();
+      g.strokeStyle = '#9c5a05';
+      g.lineWidth = 1.5;
+      g.beginPath();
+      g.arc(w / 2, w / 2, 8, 0, TAU);
+      g.stroke();
+    });
+  const glow = (col, s = 32) =>
+    sprite('g' + col + s, s, s, (g, w) => {
+      const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+      gr.addColorStop(0, col);
+      gr.addColorStop(0.35, col.replace(/[\d.]+\)$/, '0.45)'));
+      gr.addColorStop(1, col.replace(/[\d.]+\)$/, '0)'));
+      g.fillStyle = gr;
+      g.fillRect(0, 0, w, w);
+    });
+  const cloud = () =>
+    sprite('cloud', 360, 160, (g, w, h) => {
+      for (let i = 0; i < 9; i++) {
+        const x = rnd(60, w - 60),
+          y = rnd(50, h - 40),
+          r = rnd(40, 80);
+        const gr = g.createRadialGradient(x, y, 0, x, y, r);
+        gr.addColorStop(0, 'rgba(40,46,64,.55)');
+        gr.addColorStop(1, 'rgba(40,46,64,0)');
+        g.fillStyle = gr;
+        g.fillRect(0, 0, w, h);
+      }
+    });
+
+  /* ---------- shared helpers ---------- */
+  const N = (base, cap = base * 2.2) => Math.max(8, Math.min(cap, Math.round(base * ((W * H) / (1280 * 800)) * inten * (reduced() ? 0.18 : 1))));
+  const arr = (n, f) => Array.from({ length: n }, (_, i) => f(i));
+  function bolt(x0, y0, y1, spread) {
+    // midpoint-displacement lightning with a couple of branches
+    let pts = [
+      [x0, y0],
+      [x0 + rnd(-spread, spread), y1],
+    ];
+    for (let k = 0; k < 6; k++) {
+      const out = [pts[0]];
+      for (let i = 1; i < pts.length; i++) {
+        const [ax, ay] = pts[i - 1],
+          [bx, by] = pts[i];
+        out.push([(ax + bx) / 2 + rnd(-1, 1) * spread * 0.5 ** k, (ay + by) / 2 + rnd(-1, 1) * 6], [bx, by]);
+      }
+      pts = out;
+    }
+    const br = [];
+    for (let b = 0; b < 3; b++) {
+      const s = pts[Math.floor(rnd(pts.length * 0.2, pts.length * 0.8))],
+        len = rnd(40, 140),
+        a = rnd(0.3, 1.2) * (R() < 0.5 ? -1 : 1);
+      const bp = [s];
+      for (let i = 1; i < 6; i++) bp.push([s[0] + Math.sin(a) * len * (i / 5) + rnd(-8, 8), s[1] + Math.cos(Math.abs(a)) * len * (i / 5)]);
+      br.push(bp);
+    }
+    return { pts, br, life: 0.28, t: 0 };
+  }
+  function drawBolt(b, col) {
+    const a = Math.max(0, 1 - b.t / b.life);
+    const path = p => {
+      ctx.beginPath();
+      ctx.moveTo(p[0][0], p[0][1]);
+      for (let i = 1; i < p.length; i++) ctx.lineTo(p[i][0], p[i][1]);
+      ctx.stroke();
+    };
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = col;
+    ctx.globalAlpha = 0.25 * a;
+    ctx.lineWidth = 12;
+    path(b.pts);
+    ctx.globalAlpha = 0.55 * a;
+    ctx.lineWidth = 4;
+    path(b.pts);
+    b.br.forEach(path);
+    ctx.globalAlpha = a;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.6;
+    path(b.pts);
+    ctx.lineWidth = 1;
+    b.br.forEach(path);
+    ctx.restore();
+  }
+  function rain(n, col, ang, v0, v1, l0, l1) {
+    const p = arr(n, () => ({ x: rnd(-W * 0.3, W * 1.1), y: rnd(-H, H), v: rnd(v0, v1), l: rnd(l0, l1), a: rnd(0.35, 0.9) }));
+    const sx = Math.sin(ang),
+      cy = Math.cos(ang);
+    return {
+      step(dt) {
+        ctx.strokeStyle = col;
+        ctx.lineCap = 'round';
+        for (const d of p) {
+          d.x += sx * d.v * dt;
+          d.y += cy * d.v * dt;
+          if (d.y > H + 20) {
+            d.y = rnd(-80, -10);
+            d.x = rnd(-W * 0.3, W * 1.05);
+          }
+          ctx.globalAlpha = d.a;
+          ctx.lineWidth = d.l > (l0 + l1) / 2 ? 1.6 : 1.1;
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x - sx * d.l, d.y - cy * d.l);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      },
+    };
+  }
+  function fallers(n, sprs, v0, v1, sway = 30, spin = 2) {
+    const p = arr(n, () => ({ s: sprs[Math.floor(R() * sprs.length)], x: rnd(0, W), y: rnd(-H, H), v: rnd(v0, v1), r: rnd(0, TAU), vr: rnd(-spin, spin), ph: rnd(0, TAU), sc: rnd(0.7, 1.15) }));
+    return {
+      p,
+      step(dt) {
+        for (const d of p) {
+          d.y += d.v * dt;
+          d.r += d.vr * dt;
+          d.ph += dt * 2;
+          if (d.y > H + 40) {
+            d.y = rnd(-120, -30);
+            d.x = rnd(0, W);
+          }
+          const w = d.s.width * d.sc,
+            h = d.s.height * d.sc;
+          ctx.save();
+          ctx.translate(d.x + Math.sin(d.ph) * sway, d.y);
+          ctx.rotate(d.r);
+          ctx.scale(1, 0.55 + 0.45 * Math.abs(Math.cos(d.ph * 0.8)));
+          ctx.drawImage(d.s, -w / 2, -h / 2, w, h);
+          ctx.restore();
+        }
+      },
+    };
+  }
+  function risers(n, drawFn, v0, v1, sway = 20) {
+    const p = arr(n, () => ({ x: rnd(0, W), y: rnd(0, H + 100), v: rnd(v0, v1), ph: rnd(0, TAU), s: rnd(0.5, 1.3), k: R() }));
+    return {
+      step(dt) {
+        for (const d of p) {
+          d.y -= d.v * dt;
+          d.ph += dt * 1.6;
+          if (d.y < -40) {
+            d.y = H + rnd(10, 80);
+            d.x = rnd(0, W);
+          }
+          drawFn(d.x + Math.sin(d.ph) * sway, d.y, d, dt);
+        }
+      },
+    };
+  }
+  function twinkles(n, cols) {
+    const p = arr(n, () => ({ x: rnd(0, W), y: rnd(0, H), ph: rnd(0, TAU), s: rnd(0.6, 1.8), c: cols[Math.floor(R() * cols.length)] }));
+    return {
+      step(dt) {
+        for (const d of p) {
+          d.ph += dt * 3;
+          const a = 0.5 + 0.5 * Math.sin(d.ph);
+          ctx.globalAlpha = a;
+          ctx.fillStyle = d.c;
+          const r = d.s * (1 + a);
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y - r * 2.2);
+          ctx.lineTo(d.x + r * 0.5, d.y);
+          ctx.lineTo(d.x, d.y + r * 2.2);
+          ctx.lineTo(d.x - r * 0.5, d.y);
+          ctx.closePath();
+          ctx.moveTo(d.x - r * 2.2, d.y);
+          ctx.lineTo(d.x, d.y + r * 0.5);
+          ctx.lineTo(d.x + r * 2.2, d.y);
+          ctx.lineTo(d.x, d.y - r * 0.5);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      },
+    };
+  }
+  function every(min, max, fn) {
+    let next = rnd(min * 0.4, max * 0.6);
+    return dt => {
+      next -= dt;
+      if (next <= 0) {
+        next = rnd(min, max);
+        fn();
+      }
+    };
+  }
+  function dasher(e, dir, size) {
+    const s = emo(e, size);
+    let d = null;
+    return {
+      go() {
+        d = { x: dir > 0 ? -size : W + size, y: rnd(H * 0.2, H * 0.85), v: rnd(700, 1000) * dir };
+      },
+      step(dt) {
+        if (!d) return;
+        d.x += d.v * dt;
+        ctx.save();
+        ctx.globalAlpha = 0.25;
+        for (let i = 1; i < 5; i++) ctx.drawImage(s, d.x - (d.v / Math.abs(d.v)) * i * 22 - size / 2, d.y - size / 2 + Math.sin(i + T * 20) * 2, size, size);
+        ctx.restore();
+        ctx.save();
+        ctx.translate(d.x, d.y + Math.abs(Math.sin(T * 18)) * -8);
+        if (dir < 0) ctx.scale(-1, 1);
+        ctx.drawImage(s, -size / 2, -size / 2, size, size);
+        ctx.restore();
+        if (d.x < -size * 3 || d.x > W + size * 3) d = null;
+      },
+    };
+  }
+
+  /* ---------- the 20 effects ---------- */
+  const MAKE = {
+    bloodrain() {
+      const r1 = rain(N(260, 520), 'rgba(255,40,60,1)', 0.22, 1000, 1500, 16, 30);
+      const r2 = rain(N(90, 200), 'rgba(160,0,20,1)', 0.22, 700, 900, 8, 14);
+      let bolts = [];
+      const strike = every(1.7, 3.6, () => {
+        bolts.push(bolt(rnd(W * 0.1, W * 0.9), -10, rnd(H * 0.55, H * 0.95), W * 0.12));
+        if (R() < 0.35) bolts.push(bolt(rnd(W * 0.1, W * 0.9), -10, rnd(H * 0.4, H * 0.8), W * 0.1));
+        flash('#ff2d3d', 0.3);
+        shake(260);
+      });
+      const drops = arr(N(24, 50), () => ({ x: rnd(0, W), t: rnd(0, 1) }));
+      return dt => {
+        r2.step(dt);
+        r1.step(dt);
+        ctx.strokeStyle = 'rgba(255,60,70,.55)';
+        ctx.lineWidth = 1;
+        for (const d of drops) {
+          d.t += dt * 2.2;
+          if (d.t > 1) {
+            d.t = 0;
+            d.x = rnd(0, W);
+          }
+          ctx.globalAlpha = 1 - d.t;
+          ctx.beginPath();
+          ctx.ellipse(d.x, H - 6, 3 + d.t * 16, 1 + d.t * 3, 0, Math.PI, TAU);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        if (!reduced()) strike(dt);
+        bolts = bolts.filter(b => ((b.t += dt), b.t < b.life));
+        bolts.forEach(b => drawBolt(b, '#ff3048'));
+      };
+    },
+    thunder() {
+      const r1 = rain(N(240, 480), 'rgba(170,200,255,1)', 0.12, 900, 1300, 14, 26);
+      const cl = cloud(),
+        clouds = arr(7, i => ({ x: (i / 7) * W * 1.3 - 100, y: rnd(-60, 40), s: rnd(1, 1.8), v: rnd(8, 22) }));
+      let bolts = [];
+      const strike = every(2, 4.5, () => {
+        bolts.push(bolt(rnd(W * 0.1, W * 0.9), 20, rnd(H * 0.6, H), W * 0.14));
+        flash('#dfe8ff', 0.32);
+        shake(200);
+      });
+      return dt => {
+        for (const c of clouds) {
+          c.x += c.v * dt;
+          if (c.x > W + 50) c.x = -cl.width * c.s;
+          ctx.drawImage(cl, c.x, c.y, cl.width * c.s, cl.height * c.s);
+        }
+        r1.step(dt);
+        if (!reduced()) strike(dt);
+        bolts = bolts.filter(b => ((b.t += dt), b.t < b.life));
+        bolts.forEach(b => drawBolt(b, '#9cc0ff'));
+      };
+    },
+    moneyrain() {
+      const f = fallers(N(60, 120), [bill(), bill(), coin()], 110, 220, 40, 2.4);
+      const tw = twinkles(N(30), ['#fff6c8', '#b6ffcf']);
+      return dt => {
+        tw.step(dt);
+        f.step(dt);
+      };
+    },
+    meteor() {
+      const tw = twinkles(N(70), ['#fff', '#ffd9a8', '#c9b8ff']);
+      let ms = [],
+        rings = [];
+      const spawn = every(0.25, 0.8, () => {
+        const v = rnd(650, 1000);
+        ms.push({ x: rnd(W * 0.2, W * 1.2), y: rnd(-80, H * 0.2), vx: -v * 0.7, vy: v * 0.7, r: rnd(2.5, 5), end: rnd(H * 0.7, H * 1.05) });
+      });
+      const hot = glow('rgba(255,190,90,1)', 48);
+      return dt => {
+        tw.step(dt);
+        spawn(dt);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for (const m of ms) {
+          m.x += m.vx * dt;
+          m.y += m.vy * dt;
+          const g = ctx.createLinearGradient(m.x, m.y, m.x - m.vx * 0.22, m.y - m.vy * 0.22);
+          g.addColorStop(0, 'rgba(255,230,160,.95)');
+          g.addColorStop(0.3, 'rgba(255,120,40,.6)');
+          g.addColorStop(1, 'rgba(255,60,20,0)');
+          ctx.strokeStyle = g;
+          ctx.lineWidth = m.r * 1.6;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(m.x, m.y);
+          ctx.lineTo(m.x - m.vx * 0.22, m.y - m.vy * 0.22);
+          ctx.stroke();
+          ctx.drawImage(hot, m.x - m.r * 5, m.y - m.r * 5, m.r * 10, m.r * 10);
+          if (m.y > m.end) {
+            m.dead = 1;
+            rings.push({ x: m.x, y: m.y, t: 0 });
+          }
+        }
+        ms = ms.filter(m => !m.dead && m.x > -100);
+        for (const r of rings) {
+          r.t += dt;
+          ctx.globalAlpha = Math.max(0, 1 - r.t / 0.6);
+          ctx.drawImage(hot, r.x - 40 - r.t * 90, r.y - 40 - r.t * 90, 80 + r.t * 180, 80 + r.t * 180);
+        }
+        rings = rings.filter(r => r.t < 0.6);
+        ctx.restore();
+      };
+    },
+    disco() {
+      const tw = twinkles(N(70), ['#fff', '#ff9df5', '#9df5ff', '#fff59d']);
+      const lights = arr(5, i => ({ x: ((i + 0.5) / 5) * W, ph: rnd(0, TAU), sp: rnd(0.6, 1.2), h: i * 72 }));
+      return dt => {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for (const l of lights) {
+          l.ph += dt * l.sp;
+          l.h = (l.h + dt * 60) % 360;
+          const a = Math.sin(l.ph) * 0.55,
+            len = H * 1.25,
+            w = 0.16;
+          const g = ctx.createLinearGradient(l.x, 0, l.x + Math.sin(a) * len, Math.cos(a) * len);
+          g.addColorStop(0, `hsla(${l.h},100%,65%,.34)`);
+          g.addColorStop(1, `hsla(${l.h},100%,65%,0)`);
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.moveTo(l.x, -10);
+          ctx.lineTo(l.x + Math.sin(a - w) * len, Math.cos(a - w) * len);
+          ctx.lineTo(l.x + Math.sin(a + w) * len, Math.cos(a + w) * len);
+          ctx.fill();
+        }
+        ctx.restore();
+        tw.step(dt);
+      };
+    },
+    glitch() {
+      let bars = [],
+        blocks = [];
+      const jit = every(1.2, 2.6, () => shake(160, 'glitch'));
+      return dt => {
+        if (R() < 0.35 * inten) bars.push({ y: rnd(0, H), h: rnd(2, 26), t: 0, l: rnd(0.05, 0.18), c: R() < 0.5 ? 'rgba(57,255,136,' : 'rgba(255,61,110,', dx: rnd(-40, 40) });
+        if (R() < 0.5 * inten) blocks.push({ x: rnd(0, W), y: rnd(0, H), w: rnd(8, 60), h: rnd(4, 18), t: 0, l: rnd(0.04, 0.12), c: ['#39ff88', '#ff3d6e', '#3de7ff', '#fff'][Math.floor(R() * 4)] });
+        for (const b of bars) {
+          b.t += dt;
+          ctx.fillStyle = b.c + (0.22 * (1 - b.t / b.l)).toFixed(3) + ')';
+          ctx.fillRect(b.dx, b.y, W, b.h);
+        }
+        for (const b of blocks) {
+          b.t += dt;
+          ctx.globalAlpha = 0.5 * (1 - b.t / b.l);
+          ctx.fillStyle = b.c;
+          ctx.fillRect(b.x, b.y, b.w, b.h);
+        }
+        ctx.globalAlpha = 1;
+        bars = bars.filter(b => b.t < b.l);
+        blocks = blocks.filter(b => b.t < b.l);
+        if (!reduced()) jit(dt);
+      };
+    },
+    blizzard() {
+      const p = arr(N(380, 800), () => ({ x: rnd(0, W), y: rnd(0, H), r: rnd(0.8, 3.2), v: rnd(60, 160), ph: rnd(0, TAU) }));
+      let gust = 0;
+      return dt => {
+        gust = Math.sin(T * 0.6) * 0.6 + Math.sin(T * 1.7) * 0.4;
+        const wind = 380 + gust * 320;
+        ctx.fillStyle = '#fff';
+        for (const d of p) {
+          d.x += (wind * (0.4 + d.r / 3.2) + Math.sin(d.ph + T * 2) * 20) * dt;
+          d.y += d.v * dt;
+          if (d.x > W + 10) d.x = -10;
+          if (d.y > H + 10) {
+            d.y = -10;
+            d.x = rnd(-W * 0.3, W);
+          }
+          ctx.globalAlpha = 0.4 + d.r / 5;
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, d.r, 0, TAU);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 0.08 + Math.max(0, gust) * 0.1;
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 1;
+      };
+    },
+    inferno() {
+      const em = glow('rgba(255,150,40,1)', 24);
+      const r = risers(
+        N(160, 320),
+        (x, y, d) => {
+          const f = 0.6 + 0.4 * Math.sin(T * 12 + d.ph * 3);
+          ctx.globalAlpha = Math.min(1, y / H + 0.2) * f;
+          const s = 6 + d.s * 10;
+          ctx.drawImage(em, x - s / 2, y - s / 2, s, s);
+        },
+        60,
+        200,
+        30
+      );
+      return dt => {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        // flame tongues along the bottom
+        for (let layer = 0; layer < 3; layer++) {
+          const g = ctx.createLinearGradient(0, H, 0, H - 220 + layer * 50);
+          g.addColorStop(0, ['rgba(255,60,0,.55)', 'rgba(255,140,0,.45)', 'rgba(255,230,120,.4)'][layer]);
+          g.addColorStop(1, 'rgba(255,60,0,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.moveTo(0, H);
+          for (let x = 0; x <= W + 20; x += 20) {
+            const h = 90 - layer * 22 + Math.sin(x * 0.02 + T * (3 + layer)) * 30 + Math.sin(x * 0.053 - T * 5) * 22;
+            ctx.lineTo(x, H - Math.max(10, h * inten));
+          }
+          ctx.lineTo(W, H);
+          ctx.fill();
+        }
+        r.step(dt);
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      };
+    },
+    void() {
+      const n = N(300, 600),
+        p = arr(n, () => ({ a: rnd(0, TAU), r: rnd(40, Math.hypot(W, H) / 1.6), h: rnd(250, 300), s: rnd(0.6, 2) }));
+      return dt => {
+        const cx = W / 2,
+          cy = H / 2,
+          maxR = Math.hypot(W, H) / 1.6;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for (const d of p) {
+          const w = 38 / Math.max(30, d.r);
+          d.a += w * dt * 2.4;
+          d.r -= (40 + 9000 / Math.max(40, d.r)) * dt * 0.6;
+          if (d.r < 30) {
+            d.r = maxR;
+            d.a = rnd(0, TAU);
+          }
+          const x = cx + Math.cos(d.a) * d.r,
+            y = cy + Math.sin(d.a) * d.r * 0.62;
+          const x2 = cx + Math.cos(d.a - w * 0.5) * (d.r + 8),
+            y2 = cy + Math.sin(d.a - w * 0.5) * (d.r + 8) * 0.62;
+          ctx.strokeStyle = `hsla(${d.h},100%,70%,${Math.min(0.9, 70 / d.r + 0.15)})`;
+          ctx.lineWidth = d.s;
+          ctx.beginPath();
+          ctx.moveTo(x2, y2);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+        const R0 = Math.min(W, H) * 0.09;
+        const ring = ctx.createRadialGradient(cx, cy, R0 * 0.8, cx, cy, R0 * 2.6);
+        ring.addColorStop(0, 'rgba(0,0,0,1)');
+        ring.addColorStop(0.35, `rgba(180,110,255,${0.55 + 0.15 * Math.sin(T * 3)})`);
+        ring.addColorStop(1, 'rgba(120,60,255,0)');
+        ctx.fillStyle = ring;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, R0 * 2.6, R0 * 2.6 * 0.62, 0, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(cx, cy, R0, 0, TAU);
+        ctx.fill();
+      };
+    },
+    midas() {
+      const f = fallers(N(40, 80), [coin()], 90, 180, 20, 3);
+      const tw = twinkles(N(90), ['#fff6c8', '#ffd34d', '#fff']);
+      return dt => {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const cx = W / 2;
+        for (let i = 0; i < 9; i++) {
+          const a = T * 0.15 + (i / 9) * TAU;
+          ctx.fillStyle = 'rgba(255,210,90,.06)';
+          ctx.beginPath();
+          ctx.moveTo(cx, -40);
+          ctx.lineTo(cx + Math.cos(a) * W * 1.4, Math.abs(Math.sin(a)) * H * 1.6);
+          ctx.lineTo(cx + Math.cos(a + 0.12) * W * 1.4, Math.abs(Math.sin(a + 0.12)) * H * 1.6);
+          ctx.fill();
+        }
+        ctx.restore();
+        tw.step(dt);
+        f.step(dt);
+      };
+    },
+    toxic() {
+      const b = risers(
+        N(90, 180),
+        (x, y, d) => {
+          ctx.globalAlpha = 0.75;
+          ctx.strokeStyle = d.k < 0.5 ? '#7dff3d' : '#d4ff3d';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(x, y, 3 + d.s * 7, 0, TAU);
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(125,255,61,.18)';
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        },
+        40,
+        120,
+        14
+      );
+      const drips = arr(Math.max(8, Math.round(W / 70)), i => ({ x: ((i + rnd(0.2, 0.8)) / Math.round(W / 70)) * W, l: rnd(0, 60), v: rnd(10, 40), drop: null }));
+      return dt => {
+        b.step(dt);
+        ctx.fillStyle = '#7dff3d';
+        ctx.globalAlpha = 0.85;
+        for (const d of drips) {
+          d.l += d.v * dt;
+          if (d.l > 90 && !d.drop) {
+            d.drop = { y: d.l, v: 0 };
+            d.l = 10;
+          }
+          ctx.beginPath();
+          ctx.moveTo(d.x - 5, 0);
+          ctx.quadraticCurveTo(d.x - 3, d.l * 0.7, d.x, d.l);
+          ctx.quadraticCurveTo(d.x + 3, d.l * 0.7, d.x + 5, 0);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(d.x, d.l, 4, 0, TAU);
+          ctx.fill();
+          if (d.drop) {
+            d.drop.v += 900 * dt;
+            d.drop.y += d.drop.v * dt;
+            ctx.beginPath();
+            ctx.arc(d.x, d.drop.y, 3.4, 0, TAU);
+            ctx.fill();
+            if (d.drop.y > H + 10) d.drop = null;
+          }
+        }
+        ctx.globalAlpha = 1;
+      };
+    },
+    quake() {
+      const dust = fallers(
+        N(110, 220),
+        [
+          sprite('dust', 6, 6, g => {
+            g.fillStyle = '#c8a27a';
+            g.fillRect(0, 0, 6, 6);
+          }),
+        ],
+        80,
+        260,
+        6,
+        4
+      );
+      let cracks = [];
+      const hit = every(2.2, 4, () => {
+        if (!reduced()) shake(700, 'quake');
+        for (let k = 0; k < 2; k++) {
+          const edge = Math.floor(R() * 4),
+            p0 = [
+              [rnd(0, W), 0],
+              [W, rnd(0, H)],
+              [rnd(0, W), H],
+              [0, rnd(0, H)],
+            ][edge];
+          const pts = [p0];
+          let [x, y] = p0,
+            a = Math.atan2(H / 2 - y, W / 2 - x);
+          for (let i = 0; i < 14; i++) {
+            a += rnd(-0.6, 0.6);
+            x += Math.cos(a) * rnd(20, 50);
+            y += Math.sin(a) * rnd(20, 50);
+            pts.push([x, y]);
+          }
+          cracks.push({ pts, t: 0 });
+        }
+      });
+      return dt => {
+        dust.step(dt);
+        hit(dt);
+        ctx.lineJoin = 'round';
+        for (const c of cracks) {
+          c.t += dt;
+          const a = c.t < 0.2 ? c.t / 0.2 : Math.max(0, 1 - (c.t - 1.4) / 1.2);
+          ctx.globalAlpha = a;
+          ctx.strokeStyle = 'rgba(20,10,4,.85)';
+          ctx.lineWidth = 3.2;
+          ctx.beginPath();
+          c.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+          ctx.stroke();
+          ctx.strokeStyle = 'rgba(255,190,120,.6)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        cracks = cracks.filter(c => c.t < 2.6);
+      };
+    },
+    gravity() {
+      const cols = ['rgba(138,215,255,1)', 'rgba(201,184,255,1)', 'rgba(255,158,210,1)', 'rgba(255,255,255,1)'];
+      const orbs = cols.map(c => glow(c, 40));
+      const r = risers(
+        N(90, 180),
+        (x, y, d) => {
+          const s = 10 + d.s * 22;
+          ctx.globalAlpha = 0.55;
+          ctx.drawImage(orbs[Math.floor(d.k * orbs.length)], x - s / 2, y - s / 2, s, s);
+        },
+        12,
+        45,
+        40
+      );
+      const rocks = arr(N(10, 20), () => ({ x: rnd(0, W), y: rnd(0, H), r: rnd(0, TAU), vr: rnd(-0.6, 0.6), vx: rnd(-14, 14), vy: rnd(-18, -6), s: rnd(6, 16) }));
+      return dt => {
+        r.step(dt);
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = '#8a8fb0';
+        for (const k of rocks) {
+          k.x += k.vx * dt;
+          k.y += k.vy * dt;
+          k.r += k.vr * dt;
+          if (k.y < -30) (k.y = H + 30), (k.x = rnd(0, W));
+          ctx.save();
+          ctx.translate(k.x, k.y);
+          ctx.rotate(k.r);
+          ctx.beginPath();
+          ctx.moveTo(-k.s, -k.s * 0.4);
+          ctx.lineTo(-k.s * 0.2, -k.s);
+          ctx.lineTo(k.s, -k.s * 0.3);
+          ctx.lineTo(k.s * 0.6, k.s);
+          ctx.lineTo(-k.s * 0.7, k.s * 0.7);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+      };
+    },
+    mutation() {
+      const cols = ['rgba(57,255,176,1)', 'rgba(107,31,255,1)', 'rgba(255,61,240,1)', 'rgba(61,231,255,1)', 'rgba(255,211,77,1)'];
+      const orbs = cols.map(c => glow(c, 48));
+      const o = risers(
+        N(40, 80),
+        (x, y, d) => {
+          const s = 14 + d.s * 26;
+          ctx.globalAlpha = 0.7;
+          ctx.drawImage(orbs[Math.floor(d.k * orbs.length)], x - s / 2, y - s / 2, s, s);
+        },
+        30,
+        90,
+        50
+      );
+      const hx = arr(Math.max(2, Math.round(W / 420)), i => ((i + 0.5) / Math.max(2, Math.round(W / 420))) * W);
+      const pulse = every(4, 7, () => flash(`hsl(${Math.floor(rnd(0, 360))},100%,60%)`, 0.22));
+      return dt => {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        hx.forEach((x0, k) => {
+          const amp = 38,
+            step = 26;
+          for (let y = -40, i = 0; y < H + 40; y += step, i++) {
+            const ph = y * 0.022 + T * 2.2 + k,
+              x1 = x0 + Math.sin(ph) * amp,
+              x2 = x0 + Math.sin(ph + Math.PI) * amp,
+              h = (y * 0.3 + T * 60 + k * 90) % 360,
+              z = Math.cos(ph);
+            ctx.strokeStyle = `hsla(${h},100%,65%,.35)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x1, y);
+            ctx.lineTo(x2, y);
+            ctx.stroke();
+            ctx.fillStyle = `hsla(${h},100%,70%,${0.55 + 0.35 * z})`;
+            ctx.beginPath();
+            ctx.arc(x1, y, 4 + 2 * z, 0, TAU);
+            ctx.arc(x2, y, 4 - 2 * z, 0, TAU);
+            ctx.fill();
+          }
+        });
+        o.step(dt);
+        ctx.restore();
+        if (!reduced()) pulse(dt);
+      };
+    },
+    cyber() {
+      const tw = twinkles(N(40), ['#ff3df0', '#16e0ff', '#fff']);
+      return dt => {
+        tw.step(dt);
+        const hz = H * 0.62,
+          vx = W / 2;
+        // sun
+        const sr = Math.min(W, H) * 0.16;
+        const sg = ctx.createLinearGradient(0, hz - sr * 2, 0, hz);
+        sg.addColorStop(0, 'rgba(255,211,77,.55)');
+        sg.addColorStop(1, 'rgba(255,61,240,.45)');
+        ctx.fillStyle = sg;
+        ctx.beginPath();
+        ctx.arc(vx, hz, sr, Math.PI, TAU);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(10,4,30,.9)';
+        for (let i = 0; i < 6; i++) ctx.fillRect(vx - sr, hz - sr * 0.12 - i * sr * 0.16, sr * 2, 2 + i * 0.8);
+        // grid
+        ctx.fillStyle = 'rgba(12,2,34,.55)';
+        ctx.fillRect(0, hz, W, H - hz);
+        ctx.strokeStyle = 'rgba(255,61,240,.75)';
+        ctx.lineWidth = 1.4;
+        const off = (T * 0.8) % 1;
+        for (let i = 0; i < 14; i++) {
+          const z = (i + 1 - off) / 14,
+            y = hz + (H - hz) * z * z;
+          ctx.globalAlpha = z;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(W, y);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 0.7;
+        ctx.strokeStyle = 'rgba(22,224,255,.7)';
+        for (let i = -12; i <= 12; i++) {
+          ctx.beginPath();
+          ctx.moveTo(vx + i * 12, hz);
+          ctx.lineTo(vx + i * W * 0.14, H);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      };
+    },
+    bull() {
+      const r = risers(
+        N(50, 100),
+        (x, y, d) => {
+          ctx.globalAlpha = 0.8;
+          if (d.k < 0.5) {
+            const s = 8 + d.s * 10;
+            ctx.fillStyle = '#1fd67a';
+            ctx.beginPath();
+            ctx.moveTo(x, y - s);
+            ctx.lineTo(x + s * 0.8, y);
+            ctx.lineTo(x + s * 0.3, y);
+            ctx.lineTo(x + s * 0.3, y + s);
+            ctx.lineTo(x - s * 0.3, y + s);
+            ctx.lineTo(x - s * 0.3, y);
+            ctx.lineTo(x - s * 0.8, y);
+            ctx.fill();
+          } else {
+            const h = 14 + d.s * 20;
+            ctx.strokeStyle = '#8affc1';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(x, y - h * 0.8);
+            ctx.lineTo(x, y + h * 0.8);
+            ctx.stroke();
+            ctx.fillStyle = '#1fd67a';
+            ctx.fillRect(x - 4, y - h / 2, 8, h);
+          }
+          ctx.globalAlpha = 1;
+        },
+        120,
+        300,
+        6
+      );
+      const bull = dasher('🐂', 1, 64);
+      const run = every(3, 6, () => bull.go());
+      return dt => {
+        r.step(dt);
+        run(dt);
+        bull.step(dt);
+      };
+    },
+    bear() {
+      const f = fallers(
+        N(40, 80),
+        [
+          sprite('dn', 22, 30, g => {
+            g.fillStyle = '#ff3d3d';
+            g.beginPath();
+            g.moveTo(11, 30);
+            g.lineTo(22, 16);
+            g.lineTo(15, 16);
+            g.lineTo(15, 0);
+            g.lineTo(7, 0);
+            g.lineTo(7, 16);
+            g.lineTo(0, 16);
+            g.fill();
+          }),
+          sprite('rc', 12, 44, g => {
+            g.strokeStyle = '#ff9a9a';
+            g.lineWidth = 1.4;
+            g.beginPath();
+            g.moveTo(6, 0);
+            g.lineTo(6, 44);
+            g.stroke();
+            g.fillStyle = '#ff3d3d';
+            g.fillRect(2, 8, 8, 28);
+          }),
+        ],
+        160,
+        320,
+        4,
+        0.3
+      );
+      let slashes = [];
+      const slash = every(0.9, 1.8, () => {
+        slashes.push({ x: rnd(W * 0.1, W * 0.8), y: rnd(H * 0.15, H * 0.75), s: rnd(90, 180), t: 0, a: rnd(-0.5, 0.2) });
+        if (R() < 0.35) shake(150);
+      });
+      const bear = dasher('🐻', -1, 64);
+      const run = every(4, 7, () => bear.go());
+      return dt => {
+        f.step(dt);
+        slash(dt);
+        run(dt);
+        bear.step(dt);
+        for (const s of slashes) {
+          s.t += dt;
+          const grow = Math.min(1, s.t / 0.12),
+            a = s.t < 0.12 ? 1 : Math.max(0, 1 - (s.t - 0.6) / 0.8);
+          ctx.save();
+          ctx.translate(s.x, s.y);
+          ctx.rotate(s.a);
+          ctx.globalAlpha = a;
+          for (let i = 0; i < 3; i++) {
+            ctx.strokeStyle = 'rgba(40,0,0,.8)';
+            ctx.lineWidth = 7;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(i * 22, 0);
+            ctx.quadraticCurveTo(i * 22 + s.s * 0.35, s.s * 0.5 * grow, i * 22 + s.s * 0.2 * grow, s.s * grow);
+            ctx.stroke();
+            ctx.strokeStyle = '#ff2d3d';
+            ctx.lineWidth = 2.4;
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+        slashes = slashes.filter(s => s.t < 1.4);
+      };
+    },
+    petparade() {
+      const E = ['🐶', '🐱', '🐉', '🦄', '🐙', '🦊', '🐼', '🐸', '💖', '🐾', '💕', '🐾'].map(e => emo(e, 40));
+      const r = risers(
+        N(40, 80),
+        (x, y, d) => {
+          const s = 22 + d.s * 16;
+          ctx.globalAlpha = 0.9;
+          ctx.drawImage(E[Math.floor(d.k * E.length)], x - s / 2, y - s / 2 + Math.sin(d.ph * 2) * 6, s, s);
+          ctx.globalAlpha = 1;
+        },
+        30,
+        80,
+        50
+      );
+      const tw = twinkles(N(40), ['#fff', '#ffc2e2', '#d8c8ff']);
+      return dt => {
+        tw.step(dt);
+        r.step(dt);
+      };
+    },
+    tornado() {
+      const n = N(260, 480),
+        p = arr(n, () => ({ y: rnd(0, 1), a: rnd(0, TAU), v: rnd(2, 5), s: rnd(2.5, 7), c: ['#8d9aa6', '#6b5a44', '#9fae7a', '#c9d3db'][Math.floor(R() * 4)] }));
+      const streaks = arr(N(40, 80), () => ({ x: rnd(0, W), y: rnd(0, H), l: rnd(40, 140), v: rnd(500, 900) }));
+      return dt => {
+        const cx = W / 2 + Math.sin(T * 0.25) * W * 0.3 + Math.sin(T * 0.9) * 30;
+        ctx.strokeStyle = 'rgba(220,230,240,.35)';
+        ctx.lineWidth = 1;
+        for (const s of streaks) {
+          s.x += s.v * dt;
+          if (s.x > W + 150) (s.x = -150), (s.y = rnd(0, H));
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y);
+          ctx.lineTo(s.x - s.l, s.y);
+          ctx.stroke();
+        }
+        // the funnel body: a swirling translucent cone with rotating bands
+        const rOf = f => 18 + f * f * Math.min(W, 900) * 0.32,
+          xOf = f => cx + Math.sin(T * 1.3 + f * 3) * 30 * f;
+        const fg = ctx.createLinearGradient(0, 0, 0, H);
+        fg.addColorStop(0, 'rgba(150,165,180,.3)');
+        fg.addColorStop(1, 'rgba(90,100,110,.18)');
+        ctx.fillStyle = fg;
+        ctx.beginPath();
+        for (let i = 0; i <= 40; i++) {
+          const f = 1 - i / 40;
+          ctx.lineTo(xOf(f) - rOf(f), H * (1 - f));
+        }
+        for (let i = 40; i >= 0; i--) {
+          const f = 1 - i / 40;
+          ctx.lineTo(xOf(f) + rOf(f), H * (1 - f));
+        }
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(215,225,235,.28)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 12; i++) {
+          const f = ((i / 12 + T * 0.18) % 1),
+            y = H * (1 - f);
+          ctx.beginPath();
+          ctx.ellipse(xOf(f), y, rOf(f), 4 + rOf(f) * 0.12, 0, 0, Math.PI);
+          ctx.stroke();
+        }
+        for (const d of p) {
+          d.a += d.v * dt * (1.6 - d.y);
+          d.y -= dt * 0.05;
+          if (d.y < 0) d.y = 1;
+          const y = H * (1 - d.y),
+            rad = 18 + d.y * d.y * Math.min(W, 900) * 0.32,
+            x = cx + Math.sin(T * 1.3 + d.y * 3) * 30 * d.y + Math.cos(d.a) * rad;
+          const z = Math.sin(d.a);
+          ctx.globalAlpha = 0.45 + 0.5 * (z + 1) / 2;
+          ctx.fillStyle = d.c;
+          ctx.fillRect(x, y + z * 6, d.s * (0.6 + (z + 1) / 2), d.s);
+        }
+        ctx.globalAlpha = 1;
+      };
+    },
+    moon() {
+      const n = N(220, 420),
+        p = arr(n, () => ({ x: rnd(-1, 1), y: rnd(-1, 1), z: rnd(0.05, 1) }));
+      const rocket = emo('🚀', 48);
+      let rockets = [];
+      const launch = every(1.8, 3.6, () => rockets.push({ x: rnd(W * 0.05, W * 0.7), y: H + 40, v: rnd(380, 620) }));
+      return dt => {
+        const cx = W / 2,
+          cy = H / 2,
+          sc = Math.max(W, H) * 0.6;
+        ctx.strokeStyle = '#fff';
+        ctx.lineCap = 'round';
+        for (const d of p) {
+          const z0 = d.z;
+          d.z -= dt * 0.55 * inten;
+          if (d.z <= 0.03) {
+            d.x = rnd(-1, 1);
+            d.y = rnd(-1, 1);
+            d.z = 1;
+            continue;
+          }
+          const x1 = cx + (d.x / z0) * sc * 0.25,
+            y1 = cy + (d.y / z0) * sc * 0.25,
+            x2 = cx + (d.x / d.z) * sc * 0.25,
+            y2 = cy + (d.y / d.z) * sc * 0.25;
+          ctx.globalAlpha = Math.min(1, (1 - d.z) * 1.4);
+          ctx.lineWidth = Math.max(0.6, (1 - d.z) * 2.4);
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        // moon
+        const mr = Math.min(W, H) * 0.11,
+          mx = W - mr * 1.6,
+          my = mr * 1.5;
+        const mg = ctx.createRadialGradient(mx - mr * 0.3, my - mr * 0.3, mr * 0.1, mx, my, mr * 2.2);
+        mg.addColorStop(0, '#fffbe6');
+        mg.addColorStop(0.42, '#e8e1c8');
+        mg.addColorStop(0.46, 'rgba(255,245,200,.35)');
+        mg.addColorStop(1, 'rgba(255,245,200,0)');
+        ctx.fillStyle = mg;
+        ctx.beginPath();
+        ctx.arc(mx, my, mr * 2.2, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(170,160,130,.45)';
+        [
+          [-0.3, -0.2, 0.18],
+          [0.25, 0.1, 0.14],
+          [-0.05, 0.35, 0.1],
+        ].forEach(([a, b, r]) => {
+          ctx.beginPath();
+          ctx.arc(mx + a * mr, my + b * mr, r * mr, 0, TAU);
+          ctx.fill();
+        });
+        launch(dt);
+        for (const k of rockets) {
+          k.y -= k.v * dt;
+          k.x += k.v * 0.45 * dt;
+          ctx.drawImage(rocket, k.x - 24, k.y - 24, 48, 48);
+        }
+        rockets = rockets.filter(k => k.y > -60);
+      };
+    },
+  };
+
+  /* ---------- lifecycle ---------- */
+  function size() {
+    if (!cv) return;
+    dpr = Math.min(innerWidth < 700 ? 1 : 1.5, window.devicePixelRatio || 1);
+    W = innerWidth;
+    H = innerHeight;
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  let rsT = 0;
+  const onResize = () => {
+    clearTimeout(rsT);
+    rsT = setTimeout(() => {
+      size();
+      if (cur) fx = MAKE[cur]();
+    }, 150);
+  };
+  function loop(now) {
+    raf = requestAnimationFrame(loop);
+    if (doc.hidden) return;
+    const dt = Math.min(0.05, (now - (last || now)) / 1000);
+    last = now;
+    T += dt;
+    const t0 = performance.now();
+    ctx.clearRect(0, 0, W, H);
+    try {
+      fx && fx(dt);
+    } catch (e) {
+      console.error('abuse fx', e);
+      fx = null;
+    }
+    const ms = performance.now() - t0;
+    STATS.n++;
+    STATS.ms += ms;
+  }
+  const STATS = { n: 0, ms: 0 };
+  function build() {
+    if (cv) return;
+    cv = doc.createElement('canvas');
+    cv.id = 'abFx';
+    ctx = cv.getContext('2d');
+    tint = doc.createElement('div');
+    tint.id = 'abTint';
+    vig = doc.createElement('div');
+    vig.id = 'abVig';
+    fl = doc.createElement('div');
+    fl.id = 'abFlash';
+    for (const el of [tint, cv, vig, fl]) {
+      el.setAttribute('aria-hidden', 'true');
+      doc.body.appendChild(el);
+    }
+    size();
+    addEventListener('resize', onResize);
+  }
+  function start(type, opts = {}) {
+    if (!MAKE[type]) return;
+    inten = Math.max(0.3, Math.min(1.6, +opts.intensity || 1));
+    const same = cur === type && cv;
+    build();
+    if (same) return;
+    cur = type;
+    T = 0;
+    const t = TYPE[type];
+    root.classList.add('ab-on');
+    root.dataset.ab = type;
+    root.style.setProperty('--ab1', t.c1);
+    root.style.setProperty('--ab2', t.c2);
+    fx = MAKE[type]();
+    requestAnimationFrame(() => doc.body && [tint, cv, vig].forEach(el => el && el.classList.add('ab-in')));
+    if (!raf) {
+      last = 0;
+      raf = requestAnimationFrame(loop);
+    }
+  }
+  function stop() {
+    if (!cv) return;
+    const els = [tint, cv, vig, fl];
+    els.forEach(el => el && el.classList.remove('ab-in'));
+    root.classList.remove('ab-on');
+    delete root.dataset.ab;
+    root.style.removeProperty('--ab1');
+    root.style.removeProperty('--ab2');
+    const v = doc.getElementById('view');
+    if (v) v.classList.remove('ab-shake', 'ab-glitch', 'ab-quake');
+    cur = null;
+    const c = cv;
+    cv = tint = vig = fl = null;
+    removeEventListener('resize', onResize);
+    setTimeout(() => {
+      if (!cv) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        fx = null;
+      }
+      els.forEach(el => el && el.remove());
+    }, 650);
+    return c;
+  }
+  function flash(color = '#fff', max = 0.32) {
+    if (reduced() || !fl) return;
+    const now = performance.now();
+    if (now - lastFlash < 1400) return; // photosensitivity: never more than ~1 flash / 1.4s
+    lastFlash = now;
+    fl.style.setProperty('--fc', color);
+    fl.style.setProperty('--fo', String(Math.min(0.35, max)));
+    fl.classList.remove('go');
+    void fl.offsetWidth;
+    fl.classList.add('go');
+  }
+  function shake(ms = 300, kind = 'shake') {
+    if (reduced()) return;
+    const v = doc.getElementById('view');
+    if (!v || doc.querySelector('.ar-wrap')) return; // never transform the arena (it's position:fixed inside #view)
+    const cls = 'ab-' + kind;
+    v.classList.remove(cls);
+    void v.offsetWidth;
+    v.classList.add(cls);
+    clearTimeout(v._abT);
+    v._abT = setTimeout(() => v.classList.remove(cls), ms);
+  }
+  function preview(type, ms = 6000) {
+    start(type);
+    clearTimeout(preview._t);
+    preview._t = setTimeout(stop, ms);
+  }
+  // a flash for one-off moments, even with no event running (e.g. mutating a pet)
+  function flashAny(color) {
+    if (fl) return flash(color);
+    if (reduced()) return;
+    const f = doc.createElement('div');
+    f.id = 'abFlash';
+    f.className = 'solo';
+    f.style.setProperty('--fc', color || '#fff');
+    f.style.setProperty('--fo', '0.3');
+    doc.body.appendChild(f);
+    void f.offsetWidth;
+    f.classList.add('go');
+    setTimeout(() => f.remove(), 700);
+  }
+  window.AbuseFX = { TYPES, TYPE, start, stop, active: () => cur, flash: flashAny, shake, preview, stats: () => ({ frames: STATS.n, avgMs: STATS.n ? STATS.ms / STATS.n : 0 }), resetStats: () => ((STATS.n = 0), (STATS.ms = 0)) };
+})();
+
+/* =====================================================================
+   ADMIN ABUSE — when an admin starts an abuse from the admin panel, the
+   whole game goes nuts for everyone online (20 effects in abuse-fx.js),
+   coins/XP are multiplied, and players can play the admin's mini game
+   for prizes: catch falling loot, quiz (first N correct answers win),
+   lucky chests, prize wheel, a free gift, and pet mutations. Prizes are
+   decided on the server (pb_abuse_play), never in the browser.
+   ===================================================================== */
+(() => {
+  if (!window.AbuseFX) return;
+  const FX = AbuseFX;
+  const E = s => esc(s == null ? '' : String(s));
+  let A = null, // the running abuse (public data from the server)
+    tick = 0,
+    dropT = 0,
+    mktT = 0;
+  const K = id => 'pb2.abuse.' + id;
+  const mine = () => (A ? Store.get(K(A.id), {}) || {} : {});
+  const setMine = patch => A && Store.set(K(A.id), Object.assign(mine(), patch));
+  const left = () => (A ? Math.max(0, new Date(A.ends_at).getTime() - Date.now()) : 0);
+  const live = a => a && a.id && new Date(a.ends_at).getTime() > Date.now();
+  const cloud = () => window.PBCloud && PBCloud.C && PBCloud.C.s && PBCloud.C.s.token;
+  const mmss = ms => {
+    const s = Math.ceil(ms / 1000),
+      h = Math.floor(s / 3600),
+      m = Math.floor((s % 3600) / 60);
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s % 60).padStart(2, '0');
+  };
+  const ERR = {
+    abuse_over: 'This Admin Abuse just ended.',
+    no_more: 'You caught all the loot for this event!',
+    already_claimed: 'You already claimed this gift.',
+    already_played: 'You already played this one.',
+    already_won: 'You already won this one!',
+    no_tries: 'Out of tries for this quiz.',
+    too_late: 'Too late! All the prizes are taken.',
+    slow_down: 'Whoa, too fast!',
+    no_game: 'That game isn’t running right now.',
+    no_gift: 'There’s no gift in this event.',
+    auth: 'Log in to play for prizes.',
+    network: 'Can’t reach the server. Check your internet.',
+  };
+  async function play(kind, extra = {}) {
+    if (!cloud()) throw Object.assign(new Error('auth'), { code: 'auth' });
+    return PBCloud.rpc('pb_abuse_play', Object.assign({ p_token: PBCloud.C.s.token, p_abuse: A.id, p_kind: kind }, extra));
+  }
+  function give(rw) {
+    if (!rw) return '';
+    const what = window.PBApplyGrant ? PBApplyGrant({ kind: rw.kind, amount: rw.amount, item_id: rw.item_id, name: rw.name }) : rw.name;
+    saveAcct(true);
+    needRender = true;
+    return what || rw.name;
+  }
+  const bigWin = (rw, how) => {
+    SFX.play('legend');
+    confetti();
+    FX.flash(A ? FX.TYPE[A.type].c1 : '#fff');
+    toast(`🏆 You won ${rw.name}${how ? ' ' + how : ''}!`, 'xp');
+  };
+
+  /* ---------- coin / XP multipliers ---------- */
+  const mult = k => (A && live(A) ? Math.max(1, +A[k] || 1) : 1);
+  const cg0 = coinGain;
+  coinGain = function (n, fromTrade) {
+    return Math.round(cg0.call(this, n, fromTrade) * mult('coin_mult'));
+  };
+  const ax0 = addXP;
+  addXP = function (n) {
+    return ax0.call(this, n * mult('xp_mult'));
+  };
+
+  /* ---------- the banner ---------- */
+  function bar() {
+    let b = document.getElementById('abBar');
+    if (!A) return b && ((b.id = ''), b.classList.remove('ab-in'), setTimeout(() => b.remove(), 400));
+    const t = FX.TYPE[A.type];
+    if (!b) {
+      b = document.createElement('div');
+      b.id = 'abBar';
+      b.setAttribute('role', 'status');
+      document.body.appendChild(b);
+      requestAnimationFrame(() => b.classList.add('ab-in'));
+    }
+    const mults = [+A.coin_mult > 1 ? `${+A.coin_mult}× coins` : '', +A.xp_mult > 1 ? `${+A.xp_mult}× XP` : ''].filter(Boolean);
+    const h = `<span class="ab-ic">${t.ic}</span><span class="ab-t"><b>${E(A.label || t.label)}</b><small>Admin Abuse${A.by ? ' by ' + E(A.by) : ''}</small></span>${mults.map(m => `<span class="ab-mult">${m}</span>`).join('')}<span class="ab-time" data-abt>${mmss(left())}</span><button class="ab-go" data-abgo>${hasActions() ? 'Play' : 'Info'}</button>`;
+    if (b._h !== h.replace(/data-abt>[^<]*/, '')) {
+      b.innerHTML = h;
+      b._h = h.replace(/data-abt>[^<]*/, '');
+      b.querySelector('[data-abgo]').onclick = panel;
+    }
+  }
+  const hasActions = () => A && (A.game !== 'none' || A.gift || A.mutate);
+
+  /* ---------- intro splash ---------- */
+  function splash() {
+    const t = FX.TYPE[A.type];
+    document.getElementById('abSplash')?.remove();
+    const s = document.createElement('div');
+    s.id = 'abSplash';
+    s.innerHTML = `<div class="ab-sp"><div class="ab-k">⚡ ADMIN ABUSE ⚡</div><h1>${E(A.label || t.label)}</h1>${A.message ? `<p>${E(A.message)}</p>` : `<p>${E(t.desc)}</p>`}${A.by ? `<span class="ab-by">Started by ${E(A.by)}</span>` : ''}</div>`;
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 3400);
+    SFX.play('legend');
+    FX.shake(500, 'quake');
+    setTimeout(() => FX.flash(t.c1), 60);
+  }
+
+  /* ---------- start / stop ---------- */
+  function begin(a, fresh) {
+    A = a;
+    FX.start(a.type, { intensity: +a.intensity || 1 });
+    bar();
+    if (fresh) {
+      splash();
+      const seen = Store.get('pb2.abuseSeen', []) || [];
+      if (!seen.includes(a.id)) Store.set('pb2.abuseSeen', [...seen, a.id].slice(-40));
+      // a gift is waiting: nudge
+      if (a.gift && !mine().gift) setTimeout(() => A && A.id === a.id && toast(`🎁 Free gift in this event: ${a.gift.name}. Tap Play!`, 'ok'), 3600);
+    }
+    clearInterval(tick);
+    tick = setInterval(second, 1000);
+    startDrops();
+    startMarket();
+  }
+  function end(silent) {
+    if (!A) return;
+    const was = A;
+    A = null;
+    clearInterval(tick);
+    stopDrops();
+    clearInterval(mktT);
+    FX.stop();
+    bar();
+    document.getElementById('abSplash')?.remove();
+    const open = document.querySelector('#modalRoot .ab-panel, #modalRoot [data-ab-game]');
+    if (open) {
+      const r = document.getElementById('modalRoot');
+      r.classList.remove('open');
+      r.innerHTML = '';
+    }
+    if (!silent) toast(`${FX.TYPE[was.type].ic} ${was.label || 'Admin Abuse'} is over. GG!`, 'ok');
+  }
+  function apply(a) {
+    if (live(a)) {
+      if (!A || A.id !== a.id) {
+        const seen = Store.get('pb2.abuseSeen', []) || [];
+        if (A) end(true);
+        begin(a, !seen.includes(a.id));
+      } else {
+        A = Object.assign(A, a);
+        bar();
+      }
+    } else if (A) end();
+  }
+  function second() {
+    if (!A) return;
+    if (!left()) return end();
+    const t = document.querySelector('#abBar [data-abt]');
+    if (t) t.textContent = mmss(left());
+  }
+
+  /* ---------- live updates: site sync + realtime pings ---------- */
+  const al0 = window.PBApplyLive;
+  window.PBApplyLive = function (s) {
+    if (al0) al0.apply(this, arguments);
+    try {
+      apply(s && s.abuse ? s.abuse : null);
+    } catch (e) {
+      console.error('abuse', e);
+    }
+  };
+  if (window.PBLive && PBLive.on)
+    PBLive.on('abuse', p => {
+      if (p.ev === 'start' && p.a) apply(p.a);
+      else if (p.ev === 'stop') {
+        if (A) end();
+      } else if (p.ev === 'win' && A && p.id === A.id) {
+        A.winners_now = (+A.winners_now || 0) + 1;
+        const me = acct && (acct.user || acct.name);
+        if (p.who && p.who !== me) toast(`🏆 ${p.who} won ${p.prize}!${p.left === 0 ? ' All prizes are taken.' : ''}`, 'xp');
+        if (document.querySelector('#modalRoot .ab-panel')) panel();
+      }
+    });
+
+  /* ---------- market pump / dump (simulated market only) ---------- */
+  function startMarket() {
+    clearInterval(mktT);
+    if (!A || (A.type !== 'bull' && A.type !== 'bear')) return;
+    const up = A.type === 'bull';
+    toast(up ? '🐂 Bull Stampede! The whole market is pumping.' : '🐻 Bear Invasion! The whole market is dumping.', up ? 'ok' : 'err');
+    mktT = setInterval(() => {
+      if (!A || window.PBRealMode || !window.PBLive || document.hidden) return;
+      const pool = ASSETS.filter(a => !a.hidden && !a.fund && !a.legacy);
+      for (let i = 0; i < 30 && pool.length; i++) {
+        const a = pool[Math.floor(Math.random() * pool.length)],
+          k = 0.004 + Math.random() * 0.012;
+        try {
+          PBLive.setPrice(a, a.price * (up ? 1 + k : 1 - k), true);
+        } catch (e) {}
+      }
+    }, 2500);
+  }
+
+  /* ---------- catch game: loot falls from the sky ---------- */
+  const DROP_IC = { moneyrain: ['💵', '💰', '🪙'], midas: ['🪙', '👑', '💰'], petparade: ['🎁', '🦴', '💝'], bull: ['💰', '📈', '🪙'], toxic: ['🧪', '💰'], void: ['💎', '🌀'], moon: ['🚀', '💎', '🪙'], mutation: ['🧬', '🧪', '💎'], blizzard: ['🎁', '❄️', '💰'], inferno: ['🔥', '💰', '💎'] };
+  function startDrops() {
+    stopDrops();
+    if (!A || A.game !== 'catch') return;
+    const loop = () => {
+      dropT = setTimeout(loop, 900 + Math.random() * 1300);
+      if (!A || document.hidden || (mine().caught || 0) >= +A.drops || mine().full) return;
+      if (document.querySelectorAll('.ab-drop').length > 5) return;
+      spawn();
+    };
+    dropT = setTimeout(loop, 1500);
+  }
+  function stopDrops() {
+    clearTimeout(dropT);
+    document.querySelectorAll('.ab-drop').forEach(d => d.remove());
+  }
+  function spawn() {
+    const ics = DROP_IC[A.type] || ['💰', '🪙', '💎'],
+      b = document.createElement('button');
+    b.className = 'ab-drop';
+    b.setAttribute('aria-label', 'Catch the loot');
+    b.innerHTML = `<span>${ics[Math.floor(Math.random() * ics.length)]}</span>`;
+    b.style.left = 6 + Math.random() * 84 + 'vw';
+    b.style.setProperty('--dur', 5 + Math.random() * 3 + 's');
+    b.style.setProperty('--sw', (Math.random() < 0.5 ? -1 : 1) * (20 + Math.random() * 40) + 'px');
+    b.onanimationend = e => e.animationName === 'abFall' && b.remove();
+    b.onclick = () => catchIt(b);
+    document.body.appendChild(b);
+  }
+  let busy = false;
+  async function catchIt(b) {
+    if (busy || !A) return;
+    if (!cloud()) {
+      b.remove();
+      return toast('Sign up or log in to catch loot for prizes!', 'err');
+    }
+    busy = true;
+    const r = b.getBoundingClientRect();
+    b.style.setProperty('--at', getComputedStyle(b).transform === 'none' ? 'none' : getComputedStyle(b).transform);
+    b.classList.add('pop');
+    setTimeout(() => b.remove(), 360);
+    try {
+      const res = await play('drop');
+      const what = give(res.reward);
+      setMine({ caught: res.n });
+      plus(r.left + r.width / 2, r.top, res.won ? `🏆 ${res.reward.name}!` : '+' + what.replace(/ coins?$/, '') + ' 🪙');
+      if (res.won) bigWin(res.reward, 'from the loot rain');
+      else SFX.play('coin');
+      if (res.left <= 0) {
+        setMine({ full: 1 });
+        toast('You caught all the loot for this event! 🎉', 'ok');
+      }
+    } catch (e) {
+      if (e.code === 'no_more') setMine({ full: 1 });
+      if (e.code !== 'slow_down') toast(ERR[e.code] || e.message, 'err');
+    } finally {
+      setTimeout(() => (busy = false), 260);
+    }
+  }
+  function plus(x, y, txt) {
+    const p = document.createElement('div');
+    p.className = 'ab-plus';
+    p.textContent = txt;
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1000);
+  }
+
+  /* ---------- the Play panel ---------- */
+  const GAME = {
+    catch: { ic: '💰', t: 'Catch the loot', d: a => `Tap the loot falling from the sky. ${a.drops} max, ${a.drop_coins} coins each${a.prize ? `, and a rare chance at <b>${E(a.prize.name)}</b>` : ''}.` },
+    quiz: { ic: '❓', t: 'Quiz', d: a => `First ${a.winners} correct answer${a.winners > 1 ? 's' : ''} win <b>${E(a.prize && a.prize.name)}</b>. 5 tries.` },
+    chest: { ic: '🧰', t: 'Lucky chests', d: a => `Pick one chest. ${Math.round((+a.chance || 0.2) * 100)}% chance at <b>${E(a.prize && a.prize.name)}</b> (${a.winners} prize${a.winners > 1 ? 's' : ''}). Everyone else gets 100 coins.` },
+    wheel: { ic: '🎡', t: 'Prize wheel', d: a => `One free spin. Coins, XP, cash${a.prize ? `, or the jackpot: <b>${E(a.prize.name)}</b>` : ''}.` },
+  };
+  function panel() {
+    if (!A) return;
+    const t = FX.TYPE[A.type],
+      m = mine(),
+      prizesLeft = Math.max(0, (+A.winners || 0) - (+A.winners_now || 0));
+    const acts = [];
+    if (A.gift) acts.push(`<button class="ab-act" data-a="gift" ${m.gift ? 'disabled' : ''}><span class="ab-ai">🎁</span><span class="ab-at"><b>Free gift</b><small>${E(A.gift.name)} for everyone in this event.</small></span><span class="ab-st">${m.gift ? 'Claimed' : 'Claim'}</span></button>`);
+    if (A.game !== 'none' && GAME[A.game]) {
+      const g = GAME[A.game],
+        done = A.game === 'catch' ? m.full : m[A.game];
+      const st = A.game === 'catch' ? `${m.caught || 0}/${A.drops}` : done ? (m.won ? 'Won!' : 'Played') : 'Play';
+      acts.push(`<button class="ab-act" data-a="${A.game}" ${done && A.game !== 'catch' ? 'disabled' : ''}><span class="ab-ai">${g.ic}</span><span class="ab-at"><b>${g.t}</b><small>${g.d(A)}</small></span><span class="ab-st">${st}</span></button>`);
+    }
+    if (A.mutate) acts.push(`<button class="ab-act" data-a="mutate" ${m.mutate ? 'disabled' : ''}><span class="ab-ai">🧬</span><span class="ab-at"><b>Mutate a pet</b><small>Roll a random mutation serum: Golden, Frozen, Inferno… or ultra-rare Celestial (perk ×4).</small></span><span class="ab-st">${m.mutate ? 'Done' : 'Roll'}</span></button>`);
+    const meta = [`⏱ ${mmss(left())} left`, +A.coin_mult > 1 ? `${+A.coin_mult}× coins` : '', +A.xp_mult > 1 ? `${+A.xp_mult}× XP` : '', A.prize && A.game !== 'none' ? `${prizesLeft} prize${prizesLeft === 1 ? '' : 's'} left` : ''].filter(Boolean);
+    modal({
+      title: `${t.ic} Admin Abuse`,
+      confirm: '',
+      cancel: 'Close',
+      html: `<div class="ab-panel"><div class="ab-hero"><b>${E(A.label || t.label)}</b><p>${E(A.message || t.desc)}</p><div class="ab-meta">${meta.map(x => `<span>${x}</span>`).join('')}</div></div>
+        ${acts.length ? `<div class="ab-acts">${acts.join('')}</div>` : '<p class="ab-note">No game this time, just chaos. Everything you earn is multiplied while it lasts!</p>'}
+        ${!cloud() && acts.length ? '<p class="ab-note">Sign up or log in (Profile) to play for prizes.</p>' : ''}</div>`,
+      onMount: r =>
+        r.querySelectorAll('[data-a]').forEach(
+          b =>
+            (b.onclick = () => {
+              const k = b.dataset.a;
+              if (!cloud()) return toast(ERR.auth, 'err');
+              if (k === 'gift') return doGift();
+              if (k === 'mutate') return doMutate();
+              if (k === 'catch') return toast('Tap the loot falling from the sky! 💰', 'ok');
+              if (k === 'quiz') return quiz();
+              if (k === 'chest') return chests();
+              if (k === 'wheel') return wheel();
+            })
+        ),
+    });
+  }
+  async function doGift() {
+    try {
+      const res = await play('gift');
+      const what = give(res.reward);
+      setMine({ gift: 1 });
+      SFX.play('win');
+      confetti();
+      toast(`🎁 Gift claimed: ${what}`, 'xp');
+    } catch (e) {
+      if (e.code === 'already_claimed') setMine({ gift: 1 });
+      toast(ERR[e.code] || e.message, 'err');
+    }
+    panel();
+  }
+  async function doMutate() {
+    try {
+      const res = await play('mutate');
+      setMine({ mutate: 1 });
+      const id = 'mut_' + res.mut,
+        it = ITEM[id];
+      if (!it) return toast('Mutation rolled: ' + res.mut, 'ok');
+      grant(it);
+      saveAcct(true);
+      const M = window.PBExotic && PBExotic.MUT[res.mut];
+      FX.flash(M ? M.c : '#39ffb0');
+      SFX.play(M && M.mult >= 2 ? 'legend' : 'rare');
+      if (M && M.mult >= 2) confetti();
+      modal({
+        title: '🧬 Mutation rolled!',
+        confirm: acct.pets.list.length ? 'Use it now' : '',
+        cancel: acct.pets.list.length ? 'Keep for later' : 'Okay',
+        html: `<div class="ab-win"><div class="ab-big">🧪</div>${window.PBExotic ? PBExotic.pill(res.mut) : ''}<b>${E(it.name)}</b><small>${E(it.desc)}${acct.pets.list.length ? '' : ' Hatch a pet, then use it from the Pets screen.'}</small></div>`,
+        onConfirm: () => {
+          setTimeout(() => window.PBExotic && PBExotic.serumModal(id), 60);
+        },
+      });
+    } catch (e) {
+      if (e.code === 'already_played') setMine({ mutate: 1 });
+      toast(ERR[e.code] || e.message, 'err');
+    }
+  }
+  function quiz() {
+    let busyQ = false;
+    modal({
+      title: '❓ Admin quiz',
+      confirm: 'Answer',
+      cancel: 'Close',
+      html: `<div class="ab-quiz" data-ab-game><q>${E(A.question)}</q><input class="txt" id="abAns" maxlength="60" autocomplete="off" placeholder="Your answer" aria-label="Your answer"><div class="ab-msg" id="abMsg"></div></div>`,
+      onMount: r => {
+        const i = r.querySelector('#abAns');
+        i.focus();
+        i.onkeydown = e => e.key === 'Enter' && r.querySelector('[data-ok]').click();
+      },
+      onConfirm: r => {
+        const v = r.querySelector('#abAns').value.trim(),
+          msg = r.querySelector('#abMsg');
+        if (!v || busyQ) return false;
+        busyQ = true;
+        play('quiz', { p_answer: v })
+          .then(res => {
+            if (res.won) {
+              give(res.reward);
+              setMine({ quiz: 1, won: 1 });
+              msg.className = 'ab-msg good';
+              msg.textContent = `Correct! You won ${res.reward.name}!`;
+              bigWin(res.reward, 'in the quiz');
+              setTimeout(() => document.querySelector('#modalRoot [data-x]')?.click(), 1400);
+            } else {
+              msg.className = 'ab-msg bad';
+              msg.textContent = res.left > 0 ? `Nope. ${res.left} ${res.left === 1 ? 'try' : 'tries'} left.` : 'Out of tries!';
+              if (res.left <= 0) setMine({ quiz: 1 });
+              SFX.play('flip');
+            }
+          })
+          .catch(e => {
+            msg.className = 'ab-msg bad';
+            msg.textContent = ERR[e.code] || e.message;
+            if (['no_tries', 'already_won', 'too_late'].includes(e.code)) setMine({ quiz: 1 });
+          })
+          .finally(() => (busyQ = false));
+        return false; // keep it open to show the result
+      },
+    });
+  }
+  function chests() {
+    let done = false;
+    modal({
+      title: '🧰 Pick a chest',
+      confirm: '',
+      cancel: 'Close',
+      html: `<div data-ab-game><div class="ab-chests">${[0, 1, 2, 3, 4, 5].map(i => `<button class="ab-chest" data-c="${i}" aria-label="Chest ${i + 1}">🧰</button>`).join('')}</div><div class="ab-msg" id="abMsg" style="text-align:center"></div></div>`,
+      onMount: r =>
+        r.querySelectorAll('[data-c]').forEach(
+          b =>
+            (b.onclick = async () => {
+              if (done) return;
+              done = true;
+              r.querySelectorAll('[data-c]').forEach(x => (x.disabled = true));
+              b.classList.add('shake');
+              SFX.play('flip');
+              const msg = r.querySelector('#abMsg');
+              try {
+                const res = await play('chest', { p_pick: +b.dataset.c });
+                await new Promise(z => setTimeout(z, 900));
+                b.classList.remove('shake');
+                b.classList.add('open');
+                b.textContent = res.won ? '💎' : '🪙';
+                give(res.reward);
+                setMine({ chest: 1, won: res.won ? 1 : 0 });
+                msg.className = 'ab-msg ' + (res.won ? 'good' : '');
+                msg.textContent = res.won ? `JACKPOT! You won ${res.reward.name}!` : `Not this time: +${res.reward.name}`;
+                if (res.won) bigWin(res.reward, 'from a chest');
+                else SFX.play('coin');
+              } catch (e) {
+                b.classList.remove('shake');
+                msg.className = 'ab-msg bad';
+                msg.textContent = ERR[e.code] || e.message;
+                if (e.code === 'already_played') setMine({ chest: 1 });
+              }
+            })
+        ),
+    });
+  }
+  const SEG = [
+    ['100 🪙', '#3d8bff'],
+    ['250 🪙', '#8a5cff'],
+    ['200 XP', '#1fd67a'],
+    ['500 🪙', '#ff9a3d'],
+    ['$5K', '#3ddc84'],
+    ['1K 🪙', '#ff3df0'],
+    ['750 XP', '#16c7e0'],
+    ['JACKPOT', '#ffc53d'],
+  ];
+  function wheelSVG() {
+    const n = SEG.length,
+      a = (Math.PI * 2) / n;
+    let s = '';
+    SEG.forEach(([t, c], i) => {
+      const a0 = i * a - Math.PI / 2 - a / 2,
+        a1 = a0 + a;
+      const p = (ang, r) => `${(100 + Math.cos(ang) * r).toFixed(2)} ${(100 + Math.sin(ang) * r).toFixed(2)}`;
+      s += `<path d="M100 100L${p(a0, 96)}A96 96 0 0 1 ${p(a1, 96)}z" fill="${c}" stroke="#0b0610" stroke-width="2"/>`;
+      const am = a0 + a / 2;
+      s += `<text x="${(100 + Math.cos(am) * 62).toFixed(1)}" y="${(100 + Math.sin(am) * 62).toFixed(1)}" transform="rotate(${((am * 180) / Math.PI + 90).toFixed(1)} ${(100 + Math.cos(am) * 62).toFixed(1)} ${(100 + Math.sin(am) * 62).toFixed(1)})" text-anchor="middle" dominant-baseline="middle" font-size="${t === 'JACKPOT' ? 10 : 12}" font-weight="900" fill="#0b0610">${t}</text>`;
+    });
+    return `<svg viewBox="0 0 200 200" id="abWheel"><circle cx="100" cy="100" r="99" fill="#0b0610"/>${s}<circle cx="100" cy="100" r="16" fill="#fff" stroke="#0b0610" stroke-width="3"/><text x="100" y="101" text-anchor="middle" dominant-baseline="middle" font-size="12">🎡</text></svg>`;
+  }
+  function wheel() {
+    let spun = false;
+    modal({
+      title: '🎡 Prize wheel',
+      confirm: 'Spin!',
+      cancel: 'Close',
+      html: `<div data-ab-game><div class="ab-wheel">${wheelSVG()}</div><div class="ab-msg" id="abMsg" style="text-align:center">${A.prize ? `Jackpot: <b>${E(A.prize.name)}</b>` : ''}</div></div>`,
+      onConfirm: r => {
+        if (spun) return false;
+        spun = true;
+        const ok = r.querySelector('[data-ok]'),
+          msg = r.querySelector('#abMsg'),
+          w = r.querySelector('#abWheel');
+        ok.disabled = true;
+        play('wheel')
+          .then(res => {
+            const n = SEG.length,
+              deg = 360 * 6 + (360 - res.seg * (360 / n)) + (Math.random() * 20 - 10);
+            SFX.play('flip');
+            w.style.transform = `rotate(${deg}deg)`;
+            setTimeout(() => {
+              give(res.reward);
+              setMine({ wheel: 1, won: res.won ? 1 : 0 });
+              msg.className = 'ab-msg ' + (res.won ? 'good' : 'good');
+              msg.textContent = res.won ? `JACKPOT! ${res.reward.name}!` : `You won ${res.reward.name}!`;
+              if (res.won) bigWin(res.reward, 'on the wheel');
+              else SFX.play('win');
+              ok.textContent = 'Done';
+            }, 4300);
+          })
+          .catch(e => {
+            msg.className = 'ab-msg bad';
+            msg.textContent = ERR[e.code] || e.message;
+            if (e.code === 'already_played') setMine({ wheel: 1 });
+          });
+        return false;
+      },
+    });
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && A && !left()) end();
+  });
+  window.PBAbuse = { apply, end, panel, active: () => A, _begin: begin };
 })();
 
 /* SHOP-PLUS:END */
@@ -43630,6 +46004,224 @@ html.lbg-on:not(#_):not(#_):not(#_):not(#_) .side {
   html.lbg-on:not(#_):not(#_):not(#_):not(#_) .stat-card {
     background-color: color-mix(in srgb, var(--panel) 88%, transparent) !important;
   }
+}
+
+</style>
+<style id="pbExotic">
+/* ===================== EXOTIC PETS + MUTATIONS ===================== */
+/* exotic animations (inside the pet SVG) */
+svg.xart { overflow: visible; }
+svg.xart .xa-spin, svg.xart .xa-spin2, svg.art .xa-spin2 { transform-box: view-box; transform-origin: 32px 35px; animation: xaSpin 14s linear infinite; }
+svg .xa-spin2 { animation-duration: 9s !important; animation-direction: reverse; }
+svg .xa-pulse { transform-box: fill-box; transform-origin: center; animation: xaPulse 2.4s ease-in-out infinite; }
+svg .xa-pulse2 { transform-box: fill-box; transform-origin: center; animation: xaPulse2 3s ease-in-out infinite; }
+svg .xa-flap { transform-box: view-box; transform-origin: 32px 34px; animation: xaFlap 1.6s ease-in-out infinite; }
+svg .xa-flick { transform-box: fill-box; transform-origin: 50% 100%; animation: xaFlick .7s ease-in-out infinite alternate; }
+svg .xa-sway { transform-box: view-box; transform-origin: 32px 40px; animation: xaSway 2.8s ease-in-out infinite; }
+svg .xa-bob { animation: xaBob 2.2s ease-in-out infinite; }
+svg .xa-blink { animation: xaBlink 1.8s steps(2, jump-none) infinite; }
+svg .xa-glow { animation: xaGlow 1.6s ease-in-out infinite; }
+svg .xa-scan { animation: xaScan 1.4s ease-in-out infinite; }
+@keyframes xaSpin { to { transform: rotate(360deg); } }
+@keyframes xaPulse { 0%, 100% { opacity: .35; transform: scale(.94); } 50% { opacity: .75; transform: scale(1.05); } }
+@keyframes xaPulse2 { 0%, 100% { transform: scale(.97) rotate(0deg); } 50% { transform: scale(1.03) rotate(4deg); } }
+@keyframes xaFlap { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.08) translateY(-1px); } }
+@keyframes xaFlick { from { transform: scaleY(.92) skewX(-2deg); } to { transform: scaleY(1.06) skewX(2deg); } }
+@keyframes xaSway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes xaBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes xaBlink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@keyframes xaGlow { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
+@keyframes xaScan { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+
+/* Exotic rarity chrome */
+.col-item[data-r='x'], .pet-stage[data-r='x'] { --rc: #ff3df0; }
+.col-item[data-r='x'] { background: linear-gradient(160deg, color-mix(in srgb, #ff3df0 14%, var(--bg2)), color-mix(in srgb, #3de7ff 10%, var(--bg2))); border-color: color-mix(in srgb, #ff3df0 45%, transparent) !important; position: relative; overflow: hidden; }
+.col-item[data-r='x']::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .16) 50%, transparent 65%); transform: translateX(-100%); animation: xShine 4.5s ease-in-out infinite; pointer-events: none; }
+.x-rar { background: linear-gradient(90deg, #ff3df0, #8a5cff, #3de7ff, #ff3df0); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent !important; font-weight: 800; animation: xHue 3s linear infinite; }
+.col-item[data-r='x'].locked .face { filter: brightness(0) drop-shadow(0 0 6px #ff3df0) !important; opacity: .55; }
+.col-item .x-tag { position: absolute; top: 8px; right: 8px; font: 800 9.5px var(--sans); letter-spacing: .08em; padding: 3px 6px; border-radius: 99px; background: linear-gradient(90deg, #ff3df0, #8a5cff); color: #fff; z-index: 2; }
+.pet-stage[data-r='x']::after { content: ''; position: absolute; inset: 4%; border-radius: 50%; background: conic-gradient(from 0deg, #ff3df088, #8a5cff00, #3de7ff88, #8a5cff00, #ff3df088); animation: xaSpin 6s linear infinite; filter: blur(14px); pointer-events: none; z-index: 0; }
+.pet-stage[data-r='x'] .pet-big { position: relative; z-index: 1; }
+@keyframes xShine { 0%, 70% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes xHue { to { background-position: 300% 0; } }
+
+html .col-item[data-r='x'] .rpill { color: #ff6af5 !important; background: rgba(255, 61, 240, .16) !important; border: 1px solid rgba(255, 61, 240, .45) !important; font-weight: 800; letter-spacing: .03em; }
+.col-item .mut-pill ~ .x-tag { display: none; }
+.x-egg small.muted { color: var(--mut) !important; }
+/* Exotic eggs */
+.x-egg .face { filter: drop-shadow(0 0 8px var(--rc)); animation: xEgg 2.2s ease-in-out infinite; }
+@keyframes xEgg { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg) translateY(-2px); } }
+.x-eggs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.x-empty { color: var(--mut); font-size: 13px; line-height: 1.45; margin: 0; }
+
+/* ---------- mutations (any pet, drawn anywhere) ---------- */
+svg.art[data-mut] { overflow: visible; }
+svg.art[data-mut='gold'] { filter: sepia(1) saturate(3.4) hue-rotate(-12deg) brightness(1.08) contrast(1.08) drop-shadow(0 0 4px #ffc53daa); }
+svg.art[data-mut='frozen'] { filter: grayscale(.35) sepia(.3) hue-rotate(160deg) saturate(2.4) brightness(1.15) drop-shadow(0 0 4px #7fd7ffcc); }
+svg.art[data-mut='inferno'] { filter: sepia(.7) saturate(3.2) hue-rotate(-22deg) contrast(1.1) drop-shadow(0 0 5px #ff6a1acc); }
+svg.art[data-mut='toxic'] { filter: hue-rotate(75deg) saturate(2.3) brightness(1.05) drop-shadow(0 0 5px #7dff3dbb); }
+svg.art[data-mut='shadow'] { filter: brightness(.5) contrast(1.45) saturate(.7) drop-shadow(0 0 6px #9b5cffdd); }
+svg.art[data-mut='neon'] { filter: saturate(3) brightness(1.15) contrast(1.15) drop-shadow(0 0 3px #ff3df0) drop-shadow(0 0 6px #3de7ff); animation: mxNeon 1.6s ease-in-out infinite; }
+svg.art[data-mut='blood'] { filter: sepia(1) saturate(5) hue-rotate(-48deg) brightness(.85) contrast(1.15) drop-shadow(0 0 5px #ff1f3dcc); }
+svg.art[data-mut='glitch'] { filter: drop-shadow(2px 0 0 #ff3d6ecc) drop-shadow(-2px 0 0 #39ff88cc); animation: mxGlitch 2.2s steps(1) infinite; }
+svg.art[data-mut='rainbow'] { animation: mxRainbow 3s linear infinite; }
+svg.art[data-mut='diamond'] { filter: saturate(.35) brightness(1.3) contrast(1.25) drop-shadow(0 0 5px #bff4ff); }
+svg.art[data-mut='cosmic'] { filter: hue-rotate(225deg) saturate(1.9) brightness(.85) contrast(1.1) drop-shadow(0 0 6px #7b6cff); }
+svg.art[data-mut='celestial'] { filter: brightness(1.3) saturate(.75) sepia(.25) drop-shadow(0 0 6px #fff1b0) drop-shadow(0 0 12px #ffd34d88); }
+svg .mx-tw { animation: xaBlink 1.4s ease-in-out infinite; }
+svg .mx-rise { animation: mxRise 2.4s ease-in infinite; }
+svg .mx-glitch { animation: mxGlitchBar 1.1s steps(1) infinite; }
+@keyframes mxNeon { 0%, 100% { filter: saturate(3) brightness(1.15) drop-shadow(0 0 3px #ff3df0) drop-shadow(0 0 6px #3de7ff); } 50% { filter: saturate(3) brightness(1.3) drop-shadow(0 0 6px #ff3df0) drop-shadow(0 0 12px #3de7ff); } }
+@keyframes mxRainbow { from { filter: hue-rotate(0deg) saturate(1.8) drop-shadow(0 0 4px #ff7ae6); } to { filter: hue-rotate(360deg) saturate(1.8) drop-shadow(0 0 4px #ff7ae6); } }
+@keyframes mxGlitch { 0%, 88%, 100% { transform: none; } 90% { transform: translate(2px, -1px) skewX(6deg); } 94% { transform: translate(-2px, 1px); } }
+@keyframes mxGlitchBar { 0%, 100% { transform: none; opacity: .9; } 33% { transform: translateX(6px); opacity: .3; } 66% { transform: translateX(-4px); opacity: 1; } }
+@keyframes mxRise { from { transform: translateY(4px); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(-14px); opacity: 0; } }
+.mut-pill { display: inline-flex; align-items: center; gap: 4px; font: 800 10.5px var(--sans); letter-spacing: .05em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; color: #120a1e; background: var(--mc, #ffc53d); box-shadow: 0 0 12px color-mix(in srgb, var(--mc, #ffc53d) 55%, transparent); }
+.mut-pill.rb { background: linear-gradient(90deg, #ff7ae6, #ffd34d, #7dff3d, #3de7ff, #8a5cff); }
+.col-item .mut-pill { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; padding: 2px 6px; }
+.x-serums { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.x-serum { display: inline-flex; align-items: center; gap: 6px; }
+.x-serum i { width: 12px; height: 12px; border-radius: 50%; background: var(--mc); box-shadow: 0 0 8px var(--mc); }
+
+@media (prefers-reduced-motion: reduce) {
+  svg.xart *, svg.art[data-mut], svg.art[data-mut] *, .col-item[data-r='x']::after, .pet-stage[data-r='x']::after, .x-egg .face { animation: none !important; }
+}
+html.reduce-motion svg.xart *, html.reduce-motion svg.art[data-mut], html.reduce-motion svg.art[data-mut] * { animation: none !important; }
+
+</style>
+<style id="pbAbuse">
+/* ===================== ADMIN ABUSE ===================== */
+/* layers: tint 57 · canvas 58 · vignette 59 · flash 61 · banner 62 · drops 63 · splash 64  (modals 100+, packs 110, toasts 120) */
+#abTint, #abFx, #abVig, #abFlash { position: fixed; inset: 0; pointer-events: none; }
+#abTint { z-index: 57; opacity: 0; transition: opacity .8s ease; }
+#abFx { z-index: 58; width: 100vw; height: 100vh; opacity: 0; transition: opacity .8s ease; }
+#abVig { z-index: 59; opacity: 0; transition: opacity .8s ease; box-shadow: inset 0 0 180px 40px color-mix(in srgb, var(--ab2, #000) 85%, transparent); }
+#abTint.ab-in, #abFx.ab-in, #abVig.ab-in { opacity: 1; }
+#abFlash { z-index: 61; background: var(--fc, #fff); opacity: 0; }
+#abFlash.go { animation: abFlash .42s ease-out; }
+#abFlash.solo { z-index: 130; }
+@keyframes abFlash { 0% { opacity: 0; } 12% { opacity: var(--fo, .3); } 100% { opacity: 0; } }
+
+/* per-type tints: recolor the whole game */
+html[data-ab='bloodrain'] #abTint { background: radial-gradient(ellipse at 50% -20%, rgba(255, 0, 30, .55), transparent 65%), linear-gradient(rgba(120, 0, 12, .28), rgba(40, 0, 6, .4)); mix-blend-mode: hard-light; }
+html[data-ab='thunder'] #abTint { background: linear-gradient(rgba(20, 28, 52, .55), rgba(10, 14, 28, .35)); }
+html[data-ab='moneyrain'] #abTint { background: radial-gradient(ellipse at 50% 0%, rgba(61, 220, 132, .28), transparent 70%); mix-blend-mode: screen; }
+html[data-ab='meteor'] #abTint { background: radial-gradient(ellipse at 80% 0%, rgba(255, 120, 40, .3), transparent 60%), rgba(12, 6, 30, .35); }
+html[data-ab='disco'] #abTint { background: linear-gradient(120deg, rgba(255, 61, 240, .3), rgba(61, 139, 255, .3), rgba(255, 211, 77, .25)); background-size: 300% 300%; mix-blend-mode: color; animation: abDisco 4s linear infinite; }
+html[data-ab='glitch'] #abTint { background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .22) 0 2px, transparent 2px 4px), linear-gradient(90deg, rgba(255, 61, 110, .08), rgba(57, 255, 136, .08)); animation: abFlicker .15s steps(2) infinite; }
+html[data-ab='blizzard'] #abTint { background: linear-gradient(rgba(220, 240, 255, .18), rgba(180, 215, 240, .12)); }
+html[data-ab='blizzard'] #abVig { box-shadow: inset 0 0 160px 50px rgba(235, 248, 255, .75); }
+html[data-ab='inferno'] #abTint { background: linear-gradient(rgba(80, 10, 0, .2), rgba(255, 80, 0, .32)); mix-blend-mode: hard-light; }
+html[data-ab='void'] #abTint { background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0), rgba(6, 0, 16, .55) 80%); }
+html[data-ab='midas'] #abTint { background: linear-gradient(rgba(255, 197, 61, .38), rgba(180, 120, 0, .3)); mix-blend-mode: color; }
+html[data-ab='toxic'] #abTint { background: linear-gradient(rgba(125, 255, 61, .3), rgba(20, 60, 0, .3)); mix-blend-mode: color; }
+html[data-ab='quake'] #abTint { background: linear-gradient(rgba(90, 55, 20, .25), rgba(40, 24, 8, .35)); }
+html[data-ab='gravity'] #abTint { background: radial-gradient(ellipse at 50% 30%, rgba(138, 215, 255, .18), rgba(32, 22, 74, .35)); }
+html[data-ab='mutation'] #abTint { background: linear-gradient(135deg, rgba(57, 255, 176, .28), rgba(107, 31, 255, .3), rgba(255, 61, 240, .28)); background-size: 300% 300%; mix-blend-mode: color; animation: abDisco 6s linear infinite; }
+html[data-ab='cyber'] #abTint { background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .16) 0 1px, transparent 1px 3px), linear-gradient(rgba(255, 61, 240, .22), rgba(22, 224, 255, .18)); mix-blend-mode: hard-light; }
+html[data-ab='bull'] #abTint { background: linear-gradient(rgba(31, 214, 122, .32), rgba(6, 61, 32, .28)); mix-blend-mode: color; }
+html[data-ab='bear'] #abTint { background: linear-gradient(rgba(255, 61, 61, .32), rgba(61, 6, 6, .32)); mix-blend-mode: color; }
+html[data-ab='petparade'] #abTint { background: linear-gradient(135deg, rgba(255, 158, 210, .25), rgba(122, 92, 255, .22)); mix-blend-mode: screen; }
+html[data-ab='tornado'] #abTint { background: linear-gradient(rgba(60, 70, 80, .32), rgba(110, 120, 100, .22)); }
+html[data-ab='moon'] #abTint { background: radial-gradient(circle at 50% 50%, rgba(10, 8, 38, .2), rgba(10, 8, 38, .6)); }
+@keyframes abDisco { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+@keyframes abFlicker { 0% { opacity: .85; } 50% { opacity: 1; } }
+
+/* the whole UI reacts */
+html.ab-on .card { box-shadow: 0 0 0 1px color-mix(in srgb, var(--ab1) 38%, transparent), 0 10px 40px -18px var(--ab1) !important; }
+html.ab-on #topWrap { box-shadow: 0 1px 0 color-mix(in srgb, var(--ab1) 60%, transparent), 0 8px 30px -12px var(--ab1); }
+#view.ab-shake > *:not(.ar-wrap) { animation: abShake .09s linear infinite; }
+#view.ab-quake > *:not(.ar-wrap) { animation: abQuake .07s linear infinite; }
+#view.ab-glitch > *:not(.ar-wrap) { animation: abGlitch .09s steps(1) infinite; }
+html[data-ab='gravity'] #view > *:not(.ar-wrap) { animation: abFloat 5s ease-in-out infinite; }
+html[data-ab='gravity'] #view > *:nth-child(2n):not(.ar-wrap) { animation-delay: -1.7s; }
+html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay: -3.1s; }
+@keyframes abShake { 0% { transform: translate(2px, -1px); } 25% { transform: translate(-3px, 2px); } 50% { transform: translate(3px, 1px); } 75% { transform: translate(-2px, -2px); } 100% { transform: translate(1px, 2px); } }
+@keyframes abQuake { 0% { transform: translate(6px, -3px) rotate(.3deg); } 33% { transform: translate(-7px, 4px) rotate(-.4deg); } 66% { transform: translate(5px, 3px) rotate(.2deg); } 100% { transform: translate(-4px, -4px); } }
+@keyframes abGlitch { 0% { transform: translateX(-5px) skewX(3deg); filter: drop-shadow(3px 0 #ff3d6e) drop-shadow(-3px 0 #39ff88); } 50% { transform: translateX(4px); filter: none; } 100% { transform: none; } }
+@keyframes abFloat { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-7px) rotate(.35deg); } }
+
+/* banner */
+#abBar { position: fixed; z-index: 62; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 68px); transform: translate(-50%, -20px); opacity: 0; transition: transform .45s cubic-bezier(.2, 1.4, .4, 1), opacity .3s; display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 14px; border-radius: 99px; background: color-mix(in srgb, var(--ab2, #111) 78%, #000); border: 1px solid color-mix(in srgb, var(--ab1) 70%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ab1) 16%, transparent), 0 14px 40px -8px var(--ab1); color: #fff; font: 600 13px var(--sans); max-width: calc(100vw - 24px); }
+#abBar.ab-in { transform: translate(-50%, 0); opacity: 1; }
+#abBar .ab-ic { font-size: 18px; line-height: 1; animation: abPulse 1.2s ease-in-out infinite; }
+#abBar .ab-t { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+#abBar .ab-t b { font: 900 12.5px var(--sans); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ab1); text-shadow: 0 0 12px var(--ab1); }
+#abBar .ab-t small { font-size: 11px; opacity: .8; white-space: nowrap; }
+#abBar .ab-time { font: 700 13px var(--mono); padding: 4px 8px; border-radius: 8px; background: rgba(0, 0, 0, .35); }
+#abBar .ab-mult { font: 800 11px var(--sans); padding: 4px 7px; border-radius: 99px; background: color-mix(in srgb, var(--ab1) 30%, transparent); white-space: nowrap; }
+#abBar .ab-go { border: 0; font: 800 12.5px var(--sans); padding: 8px 14px; border-radius: 99px; background: var(--ab1); color: #0b0610; cursor: pointer; white-space: nowrap; box-shadow: 0 0 16px var(--ab1); animation: abPulse 1.6s ease-in-out infinite; }
+#abBar .ab-go:hover { filter: brightness(1.12); }
+@keyframes abPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@media (max-width: 899px) {
+  #abBar { top: calc(env(safe-area-inset-top, 0px) + 60px); gap: 7px; padding: 6px 6px 6px 11px; font-size: 12px; }
+  #abBar .ab-mult { display: none; }
+  #abBar .ab-t small { display: none; }
+}
+
+/* intro splash */
+#abSplash { position: fixed; inset: 0; z-index: 64; display: grid; place-items: center; pointer-events: none; }
+#abSplash .ab-sp { text-align: center; padding: 20px; animation: abSplash 3.2s cubic-bezier(.2, .8, .2, 1) forwards; }
+#abSplash .ab-k { font: 900 13px var(--sans); letter-spacing: .5em; color: #fff; opacity: .9; margin-bottom: 8px; text-shadow: 0 0 10px var(--ab1); }
+#abSplash h1 { margin: 0; font: 900 clamp(38px, 9vw, 96px)/.95 var(--sans); letter-spacing: -.02em; color: #fff; text-transform: uppercase; text-shadow: 0 0 24px var(--ab1), 0 0 60px var(--ab1), 3px 0 0 color-mix(in srgb, var(--ab1) 80%, #f0f), -3px 0 0 color-mix(in srgb, var(--ab1) 60%, #0ff); animation: abGlitchTxt .5s steps(2) 3; }
+#abSplash p { margin: 12px auto 0; max-width: 520px; font: 600 16px/1.4 var(--sans); color: #fff; text-shadow: 0 2px 10px #000; }
+#abSplash .ab-by { display: inline-block; margin-top: 10px; font: 700 12px var(--sans); padding: 5px 12px; border-radius: 99px; background: rgba(0, 0, 0, .45); color: #fff; }
+@keyframes abSplash { 0% { transform: scale(2.2); opacity: 0; filter: blur(12px); } 12% { transform: scale(1); opacity: 1; filter: none; } 80% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1.12); opacity: 0; } }
+@keyframes abGlitchTxt { 0% { transform: translate(-4px, 2px) skewX(-8deg); } 50% { transform: translate(4px, -2px) skewX(6deg); } 100% { transform: none; } }
+
+/* falling loot for the "catch" game */
+.ab-drop { position: fixed; z-index: 63; top: -70px; width: 58px; height: 58px; border: 0; padding: 0; background: none; cursor: pointer; font-size: 40px; line-height: 58px; text-align: center; filter: drop-shadow(0 0 10px var(--ab1)) drop-shadow(0 4px 6px rgba(0, 0, 0, .5)); animation: abFall var(--dur, 6s) linear forwards; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.ab-drop span { display: inline-block; animation: abSpin 1.6s ease-in-out infinite; }
+.ab-drop::before { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
+.ab-drop.pop { animation: abPop .35s ease-out forwards; pointer-events: none; }
+@keyframes abFall { from { transform: translate(0, 0); } 25% { transform: translate(var(--sw, 30px), 27vh); } 50% { transform: translate(0, 55vh); } 75% { transform: translate(calc(var(--sw, 30px) * -1), 82vh); } to { transform: translate(0, 112vh); } }
+@keyframes abSpin { 0%, 100% { transform: rotate(-12deg) scale(1); } 50% { transform: rotate(12deg) scale(1.08); } }
+@keyframes abPop { to { transform: var(--at) scale(1.8); opacity: 0; } }
+.ab-plus { position: fixed; z-index: 64; pointer-events: none; font: 900 18px var(--sans); color: #fff; text-shadow: 0 0 10px var(--ab1), 0 2px 4px #000; animation: abPlus 1s ease-out forwards; white-space: nowrap; }
+@keyframes abPlus { from { transform: translate(-50%, 0) scale(.8); opacity: 1; } to { transform: translate(-50%, -70px) scale(1.15); opacity: 0; } }
+
+/* panel + games (inside the normal modal) */
+.ab-panel { display: flex; flex-direction: column; gap: 12px; }
+.ab-hero { border-radius: 14px; padding: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--ab1) 30%, #000), color-mix(in srgb, var(--ab2) 60%, #000)); color: #fff; position: relative; overflow: hidden; }
+.ab-hero b { font: 900 18px var(--sans); text-transform: uppercase; letter-spacing: .04em; display: block; }
+.ab-hero p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.4; opacity: .95; }
+.ab-hero .ab-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ab-hero .ab-meta span { font: 700 11px var(--sans); padding: 4px 8px; border-radius: 99px; background: rgba(0, 0, 0, .35); }
+.ab-acts { display: grid; gap: 8px; }
+.ab-act { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; border: 1px solid var(--line2); background: var(--bg2); color: var(--tx); font: inherit; text-align: left; cursor: pointer; width: 100%; }
+.ab-act:hover:not([disabled]) { border-color: var(--ab1); }
+.ab-act[disabled] { opacity: .55; cursor: default; }
+.ab-act .ab-ai { font-size: 26px; width: 34px; text-align: center; flex: none; }
+.ab-act .ab-at { flex: 1; min-width: 0; }
+.ab-act .ab-at b { display: block; font-size: 14.5px; }
+.ab-act .ab-at small { display: block; color: var(--mut); font-size: 12px; margin-top: 2px; line-height: 1.35; }
+.ab-act .ab-st { font: 800 11px var(--sans); padding: 4px 8px; border-radius: 99px; background: color-mix(in srgb, var(--ab1, var(--amber)) 22%, transparent); color: var(--tx); white-space: nowrap; }
+.ab-note { font-size: 12.5px; color: var(--mut); text-align: center; margin: 0; }
+.ab-quiz q { display: block; font: 800 18px/1.3 var(--sans); quotes: none; margin-bottom: 10px; }
+.ab-quiz .txt { width: 100%; font-size: 16px; }
+.ab-msg { min-height: 20px; font-size: 13px; margin-top: 8px; }
+.ab-msg.bad { color: var(--dn); }
+.ab-msg.good { color: var(--up); font-weight: 800; }
+.ab-chests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ab-chest { aspect-ratio: 1; border-radius: 14px; border: 1px solid var(--line2); background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--ab1) 22%, var(--bg2)), var(--bg2)); font-size: 44px; cursor: pointer; transition: transform .15s; }
+.ab-chest:hover:not([disabled]) { transform: translateY(-3px) rotate(-3deg); }
+.ab-chest.shake { animation: abShake .08s linear infinite; }
+.ab-chest.open { animation: abPop2 .4s ease-out; border-color: var(--ab1); box-shadow: 0 0 24px var(--ab1); }
+.ab-chest[disabled] { cursor: default; }
+@keyframes abPop2 { 0% { transform: scale(1); } 50% { transform: scale(1.18); } 100% { transform: scale(1); } }
+.ab-wheel { position: relative; width: min(290px, 72vw); aspect-ratio: 1; margin: 4px auto 8px; }
+.ab-wheel svg { width: 100%; height: 100%; transition: transform 4.2s cubic-bezier(.12, .8, .1, 1); filter: drop-shadow(0 8px 24px rgba(0, 0, 0, .45)); }
+.ab-wheel::after { content: ''; position: absolute; left: 50%; top: -6px; transform: translateX(-50%); border: 12px solid transparent; border-top: 22px solid #fff; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .6)); }
+.ab-win { text-align: center; padding: 8px 0 2px; }
+.ab-win .ab-big { font-size: 56px; line-height: 1; animation: abPop2 .5s ease-out; }
+.ab-win b { display: block; font: 900 20px var(--sans); margin-top: 6px; }
+.ab-win small { color: var(--mut); }
+
+@media (prefers-reduced-motion: reduce) {
+  #view.ab-shake > *, #view.ab-quake > *, #view.ab-glitch > *, html[data-ab='gravity'] #view > * { animation: none !important; }
+  #abTint { animation: none !important; }
+  #abSplash .ab-sp, #abSplash h1 { animation-duration: .01s !important; }
+  #abBar .ab-ic, #abBar .ab-go { animation: none; }
 }
 
 </style>
