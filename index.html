@@ -9070,7 +9070,7 @@ const Shop = {
     <button class="promo" data-go="pets"><span class="pet-mini-ic">${eggFace(ITEM.egg_c)}</span><span class="promo-t"><b>Pets & eggs</b><small>Hatch companions that boost your coins, XP and pack luck</small></span><span class="promo-go">Pets</span></button>
     <section class="card"><div class="card-h"><h3>Daily deals</h3><span class="muted small" id="dealTimer"></span></div><div class="deal-grid" id="deals"></div></section>
     <section class="card"><div class="card-h"><h3>Power-ups</h3><span class="muted small" id="activePU"></span></div><div id="powers"></div></section>
-    <section class="card"><div class="card-h"><h3>Luck multiplier</h3><span class="muted small" id="luckNow"></span></div><p class="muted small" style="margin-bottom:10px">Higher luck nudges the stocks you own upward. Stacks up to 2,000x.</p><div class="luck-grid" id="luckGrid"></div></section>
+    <section class="card"><div class="card-h"><h3>Luck multiplier</h3><span class="muted small" id="luckNow"></span></div><p class="muted small" style="margin-bottom:10px">Higher luck adds a bonus on top of every profitable sale (up to +30% extra). Stacks up to 2,000x.</p><div class="luck-grid" id="luckGrid"></div></section>
     <section class="card"><div class="card-h"><h3>Cash → coins</h3><span class="muted small">Trade virtual cash for coins</span></div><div class="luck-grid" id="xchg"></div></section>
     <section class="card"><div class="card-h col-h"><h3>Collection</h3><div class="seg" id="colTabs">${COSMETIC_TYPES.map(t => `<button data-t="${t}">${TYPE_LABEL[t] === 'Chart skin' ? 'Charts' : TYPE_LABEL[t] + 's'}</button>`).join('')}</div></div><div class="col-grid" id="colGrid"></div></section>
     <p class="foot-note"><button class="linkish" data-cheat>Have a code?</button></p>
@@ -14229,6 +14229,921 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
   };
 })();
 
+/* =====================================================================
+   WORLD MARKET — one market for every player.
+   Before: every browser ran its own random market, so no two players
+   ever saw the same price. Now every price, headline and market event is
+   a pure function of the clock: log price(t) = drift + multi-scale noise
+   + headline jumps + earnings + dividends + market-wide events + admin
+   overrides, all seeded by ticker and time. Any device, any moment,
+   same numbers, same charts, same news. No server needed.
+   (Real-market mode is untouched: it uses real quotes.)
+   ===================================================================== */
+(() => {
+  const ON = !(typeof settings !== 'undefined' && settings && settings.market === 'real');
+  const W = (window.World = { on: ON, ver: 1 });
+  if (!ON) return;
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const T0 = Date.UTC(2026, 8, 28) / 1000, // the shared market's "day zero": prices equal the list prices here
+    DAY = 86400,
+    H = 3600;
+  W.T0 = T0;
+
+  /* ---------------- deterministic hashing ---------------- */
+  function fnv(s) {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+  function mix(a, b) {
+    let h = (a ^ Math.imul(b | 0, 0x9e3779b1)) | 0;
+    h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
+    h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+    return (h ^ (h >>> 16)) >>> 0;
+  }
+  const U = (s, i) => mix(s, i) / 4294967296;
+  function vn(s, x) {
+    const i = Math.floor(x),
+      f = x - i,
+      w = f * f * (3 - 2 * f),
+      a = U(s, i);
+    return (a + (U(s, i + 1) - a) * w) * 2 - 1;
+  }
+  function rngOf(seed) {
+    return mulberry32(seed);
+  }
+  function poissonR(r, lam) {
+    const L = Math.exp(-lam);
+    let k = 0,
+      p = 1;
+    do {
+      k++;
+      p *= r();
+    } while (p > L);
+    return k - 1;
+  }
+  W.fnv = fnv;
+  W.mix = mix;
+  W.seeded = (seed, fn) => {
+    const R = Math.random;
+    Math.random = mulberry32(seed);
+    try {
+      return fn();
+    } finally {
+      Math.random = R;
+    }
+  };
+
+  /* ---------------- noise ---------------- */
+  const SLOW = [240 * DAY, 60 * DAY, 20 * DAY, 6 * DAY, 2 * DAY, 12 * H, 5 * H, 2 * H, 50 * 60],
+    SLOWK = SLOW.map(P => (P >= 6 * DAY ? 1.25 : 1.05) * Math.sqrt(P)),
+    FASTP = [2400, 1100, 420, 150, 45, 12],
+    FW = [0.72, 0.5, 0.26, 0.13, 0.07, 0.035],
+    FN = 0.48 * Math.sqrt(FW.reduce((s, w) => s + w * w, 0)),
+    FK = FW.map(w => w / FN);
+  const MSEED = { stock: SLOW.map((_, k) => fnv('mkt:stock:' + k)), crypto: SLOW.map((_, k) => fnv('mkt:crypto:' + k)) };
+  const mktMemo = { stock: new Map(), crypto: new Map() };
+  function mkt(type, t) {
+    const m = mktMemo[type] || mktMemo.stock;
+    let v = m.get(t);
+    if (v !== undefined) return v;
+    const sd = MSEED[type] || MSEED.stock;
+    v = 0;
+    for (let k = 0; k < SLOW.length; k++) v += SLOWK[k] * vn(sd[k], t / SLOW[k]);
+    if (m.size > 30000) m.clear();
+    m.set(t, v);
+    return v;
+  }
+  function seeds(a) {
+    if (a._ws && a._wsym === a.sym) return;
+    a._wsym = a.sym;
+    a._ws = fnv(a.sym);
+    a._wo = SLOW.map((_, k) => mix(a._ws, 0x51ed27 + k * 7919));
+    a._wf = FASTP.map((_, k) => mix(a._ws, 0x7f4a7c + k * 104729));
+  }
+  function slow(a, t) {
+    let own = 0;
+    for (let k = 0; k < SLOW.length; k++) own += SLOWK[k] * vn(a._wo[k], t / SLOW[k]);
+    return a.sigA * (RHO * mkt(a.type, t) + RHO2 * own);
+  }
+  function fast(a, t) {
+    let v = 0;
+    for (let k = 0; k < FASTP.length; k++) v += FK[k] * vn(a._wf[k], t / FASTP[k]);
+    return a.devStd * 0.5 * v;
+  }
+  // a headline-style impulse: plays out over ~10s, mostly fades (half-life 15 min), a little lingers
+  const sh = (d, fw, tau) => (d < 0 ? 0 : (1 - Math.exp(-d / 10)) * (fw * Math.exp(-THETA * d) + (1 - fw) * Math.exp(-d / tau)));
+
+  /* ---------------- universe facts everyone agrees on ---------------- */
+  const BASE_CORE = UNIVERSE.map(u => u.slice()); // before funds / IPOs are added
+  let facts = null;
+  function F() {
+    if (facts) return facts;
+    const fundSet = new Set(window.PBFunds ? PBFunds.list() : []);
+    const base = BASE_CORE.filter(u => !fundSet.has(u[0])).map(u => ({ sym: u[0], type: u[2], vol: u[4] }));
+    for (const a of LITE) if (!a.legacy && !a.ipo && !a.admin) base.push({ sym: a.sym, type: a.type, vol: a.vol });
+    let wTot = 0;
+    const sums = { stock: [0, 0], crypto: [0, 0] };
+    for (const b of base) {
+      wTot += Math.sqrt(b.vol);
+      const s = sums[b.type] || sums.stock;
+      s[0] += b.vol;
+      s[1]++;
+    }
+    facts = {
+      wTot,
+      nLite: LITE.filter(a => !a.legacy && !a.ipo && !a.admin).length || 1,
+      avg: { stock: sums.stock[0] / Math.max(1, sums.stock[1]), crypto: sums.crypto[0] / Math.max(1, sums.crypto[1]) },
+      fundSet,
+    };
+    return facts;
+  }
+  const mev = () => clamp(+GAME.market_events || 0, 0, 5);
+  const HFM = new Map();
+  const hfrac = s => {
+    let v = HFM.get(s);
+    if (v === undefined) HFM.set(s, (v = (hashStr(s) % 10007) / 10007));
+    return v;
+  };
+  const DIVS = new Set(['Utilities', 'Finance', 'Food & drink', 'Energy', 'Real estate']);
+  const secOf = a => (a._sec && a._secSym === a.sym + (a.sector || '') ? a._sec : ((a._secSym = a.sym + (a.sector || '')), (a._sec = sectorOf(a.sym))));
+
+  /* ---------------- company headlines (per-asset schedule) ---------------- */
+  const WN = 6 * H,
+    LOOK_N = 36 * H;
+  function newsRate(a) {
+    const f = F();
+    if (f.fundSet.has(a.sym) || a.fund) return 0;
+    return (1 / Math.max(5, CONFIG.NEWS_EVERY_S)) * (Math.sqrt(a.vol) / f.wTot) + (a.lite ? 1 / (LITE_NEWS_EVERY_S * f.nLite) : 0);
+  }
+  function newsWin(a, w) {
+    const r = newsRate(a);
+    let c = a._wnC;
+    if (!c || c.r !== r || c.v !== a.vol) c = a._wnC = { r, v: a.vol, m: new Map() };
+    let ev = c.m.get(w);
+    if (ev) return ev;
+    ev = [];
+    if (r > 0) {
+      const g = rngOf(mix(a._ws, w * 2 + 1)),
+        n = poissonR(g, r * WN);
+      for (let i = 0; i < n; i++) {
+        const te = w * WN + g() * WN,
+          up = g() < 0.5,
+          mega = g() < (a.lite ? 0.08 : 0.1),
+          J = (up ? 1 : -1) * (0.35 + 0.65 * g()) * a.vol * 0.08 * (mega ? 2.2 : 1);
+        ev.push({ te, up, mega, J, k: g(), id: a.sym + ':' + w + ':' + i });
+      }
+      ev.sort((x, y) => x.te - y.te);
+    }
+    if (c.m.size > 60) c.m.clear();
+    c.m.set(w, ev);
+    return ev;
+  }
+  function news(a, t) {
+    const w1 = Math.floor(t / WN),
+      w0 = Math.floor((t - LOOK_N) / WN);
+    let s = 0;
+    for (let w = w0; w <= w1; w++)
+      for (const e of newsWin(a, w)) {
+        if (e.te > t) break;
+        s += e.J * sh(t - e.te, 0.85, 8 * H);
+      }
+    return s;
+  }
+
+  /* ---------------- earnings + dividends (already on a fixed calendar) ---------------- */
+  const earnP = a => ((a.lite ? 24 : 8) * H) / Math.max(mev(), 0.2);
+  const isIdx = a => secOf(a) === 'Index fund';
+  function earnOut(a, k) {
+    const c = (a._eoC ||= new Map());
+    let o = c.get(k);
+    if (o) return o;
+    o = earnOut0(a, k);
+    if (c.size > 40) c.clear();
+    c.set(k, o);
+    return o;
+  }
+  function earnOut0(a, k) {
+    seeds(a);
+    const g = rngOf(mix(a._ws ^ 0xea21, k));
+    const beat = g() < 0.55,
+      mag = 0.03 + 0.12 * Math.pow(g(), 2.2);
+    return { beat, mag, J: (beat ? 1 : -1) * Math.log(1 + mag), k: g() };
+  }
+  function earn(a, t) {
+    if (!mev() || a.type !== 'stock' || a.fund || isIdx(a)) return 0;
+    const P = earnP(a),
+      o = hfrac(a.sym) * P;
+    let s = 0;
+    for (let k = Math.floor((t + o) / P); ; k--) {
+      const te = k * P - o;
+      if (t - te > 5 * DAY) break;
+      if (te > t || te < (a._T0 || 0)) continue;
+      s += earnOut(a, k).J * sh(t - te, 0.65, 1.5 * DAY);
+    }
+    return s;
+  }
+  function div(a, t) {
+    if (!mev() || a.type !== 'stock' || a.fund || !DIVS.has(secOf(a))) return 0;
+    const P = (12 * H) / Math.max(mev(), 0.2),
+      o = hfrac(a.sym + 'div') * P,
+      L = Math.log(1 - (0.002 + (hashStr(a.sym + 'd') % 7) * 0.0005));
+    let s = 0;
+    for (let k = Math.floor((t + o) / P); ; k--) {
+      const te = k * P - o;
+      if (t - te > 4 * DAY) break;
+      if (te > t) continue;
+      s += L * Math.exp(-(t - te) / DAY); // ex-dividend drop, recovered over a day or two
+    }
+    return s;
+  }
+  W.earnAt = (a, t) => {
+    const P = earnP(a),
+      o = hfrac(a.sym) * P;
+    return earnOut(a, Math.floor((t + o) / P));
+  };
+
+  /* ---------------- market-wide: macro headlines, crashes / bull runs, calendar, abuses ---------------- */
+  const WM = 6 * H,
+    macroC = new Map();
+  function macroWin(w) {
+    let ev = macroC.get(w);
+    if (ev) return ev;
+    const g = rngOf(mix(0x3ac20b, w)),
+      n = poissonR(g, WM / Math.max(60, CONFIG.MACRO_EVERY_S));
+    ev = [];
+    for (let i = 0; i < n; i++) {
+      const te = w * WM + g() * WM,
+        group = g() < 0.5 ? 'stock' : 'crypto',
+        up = g() < 0.5,
+        base = (up ? 1 : -1) * (group === 'stock' ? 0.006 + 0.01 * g() : 0.015 + 0.025 * g());
+      ev.push({ te, group, up, base, k: g(), id: 'm:' + w + ':' + i });
+    }
+    ev.sort((x, y) => x.te - y.te);
+    if (macroC.size > 400) macroC.clear();
+    macroC.set(w, ev);
+    return ev;
+  }
+  const regC = new Map();
+  const WRl = () => (16 * H) / Math.max(mev(), 0.2);
+  function regWin(w) {
+    const WR = WRl(),
+      key = w + ':' + WR;
+    let r = regC.get(key);
+    if (r !== undefined) return r;
+    r = null;
+    if (mev()) {
+      const g = rngOf(mix(0x4e61e, w));
+      if (g() < 0.63) {
+        const start = w * WR + g() * Math.max(60, WR - 600),
+          up = g() < 0.45,
+          group = g() < 0.55 ? 'stock' : 'crypto',
+          len = Math.round(180 + g() * 240),
+          size = group === 'stock' ? 0.05 + g() * 0.06 : 0.08 + g() * 0.1;
+        r = { start, end: start + len, up, group, total: (up ? 1 : -1) * size, id: 'r:' + w };
+      }
+    }
+    if (regC.size > 400) regC.clear();
+    regC.set(key, r);
+    return r;
+  }
+  W.regimeAt = t => {
+    if (!mev()) return null;
+    const WR = WRl(),
+      w = Math.floor(t / WR);
+    for (const k of [w, w - 1]) {
+      const r = regWin(k);
+      if (r && t >= r.start && t < r.end) return r;
+    }
+    return null;
+  };
+  W.regimesBetween = (t0, t1) => {
+    const out = [];
+    if (!mev() || !(t1 > t0)) return out;
+    const WR = WRl();
+    for (let w = Math.floor(t0 / WR) - 1; w <= Math.floor(t1 / WR); w++) {
+      const r = regWin(w);
+      if (r) out.push(r);
+    }
+    return out;
+  };
+  // economic calendar (advanced.js registers what each release does)
+  const WC = 200;
+  let CAL = null;
+  const calC = new Map();
+  W.setCalendar = prov => {
+    CAL = prov;
+    calC.clear();
+    W.ver++;
+    gMemo.clear();
+  };
+  W.calSlot = s => {
+    let c = calC.get(s);
+    if (c) return c;
+    const at = s * WC + 20 + U(0xca1e, s) * 160;
+    c = CAL ? CAL(s, at) : null;
+    if (calC.size > 3000) calC.clear();
+    calC.set(s, c);
+    return c;
+  };
+  W.calUpcoming = (now, n) => {
+    const out = [];
+    for (let s = Math.floor(now / WC) - 1; out.length < n && s < Math.floor(now / WC) + 50; s++) {
+      const c = W.calSlot(s);
+      if (c && c.at > now - 60) out.push(c);
+    }
+    return out;
+  };
+  // admin abuse: Bull Stampede / Bear Invasion push the whole market
+  let AB = null;
+  W.setAbuse = x => {
+    const k = x ? x.type + x.start + ':' + x.end : '';
+    if (k === (AB ? AB.type + AB.start + ':' + AB.end : '')) return;
+    AB = x && (x.type === 'bull' || x.type === 'bear') ? x : null;
+    gMemo.clear();
+    W.ver++;
+  };
+  function abuse(t) {
+    if (!AB || t < AB.start) return 0;
+    const dir = AB.type === 'bull' ? 1 : -1,
+      e = Math.min(t, AB.end),
+      v = (dir * 0.006 * (e - AB.start)) / 60;
+    return t > AB.end ? v * Math.exp(-(t - AB.end) / (2 * H)) : v;
+  }
+  const gMemo = new Map();
+  function G(t) {
+    let g = gMemo.get(t);
+    if (g) return g;
+    g = { stock: 0, crypto: 0, sec: {} };
+    // macro headlines
+    for (let w = Math.floor((t - 30 * H) / WM); w <= Math.floor(t / WM); w++)
+      for (const e of macroWin(w)) {
+        if (e.te > t) break;
+        g[e.group] += e.base * sh(t - e.te, 0.9, 6 * H);
+      }
+    // crashes / bull runs: a ramp that sticks, then fades over days
+    if (mev()) {
+      const WR = WRl();
+      for (let w = Math.floor((t - 5 * DAY) / WR); w <= Math.floor(t / WR); w++) {
+        const r = regWin(w);
+        if (!r || t < r.start) continue;
+        const ramp = Math.min(1, (t - r.start) / (r.end - r.start)),
+          dec = t > r.end ? Math.exp(-(t - r.end) / DAY) : 1;
+        g[r.group] += r.total * ramp * dec;
+      }
+    }
+    // economic calendar releases
+    if (CAL)
+      for (let s = Math.floor((t - 5 * H) / WC); s <= Math.floor(t / WC); s++) {
+        const c = W.calSlot(s);
+        if (!c || !c.out || c.at > t) continue;
+        const k = sh(t - c.at, 0.9, H);
+        g.stock += (c.out.stocks || 0) * k;
+        g.crypto += (c.out.crypto || 0) * k;
+        for (const sec in c.out.sec || {}) g.sec[sec] = (g.sec[sec] || 0) + c.out.sec[sec] * k;
+      }
+    const ab = abuse(t);
+    g.stock += ab;
+    g.crypto += ab;
+    if (gMemo.size > 30000) gMemo.clear();
+    gMemo.set(t, g);
+    return g;
+  }
+
+  /* ---------------- the price of anything at any time ---------------- */
+  function base(a, t) {
+    seeds(a);
+    const T = a._T0 || T0;
+    if (a._L0 == null) a._L0 = Math.log(a.p0);
+    if (a._T0 && t < T) return a._L0; // an IPO didn't trade before it listed
+    if (a._s0k !== a.sigA + ':' + T) {
+      a._s0k = a.sigA + ':' + T;
+      a._s0 = slow(a, T);
+    }
+    // everything but the fast wiggle moves slowly: sample it on a 15s grid (cached) and blend
+    const k0 = Math.floor(t / KN) * KN,
+      v0 = knot(a, k0, T),
+      fr = (t - k0) / KN;
+    const L = fr ? v0 + (knot(a, k0 + KN, T) - v0) * fr : v0;
+    return L + fast(a, t);
+  }
+  const KN = 15;
+  function knot(a, k, T) {
+    if (a._kv === W.ver && a._kL0 === a._L0) {
+      if (a._k0t === k) return a._k0v;
+      if (a._k1t === k) return a._k1v;
+    } else {
+      a._k0t = a._k1t = null;
+      a._kv = W.ver;
+      a._kL0 = a._L0;
+    }
+    const f = F(),
+      g = G(k),
+      sc = clamp(a.vol / (f.avg[a.type] || 0.5), 0.3, 2.5);
+    let L = a._L0 + a.mu * (k - T) + slow(a, k) - a._s0 + news(a, k) + earn(a, k) + div(a, k) + (g[a.type] || 0) * sc + (g.sec[secOf(a)] || 0);
+    if (a._pop) L += a._pop * (0.5 + 0.5 * sh(k - T, 1, H));
+    // keep the two most recent knots
+    if (a._k1t == null || k > a._k1t) {
+      a._k0t = a._k1t;
+      a._k0v = a._k1v;
+      a._k1t = k;
+      a._k1v = L;
+    } else {
+      a._k0t = k;
+      a._k0v = L;
+    }
+    return L;
+  }
+  function logP(a, t) {
+    let L;
+    if (a._fs && a._fs.length) {
+      let s = 0;
+      for (const m of a._fs) s += logP(m, t) - Math.log(m.p0);
+      L = Math.log(a.p0) + s / a._fs.length;
+    } else L = base(a, t);
+    const ov = a._ov;
+    if (ov && t >= ov.at) L += ov.k;
+    return L;
+  }
+  function P(a, t) {
+    if (t % 300 === 0) {
+      const m = a._pm && a._pmv === W.ver && a._pmL === a._L0 ? a._pm : ((a._pmv = W.ver), (a._pmL = a._L0), (a._pm = new Map()));
+      let v = m.get(t);
+      if (v === undefined) {
+        v = Math.exp(logP(a, t));
+        if (m.size > 1200) m.clear();
+        m.set(t, v);
+      }
+      return v;
+    }
+    return Math.exp(logP(a, t));
+  }
+  W.price = P;
+  W.logP = logP;
+  // an admin repriced this asset at time `at`: from then on it follows the market from that new level
+  W.override = (a, p, at) => {
+    if (!(p > 0)) return;
+    at = +at || simT || nowSec();
+    const prev = a._ov;
+    a._ov = null;
+    const k = Math.log(p) - logP(a, at);
+    a._ov = { at, k, p };
+    if (prev && prev.at === at && Math.abs(prev.k - k) < 1e-9) a._ov = prev;
+    a._rv = -1; // rebuild ring
+    W.rebuild(a, simT || nowSec());
+  };
+
+  /* ---------------- charts: bars + 24h rings, identical on every device ---------------- */
+  const mkBar = (a, B, bt, o, c) => {
+    const w = wickW(a, B);
+    return { t: bt, o, c, h: Math.max(o, c) * (1 + w * wickRand(bt, a.sym)), l: Math.min(o, c) * (1 - w * wickRand(bt + 7, a.sym)) };
+  };
+  function buildBuf(a, buf, T) {
+    const B = buf.B,
+      n = buf.max,
+      last = Math.floor(T / B) * B,
+      out = [],
+      T0a = a._T0 || 0;
+    let o = null;
+    for (let i = n - 1; i >= 0; i--) {
+      const bt = last - i * B;
+      if (T0a && bt + B <= T0a && i > 1) continue; // an IPO has no history before it listed
+      if (o == null) o = P(a, bt);
+      const c = bt === last ? a.price : P(a, bt + B);
+      out.push(mkBar(a, B, bt, o, c));
+      o = c;
+    }
+    buf.bars = out;
+  }
+  function buildCore(a, T) {
+    a.price = P(a, T);
+    for (const k in a.bufs) {
+      const buf = a.bufs[k];
+      if (k === 'm5') buildBuf(a, buf, T);
+      else lazyBuf(a, buf, T);
+    }
+  }
+  // 1M / 1Y history: built the first time a chart or a "1Y change" needs it
+  function lazyBuf(a, buf, T) {
+    buf._need = T;
+    if (!buf._lazy) {
+      buf._lazy = true;
+      buf._bars = [];
+      Object.defineProperty(buf, 'bars', {
+        get() {
+          if (this._need != null) {
+            const t = Math.max(this._need, simT || 0);
+            this._need = null;
+            buildBuf(a, this, t);
+          }
+          return this._bars;
+        },
+        set(v) {
+          this._bars = v;
+        },
+        configurable: true,
+      });
+    }
+  }
+  function pushW(a, t) {
+    for (const k in a.bufs) {
+      if (a.bufs[k]._need != null) continue; // not built yet: it will be built fresh when needed
+      const buf = a.bufs[k],
+        B = buf.B,
+        bars = buf.bars,
+        bt = Math.floor(t / B) * B,
+        last = bars[bars.length - 1];
+      if (!last) {
+        buildBuf(a, buf, t);
+        continue;
+      }
+      if (bt === last.t) {
+        last.c = a.price;
+        if (a.price > last.h) last.h = a.price;
+        if (a.price < last.l) last.l = a.price;
+        continue;
+      }
+      if (bt < last.t) continue;
+      if ((bt - last.t) / B > buf.max) {
+        buildBuf(a, buf, t);
+        continue;
+      }
+      const fin = mkBar(a, B, last.t, last.o, P(a, last.t + B));
+      Object.assign(last, fin);
+      for (let tt = last.t + B; tt < bt; tt += B) bars.push(mkBar(a, B, tt, bars[bars.length - 1].c, P(a, tt + B)));
+      bars.push(mkBar(a, B, bt, bars[bars.length - 1].c, a.price));
+      if (bars.length > buf.max) bars.splice(0, bars.length - buf.max);
+    }
+  }
+  // lite companies: the 24h ring is built only when something looks at it
+  function ensureRing(a) {
+    const rt = Math.floor((simT || nowSec()) / 300) * 300;
+    let r = a._ring;
+    if (!r) r = a._ring = new Float64Array(RING);
+    if (a._rrt === rt && a._rv === W.ver) {
+      r[a._ri] = a.price;
+      return;
+    }
+    if (a._rrt && a._rv === W.ver && rt > a._rrt && (rt - a._rrt) / 300 < RING) {
+      const steps = (rt - a._rrt) / 300;
+      r[a._ri] = P(a, a._rrt + 300);
+      for (let k = 1; k <= steps; k++) {
+        a._ri = (a._ri + 1) % RING;
+        r[a._ri] = k < steps ? P(a, a._rrt + k * 300 + 300) : a.price;
+      }
+    } else {
+      for (let i = 0; i < RING; i++) r[i] = i === RING - 1 ? a.price : P(a, rt - (RING - 1 - i) * 300 + 300);
+      a._ri = RING - 1;
+    }
+    a._rrt = rt;
+    a._rv = W.ver;
+  }
+  function lazyRing(a) {
+    if (a._lazy) return;
+    a._lazy = true;
+    a._ring = a.ring;
+    a._ri = RING - 1;
+    a._rrt = 0;
+    delete a.ring;
+    delete a.ri;
+    delete a.rt;
+    Object.defineProperty(a, 'ring', {
+      get() {
+        ensureRing(this);
+        return this._ring;
+      },
+      set(v) {
+        this._ring = v;
+        this._rrt = 0;
+      },
+      configurable: true,
+    });
+    Object.defineProperty(a, 'ri', { get() { return this._ri; }, set() {}, configurable: true });
+    Object.defineProperty(a, 'rt', { get() { return this._rrt; }, set() {}, configurable: true });
+  }
+  W.rebuild = (a, T) => {
+    T = T || simT || nowSec();
+    a._L0 = Math.log(a.p0);
+    if (a.lite) {
+      lazyRing(a);
+      a.price = P(a, T);
+      a._rv = -1;
+      for (const k of ['1W', '1M', '1Y']) delete liteCache[a.sym + k];
+    } else buildCore(a, T);
+  };
+  W.rebuildAll = T => {
+    W.ver++;
+    gMemo.clear();
+    for (const a of ASSETS) {
+      if (a.lite) {
+        lazyRing(a);
+        a.price = P(a, T);
+      } else buildCore(a, T);
+    }
+    W.builtAt = T;
+  };
+
+  /* ---------------- replace the old per-device engine ---------------- */
+  const makeLite0 = makeLite;
+  makeLite = function (u) {
+    const a = makeLite0.apply(this, arguments);
+    lazyRing(a);
+    return a;
+  };
+  backfill = function (a, T) {
+    a._L0 = Math.log(a.p0);
+    buildCore(a, T || simT || nowSec());
+  };
+  liteBackfill = function (a, T) {
+    lazyRing(a);
+    a._L0 = Math.log(a.p0);
+    a.price = P(a, T || simT || nowSec());
+    a._rv = -1;
+  };
+  const chg0 = chg24;
+  chg24 = function (a) {
+    if (a && a.lite && a._lazy && !(a._rrt === Math.floor((simT || nowSec()) / 300) * 300 && a._rv === W.ver)) {
+      // same number the ring would give, without building the whole ring
+      const rt = Math.floor((simT || nowSec()) / 300) * 300;
+      return a.price / P(a, rt - (RING - 1) * 300 + 300) - 1;
+    }
+    return chg0.apply(this, arguments);
+  };
+  // longer lite charts: history from the same formula
+  liteBars = function (a, range) {
+    const day = ringBars(a);
+    if (range === '1D') return day;
+    const step = range === '1Y' ? 86400 : 3600,
+      n = range === '1W' ? 168 : range === '1M' ? 720 : 365,
+      tail = aggregateBars(day, step),
+      key = a.sym + range,
+      stamp = tail[0].t;
+    let c = liteCache[key];
+    if (!c || c.stamp !== stamp || c.v !== W.ver) {
+      const cnt = Math.max(0, n - tail.length),
+        head = new Array(cnt);
+      let o = P(a, stamp - cnt * step);
+      for (let i = 0; i < cnt; i++) {
+        const bt = stamp - (cnt - i) * step,
+          cl = P(a, bt + step);
+        head[i] = mkBar(a, step === 86400 ? 86400 : 3600, bt, o, cl);
+        o = cl;
+      }
+      c = liteCache[key] = { stamp, head, v: W.ver };
+    }
+    return c.head.concat(tail);
+  };
+  stepLite = function () {};
+  fireNews = function () {}; // headlines come from the shared schedule
+  fireMacro = function () {};
+  saveMarket = function () {
+    Store.set(KEY.market, { v: 3, t: simT });
+  };
+
+  loadMarket = function () {
+    const s = Store.get(KEY.market, null),
+      T = nowSec();
+    for (const u of UNIVERSE) {
+      const a = makeAsset(u);
+      SIM[a.sym] = a;
+      ASSETS.push(a);
+      CORE.push(a);
+    }
+    for (const u of generateLite()) {
+      const a = makeLite(u);
+      SIM[a.sym] = a;
+      ASSETS.push(a);
+      LITE.push(a);
+    }
+    for (const u of generateLiteCrypto(new Set(ASSETS.map(a => a.sym)))) {
+      const a = makeLite(u);
+      SIM[a.sym] = a;
+      ASSETS.push(a);
+      LITE.push(a);
+    }
+    facts = null;
+    simT = T;
+    W.rebuildAll(T);
+    NEWS = W.recentNews(T, 40);
+    for (const n of NEWS) {
+      const a = n.sym && SIM[n.sym];
+      if (a && !a.lastNewsT) {
+        a.lastNewsT = n.t;
+        a.lastNewsUp = n.up;
+      }
+    }
+    // where this device left off, so orders / margin / history can catch up
+    if (s && s.t && s.t < T - 8) {
+      simT = Math.max(s.t, T - 30 * DAY);
+      return true;
+    }
+    return false;
+  };
+
+  /* ---------------- headlines feed ---------------- */
+  const tl = new Map(); // window -> every company headline in it, sorted
+  function timeline(w) {
+    let x = tl.get(w);
+    if (x) return x;
+    x = [];
+    for (const a of ASSETS) {
+      if (a.hidden && !a.admin) continue;
+      seeds(a);
+      for (const e of newsWin(a, w)) x.push([e, a]);
+    }
+    x.sort((p, q) => p[0].te - q[0].te);
+    if (tl.size > 8) tl.clear();
+    tl.set(w, x);
+    return x;
+  }
+  const pickK = (arr, k) => arr[Math.floor(k * arr.length) % arr.length];
+  function companyItem(e, a) {
+    const text = pickK(HEADLINES[a.type][e.up ? 'up' : 'down'], e.k)
+      .replace('{S}', a.sym)
+      .replace('{N}', a.name);
+    return { id: 'w' + e.id, t: e.te, sym: a.sym, text: (e.mega ? 'BREAKING: ' : '') + text, pct: Math.exp(e.J) - 1, up: e.up, mega: e.mega };
+  }
+  function macroItem(e) {
+    return { id: 'w' + e.id, t: e.te, sym: null, group: e.group, text: pickK(HEADLINES.macro[e.group][e.up ? 'up' : 'down'], e.k), pct: Math.exp(e.base) - 1, up: e.up, mega: true };
+  }
+  W.newsBetween = (t0, t1, cap = 200) => {
+    const out = [];
+    if (!(t1 > t0)) return out;
+    for (let w = Math.floor(t0 / WN); w <= Math.floor(t1 / WN) && out.length < cap; w++)
+      for (const [e, a] of timeline(w)) {
+        if (e.te <= t0) continue;
+        if (e.te > t1) break;
+        out.push(companyItem(e, a));
+      }
+    for (let w = Math.floor(t0 / WM); w <= Math.floor(t1 / WM); w++)
+      for (const e of macroWin(w)) if (e.te > t0 && e.te <= t1) out.push(macroItem(e));
+    return out.sort((x, y) => x.t - y.t);
+  };
+  W.recentNews = (T, n) => {
+    let back = 20 * 60,
+      xs = [];
+    while (xs.length < n && back <= 12 * H) {
+      xs = W.newsBetween(T - back, T, 400);
+      back *= 2;
+    }
+    return xs.slice(-n).reverse();
+  };
+  // the next headlines that are coming (for pets that sense news and the Insider Tip)
+  W.upcoming = (t0, t1) => {
+    const out = [];
+    for (let w = Math.floor(t0 / WN); w <= Math.floor(t1 / WN); w++)
+      for (const [e, a] of timeline(w)) if (e.te > t0 && e.te <= t1) out.push([e, a]);
+    return out;
+  };
+
+  /* ---------------- the tick ---------------- */
+  function watched() {
+    const s = new Set();
+    if (!acct) return s;
+    for (const k of Object.keys(acct.positions || {})) s.add(k);
+    for (const k of Object.keys(acct.shorts || {})) s.add(k);
+    for (const o of acct.orders || []) s.add(o.sym);
+    for (const l of acct.lev || []) s.add(l.sym);
+    for (const o of acct.options || []) s.add(o.sym);
+    for (const k of Object.keys(acct.brackets || {})) s.add(k);
+    return s;
+  }
+  const warned = new Set();
+  let petKey = 0;
+  simStep = function (dt, t, quiet) {
+    const t0 = simT;
+    if (quiet) {
+      for (const sym of watched()) {
+        const a = SIM[sym];
+        if (a) a.price = P(a, t);
+      }
+    } else {
+      for (const a of CORE) {
+        a.price = P(a, t);
+        pushW(a, t);
+      }
+      for (const a of LITE) a.price = P(a, t);
+      for (const n of W.newsBetween(t0, t, 60)) {
+        const a = n.sym && SIM[n.sym];
+        if (a) {
+          if (a.hidden && !acct.positions[a.sym]) continue;
+          a.lastNewsT = n.t;
+          a.lastNewsUp = n.up;
+        }
+        if (!NEWS.some(x => x.id === n.id)) addNews(n, false);
+      }
+      // pets that "sense" news warn you a few seconds before a headline lands
+      const sense = acct ? petPerk('newsSense') : 0;
+      if (sense > 0 && t - t0 < 30) {
+        petKey ||= fnv(String(acct.id || 'me'));
+        for (const [e, a] of W.upcoming(t + 8, t + 14)) {
+          if (warned.has(e.id) || a.hidden) continue;
+          warned.add(e.id);
+          if (U(petKey, fnv(e.id)) < sense) {
+            const p = activePet();
+            if (p) {
+              toast(`${p.name} hears ${e.up ? 'good' : 'bad'} news coming for ${a.sym}…`, 'news');
+              SFX.play('news');
+            }
+          }
+        }
+        if (warned.size > 500) warned.clear();
+      }
+    }
+    simT = t;
+    TIPS.length = 0;
+    if (acct && acct.orders.length) for (const sym of new Set(acct.orders.map(o => o.sym))) checkOrders(sym, t, quiet);
+    if (acct && acct.shorts) for (const sym of Object.keys(acct.shorts)) checkMargin(sym, t, quiet);
+  };
+
+  fastForward = function (to) {
+    const gap = to - simT;
+    if (gap <= 0) return null;
+    const v0 = valuation().total;
+    FF.active = true;
+    FF.news = 0;
+    FF.fills = [];
+    const from = simT;
+    let t = simT;
+    while (to - t > 7 * 86400) {
+      const dt = Math.min(86400, to - t - 7 * 86400);
+      t += dt;
+      simStep(dt, t, true);
+    }
+    let lastRec = t;
+    while (t < to) {
+      // coarse steps for older time, fine steps for the last day
+      const step = to - t > 86400 ? 300 : to - t > 3600 ? 60 : 5,
+        dt = Math.min(step, to - t);
+      t += dt;
+      simStep(dt, t, true);
+      if (t - lastRec >= 600) {
+        recordHistory(true, t);
+        lastRec = t;
+      }
+    }
+    FF.active = false;
+    if (Math.abs((W.builtAt || 0) - to) > 60) W.rebuildAll(to);
+    else for (const a of ASSETS) a.price = P(a, to);
+    simT = to;
+    // what happened to the things you own while you were gone
+    const held = watched(),
+      seen = W.newsBetween(Math.max(from, to - 2 * DAY), to, 5000);
+    FF.news = seen.length;
+    const fresh = seen.filter(n => !n.sym || held.has(n.sym)).slice(-30).reverse();
+    NEWS = W.recentNews(to, 40);
+    return { gap, v0, v1: valuation().total, news: fresh, fills: FF.fills.slice() };
+  };
+
+  /* ---------------- Insider Tip: the real next big headline ---------------- */
+  const up0 = usePower;
+  usePower = function (id) {
+    if (id !== 'pu_tip') return up0.apply(this, arguments);
+    if (!(acct.inv.pu_tip > 0)) return;
+    const now = simT || nowSec();
+    let list = W.upcoming(now + 8, now + 600).filter(([, a]) => !a.hidden);
+    if (!list.length) return toast('The wire is quiet. Try the tip again in a minute.', 'err');
+    list.sort((x, y) => Math.abs(y[0].J) - Math.abs(x[0].J));
+    const [e, a] = list[0];
+    acct.inv.pu_tip--;
+    saveAcct(true);
+    const secs = Math.max(1, Math.round(e.te - now));
+    modal({
+      title: 'Insider tip',
+      confirm: `Trade ${a.sym}`,
+      cancel: 'Close',
+      variant: e.up ? 'buy' : 'sell',
+      html: `Word is that <b>${esc(a.name)} (${esc(a.sym)})</b> is about to get <b class="${e.up ? 'pos' : 'neg'}">${e.mega ? 'huge ' : ''}${e.up ? 'good' : 'bad'} news</b> in about <b>${secs < 90 ? secs + ' seconds' : Math.round(secs / 60) + ' minutes'}</b>.<br><br><span class="muted small">${e.up ? 'Buy before it hits and sell into the spike.' : 'If you hold it, sell before it hits.'} Every player sees the same headline at the same moment.</span>`,
+      onConfirm: () => go('asset/' + a.sym),
+    });
+  };
+
+  /* ---------------- luck: a bonus on profitable sales instead of bending prices ---------------- */
+  const ex0 = executeTrade;
+  executeTrade = function (o) {
+    const r = ex0.apply(this, arguments);
+    try {
+      const tr = r && r.ok && r.trade;
+      const luck = acct && acct.luck > 1 ? acct.luck : 0;
+      if (tr && luck && (tr.side === 'sell' || tr.side === 'cover') && tr.pnl > 0) {
+        const pct = (Math.log(luck) / Math.log(LUCK_MAX)) * 0.3,
+          bonus = Math.round(tr.pnl * pct * 100) / 100;
+        if (bonus >= 0.01) {
+          acct.cash += bonus;
+          acct.realized += bonus;
+          tr.luck = bonus;
+          if (!FF.active) toast(`✨ Luck bonus: +${fmtUSD(bonus, 2)} on that profit`, 'xp');
+        }
+      }
+    } catch (e) {}
+    return r;
+  };
+})();
+
 /* ===================== SHOP & PETS EXPANSION ===================== */
 (function () {
   const pt = (cx, cy, r, a) => `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
@@ -17106,6 +18021,69 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     }),
     tusks: () => ({ front: MIR(`<path d="M26 47q-1 5 2 8 0-4 1-7z" fill="#fff8e6"/>`) }),
     moon: () => ({ top: `<path d="M44 6a8 8 0 1 0 6 12 6.5 6.5 0 1 1-6-12z" fill="#fff4c4" class="xa-bob"/>` }),
+    cosmicwings: (d, k) => ({
+      back: `<g class="xa-flap">${MIR(`<path d="M16 38C2 38-3 22 1 6c5 7 9 9 14 10-2-5-1-10 2-14 3 8 8 14 13 18z" fill="url(#cw${k})" stroke="${lighten(d.c3, 0.4)}" stroke-opacity=".7" stroke-width="1"/><circle cx="7" cy="18" r=".9" fill="#fff"/><circle cx="12" cy="11" r=".6" fill="#fff"/><circle cx="5" cy="28" r=".7" fill="#fff"/><circle cx="14" cy="24" r=".5" fill="#fff"/><path d="M3 22q7 2 12 8" stroke="${lighten(d.c3, 0.5)}" stroke-opacity=".45" stroke-width="1" fill="none"/>`)}</g>`,
+      defs: RG(`cw${k}`, [ST(0, lighten(d.c3, 0.3)), ST(0.45, d.c1), ST(1, d.c2)], 0.3, 0.3, 0.9),
+    }),
+    fireaura: (d, k) => {
+      let f = '';
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2 - Math.PI / 2,
+          x = 32 + Math.cos(a) * 21,
+          y = 37 + Math.sin(a) * 21,
+          deg = (a * 180) / Math.PI + 90;
+        f += `<path d="M0 3c-3-3-2-7 0-11 2 4 3 8 0 11z" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${deg.toFixed(0)}) scale(${i % 2 ? 1 : 1.35})" fill="url(#fa${k})"/>`;
+      }
+      return { back: `<g class="xa-spin3"><g class="xa-flick">${f}</g></g>`, defs: LG(`fa${k}`, [ST(0, '#fff6b0'), ST(0.5, d.c3), ST(1, d.c1)]) };
+    },
+    unihorn: (d, k) => ({
+      top: `<path d="M29 20L32 1l3 19z" fill="url(#uh${k})" stroke="#fff" stroke-opacity=".8" stroke-width=".8" stroke-linejoin="round"/><path d="M29.8 16l4.6-2M30.4 11l3.4-1.6M31 6.5l2.2-1" stroke="#fff" stroke-opacity=".8" stroke-width=".9"/><circle cx="32" cy="2" r="2.4" fill="#fff" opacity=".7" class="xa-pulse"/>`,
+      defs: LG(`uh${k}`, [ST(0, '#ffffff'), ST(0.5, d.c3), ST(1, lighten(d.c3, 0.5))]),
+    }),
+    demonhorns: d => ({
+      top: MIR(`<path d="M20 25C12 22 8 14 10 3c2 6 6 9 12 12-3 2-3 5-2 10z" fill="${d.c3}" stroke="#000" stroke-opacity=".35" stroke-width="1"/><path d="M11 7q3 5 8 7" stroke="#fff" stroke-opacity=".4" stroke-width="1" fill="none"/>`),
+    }),
+    shell: (d, k) => {
+      let hx = '';
+      for (const [x, y] of [[32, 50], [24, 53], [40, 53], [28, 58], [36, 58]]) hx += `<path d="M${x - 4} ${y}l2-3.5h4l2 3.5-2 3.5h-4z" fill="none" stroke="${lighten(d.c3, 0.35)}" stroke-width="1" opacity=".8"/>`;
+      return { back: `<path d="M8 50C8 34 56 34 56 50c0 8-10 12-24 12S8 58 8 50z" fill="url(#sh${k})" stroke="${d.c2}" stroke-width="1.4"/>${hx}`, defs: RG(`sh${k}`, [ST(0, d.c3), ST(1, d.c2)], 0.5, 0.2, 0.9) };
+    },
+    ringplanet: d => ({
+      back: `<ellipse cx="32" cy="38" rx="31" ry="8" fill="none" stroke="${d.c3}" stroke-width="3" opacity=".55" transform="rotate(-16 32 38)"/>`,
+      front: `<path d="M1.5 44.5A31 8 -16 0 0 62.5 27" fill="none" stroke="${lighten(d.c3, 0.3)}" stroke-width="3" opacity=".9" transform="rotate(0)"/><circle cx="58" cy="28" r="2" fill="#fff" class="xa-blink"/>`,
+    }),
+    multieyes: d => ({
+      front: [[18, 24, 2.2], [46, 23, 2.4], [15, 44, 1.8], [49, 44, 2], [32, 20, 2.6]]
+        .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r + 0.8}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${r}" fill="${d.eye}"/><circle cx="${x}" cy="${y}" r="${r * 0.45}" fill="#12061c"/>`)
+        .join('') + `<g class="xa-blink">${[[18, 24], [49, 44]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.4" fill="${d.eye}" opacity=".35"/>`).join('')}</g>`,
+    }),
+    flowercrown: d => {
+      const fl = (x, y, c) => `<g transform="translate(${x} ${y})">${[0, 72, 144, 216, 288].map(r => `<ellipse cx="0" cy="-2.6" rx="1.8" ry="2.6" fill="${c}" transform="rotate(${r})"/>`).join('')}<circle r="1.4" fill="#ffe066"/></g>`;
+      return { top: fl(20, 21, '#ff9ecf') + fl(27, 17, '#fff') + fl(34, 16, d.c3) + fl(41, 18, '#ff9ecf') + fl(47, 22, '#fff') };
+    },
+    moonback: d => ({
+      back: `<path d="M47 3a15 15 0 1 0 14 21 12 12 0 1 1-14-21z" fill="${lighten(d.c3, 0.5)}" opacity=".95"/><circle cx="52" cy="14" r="15" fill="${d.c3}" opacity=".16" class="xa-pulse"/>`,
+    }),
+    lightmane: d => {
+      let z = '';
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2 - Math.PI / 2,
+          x0 = 32 + Math.cos(a) * 19,
+          y0 = 36 + Math.sin(a) * 19,
+          x1 = 32 + Math.cos(a) * 29,
+          y1 = 36 + Math.sin(a) * 29,
+          mx = (x0 + x1) / 2 + Math.cos(a + 1.3) * 3,
+          my = (y0 + y1) / 2 + Math.sin(a + 1.3) * 3;
+        z += `<path d="M${x0.toFixed(1)} ${y0.toFixed(1)}L${mx.toFixed(1)} ${my.toFixed(1)}L${x1.toFixed(1)} ${y1.toFixed(1)}" stroke="${d.c3}" stroke-width="2.2" fill="none" stroke-linejoin="round"/>`;
+      }
+      return { back: `<g class="xa-blink">${z}</g><g opacity=".4" class="xa-spin3">${z}</g>` };
+    },
+    tail: (d, k) => ({
+      back: `<g class="xa-sway"><path d="M46 50c10 4 16-2 15-10-1-5 2-8 3-9-5 0-8 3-8 7 0 6-5 8-10 6z" fill="${d.c1}" stroke="${d.c3}" stroke-width="1"/><path d="M61 30l3-4-1 6z" fill="${d.c3}"/></g>`,
+    }),
+    tentaclecrown: d => ({
+      top: `<g class="xa-sway">${[16, 24, 32, 40, 48].map((x, i) => `<path d="M${x} 24c${i % 2 ? -4 : 4}-6 ${i % 2 ? 3 : -3}-12 0-${16 + (i === 2 ? 4 : 0)}" stroke="${d.c3}" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="${x}" cy="${8 - (i === 2 ? 4 : 0)}" r="1.8" fill="${lighten(d.c3, 0.5)}"/>`).join('')}</g>`,
+    }),
     orbit: d => ({ back: `<g class="xa-spin2"><ellipse cx="32" cy="36" rx="30" ry="9" fill="none" stroke="${d.c3}" stroke-width="1.4" opacity=".7" transform="rotate(-18 32 36)"/><circle cx="4" cy="42" r="2.4" fill="${lighten(d.c3, 0.5)}"/></g>` }),
   };
 
@@ -17156,6 +18134,13 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     frost: () => `<g stroke="#fff" stroke-width="1" opacity=".75"><path d="M18 28v6M15 31h6M16 29l4 4M20 29l-4 4"/><path d="M46 44v5M43.5 46.5h5"/></g>`,
     tiger: d => `<path d="M14 34q5-1 8 2M50 34q-5-1-8 2M16 42q4 0 7 3M48 42q-4 0-7 3M32 19v6M27 20l2 5M37 20l-2 5" stroke="${d.c2}" stroke-width="2.4" stroke-linecap="round" fill="none"/>`,
     glow: d => `<circle cx="32" cy="44" r="9" fill="${d.c3}" opacity=".3" class="xa-pulse"/>`,
+    pixel: d => {
+      let s = '';
+      for (let y = 18; y < 58; y += 5) for (let x = 12; x < 54; x += 5) if ((x * 7 + y * 13) % 5 < 2) s += `<rect x="${x}" y="${y}" width="4" height="4" fill="${(x + y) % 3 ? d.c3 : '#fff'}" opacity="${(x + y) % 3 ? 0.5 : 0.25}"/>`;
+      return s;
+    },
+    skull: () => `<path d="M24 46h16M26 46v4M30 46v4M34 46v4M38 46v4" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/><path d="M22 26c3-4 17-4 20 0" stroke="#fff" stroke-opacity=".5" stroke-width="1.4" fill="none"/>`,
+    lava: d => `<path d="M12 44c6-3 10 3 16 0s10-4 16-1 8 2 10 0V60H12z" fill="${d.c3}" opacity=".75" class="xa-glow"/><path d="M18 30l5 4-1 5M44 28l-4 5 3 4" stroke="${d.c3}" stroke-width="1.8" fill="none" class="xa-glow"/>`,
   };
 
   /* ---------------- faces ---------------- */
@@ -17168,6 +18153,12 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       return `${glow}${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="4.2" fill="${e}"/><ellipse cx="${x}" cy="${y}" rx="1" ry="3.4" fill="#12061c"/><circle cx="${x + 1.2}" cy="${y - 1.6}" r=".9" fill="#fff"/>`).join('')}`;
     if (style === 'angry')
       return `${glow}${[L, R].map(([x, y], i) => `<ellipse cx="${x}" cy="${y}" rx="3.4" ry="3.2" fill="${e}"/><circle cx="${x}" cy="${y}" r="1.4" fill="#12061c"/><path d="M${x - 4} ${y - (i ? 3 : 6)}L${x + 4} ${y - (i ? 6 : 3)}" stroke="#12061c" stroke-width="1.8" stroke-linecap="round"/>`).join('')}`;
+    if (style === 'spiral')
+      return `${glow}${[L, R].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4.4" fill="#fff"/><g class="xa-spin4" style="transform-origin:${x}px ${y}px"><path d="M${x} ${y}m0-1a1 1 0 1 1-1 1 2 2 0 1 1 2 2 3 3 0 1 1-3-3 3.6 3.6 0 0 1 3.6 3.6" stroke="${e}" stroke-width="1.2" fill="none"/></g>`).join('')}`;
+    if (style === 'star')
+      return `${glow}${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.8" ry="4.4" fill="#170a26"/>${star4(x, y, 3.2, e)}<circle cx="${x + 1.3}" cy="${y - 1.9}" r="1" fill="#fff"/>`).join('')}`;
+    if (style === 'void')
+      return `${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.8" ry="2.6" fill="#000"/><ellipse cx="${x}" cy="${y}" rx="1.6" ry="1.1" fill="${e}" class="xa-pulse"/>`).join('')}`;
     if (style === 'visor') return `<rect x="19" y="31" width="26" height="8" rx="4" fill="#0a0f1c"/><rect x="21" y="33" width="22" height="4" rx="2" fill="${e}" class="xa-scan"/>`;
     if (style === 'cute')
       return `${glow}${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.8" ry="4.6" fill="#170a26"/><ellipse cx="${x}" cy="${y + 1.5}" rx="2.6" ry="1.6" fill="${e}" opacity=".85"/><circle cx="${x + 1.3}" cy="${y - 1.8}" r="1.4" fill="#fff"/>`).join('')}`;
@@ -17181,6 +18172,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     snout: `<ellipse cx="32" cy="45" rx="7" ry="4.6" fill="#000" opacity=".22"/><ellipse cx="29.5" cy="45" rx="1.2" ry="1.6" fill="#12061c"/><ellipse cx="34.5" cy="45" rx="1.2" ry="1.6" fill="#12061c"/>`,
     o: `<ellipse cx="32" cy="44.5" rx="2" ry="2.4" fill="#12061c"/>`,
     none: '',
+    zigzag: `<path d="M25 43l2.3 3 2.3-3 2.4 3 2.4-3 2.3 3 2.3-3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M24 42.5q8 6 16 0" stroke="#12061c" stroke-width="1.6" fill="none"/>`,
+    tongue: `<path d="M28.5 43q3.5 3 7 0" stroke="#12061c" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M31 44.6q1 3.4 2.4 0" fill="#ff5c8a"/>`,
   };
 
   /* ---------------- the exotic roster ----------------
@@ -17212,6 +18205,31 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     { id: 'x_quantumaxolotl', name: 'Quantum Axolotl', el: 'tech', c1: '#ff9ed2', c2: '#b8337a', c3: '#3dffe0', eye: '#15051a', f: ['gills', 'eye3'], pat: 'glow', eyes: 'cute', mouth: 'smile', perk: 'passive', base: 300, perk2: 'xpPct', base2: 0.5, desc: 'Exists in two portfolios at once.' },
     { id: 'x_glitchling', name: 'Glitchling', el: 'tech', c1: '#1b1b1b', c2: '#000000', c3: '#39ff88', eye: '#39ff88', f: ['ears', 'eye3', 'bolts'], pat: 'circuit', eyes: 'visor', mouth: 'none', perk: 'packLuck', base: 1.2, perk2: 'packTimer', base2: 0.6, desc: 'ERR0R: t00 p0werful. D0 n0t tr4de.' },
     { id: 'x_hydra', name: 'Abyss Hydra', el: 'water', c1: '#0e4d4a', c2: '#031a1a', c3: '#6bffd5', eye: '#ff3d6e', f: ['hood', 'horns', 'eye3'], pat: 'scales', eyes: 'slit', mouth: 'fangs', perk: 'coinPct', base: 1.4, perk2: 'newsSense', base2: 0.5, desc: 'Cut off one loss, two gains grow back.' },
+    // ---- wave 2 ----
+    { id: 'x_cosmicdragon', name: 'Cosmic Dragon', el: 'void', ultra: true, c1: '#3b1fa3', c2: '#0a0428', c3: '#7ce7ff', eye: '#fff36b', f: ['cosmicwings', 'demonhorns', 'tail', 'orbit'], pat: 'galaxy', eyes: 'slit', mouth: 'fangs', perk: 'coinPct', base: 1.8, perk2: 'packLuck', base2: 0.9, desc: 'Born inside a black hole. Eats galaxies for breakfast.' },
+    { id: 'x_infernotitan', name: 'Inferno Titan', el: 'fire', ultra: true, c1: '#5a1a0a', c2: '#1a0502', c3: '#ff7a1a', eye: '#fff36b', f: ['fireaura', 'demonhorns'], pat: 'lava', eyes: 'angry', mouth: 'zigzag', perk: 'passive', base: 520, perk2: 'coinPct', base2: 0.8, desc: 'The market’s hottest asset. Literally on fire.' },
+    { id: 'x_thundergod', name: 'Thunder God', el: 'sky', ultra: true, c1: '#2d3b8f', c2: '#0c1238', c3: '#fff36b', eye: '#bff4ff', f: ['lightmane', 'crown', 'bolts'], pat: 'none', eyes: 'orb', mouth: 'fangs', perk: 'xpPct', base: 1.6, perk2: 'newsSense', base2: 0.8, desc: 'Every lightning bolt is a green candle.' },
+    { id: 'x_voidreaper', name: 'Void Reaper', el: 'void', c1: '#1a1024', c2: '#050208', c3: '#b35cff', eye: '#d6a8ff', f: ['hood', 'wisps'], pat: 'skull', eyes: 'void', mouth: 'none', perk: 'packLuck', base: 1.3, perk2: 'passive', base2: 140, desc: 'Collects the souls of bad trades.' },
+    { id: 'x_hypnoowl', name: 'Hypno Owl', el: 'sky', c1: '#7d4cff', c2: '#2a0f73', c3: '#ff7ae6', eye: '#ff3df0', f: ['wings', 'crest'], pat: 'none', eyes: 'spiral', mouth: 'beak', perk: 'newsSense', base: 0.9, perk2: 'xpPct', base2: 0.6, desc: 'Look into its eyes. Buy the dip. Buy the dip.' },
+    { id: 'x_mechabull', name: 'Mecha Bull', el: 'tech', c1: '#8a96a8', c2: '#2c3440', c3: '#39ff88', eye: '#39ff88', f: ['bullhorns', 'bolts'], pat: 'circuit', eyes: 'visor', mouth: 'snout', perk: 'coinPct', base: 1.5, perk2: 'packTimer', base2: 0.6, desc: 'Fully automated bull market. Batteries included.' },
+    { id: 'x_crystalunicorn', name: 'Crystal Unicorn', el: 'sky', ultra: true, c1: '#f2fbff', c2: '#9cc7e8', c3: '#d18bff', eye: '#7b6cff', f: ['unihorn', 'crystalwings', 'roundears'], pat: 'crystal', eyes: 'star', mouth: 'smile', perk: 'packLuck', base: 1.7, perk2: 'loginPct', base2: 1.4, desc: 'So rare it has only been seen in charts.' },
+    { id: 'x_lavaturtle', name: 'Magma Turtle', el: 'fire', c1: '#4a3a2e', c2: '#1a120c', c3: '#ff6a1a', eye: '#ffcf3d', f: ['shell'], pat: 'lava', eyes: 'cute', mouth: 'smile', perk: 'passive', base: 340, perk2: 'loginPct', base2: 1.0, desc: 'Slow and steady wins the compound interest.' },
+    { id: 'x_planetcat', name: 'Planet Cat', el: 'void', c1: '#ff9e5c', c2: '#8a3a1a', c3: '#ffd89e', eye: '#2d1b4d', f: ['ears', 'ringplanet'], pat: 'spots', eyes: 'cute', mouth: 'tongue', perk: 'xpPct', base: 1.2, perk2: 'coinPct', base2: 0.6, desc: 'Has its own gravity. And its own moons.' },
+    { id: 'x_starfox', name: 'Starlight Fox', el: 'sky', ultra: true, c1: '#1b1f5c', c2: '#070924', c3: '#9dd6ff', eye: '#fff36b', f: ['tails9', 'ears'], pat: 'galaxy', eyes: 'star', mouth: 'smile', perk: 'packLuck', base: 1.5, perk2: 'xpPct', base2: 1.0, desc: 'Nine tails, each one a constellation.' },
+    { id: 'x_marketeye', name: 'Eye of the Market', el: 'void', c1: '#6b0f3a', c2: '#1a0210', c3: '#ff3d6e', eye: '#ffcf3d', f: ['tentacles', 'multieyes'], pat: 'glow', eyes: 'slit', mouth: 'zigzag', perk: 'newsSense', base: 1.1, perk2: 'coinPct', base2: 0.7, desc: 'It sees every trade. Every. Single. One.' },
+    { id: 'x_bluephoenix', name: 'Azure Phoenix', el: 'fire', c1: '#1f6fff', c2: '#0a1f6b', c3: '#7ce7ff', eye: '#ffffff', f: ['flames', 'wings', 'crown'], pat: 'glow', eyes: 'orb', mouth: 'beak', perk: 'coinPct', base: 1.4, perk2: 'xpPct', base2: 0.7, desc: 'Burns hotter than the red one. Blue chips only.' },
+    { id: 'x_blossomdragon', name: 'Blossom Dragon', el: 'earth', c1: '#ffc2dc', c2: '#c2527f', c3: '#7dffb0', eye: '#c2185b', f: ['flowercrown', 'horns', 'wings'], pat: 'scales', eyes: 'cute', mouth: 'smile', perk: 'loginPct', base: 1.6, perk2: 'passive', base2: 160, desc: 'Every spring its portfolio blooms.' },
+    { id: 'x_frostwyrm', name: 'Frost Wyrm', el: 'water', c1: '#9fe4ff', c2: '#1f5f99', c3: '#e6fbff', eye: '#3db4ff', f: ['batwings', 'spikes', 'tail'], pat: 'frost', eyes: 'slit', mouth: 'fangs', perk: 'passive', base: 300, perk2: 'packLuck', base2: 0.6, desc: 'Freezes your losses solid.' },
+    { id: 'x_goldkraken', name: 'Golden Kraken', el: 'water', ultra: true, c1: '#ffcf3d', c2: '#8a5a00', c3: '#fff2b0', eye: '#ff3d3d', f: ['tentaclecrown', 'tentacles', 'crown'], pat: 'spots', eyes: 'angry', mouth: 'o', perk: 'coinPct', base: 2.0, perk2: 'passive', base2: 200, desc: 'Pulls whole ships of gold down to its treasury.' },
+    { id: 'x_eclipsewolf', name: 'Eclipse Wolf', el: 'void', c1: '#1c1c2e', c2: '#06060d', c3: '#ffb13d', eye: '#ffb13d', f: ['moonback', 'ears'], pat: 'none', eyes: 'slit', mouth: 'fangs', perk: 'xpPct', base: 1.2, perk2: 'newsSense', base2: 0.6, desc: 'Only howls during a total market eclipse.' },
+    { id: 'x_prismjelly', name: 'Prism Jelly', el: 'water', c1: '#ff7ae6', c2: '#5b2bff', c3: '#7dffe8', eye: '#ffffff', f: ['tentacles', 'orbit'], pat: 'glow', eyes: 'cute', mouth: 'o', perk: 'packLuck', base: 1.2, perk2: 'loginPct', base2: 0.9, desc: 'Refracts profits into every color.', prism: true },
+    { id: 'x_plaguedrake', name: 'Plague Drake', el: 'void', c1: '#2f5c1a', c2: '#0c1a05', c3: '#b6ff3d', eye: '#e8ff3d', f: ['batwings', 'spikes'], pat: 'spots', eyes: 'slit', mouth: 'fangs', perk: 'coinPct', base: 1.3, perk2: 'packTimer', base2: 0.6, desc: 'Its breath melts short sellers.' },
+    { id: 'x_neonshark', name: 'Neon Shark', el: 'tech', c1: '#0f1a3a', c2: '#03060f', c3: '#16e0ff', eye: '#ff3df0', f: ['fins'], pat: 'circuit', eyes: 'slit', mouth: 'zigzag', perk: 'coinPct', base: 1.3, perk2: 'newsSense', base2: 0.5, desc: 'Smells a dip from a mile away.' },
+    { id: 'x_bitbeast', name: 'Bit Beast', el: 'tech', c1: '#241a4d', c2: '#0a0620', c3: '#39ff88', eye: '#39ff88', f: ['ears', 'eye3'], pat: 'pixel', eyes: 'visor', mouth: 'zigzag', perk: 'packTimer', base: 0.8, perk2: 'packLuck', base2: 0.8, desc: '8-bit body, 64-bit brain.' },
+    { id: 'x_lunarkirin', name: 'Lunar Kirin', el: 'sky', c1: '#e9e3ff', c2: '#7a6fc0', c3: '#fff1b0', eye: '#5f4bd6', f: ['antlers', 'moonback', 'halo'], pat: 'none', eyes: 'star', mouth: 'smile', perk: 'loginPct', base: 1.5, perk2: 'xpPct', base2: 0.8, desc: 'Appears only on the luckiest full moons.' },
+    { id: 'x_diamondtitan', name: 'Diamond Titan', el: 'earth', c1: '#dffcff', c2: '#6aa8c9', c3: '#ffffff', eye: '#3de7ff', f: ['spikes', 'crystalwings'], pat: 'crystal', eyes: 'angry', mouth: 'none', perk: 'packLuck', base: 1.4, perk2: 'coinPct', base2: 0.8, desc: 'Diamond hands. Diamond feet. Diamond everything.' },
+    { id: 'x_hellhound', name: 'Hellhound', el: 'fire', c1: '#3a0a0a', c2: '#120202', c3: '#ff3d1a', eye: '#ffcf3d', f: ['fireaura', 'ears'], pat: 'cracks', eyes: 'angry', mouth: 'fangs', perk: 'coinPct', base: 1.4, perk2: 'xpPct', base2: 0.7, desc: 'Guards the gates of the bear market.' },
+    { id: 'x_bubblegum', name: 'Bubblegum Blob', el: 'earth', c1: '#ffb3e6', c2: '#e05aa8', c3: '#9ef0ff', eye: '#2d1b4d', f: ['roundears', 'tentaclecrown'], pat: 'spots', eyes: 'big', mouth: 'tongue', perk: 'xpPct', base: 1.3, perk2: 'loginPct', base2: 1.1, desc: 'Sticky gains. Very sticky.' },
   ];
 
   /* ---------------- mutations ---------------- */
@@ -17276,8 +18294,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       `<circle cx="${HX}" cy="${HY}" r="${HR}" fill="url(#xh${k})" stroke="${lighten(d.c3, 0.3)}" stroke-width="1.4"${d.ghost ? ' opacity=".8"' : ''}/>` +
       (d.pat && P[d.pat] ? `<g clip-path="url(#xc${k})">${P[d.pat](d)}</g>` : '') +
       `<ellipse cx="25" cy="27" rx="7" ry="3.6" fill="#fff" opacity=".3" transform="rotate(-28 25 27)"/>`;
+    const ultra = d.ultra
+      ? `<g class="xa-spin3" opacity=".85"><circle cx="32" cy="36" r="30.5" fill="none" stroke="${d.c3}" stroke-width="1.2" stroke-dasharray="2 3.2"/>${[0, 90, 180, 270].map(a => { const t = (a * Math.PI) / 180; return `<path d="M${(32 + Math.cos(t) * 30.5).toFixed(1)} ${(36 + Math.sin(t) * 30.5).toFixed(1)}l2 2-2 2-2-2z" fill="#fff"/>`; }).join('')}</g><circle cx="32" cy="36" r="27" fill="none" stroke="${lighten(d.c3, 0.4)}" stroke-width=".8" opacity=".5" class="xa-pulse"/>`
+      : '';
     return (
-      `<svg viewBox="0 0 64 64" class="art xart" aria-hidden="true"><defs>${defs}</defs>` +
+      `<svg viewBox="0 0 64 64" class="art xart${d.ultra ? ' xultra' : ''}${d.prism ? ' xprism' : ''}" aria-hidden="true"><defs>${defs}</defs>` + ultra +
       `<circle cx="32" cy="36" r="31" fill="url(#xa${k})" class="xa-pulse"/>${ring}` +
       back.join('') +
       head +
@@ -17313,7 +18334,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   /* ---------- pets ---------- */
   for (const d of X.PETS)
     if (!PET[d.id]) {
-      const p = { id: d.id, name: d.name, ic: '', r: 'x', perk: d.perk, base: d.base, perk2: d.perk2, base2: d.base2, el: d.el, desc: d.desc, exotic: true };
+      const p = { id: d.id, name: d.name, ic: '', r: 'x', perk: d.perk, base: d.base, perk2: d.perk2, base2: d.base2, el: d.el, desc: d.desc, exotic: true, ultra: !!d.ultra };
       PETS.push(p);
       PET[d.id] = p;
       DESIGNS[d.id] = () => X.svg(d.id);
@@ -17335,6 +18356,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     { id: 'egg_x_sky', name: 'Celestial Egg', shell: ['#fffbe0', '#c9a44a'], el: 'sky', mut: 0.2, desc: 'A sky Exotic: Seraph Owl, Storm Hawk, Thunder Lion and more.' },
     { id: 'egg_x_tech', name: 'Cyber Egg', shell: ['#b8ffef', '#16304f'], el: 'tech', mut: 0.2, desc: 'A tech Exotic: Neon Wolf, Cyber Fox, Glitchling or Quantum Axolotl.' },
     { id: 'egg_x_earth', name: 'Titan Egg', shell: ['#fff0b3', '#6b3f00'], el: 'earth', mut: 0.2, desc: 'An earth Exotic: Golden Bull, Bear King, Diamond Panda and more.' },
+    { id: 'egg_x_ultra', name: 'Ultra Egg', shell: ['#fff3b0', '#7b2bff'], el: null, ultra: true, mut: 0.25, desc: 'Only hatches ULTRA exotics: the rarest pets in the game.' },
     { id: 'egg_x_mutant', name: 'Mutant Egg', shell: ['#b6ff3d', '#3a0a5c'], el: null, mut: 1, desc: 'Any Exotic pet, and it ALWAYS hatches mutated.' },
   ];
   for (const e of EGGS) reg({ ...e, type: 'egg', r: 'x', exotic: true, price: null, hatch: {} });
@@ -17479,7 +18501,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if (!egg || !egg.exotic) return h0.apply(this, arguments);
     if (!(acct.inv[eggId] > 0)) return;
     acct.inv[eggId]--;
-    const pool = EXO.filter(p => !egg.el || p.el === egg.el),
+    const pool = EXO.filter(p => (!egg.el || p.el === egg.el) && (!egg.ultra || p.ultra)),
       d = pick(pool.length ? pool : EXO),
       mut = Math.random() < egg.mut ? rollMut() : null;
     const r = addPet(d.id, mut);
@@ -17572,7 +18594,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       if (!d) return;
       const mine = acct.pets.list.find(x => x.id === d.id);
       if (d.r === 'x') {
-        if (!el.querySelector('.x-tag')) el.insertAdjacentHTML('afterbegin', '<span class="x-tag">EXOTIC</span>');
+        if (!el.querySelector('.x-tag')) el.insertAdjacentHTML('afterbegin', d.ultra ? '<span class="x-tag x-ultra-tag">ULTRA</span>' : '<span class="x-tag">EXOTIC</span>');
         const pm = el.querySelector('.perk-mini');
         if (pm && d.perk2 && !pm.dataset.x) {
           pm.dataset.x = 1;
@@ -17617,6 +18639,532 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       if (a && perk && PET[a.id] && (PET[a.id].perk2 || a.mut)) perk.textContent = PBExotic.perkText(a) + (a.mood < MOOD_MIN ? ' · off, too sad' : a.mission ? ' · off, on a mission' : '');
     }
   };
+})();
+
+/* =====================================================================
+   PET GARDEN — a living scene where your pets hang out.
+   · Real day / sunset / night sky from your clock (stars, moon, fireflies)
+   · Pets wander, hop, nap and say hi; exotics that fly float in the air
+   · Tap a pet to pet it, feed it or make it your companion
+   · Pets in the garden earn garden coins (rarer + mutated = more)
+   · Loot pops up now and then: tap it
+   · Buy decorations: they appear in the scene and boost the garden
+   ===================================================================== */
+(() => {
+  const G = () => {
+    const g = (acct.garden ||= {});
+    g.slots ||= [];
+    g.deco ||= {};
+    if (g.bank == null) g.bank = 0;
+    g.last ||= Date.now();
+    g.drops ||= {};
+    return g;
+  };
+  const HR = 3.6e6;
+  const RATE = { c: 3, r: 6, e: 12, l: 24, x: 60 }; // coins an hour per pet in the garden
+  const DECO = [
+    { id: 'flowers', name: 'Flower Beds', ic: '🌷', cost: 800, boost: 0.05, slots: 0, desc: 'Colorful beds all over the lawn. +5% garden coins.' },
+    { id: 'pond', name: 'Koi Pond', ic: '🐟', cost: 2000, boost: 0.08, slots: 2, desc: 'A sparkling pond. +8% coins, +2 pet spots.' },
+    { id: 'lanterns', name: 'Lanterns', ic: '🏮', cost: 3000, boost: 0.08, slots: 0, desc: 'They glow at night. +8% garden coins.' },
+    { id: 'fountain', name: 'Gold Fountain', ic: '⛲', cost: 6000, boost: 0.12, slots: 2, desc: 'A golden fountain. +12% coins, +2 pet spots.' },
+    { id: 'sakura', name: 'Sakura Tree', ic: '🌸', cost: 9000, boost: 0.12, slots: 2, desc: 'Petals drift across the garden. +12% coins, +2 spots.' },
+    { id: 'gazebo', name: 'Gazebo', ic: '🛖', cost: 15000, boost: 0.15, slots: 3, desc: 'A cozy hangout. +15% coins, +3 pet spots.' },
+    { id: 'crystal', name: 'Exotic Crystal', ic: '💎', cost: 25000, boost: 0.25, slots: 3, desc: 'A glowing crystal that exotic pets love. +25% coins, +3 spots.' },
+    { id: 'rainbow', name: 'Rainbow Arch', ic: '🌈', cost: 50000, boost: 0.4, slots: 5, desc: 'The ultimate flex. +40% coins, +5 pet spots.' },
+  ];
+  const BASE_SLOTS = 6,
+    CAP_H = 12;
+  const own = id => !!G().deco[id];
+  const slotsMax = () => BASE_SLOTS + DECO.filter(d => own(d.id)).reduce((s, d) => s + d.slots, 0);
+  const boost = () => 1 + DECO.filter(d => own(d.id)).reduce((s, d) => s + d.boost, 0);
+  const petBy = uid => acct.pets.list.find(p => p.uid === uid);
+  const mutMult = p => (window.PBExotic && p.mut && PBExotic.MUT[p.mut] ? PBExotic.MUT[p.mut].mult : 1);
+  const home = () => {
+    // who lives here: chosen pets (or, if you never chose, your first pets)
+    const g = G(),
+      max = slotsMax();
+    let list = g.slots.map(petBy).filter(Boolean);
+    if (!g.chosen) list = acct.pets.list.slice(0, max);
+    return list.slice(0, max);
+  };
+  const petRate = p => {
+    const d = PET[p.id];
+    if (!d) return 0;
+    return (RATE[d.r] || 3) * (d.ultra ? 2 : 1) * mutMult(p) * (1 + 0.05 * (p.lvl - 1));
+  };
+  const rate = () => home().filter(p => !p.mission).reduce((s, p) => s + petRate(p), 0) * boost();
+  function accrue() {
+    const g = G(),
+      now = Date.now(),
+      dt = Math.min(CAP_H * HR, Math.max(0, now - g.last));
+    g.last = now;
+    g.bank = Math.min(rate() * CAP_H, g.bank + (rate() * dt) / HR);
+  }
+  function collect() {
+    accrue();
+    const g = G(),
+      n = Math.floor(g.bank);
+    if (n < 1) return toast('Nothing to collect yet. Your pets are working on it!', 'err');
+    g.bank -= n;
+    acct.coins += n;
+    bumpCoins();
+    saveAcct(true);
+    SFX.play('coin');
+    toast(`Collected ${n.toLocaleString()} garden coins 🪙`, 'ok');
+    burst(document.getElementById('pgCollect'), '🪙', 10);
+    paintBank();
+  }
+
+  /* ---------------- the scene ---------------- */
+  function phase() {
+    const h = new Date().getHours() + new Date().getMinutes() / 60;
+    return h >= 6.5 && h < 17.5 ? 'day' : h >= 17.5 && h < 20 ? 'dusk' : h >= 5 && h < 6.5 ? 'dawn' : 'night';
+  }
+  const SKY = {
+    day: ['#6cc6ff', '#bfe9ff', '#e9f8ff'],
+    dawn: ['#6d7fd8', '#f5a7a0', '#ffe0b3'],
+    dusk: ['#3b3f8f', '#ff7e6b', '#ffc98a'],
+    night: ['#070b24', '#141c47', '#2a2f6b'],
+  };
+  function sceneSVG(ph) {
+    const s = SKY[ph],
+      night = ph === 'night',
+      g1 = night ? '#1f4d3a' : ph === 'dusk' ? '#4f8a3a' : '#6fcf57',
+      g2 = night ? '#16392b' : ph === 'dusk' ? '#3f7430' : '#57b845',
+      g3 = night ? '#10291f' : ph === 'dusk' ? '#325f26' : '#46a137';
+    let stars = '';
+    if (night || ph === 'dawn') for (let i = 0; i < 40; i++) stars += `<circle cx="${(i * 97) % 1000}" cy="${(i * 53) % 190}" r="${i % 5 ? 1.1 : 1.9}" fill="#fff" opacity="${night ? 0.9 : 0.4}" class="pg-tw" style="animation-delay:${(i % 7) * 0.4}s"/>`;
+    const orb = night
+      ? `<circle cx="820" cy="70" r="30" fill="#fff6d6"/><circle cx="834" cy="62" r="26" fill="${s[0]}"/>`
+      : `<circle cx="${ph === 'day' ? 160 : 860}" cy="${ph === 'day' ? 70 : 150}" r="40" fill="#fff3b0" opacity=".95"/><circle cx="${ph === 'day' ? 160 : 860}" cy="${ph === 'day' ? 70 : 150}" r="70" fill="#fff3b0" opacity=".25"/>`;
+    const clouds = night ? '' : [[120, 110, 1], [520, 60, 0.8], [760, 120, 1.2]].map(([x, y, k], i) => `<g class="pg-cloud" style="animation-duration:${60 + i * 20}s"><g transform="translate(${x} ${y}) scale(${k})" fill="#fff" opacity=".85"><ellipse cx="0" cy="0" rx="46" ry="16"/><ellipse cx="-20" cy="-10" rx="22" ry="16"/><ellipse cx="18" cy="-14" rx="26" ry="20"/></g></g>`).join('');
+    let flowers = '';
+    if (own('flowers'))
+      for (let i = 0; i < 46; i++) {
+        const x = (i * 211) % 1000,
+          y = 330 + ((i * 37) % 140),
+          c = ['#ff6fae', '#ffd34d', '#fff', '#b388ff', '#ff8a5c'][i % 5];
+        flowers += `<g transform="translate(${x} ${y})"><path d="M0 0v8" stroke="${g3}" stroke-width="2"/><circle r="4" fill="${c}"/><circle r="1.6" fill="#ffe066"/></g>`;
+      }
+    else
+      for (let i = 0; i < 18; i++) {
+        const x = (i * 157 + 40) % 1000,
+          y = 360 + ((i * 41) % 110);
+        flowers += `<circle cx="${x}" cy="${y}" r="3" fill="${['#ffffff', '#ffe066', '#ff9ecf'][i % 3]}" opacity=".9"/>`;
+      }
+    const pond = own('pond') ? `<g><ellipse cx="780" cy="420" rx="120" ry="34" fill="${night ? '#1a3a6b' : '#4fb6ff'}" stroke="${g3}" stroke-width="4"/><ellipse cx="760" cy="412" rx="60" ry="8" fill="#fff" opacity=".35" class="pg-shim"/><path d="M740 424q10-6 20 0" stroke="#ff8a3d" stroke-width="5" stroke-linecap="round" class="pg-koi"/></g>` : '';
+    const fountain = own('fountain') ? `<g transform="translate(250 360)"><ellipse cx="0" cy="40" rx="70" ry="16" fill="#8fd3ff" stroke="#c9a227" stroke-width="5"/><rect x="-8" y="-10" width="16" height="50" rx="4" fill="#ffd34d"/><ellipse cx="0" cy="-10" rx="30" ry="8" fill="#ffd34d"/><g class="pg-spray"><path d="M0 -14q-24-30-40 10M0 -14q24-30 40 10M0-14v-26" stroke="#bfe9ff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".9"/></g></g>` : '';
+    const sakura = own('sakura') ? `<g transform="translate(90 330)"><path d="M0 0c-4-40 4-80 0-120" stroke="#6b3f24" stroke-width="16" fill="none" stroke-linecap="round"/><circle cx="-30" cy="-130" r="50" fill="#ffb7d5"/><circle cx="30" cy="-140" r="54" fill="#ff9ecf"/><circle cx="0" cy="-170" r="46" fill="#ffc8e0"/></g>` : `<g transform="translate(80 330)"><path d="M0 0v-90" stroke="#6b3f24" stroke-width="14" stroke-linecap="round"/><circle cx="0" cy="-110" r="46" fill="${g2}"/><circle cx="-24" cy="-90" r="30" fill="${g1}"/><circle cx="26" cy="-92" r="32" fill="${g1}"/></g>`;
+    const gazebo = own('gazebo') ? `<g transform="translate(560 300)"><path d="M-70 0h140l-70-50z" fill="#c2527f"/><rect x="-60" y="0" width="8" height="60" fill="#fff6e3"/><rect x="52" y="0" width="8" height="60" fill="#fff6e3"/><rect x="-66" y="56" width="132" height="8" rx="3" fill="#8a5a3c"/></g>` : '';
+    const crystal = own('crystal') ? `<g transform="translate(900 350)" class="pg-glow"><path d="M0-80l22 40-22 60-22-60z" fill="#b18cff" stroke="#fff" stroke-width="2"/><path d="M0-80v100" stroke="#fff" stroke-opacity=".6"/><circle cy="-30" r="60" fill="#b18cff" opacity=".18"/></g>` : '';
+    const rainbow = own('rainbow') ? `<g opacity="${night ? 0.35 : 0.75}" fill="none" stroke-width="12">${['#ff5b5b', '#ffa54d', '#ffe066', '#6fdc6f', '#5ab4ff', '#8a6bff'].map((c, i) => `<path d="M${200 + i * 12} 330A${300 - i * 12} ${230 - i * 12} 0 0 1 ${800 - i * 12} 330" stroke="${c}"/>`).join('')}</g>` : '';
+    const lanterns = own('lanterns') ? [180, 420, 680, 940].map(x => `<g transform="translate(${x} 300)"><path d="M0 0v-30" stroke="#6b3f24" stroke-width="3"/><rect x="-9" y="-44" width="18" height="18" rx="5" fill="#ff5b3d"/>${night || ph === 'dusk' ? '<circle cy="-35" r="26" fill="#ffb13d" opacity=".35" class="pg-glow"/>' : ''}</g>`).join('') : '';
+    const fence = `<g stroke="${night ? '#5a4632' : '#fff6e3'}" stroke-width="7" stroke-linecap="round">${Array.from({ length: 21 }, (_, i) => `<path d="M${i * 50} 300v-34"/>`).join('')}<path d="M0 282h1000M0 296h1000" stroke-width="5"/></g>`;
+    return `<svg class="pg-bg" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs><linearGradient id="pgSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s[0]}"/><stop offset=".6" stop-color="${s[1]}"/><stop offset="1" stop-color="${s[2]}"/></linearGradient></defs>
+      <rect width="1000" height="520" fill="url(#pgSky)"/>${stars}${orb}${clouds}${rainbow}
+      <path d="M0 250Q200 180 420 235T1000 215V520H0z" fill="${g3}" opacity=".85"/>
+      <path d="M0 290Q260 240 520 285T1000 270V520H0z" fill="${g2}"/>${fence}
+      <path d="M0 305Q300 285 600 310T1000 300V520H0z" fill="${g1}"/>
+      ${sakura}${gazebo}${crystal}${lanterns}${fountain}${pond}${flowers}</svg>`;
+  }
+
+  /* ---------------- pets as actors ---------------- */
+  const FLY = new Set(['wings', 'batwings', 'crystalwings', 'cosmicwings']);
+  const flies = d => {
+    if (!d) return false;
+    if (d.exotic && window.ExoticArt) {
+      const x = ExoticArt.PETS.find(p => p.id === d.id);
+      return !!(x && (x.f.some(f => FLY.has(f)) || x.ghost || x.f.includes('tentacles')));
+    }
+    return ['eagle', 'owl', 'peacock', 'swan', 'phoenix', 'griffin', 'snowowl', 'bat', 'butterfly', 'bee', 'parrot'].includes(d.id);
+  };
+  const LINES = ['*happy wiggle*', '*zoomies*', '*sniffs a flower*', 'This garden is 🔥', '*yawn*', 'Buy the dip!', '♥', '*chases a butterfly*', 'Diamond paws 💎', '*rolls in the grass*', 'To the moon! 🚀', '*naps in the sun*'];
+  let actors = [],
+    raf = 0,
+    lastT = 0,
+    stage = null,
+    dropT = 0,
+    petalT = 0;
+  function makeActors() {
+    const list = home();
+    actors = list.map((p, i) => {
+      const d = PET[p.id],
+        fly = flies(d);
+      return {
+        p,
+        d,
+        fly,
+        x: 0.1 + ((i * 0.37) % 0.8),
+        y: fly ? 0.15 + ((i * 0.23) % 0.35) : 0.55 + ((i * 0.29) % 0.4),
+        tx: 0,
+        ty: 0,
+        v: (fly ? 0.07 : 0.05) * (0.8 + Math.random() * 0.5),
+        mode: 'idle',
+        t: 1 + Math.random() * 3,
+        face: 1,
+        ph: Math.random() * 6,
+        el: null,
+      };
+    });
+  }
+  function pickTarget(a) {
+    a.tx = 0.06 + Math.random() * 0.88;
+    a.ty = a.fly ? 0.1 + Math.random() * 0.45 : 0.5 + Math.random() * 0.45;
+  }
+  function renderActors() {
+    const box = stage && stage.querySelector('.pg-actors');
+    if (!box) return;
+    box.innerHTML = actors
+      .map((a, i) => {
+        const d = a.d,
+          away = a.p.mission;
+        return `<button class="pg-pet${a.fly ? ' fly' : ''}${away ? ' away' : ''}${d.r === 'x' ? ' exo' : ''}${a.p.uid === acct.pets.active ? ' comp' : ''}" data-i="${i}" style="--rc:${RARITY[d.r].color}" aria-label="${esc(a.p.name)}"><span class="pg-shadow"></span><span class="pg-body">${petArt(a.p.id)}</span><span class="pg-name">${esc(a.p.name)}</span><span class="pg-say"></span></button>`;
+      })
+      .join('');
+    actors.forEach((a, i) => (a.el = box.children[i]));
+    box.onclick = e => {
+      const b = e.target.closest('.pg-pet');
+      if (b) tapPet(actors[+b.dataset.i]);
+    };
+  }
+  function frame(now) {
+    raf = requestAnimationFrame(frame);
+    if (!stage || !stage.isConnected) return stop();
+    if (document.hidden) return;
+    const dt = Math.min(0.05, (now - (lastT || now)) / 1000);
+    lastT = now;
+    const W = stage.clientWidth,
+      H = stage.clientHeight,
+      reduce = document.documentElement.classList.contains('reduce-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    for (const a of actors) {
+      if (!a.el || a.p.mission) continue;
+      a.t -= dt;
+      a.ph += dt;
+      if (a.mode === 'idle' && a.t <= 0) {
+        if (Math.random() < 0.18 && !a.fly) {
+          a.mode = 'hop';
+          a.t = 0.6;
+        } else {
+          a.mode = 'walk';
+          pickTarget(a);
+        }
+      } else if (a.mode === 'hop' && a.t <= 0) {
+        a.mode = 'idle';
+        a.t = 1 + Math.random() * 3;
+      }
+      if (a.mode === 'walk' && !reduce) {
+        const dx = a.tx - a.x,
+          dy = a.ty - a.y,
+          dist = Math.hypot(dx, dy),
+          step = a.v * dt;
+        if (dist <= step) {
+          a.x = a.tx;
+          a.y = a.ty;
+          a.mode = 'idle';
+          a.t = 1.5 + Math.random() * 4;
+          if (Math.random() < 0.25) say(a, LINES[Math.floor(Math.random() * LINES.length)]);
+        } else {
+          a.x += (dx / dist) * step;
+          a.y += (dy / dist) * step * 0.7;
+          if (Math.abs(dx) > 0.002) a.face = dx > 0 ? 1 : -1;
+        }
+      }
+      // depth: lower on screen = closer = bigger
+      const depth = a.fly ? 0.9 + a.y * 0.3 : 0.75 + (a.y - 0.5) * 0.9,
+        size = Math.max(54, Math.min(96, W * 0.085)) * depth,
+        bob = reduce ? 0 : a.fly ? Math.sin(a.ph * 2) * 7 : a.mode === 'walk' ? Math.abs(Math.sin(a.ph * 9)) * -5 : a.mode === 'hop' ? -Math.sin(((0.6 - a.t) / 0.6) * Math.PI) * 26 : Math.sin(a.ph * 2.2) * 1.5,
+        px = a.x * W - size / 2,
+        py = a.y * H - size;
+      a.el.style.transform = `translate3d(${px.toFixed(1)}px,${py.toFixed(1)}px,0)`;
+      a.el.style.width = a.el.style.height = size.toFixed(0) + 'px';
+      a.el.style.zIndex = String(10 + Math.round(a.y * 100) + (a.fly ? 100 : 0));
+      const body = a.el.children[1];
+      body.style.transform = `translateY(${bob.toFixed(1)}px) scaleX(${a.face})`;
+      a.el.children[0].style.transform = `scale(${a.fly ? 0.55 - bob / 60 : 1 + bob / 60})`;
+      a.el.children[0].style.top = a.fly ? `${(H * 0.62 - a.y * H + size).toFixed(0)}px` : '';
+    }
+    // pets that meet make hearts
+    if (!reduce && Math.random() < dt * 0.5)
+      for (let i = 0; i < actors.length; i++)
+        for (let j = i + 1; j < actors.length; j++) {
+          const A = actors[i],
+            B = actors[j];
+          if (A.fly !== B.fly || A.p.mission || B.p.mission) continue;
+          if (Math.hypot(A.x - B.x, A.y - B.y) < 0.07) {
+            floatAt((A.x + B.x) / 2, (A.y + B.y) / 2 - 0.12, '💕');
+            i = j = 1e9;
+          }
+        }
+    // loot and petals
+    dropT -= dt;
+    if (dropT <= 0) {
+      dropT = 25 + Math.random() * 35;
+      spawnDrop();
+    }
+    if (own('sakura') && !reduce) {
+      petalT -= dt;
+      if (petalT <= 0) {
+        petalT = 0.7;
+        petal();
+      }
+    }
+    if (Math.random() < dt / 2) paintBank();
+  }
+  function stop() {
+    cancelAnimationFrame(raf);
+    raf = 0;
+  }
+  function say(a, text) {
+    const s = a.el && a.el.querySelector('.pg-say');
+    if (!s) return;
+    s.textContent = text;
+    s.classList.remove('on');
+    void s.offsetWidth;
+    s.classList.add('on');
+  }
+  function floatAt(x, y, ic) {
+    const box = stage && stage.querySelector('.pg-fx');
+    if (!box) return;
+    const e = document.createElement('span');
+    e.className = 'pg-float';
+    e.textContent = ic;
+    e.style.left = x * 100 + '%';
+    e.style.top = y * 100 + '%';
+    box.appendChild(e);
+    setTimeout(() => e.remove(), 1400);
+  }
+  function burst(el, ic, n = 6) {
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    for (let i = 0; i < n; i++) {
+      const e = document.createElement('span');
+      e.className = 'pg-burst';
+      e.textContent = ic;
+      e.style.left = r.left + r.width / 2 + 'px';
+      e.style.top = r.top + r.height / 2 + 'px';
+      e.style.setProperty('--dx', (Math.random() - 0.5) * 160 + 'px');
+      e.style.setProperty('--dy', -40 - Math.random() * 90 + 'px');
+      document.body.appendChild(e);
+      setTimeout(() => e.remove(), 900);
+    }
+  }
+  function petal() {
+    const box = stage && stage.querySelector('.pg-fx');
+    if (!box) return;
+    const e = document.createElement('i');
+    e.className = 'pg-petal';
+    e.style.left = Math.random() * 30 + '%';
+    e.style.animationDuration = 5 + Math.random() * 4 + 's';
+    box.appendChild(e);
+    setTimeout(() => e.remove(), 9500);
+  }
+  /* loot: up to 8 an hour */
+  function spawnDrop() {
+    const box = stage && stage.querySelector('.pg-fx');
+    if (!box || box.querySelector('.pg-drop')) return;
+    const g = G(),
+      hk = Math.floor(Date.now() / HR);
+    for (const k of Object.keys(g.drops)) if (+k < hk) delete g.drops[k];
+    if ((g.drops[hk] || 0) >= 8) return;
+    const b = document.createElement('button');
+    b.className = 'pg-drop';
+    const treat = Math.random() < 0.25 && ITEMS.some(i => i.type === 'treat');
+    b.textContent = treat ? '🦴' : Math.random() < 0.5 ? '🪙' : '💎';
+    b.setAttribute('aria-label', 'Pick up');
+    b.style.left = 8 + Math.random() * 84 + '%';
+    b.style.top = 58 + Math.random() * 32 + '%';
+    b.onclick = () => {
+      const gg = G(),
+        k = Math.floor(Date.now() / HR);
+      if ((gg.drops[k] || 0) >= 8) return b.remove();
+      gg.drops[k] = (gg.drops[k] || 0) + 1;
+      let msg;
+      if (treat) {
+        const t = pick(ITEMS.filter(i => i.type === 'treat'));
+        acct.inv[t.id] = (acct.inv[t.id] || 0) + 1;
+        msg = `Found a ${t.name}!`;
+      } else {
+        const n = Math.round((b.textContent === '💎' ? 60 : 25) * (1 + home().length * 0.1));
+        acct.coins += n;
+        bumpCoins();
+        msg = `+${n} coins`;
+      }
+      saveAcct(true);
+      SFX.play('coin');
+      burst(b, b.textContent, 6);
+      toast(msg, 'ok');
+      b.remove();
+    };
+    box.appendChild(b);
+    setTimeout(() => b.isConnected && b.remove(), 40000);
+  }
+
+  /* ---------------- tapping a pet ---------------- */
+  function tapPet(a) {
+    if (!a) return;
+    const p = a.p,
+      d = a.d;
+    if (p.mission) return toast(`${p.name} is away on a mission`, 'info');
+    say(a, pick(PET_LINES));
+    floatAt(a.x, a.y - 0.18, '♥');
+    const card = stage.querySelector('.pg-card'),
+      cd = PET_COOLDOWN - (Date.now() - (p.lastPet || 0)),
+      treats = ITEMS.filter(i => i.type === 'treat' && acct.inv[i.id] > 0),
+      M = window.PBExotic && p.mut ? PBExotic.MUT[p.mut] : null;
+    card.innerHTML = `<button class="pg-x" aria-label="Close">×</button><span class="pg-cart">${petArt(p.id)}</span>
+      <div class="pg-ct"><b>${esc(p.name)}</b><small style="color:${RARITY[d.r].color}">${d.r === 'x' ? '<span class="x-rar">' + (d.ultra ? 'ULTRA Exotic' : 'Exotic') + '</span>' : RARITY[d.r].name} · Lv ${p.lvl}${M && window.PBExotic ? ' ' + PBExotic.pill(p.mut) : ''}</small>
+      ${moodBar(p.mood)}<small class="muted">Earns ${Math.round(petRate(p) * boost())} garden coins an hour</small>
+      <div class="pg-cb"><button class="btn sm primary" data-a="pet" ${cd > 0 ? 'disabled' : ''}>${cd > 0 ? 'Pet in ' + fmtDur(cd / 1000) : 'Pet'}</button>${treats.length ? `<button class="btn sm" data-a="feed">Feed ${esc(treats[0].name)}</button>` : ''}${p.uid !== acct.pets.active ? '<button class="btn sm" data-a="comp">Make companion</button>' : '<span class="pg-comp">Companion</span>'}</div></div>`;
+    card.classList.add('on');
+    card.onclick = e => {
+      const b = e.target.closest('[data-a], .pg-x');
+      if (!b) return;
+      if (b.classList.contains('pg-x')) return card.classList.remove('on');
+      const k = b.dataset.a;
+      if (k === 'pet') {
+        if (petPet(p)) {
+          for (let i = 0; i < 4; i++) setTimeout(() => floatAt(a.x + (Math.random() - 0.5) * 0.06, a.y - 0.2, '❤️'), i * 120);
+          say(a, '*purrs*');
+        }
+      } else if (k === 'feed' && treats[0]) {
+        feedPet(p, treats[0].id);
+        floatAt(a.x, a.y - 0.2, '😋');
+      } else if (k === 'comp') {
+        acct.pets.active = p.uid;
+        saveAcct(true);
+        toast(`${p.name} is now your companion`, 'ok');
+        renderActors();
+      }
+      tapPet(a);
+    };
+  }
+
+  /* ---------------- the page ---------------- */
+  function paintBank() {
+    const el = document.getElementById('pgBank');
+    if (!el) return;
+    accrue();
+    const g = G(),
+      r = rate(),
+      cap = r * CAP_H,
+      f = cap ? Math.min(1, g.bank / cap) : 0;
+    const h = `<div class="pg-bk-l"><small>Garden bank</small><b>${coinHTML(Math.floor(g.bank))}</b><span class="pg-bar"><i style="width:${(f * 100).toFixed(1)}%"></i></span><small class="muted">${Math.round(r).toLocaleString()} coins an hour · holds up to ${CAP_H}h${boost() > 1 ? ` · decorations +${Math.round((boost() - 1) * 100)}%` : ''}</small></div><button class="btn primary" id="pgCollect" ${g.bank >= 1 ? '' : 'disabled'}>Collect</button>`;
+    if (el._h !== h) {
+      el.innerHTML = h;
+      el._h = h;
+      el.querySelector('#pgCollect').onclick = collect;
+    }
+  }
+  function paintDeco() {
+    const el = document.getElementById('pgDeco');
+    if (!el) return;
+    el.innerHTML = DECO.map(d => `<div class="pg-deco${own(d.id) ? ' own' : ''}"><span class="pg-dic">${d.ic}</span><b>${esc(d.name)}</b><small>${esc(d.desc)}</small>${own(d.id) ? '<span class="pg-owned">In your garden</span>' : `<button class="btn sm" data-deco="${d.id}">${coinHTML(d.cost)}</button>`}</div>`).join('');
+    el.querySelectorAll('[data-deco]').forEach(
+      b =>
+        (b.onclick = () => {
+          const d = DECO.find(x => x.id === b.dataset.deco);
+          if (!spendCoins(d.cost)) return toast(`You need ${(d.cost - acct.coins).toLocaleString()} more coins`, 'err');
+          accrue();
+          G().deco[d.id] = Date.now();
+          saveAcct(true);
+          SFX.play('rare');
+          confetti();
+          toast(`${d.ic} ${d.name} added to your garden!`, 'xp');
+          Garden.mount(document.getElementById('view'));
+        })
+    );
+  }
+  function paintWho() {
+    const el = document.getElementById('pgWho');
+    if (!el) return;
+    const g = G(),
+      inG = new Set(home().map(p => p.uid)),
+      max = slotsMax();
+    document.getElementById('pgWhoN').textContent = `${inG.size} of ${max} spots used`;
+    if (!acct.pets.list.length) {
+      el.innerHTML = '<p class="muted small" style="margin:0">No pets yet. Hatch an egg on the Pets page and it will move in here.</p>';
+      return;
+    }
+    el.innerHTML = acct.pets.list
+      .map(p => {
+        const d = PET[p.id];
+        if (!d) return '';
+        const on = inG.has(p.uid);
+        return `<button class="pg-w${on ? ' on' : ''}" data-u="${p.uid}" style="--rc:${RARITY[d.r].color}"><span class="face art-face">${petArt(p.id)}</span><span class="pg-wt"><b>${esc(p.name)}</b><small>${d.r === 'x' ? 'Exotic' : RARITY[d.r].name} · ${Math.round(petRate(p) * boost())}/h</small></span><span class="pg-chk">${on ? '✓' : '+'}</span></button>`;
+      })
+      .join('');
+    el.querySelectorAll('[data-u]').forEach(
+      b =>
+        (b.onclick = () => {
+          accrue();
+          const gg = G();
+          if (!gg.chosen) {
+            gg.slots = home().map(p => p.uid);
+            gg.chosen = true;
+          }
+          const u = b.dataset.u,
+            i = gg.slots.indexOf(u);
+          if (i >= 0) gg.slots.splice(i, 1);
+          else if (gg.slots.length >= slotsMax()) return toast(`Your garden is full (${slotsMax()} pets). Decorations add more spots.`, 'err');
+          else gg.slots.push(u);
+          saveAcct(true);
+          makeActors();
+          renderActors();
+          paintWho();
+          paintBank();
+        })
+    );
+  }
+  const PH_LBL = { day: '☀️ Sunny day', dawn: '🌅 Sunrise', dusk: '🌇 Sunset', night: '🌙 Night' };
+  const Garden = {
+    mount(v) {
+      stop();
+      accrue();
+      const ph = phase();
+      v.innerHTML = `<section class="pg-stage ph-${ph}" id="pgStage">${sceneSVG(ph)}<div class="pg-fx">${ph === 'night' ? Array.from({ length: 14 }, (_, i) => `<i class="pg-fly" style="left:${(i * 67) % 96}%;top:${40 + ((i * 29) % 50)}%;animation-delay:${(i % 5) * 0.7}s"></i>`).join('') : ''}</div><div class="pg-actors"></div>
+          <div class="pg-top"><span class="pg-chip">${PH_LBL[ph]}</span><span class="pg-chip" id="pgCount"></span></div>
+          ${acct.pets.list.length ? '' : '<div class="pg-empty"><b>Your garden is empty</b><span>Hatch a pet and it will move in here.</span><button class="btn primary" data-go="pets">Go to Pets</button></div>'}
+          <div class="pg-card"></div></section>
+        <section class="card pg-bank" id="pgBank"></section>
+        <section class="card"><div class="card-h"><h3>Who lives here</h3><span class="muted small" id="pgWhoN"></span></div><div class="pg-who" id="pgWho"></div></section>
+        <section class="card"><div class="card-h"><h3>Decorations</h3><span class="muted small">They show up in the garden and boost what it earns</span></div><div class="pg-decos" id="pgDeco"></div></section>
+        <p class="foot-note">Pets in the garden earn coins even when you’re away (up to ${CAP_H} hours). Rarer, higher-level and mutated pets earn more. Pets away on missions don’t earn.</p>`;
+      stage = document.getElementById('pgStage');
+      makeActors();
+      renderActors();
+      document.getElementById('pgCount').textContent = `🐾 ${actors.length} pet${actors.length === 1 ? '' : 's'}`;
+      paintBank();
+      paintWho();
+      paintDeco();
+      lastT = 0;
+      dropT = 6;
+      raf = requestAnimationFrame(frame);
+    },
+    unmount() {
+      stop();
+      stage = null;
+    },
+    update() {},
+    second() {},
+  };
+  SCREENS.garden = Garden;
+  if (window.PBPages) PBPages.garden = ['Pet Garden', () => 'Where your pets live, play and earn coins'];
+  // earnings keep ticking while away
+  const gl0 = gameLoop;
+  gameLoop = function () {
+    const r = gl0.apply(this, arguments);
+    try {
+      if (acct && acct.pets && Date.now() - (G().last || 0) > 60000) accrue();
+    } catch (e) {}
+    return r;
+  };
+  // the menu: Garden right after Pets
+  const nav = document.getElementById('nav'),
+    pets = nav && nav.querySelector('a[data-go="pets"]');
+  if (pets && !nav.querySelector('a[data-go="garden"]'))
+    pets.insertAdjacentHTML('afterend', '<a data-go="garden" data-s="garden" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M12 21v-9"/></svg><span>Garden</span></a>');
+  window.PBGarden = { rate, collect, slotsMax, DECO, home };
 })();
 
 /* ===================== ADVANCED MODE · REPLAY · NEWS DESK ===================== */
@@ -18756,8 +20304,30 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     },
   };
   const EVK = Object.keys(EVENTS);
+  // shared market: the calendar is the same for everyone, fixed by the clock
+  const WMk = !!(window.World && World.on);
+  if (WMk) {
+    const DEF_M = { rate: 5.25, cpi: 3.2, unemp: 3.9, oil: 78, dxy: 104, vix: 16 };
+    World.setCalendar((s, at) => {
+      const k = EVK[World.mix(0xca1d, s) % EVK.length],
+        save = { rate: M.rate, cpi: M.cpi, unemp: M.unemp, oil: M.oil, dxy: M.dxy, vix: M.vix };
+      Object.assign(M, DEF_M);
+      try {
+        const e = { id: 'c' + s, k, s, at: at * 1000 };
+        e.exp = World.seeded(World.mix(0xca1f, s), () => EVENTS[k].exp());
+        const out = World.seeded(World.mix(0xca20, s), () => EVENTS[k].go(e));
+        return { id: e.id, k, s, at, exp: e.exp, out };
+      } finally {
+        Object.assign(M, save);
+      }
+    });
+  }
   function schedule() {
     const now = Date.now();
+    if (WMk) {
+      M.cal = World.calUpcoming(now / 1000, 5).map(c => ({ id: c.id, k: c.k, s: c.s, at: c.at * 1000, exp: { ...c.exp } }));
+      return;
+    }
     M.cal = (M.cal || []).filter(e => e.at > now - 60000 && EVENTS[e.k]);
     let last = M.cal.length ? M.cal[M.cal.length - 1].at : now - 50000;
     while (M.cal.length < 5) {
@@ -18769,7 +20339,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   }
   function release(e) {
     const E = EVENTS[e.k],
-      out = E.go(e),
+      out = WMk && e.s != null ? World.seeded(World.mix(0xca20, e.s), () => E.go(e)) : E.go(e),
       stocks = ASSETS.filter(a => a.type === 'stock'),
       cryptos = ASSETS.filter(a => a.type === 'crypto');
     const avg = xs => xs.reduce((s, a) => s + a.vol, 0) / (xs.length || 1),
@@ -18779,7 +20349,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       const base = a.type === 'stock' ? (out.stocks * a.vol) / as : (out.crypto * a.vol) / ac,
         extra = (out.sec || {})[sectorOf(a.sym)] || 0;
       const J = base + extra;
-      if (J) a.imp += J;
+      if (J && !WMk) a.imp += J; // shared market: the move is already part of every price
     }
     const up = (out.stocks || out.crypto) >= 0,
       pct = out.stocks || out.crypto || 0;
@@ -18788,7 +20358,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     M.hist.length = Math.min(M.hist.length, 20);
     addNews(
       {
-        id: uid(),
+        id: WMk && e.id ? e.id : uid(),
         t: simT,
         sym: null,
         group: out.stocks ? 'stock' : 'crypto',
@@ -18813,7 +20383,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const due = M.cal.filter(e => e.at <= now);
     if (due.length) {
       M.cal = M.cal.filter(e => e.at > now);
-      if (now - due[due.length - 1].at < 120000) release(due[due.length - 1]);
+      const d = due[due.length - 1];
+      if (now - d.at < 120000 && !(WMk && d.s != null && d.s <= (M.lastCal ?? -1))) {
+        if (WMk && d.s != null) M.lastCal = d.s;
+        release(d);
+      }
       schedule();
     }
     M.oil = clamp(M.oil * (1 + rn() * 0.0008), 35, 160);
@@ -19150,7 +20724,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   setTimeout(fixGear, 0);
 
   /* phone navigation: 4 main tabs + a More sheet */
-  const MORE = ['play', 'social', 'pass', 'store', 'learn', 'shop', 'pets', 'bank', 'ranks', 'profile', 'settings'];
+  const MORE = ['play', 'social', 'pass', 'store', 'learn', 'shop', 'pets', 'garden', 'bank', 'ranks', 'profile', 'settings'];
   const LBL = {
     play: 'Play',
     social: 'Social',
@@ -19159,6 +20733,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     learn: 'Learn',
     shop: 'Shop',
     pets: 'Pets',
+    garden: 'Garden',
     bank: 'Bank',
     ranks: 'Ranks',
     profile: 'Profile',
@@ -19295,7 +20870,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const st = document.createElement('style');
   st.textContent = `
   .nav-more{display:none!important;position:relative}.more-dot{position:absolute;top:8px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px var(--panel)}
-  @media(max-width:899px){#nav a[data-s="learn"],#nav a[data-s="shop"],#nav a[data-s="store"],#nav a[data-s="play"],#nav a[data-s="social"],#nav a[data-s="pass"],#nav a[data-s="pets"],#nav a[data-s="bank"]{display:none!important}.nav-more{display:flex!important}#nav a{font-size:11px!important}}
+  @media(max-width:899px){#nav a[data-s="learn"],#nav a[data-s="shop"],#nav a[data-s="store"],#nav a[data-s="play"],#nav a[data-s="social"],#nav a[data-s="pass"],#nav a[data-s="pets"],#nav a[data-s="garden"],#nav a[data-s="bank"]{display:none!important}.nav-more{display:flex!important}#nav a{font-size:11px!important}}
   .more-sheet{position:fixed;inset:0;z-index:950}.ms-bg{position:absolute;inset:0;background:rgba(10,6,30,.45);opacity:0;transition:opacity .2s}
   .ms-panel{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-radius:24px 24px 0 0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateY(100%);transition:transform .24s cubic-bezier(.2,0,0,1);box-shadow:0 -20px 50px -20px rgba(0,0,0,.4)}
   .more-sheet.open .ms-bg{opacity:1}.more-sheet.open .ms-panel{transform:none}
@@ -23321,9 +24896,21 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     a.devStd = v * (a.type === 'crypto' ? 0.05 : 0.035);
     a.sigA = (v * 0.7) / Math.sqrt(YEAR);
   }
-  function setPrice(a, p, live) {
+  function setPrice(a, p, live, at) {
     const old = a.price || p,
       t = simT || nowSec();
+    if (window.World && World.on) {
+      // shared market: from the admin's timestamp on, this asset follows the market from the new level
+      World.override(a, p, at ? new Date(at).getTime() / 1000 : t);
+      if (live) {
+        const pct = p / old - 1,
+          up = pct >= 0;
+        a.lastNewsT = t;
+        a.lastNewsUp = up;
+        addNews({ id: 'ov' + a.sym + (at || t), t, sym: a.sym, text: `${a.name} repriced to ${fmtUSD(p)} by the exchange${Math.abs(pct) >= 0.005 ? ` (${fmtPct(pct, 1)})` : ''}`, pct, up, mega: Math.abs(pct) > 0.25 });
+      }
+      return;
+    }
     a.imp = 0;
     a.dev = 0;
     a.anchor = Math.log(p);
@@ -23422,8 +25009,9 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         a.hidden = !!r.hidden;
         changed = true;
       }
-      if (r.price > 0 && r.price_at && applied[r.sym] !== r.price_at) {
-        setPrice(a, +r.price, live);
+      const needOv = window.World && World.on && !(a._ov && a._ov.p === +r.price);
+      if (r.price > 0 && r.price_at && (applied[r.sym] !== r.price_at || needOv)) {
+        setPrice(a, +r.price, live && applied[r.sym] !== r.price_at, r.price_at);
         applied[r.sym] = r.price_at;
         changed = true;
       }
@@ -29269,7 +30857,15 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if (!xs.includes(m)) xs.push(m);
     return xs;
   };
-  const hfrac = s => (hashStr(s) % 10007) / 10007;
+  const HF = new Map();
+  const hfrac = s => {
+    let v = HF.get(s);
+    if (v === undefined) {
+      v = (hashStr(s) % 10007) / 10007;
+      HF.set(s, v);
+    }
+    return v;
+  };
   const dur = s => {
     s = Math.max(0, Math.round(s));
     if (s < 60) return s + 's';
@@ -29303,7 +30899,9 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
      ACCOUNT STATE + SPLIT BOOKKEEPING
      ================================================================ */
   // device-level cumulative split factor per symbol (the market lives on this device)
-  let SPLITF = Store.get(LS.split, {}) || {};
+  const WM = !!(window.World && World.on); // one shared market for every player
+  let SPLITF = WM ? {} : Store.get(LS.split, {}) || {};
+  if (WM) Store.set(LS.split, {});
   function adjustForSplit(a, sym, r) {
     const p = a.positions && a.positions[sym];
     if (p) {
@@ -29628,8 +31226,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const saveEv = () => Store.set(LS.ev, EV);
   let IPOS = Store.get(LS.ipo, []);
   if (!Array.isArray(IPOS)) IPOS = [];
+  // IPOs from the old per-device market stay only so anyone holding one can close it (delisted)
+  const OLD_IPOS = WM ? IPOS.filter(r => r && r.sym && !r.w) : [];
+  if (WM) IPOS = [];
   // IPO companies must exist before the market is restored so they get saved bars like everything else
-  for (const r of IPOS) if (r && r.sym && !UNIVERSE.some(u => u[0] === r.sym)) UNIVERSE.push([r.sym, r.name, 'stock', +r.p0 || 20, +r.vol || 0.7]);
+  for (const r of WM ? OLD_IPOS : IPOS) if (r && r.sym && !UNIVERSE.some(u => u[0] === r.sym)) UNIVERSE.push([r.sym, r.name, 'stock', +r.p0 || 20, +r.vol || 0.7]);
   const isStock = a => a && a.type === 'stock' && !a.hidden;
   const earnP = a => ((a.lite ? 24 : 8) * H) / Math.max(me(), 0.2);
   const divP = () => (12 * H) / Math.max(me(), 0.2);
@@ -29669,12 +31270,18 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const BEAT = ['{N} beats earnings estimates as revenue jumps', '{N} crushes expectations and raises guidance', '{N} posts record quarter, shares pop', 'Strong quarter for {N}: profit tops forecasts'];
   const MISS = ['{N} misses earnings estimates, guidance cut', '{N} disappoints as sales slow', 'Weak quarter for {N}: profit falls short', '{N} warns on outlook after soft quarter'];
   function doEarnings(a, t, quiet, force) {
-    const beat = force && force.up != null ? force.up : Math.random() < 0.55,
-      mag = 0.03 + 0.12 * Math.pow(Math.random(), 2.2),
+    const o = WM && !force ? World.earnAt(a, t) : null;
+    const beat = o ? o.beat : force && force.up != null ? force.up : Math.random() < 0.55,
+      mag = o ? o.mag : 0.03 + 0.12 * Math.pow(Math.random(), 2.2),
       J = (beat ? 1 : -1) * Math.log(1 + mag);
-    kick(a, J, 0.35);
+    if (WM) {
+      a.lastNewsT = t;
+      a.lastNewsUp = beat;
+    } else kick(a, J, 0.35);
+    const pool = beat ? BEAT : MISS,
+      line = o ? pool[Math.floor(o.k * pool.length) % pool.length] : pick(pool);
     if (newsworthy(a) || force)
-      addNews({ id: uid(), t, sym: a.sym, text: 'EARNINGS: ' + pick(beat ? BEAT : MISS).replace('{N}', a.name), pct: Math.exp(J) - 1, up: beat, mega: mag > 0.08, kind: 'earnings' }, quiet);
+      addNews({ id: o ? 'e' + a.sym + ':' + Math.round(t / 60) : uid(), t, sym: a.sym, text: 'EARNINGS: ' + line.replace('{N}', a.name), pct: Math.exp(J) - 1, up: beat, mega: mag > 0.08, kind: 'earnings' }, quiet);
     return { beat, pct: Math.exp(J) - 1 };
   }
   const divNotes = [];
@@ -29696,8 +31303,10 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       }
     }
     // ex-dividend: the price drops by the payout, so it's neutral for holders (like the real thing)
-    a.anchor += Math.log(1 - y);
-    reprice(a);
+    if (!WM) {
+      a.anchor += Math.log(1 - y);
+      reprice(a);
+    }
     if (got) {
       const txt = `${a.name} paid a ${fmtUSD(d)} per share dividend`;
       addNews({ id: uid(), t, sym: a.sym, text: 'DIVIDEND: ' + txt, pct: -y, up: got > 0, kind: 'dividend' }, quiet);
@@ -29710,7 +31319,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   }
 
   function doSplit(a, t, quiet, ratio) {
-    if (!isStock(a)) return null;
+    if (WM || !isStock(a)) return null;
     const r = ratio || (a.price > 2000 ? 4 : a.price > 1000 ? pick([3, 4]) : a.price > 700 ? pick([2, 3]) : 2);
     const L = Math.log(r);
     a.anchor -= L;
@@ -29776,7 +31385,50 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     }
     return a;
   }
+  // shared IPO calendar: one 12h window at a time, same company on every device
+  const IPO_WIN = 12 * H;
+  function ipoSlot(w) {
+    if (!me()) return null;
+    const g = mulberry32(World.mix(0x1b0f3, w));
+    return g() < 0.5 ? { w, t: w * IPO_WIN + g() * IPO_WIN } : null;
+  }
+  function ipoFromSlot(slot, quiet) {
+    if (IPOS.some(r => r.w === slot.w)) return null;
+    let row = null,
+      pop = 0;
+    World.seeded(World.mix(0x1b0f4, slot.w), () => {
+      for (let k = 0; k < 20 && !row; k++) {
+        const sec = pick(Object.keys(IPO_B)),
+          A = pick(IPO_A),
+          B = pick(IPO_B[sec]),
+          sym = ipoTicker(A, B);
+        if (!sym) continue;
+        row = { sym, name: `${A} ${B}`, sector: sec, p0: Math.round((14 + Math.random() * 34) * 100) / 100, vol: Math.round((0.55 + Math.random() * 0.4) * 100) / 100, t: slot.t, w: slot.w };
+      }
+      pop = Math.random() < 0.8 ? 0.05 + Math.random() * 0.3 : -(0.03 + Math.random() * 0.12);
+    });
+    if (!row) return null;
+    const a = makeIpoAsset(row);
+    a.sector = row.sector;
+    a.ipo = true;
+    a.ipoT = row.t;
+    a._T0 = row.t;
+    a._pop = Math.log(1 + pop);
+    SIM[a.sym] = a;
+    ASSETS.splice(CORE.length, 0, a);
+    CORE.push(a);
+    World.rebuild(a, simT || nowSec());
+    IPOS.push(row);
+    if (!UNIVERSE.some(u => u[0] === row.sym)) UNIVERSE.push([row.sym, row.name, 'stock', row.p0, row.vol]);
+    if (!quiet || nowSec() - row.t < 2 * 3600) addNews({ id: 'ipo' + slot.w, t: row.t, sym: a.sym, text: `IPO: ${row.name} (${row.sym}) lists today at ${fmtUSD(row.p0)} — ${pop > 0 ? 'strong demand' : 'a shaky debut'}`, pct: pop, up: pop > 0, mega: true, kind: 'ipo' }, quiet);
+    try {
+      if (window.BuckAI && BuckAI.reindex) BuckAI.reindex();
+    } catch (e) {}
+    if (!quiet && current === Markets) Markets.renderList?.();
+    return a;
+  }
   function doIPO(t, quiet, force) {
+    if (WM) return null;
     if (IPOS.length >= 10 && !force) return null;
     let row = null;
     for (let k = 0; k < 20 && !row; k++) {
@@ -29820,7 +31472,20 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     return a;
   }
 
+  function announceRegime(R, t, quiet, ended) {
+    const what = R.group === 'stock' ? 'Stocks' : 'Crypto';
+    if (ended) {
+      addNews({ id: R.id + 'e', t: R.end, sym: null, group: R.group, text: R.up ? `${what} cool off after the rally` : `${what} steady after the sell-off`, pct: 0, up: !R.up, kind: 'regime' }, quiet);
+      return;
+    }
+    addNews({ id: R.id, t: R.start, sym: null, group: R.group, text: R.up ? `BULL RUN: ${what} rip higher as buyers pile in` : `CRASH: ${what} plunge as panic selling spreads`, pct: Math.exp(R.total) - 1, up: R.up, mega: true, kind: 'regime' }, quiet);
+    if (!quiet) {
+      toast(R.up ? `Bull run in ${what.toLowerCase()}! Prices are surging` : `Market crash in ${what.toLowerCase()}! Prices are falling fast`, 'news', R.up ? '🚀' : '📉');
+      notify(R.up ? `${what} bull run` : `${what} crash`, R.up ? 'Prices are surging right now.' : 'Prices are falling fast right now.');
+    }
+  }
   function startRegime(t, quiet, kind, group) {
+    if (WM) return null;
     const up = kind ? kind === 'bull' : Math.random() < 0.45;
     group ||= Math.random() < 0.55 ? 'stock' : 'crypto';
     const len = Math.round(180 + Math.random() * 240),
@@ -29859,6 +31524,13 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     }
   }
 
+  let SCH = null,
+    HID = 0;
+  setInterval(() => {
+    // delistings / new listings change who reports earnings
+    const h = ASSETS.reduce((n, a) => n + (a.hidden ? 1 : 0), 0);
+    if (h !== HID) HID = h;
+  }, 5000);
   function eventsPre(dt, t, quiet) {
     const t0 = simT;
     // release lasting moves
@@ -29874,7 +31546,18 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         }
         reprice(a);
       }
-    if (EV.regime) applyRegime(t0, t, quiet);
+    if (WM) {
+      if (t > t0 && t - t0 < 3 * 86400)
+        for (const R of World.regimesBetween(t0, t)) {
+          if (R.start > t0 && R.start <= t) announceRegime(R, t, quiet);
+          if (R.end > t0 && R.end <= t) announceRegime(R, t, quiet, true);
+        }
+      const cur = World.regimeAt(t);
+      if ((cur && cur.id) !== (EV.regime && EV.regime.id)) {
+        EV.regime = cur ? { ...cur } : null;
+        if (!quiet) paintRegime();
+      }
+    } else if (EV.regime) applyRegime(t0, t, quiet);
     const m = me();
     if (!m || !(t > t0)) return;
     const span = t - t0;
@@ -29882,13 +31565,32 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const PC = (8 * H) / m,
       PL = (24 * H) / m,
       PD = divP();
-    for (const a of ASSETS) {
-      if (a.type !== 'stock' || a.hidden) continue;
-      if (sectorOf(a.sym) !== 'Index fund') {
-        const k = crossed(a.sym, a.lite ? PL : PC, t0, t);
-        if (k > 0) doEarnings(a, t, quiet);
+    // company facts are looked up once, then each step is just arithmetic
+    if (!SCH || SCH.m !== m || SCH.n !== ASSETS.length || SCH.h !== HID) {
+      SCH = { m, n: ASSETS.length, h: HID, list: [] };
+      for (const a of ASSETS) {
+        if (a.type !== 'stock' || a.hidden) continue;
+        const sec = sectorOf(a.sym);
+        SCH.list.push({ a, earn: sec !== 'Index fund', pay: DIV_SECTORS.has(sec), P: a.lite ? PL : PC, oe: hfrac(a.sym), od: hfrac(a.sym + 'div') });
       }
-      if (DIV_SECTORS.has(sectorOf(a.sym)) && crossed(a.sym + 'div', PD, t0, t) > 0) doDividend(a, t, quiet);
+    }
+    for (const x of SCH.list) {
+      if (x.earn) {
+        const o = x.oe * x.P;
+        if (Math.floor((t + o) / x.P) > Math.floor((t0 + o) / x.P)) doEarnings(x.a, t, quiet);
+      }
+      if (x.pay) {
+        const o = x.od * PD;
+        if (Math.floor((t + o) / PD) > Math.floor((t0 + o) / PD)) doDividend(x.a, t, quiet);
+      }
+    }
+    if (WM) {
+      // IPOs on the shared calendar
+      for (let w = Math.floor(t0 / IPO_WIN); w <= Math.floor(t / IPO_WIN); w++) {
+        const sl = ipoSlot(w);
+        if (sl && sl.t > t0 && sl.t <= t && sl.t > t - 10 * 86400) ipoFromSlot(sl, quiet);
+      }
+      return;
     }
     // random: splits, IPOs, crashes / bull runs
     if (span > 3 * 86400) return; // long catch-ups skip the rare stuff
@@ -29936,6 +31638,24 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const lm0 = loadMarket;
   loadMarket = function () {
     const restored = lm0.apply(this, arguments);
+    if (WM) {
+      const now = nowSec();
+      for (const r of OLD_IPOS) {
+        const a = SIM[r.sym];
+        if (!a || a.lite) continue;
+        a.hidden = true; // delisted: only there so holders can close
+        a.ipo = true;
+        a._T0 = +r.t || World.T0;
+        World.rebuild(a, now);
+      }
+      for (let w = Math.floor((now - 10 * 86400) / IPO_WIN); w <= Math.floor(now / IPO_WIN); w++) {
+        const sl = ipoSlot(w);
+        if (sl && sl.t <= now && sl.t > now - 10 * 86400) ipoFromSlot(sl, true);
+      }
+      EV.regime = World.regimeAt(now);
+      if (EV.regime) EV.regime = { ...EV.regime };
+      return restored;
+    }
     if (!restored) {
       SPLITF = {};
       Store.set(LS.split, SPLITF);
@@ -32560,6 +34280,14 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         a.fund = true;
         a.sector = 'Fund';
         a.members = members[sym].length;
+        if (window.World && World.on) {
+          // shared market: a fund is the average move of a fixed, evenly spread sample of its companies
+          const m = members[sym],
+            n = Math.min(6, m.length),
+            smp = [];
+          for (let i = 0; i < n; i++) smp.push(m[Math.floor((i * m.length) / n)]);
+          a._fs = smp;
+        }
       }
     }
   }
@@ -32584,7 +34312,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const r = lm0.apply(this, arguments);
     try {
       build();
-      if (!window.PBRealMode) track(simT || nowSec());
+      if (window.World && World.on) for (const f of FUNDS) SIM[f[0]] && World.rebuild(SIM[f[0]], simT || nowSec());
+      else if (!window.PBRealMode) track(simT || nowSec());
     } catch (e) {
       console.error(e);
     }
@@ -32593,7 +34322,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const ss0 = simStep;
   simStep = function (dt, t, quiet) {
     const r = ss0.apply(this, arguments);
-    if (!window.PBRealMode) track(t);
+    if (!window.PBRealMode && !(window.World && World.on)) track(t);
     return r;
   };
   const sm0 = saveMarket;
@@ -32641,7 +34370,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const GROUPS = [
     [null, ['home', 'markets', 'news', 'portfolio']],
     ['Play', ['play', 'pass', 'social', 'ranks']],
-    ['Collect', ['shop', 'store', 'pets', 'bank']],
+    ['Collect', ['shop', 'store', 'pets', 'garden', 'bank']],
     ['You', ['learn', 'profile']],
   ];
   function tidyNav() {
@@ -34458,6 +36187,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       r.innerHTML = '';
     }
     if (!silent) toast(`${FX.TYPE[was.type].ic} ${was.label || 'Admin Abuse'} is over. GG!`, 'ok');
+    if ((was.type === 'bull' || was.type === 'bear') && window.PBLive) setTimeout(() => PBLive.resync('site'), 800 + Math.random() * 800); // exact stop time from the server
   }
   function apply(a) {
     if (live(a)) {
@@ -34483,6 +36213,10 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   window.PBApplyLive = function (s) {
     if (al0) al0.apply(this, arguments);
     try {
+      if (window.World && World.on && s) {
+        const m = s.market_abuse;
+        World.setAbuse(m ? { type: m.type, start: Date.parse(m.started_at) / 1000, end: Date.parse(m.end_at) / 1000 } : null);
+      }
       apply(s && s.abuse ? s.abuse : null);
     } catch (e) {
       console.error('abuse', e);
@@ -34507,6 +36241,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if (!A || (A.type !== 'bull' && A.type !== 'bear')) return;
     const up = A.type === 'bull';
     toast(up ? '🐂 Bull Stampede! The whole market is pumping.' : '🐻 Bear Invasion! The whole market is dumping.', up ? 'ok' : 'err');
+    if (window.World && World.on) {
+      // shared market: every device applies the same push from the event's start/end times
+      World.setAbuse({ type: A.type, start: Date.parse(A.started_at) / 1000, end: Date.parse(A.ends_at) / 1000 });
+      return;
+    }
     mktT = setInterval(() => {
       if (!A || window.PBRealMode || !window.PBLive || document.hidden) return;
       const pool = ASSETS.filter(a => !a.hidden && !a.fund && !a.legacy);
@@ -39350,6 +41089,7 @@ html.classic .pb-pin {
 body.off-shop #nav [data-s='shop'],
 body.off-shop #pbGiftShop,
 body.off-pets #nav [data-s='pets'],
+body.off-pets #nav [data-s='garden'],
 body.off-pets #homePet,
 body.off-garden #nav [data-s='garden'],
 body.off-bank #nav [data-s='bank'],
@@ -46023,6 +47763,11 @@ svg .xa-blink { animation: xaBlink 1.8s steps(2, jump-none) infinite; }
 svg .xa-glow { animation: xaGlow 1.6s ease-in-out infinite; }
 svg .xa-scan { animation: xaScan 1.4s ease-in-out infinite; }
 @keyframes xaSpin { to { transform: rotate(360deg); } }
+svg .xa-spin3 { transform-box: view-box; transform-origin: 32px 36px; animation: xaSpin 22s linear infinite; }
+svg .xa-spin4 { transform-box: fill-box; animation: xaSpin 1.6s linear infinite; }
+svg.xultra { filter: drop-shadow(0 0 5px color-mix(in srgb, #ffe27a 55%, transparent)); }
+svg.xprism { animation: mxRainbow 5s linear infinite; }
+.x-ultra-tag { background: linear-gradient(90deg, #ffe27a, #ff3df0, #3de7ff) !important; color: #1a0a24 !important; }
 @keyframes xaPulse { 0%, 100% { opacity: .35; transform: scale(.94); } 50% { opacity: .75; transform: scale(1.05); } }
 @keyframes xaPulse2 { 0%, 100% { transform: scale(.97) rotate(0deg); } 50% { transform: scale(1.03) rotate(4deg); } }
 @keyframes xaFlap { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.08) translateY(-1px); } }
@@ -46087,6 +47832,105 @@ svg .mx-glitch { animation: mxGlitchBar 1.1s steps(1) infinite; }
   svg.xart *, svg.art[data-mut], svg.art[data-mut] *, .col-item[data-r='x']::after, .pet-stage[data-r='x']::after, .x-egg .face { animation: none !important; }
 }
 html.reduce-motion svg.xart *, html.reduce-motion svg.art[data-mut], html.reduce-motion svg.art[data-mut] * { animation: none !important; }
+
+</style>
+<style id="pbGarden">
+/* ===================== PET GARDEN ===================== */
+.pg-stage { position: relative; height: clamp(340px, 52vh, 520px); border-radius: 22px; overflow: hidden; margin-bottom: 14px; border: 1px solid var(--line); box-shadow: 0 18px 50px -24px rgba(0, 0, 0, 0.55); isolation: isolate; user-select: none; -webkit-user-select: none; }
+.pg-bg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.pg-actors, .pg-fx { position: absolute; inset: 0; }
+.pg-actors { z-index: 2; }
+.pg-fx { z-index: 3; pointer-events: none; }
+.pg-fx .pg-drop { pointer-events: auto; }
+.pg-top { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 8px; z-index: 5; pointer-events: none; }
+.pg-chip { font: 700 12px var(--sans); padding: 6px 11px; border-radius: 99px; background: rgba(10, 14, 30, 0.45); color: #fff; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.pg-empty { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); }
+.pg-empty b { font: 800 20px var(--sans); }
+
+/* pets */
+.pg-pet { position: absolute; left: 0; top: 0; width: 72px; height: 72px; padding: 0; border: 0; background: none; cursor: pointer; will-change: transform; -webkit-tap-highlight-color: transparent; }
+.pg-body { position: absolute; inset: 0; display: block; transform-origin: 50% 90%; filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.28)); }
+.pg-body svg { width: 100%; height: 100%; }
+.pg-pet.exo .pg-body { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--rc) 70%, transparent)) drop-shadow(0 4px 5px rgba(0, 0, 0, 0.3)); }
+.pg-pet.away { display: none; }
+.pg-shadow { position: absolute; left: 18%; right: 18%; top: 88%; height: 12%; border-radius: 50%; background: rgba(0, 0, 0, 0.28); filter: blur(2px); transform-origin: center; }
+.pg-pet.fly .pg-shadow { opacity: 0.35; }
+.pg-name { position: absolute; left: 50%; top: -8px; transform: translateX(-50%); font: 800 10.5px var(--sans); color: #fff; background: rgba(10, 14, 30, 0.55); padding: 2px 7px; border-radius: 99px; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.pg-pet:hover .pg-name, .pg-pet:focus-visible .pg-name, .pg-pet.comp .pg-name { opacity: 1; }
+.pg-pet.comp .pg-name { background: linear-gradient(90deg, #ff9a1f, #ff5e1a); }
+.pg-say { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, 6px) scale(0.6); background: #fff; color: #1c1c28; font: 700 11.5px var(--sans); padding: 5px 9px; border-radius: 12px; white-space: nowrap; opacity: 0; pointer-events: none; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25); }
+.pg-say::after { content: ''; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #fff; }
+.pg-say.on { animation: pgSay 2.6s ease forwards; }
+@keyframes pgSay { 0% { opacity: 0; transform: translate(-50%, 6px) scale(0.6); } 10%, 80% { opacity: 1; transform: translate(-50%, -4px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -10px) scale(1); } }
+
+/* effects */
+.pg-float { position: absolute; font-size: 22px; transform: translate(-50%, 0); animation: pgFloat 1.4s ease-out forwards; }
+@keyframes pgFloat { to { transform: translate(-50%, -60px) scale(1.3); opacity: 0; } }
+.pg-burst { position: fixed; z-index: 140; font-size: 20px; pointer-events: none; animation: pgBurst 0.9s ease-out forwards; }
+@keyframes pgBurst { to { transform: translate(var(--dx), var(--dy)) scale(0.6); opacity: 0; } }
+.pg-drop { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; border: 0; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.6), transparent 70%); font-size: 26px; cursor: pointer; animation: pgDrop 1.8s ease-in-out infinite; filter: drop-shadow(0 0 8px #ffe27a); }
+@keyframes pgDrop { 0%, 100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-8px) rotate(8deg); } }
+.pg-petal { position: absolute; top: -10px; width: 9px; height: 7px; border-radius: 60% 0 60% 0; background: #ffb7d5; animation: pgPetal linear forwards; }
+@keyframes pgPetal { to { transform: translate(70vw, 560px) rotate(720deg); opacity: 0.2; } }
+.pg-fly { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #fff7a0; box-shadow: 0 0 10px 3px #ffe95c; animation: pgFireFly 4s ease-in-out infinite; }
+@keyframes pgFireFly { 0%, 100% { transform: translate(0, 0); opacity: 0.2; } 50% { transform: translate(18px, -14px); opacity: 1; } }
+.pg-bg .pg-tw { animation: pgTw 2.4s ease-in-out infinite; }
+@keyframes pgTw { 50% { opacity: 0.2; } }
+.pg-bg .pg-cloud { animation: pgCloud linear infinite; }
+@keyframes pgCloud { from { transform: translateX(-200px); } to { transform: translateX(1100px); } }
+.pg-bg .pg-glow { animation: pgGlow 2.2s ease-in-out infinite; }
+@keyframes pgGlow { 50% { opacity: 0.55; } }
+.pg-bg .pg-shim { animation: pgGlow 1.6s ease-in-out infinite; }
+.pg-bg .pg-spray { animation: pgGlow 0.9s ease-in-out infinite; }
+.pg-bg .pg-koi { animation: pgKoi 6s ease-in-out infinite; transform-box: fill-box; }
+@keyframes pgKoi { 50% { transform: translateX(60px) scaleX(-1); } }
+
+/* pet card */
+.pg-card { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 8; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 18px; background: color-mix(in srgb, var(--bg2, #16171d) 90%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--line); box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.6); transform: translateY(calc(100% + 40px)); opacity: 0; pointer-events: none; transition: transform 0.28s cubic-bezier(0.2, 1.1, 0.4, 1), opacity 0.2s; max-width: 520px; }
+.pg-card.on { transform: none; opacity: 1; pointer-events: auto; }
+.pg-cart { width: 70px; height: 70px; flex: none; }
+.pg-cart svg { width: 100%; height: 100%; }
+.pg-ct { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pg-ct b { font-size: 16px; }
+.pg-ct small { font-size: 12px; }
+.pg-cb { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.pg-comp { font: 800 11px var(--sans); color: var(--amber); align-self: center; }
+.pg-x { position: absolute; top: 6px; right: 10px; border: 0; background: none; color: var(--mut); font-size: 20px; cursor: pointer; }
+
+/* bank, who, decorations */
+.pg-bank { display: flex; align-items: center; gap: 16px; }
+.pg-bk-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.pg-bk-l b { font-size: 22px; }
+.pg-bk-l small { font-size: 12px; }
+.pg-bar { display: block; height: 7px; border-radius: 9px; background: var(--line); overflow: hidden; }
+.pg-bar i { display: block; height: 100%; background: linear-gradient(90deg, #6fcf57, #ffd34d); border-radius: 9px; transition: width 0.4s; }
+.pg-who { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.pg-w { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg2); color: var(--tx); font: inherit; text-align: left; cursor: pointer; }
+.pg-w.on { border-color: color-mix(in srgb, #6fcf57 70%, transparent); background: color-mix(in srgb, #6fcf57 10%, var(--bg2)); }
+.pg-w .face { width: 40px; height: 40px; flex: none; }
+.pg-wt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pg-wt b { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pg-wt small { color: var(--mut); font-size: 11.5px; }
+.pg-chk { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--line); color: var(--mut); flex: none; }
+.pg-w.on .pg-chk { background: #6fcf57; color: #0c2a08; }
+.pg-decos { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.pg-deco { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg2); }
+.pg-deco.own { border-color: color-mix(in srgb, #6fcf57 55%, transparent); }
+.pg-dic { font-size: 30px; line-height: 1; }
+.pg-deco b { font-size: 14px; }
+.pg-deco small { color: var(--mut); font-size: 12px; line-height: 1.35; flex: 1; }
+.pg-owned { font: 800 11px var(--sans); color: #6fcf57; }
+
+@media (max-width: 600px) {
+  .pg-stage { height: 380px; border-radius: 18px; }
+  .pg-bank { flex-wrap: wrap; }
+  .pg-bank .btn { width: 100%; }
+  .pg-card { padding: 10px 12px; }
+  .pg-cart { width: 56px; height: 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pg-bg *, .pg-fly, .pg-drop, .pg-petal { animation: none !important; }
+}
 
 </style>
 <style id="pbAbuse">

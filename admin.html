@@ -3141,6 +3141,11 @@ svg .xa-blink { animation: xaBlink 1.8s steps(2, jump-none) infinite; }
 svg .xa-glow { animation: xaGlow 1.6s ease-in-out infinite; }
 svg .xa-scan { animation: xaScan 1.4s ease-in-out infinite; }
 @keyframes xaSpin { to { transform: rotate(360deg); } }
+svg .xa-spin3 { transform-box: view-box; transform-origin: 32px 36px; animation: xaSpin 22s linear infinite; }
+svg .xa-spin4 { transform-box: fill-box; animation: xaSpin 1.6s linear infinite; }
+svg.xultra { filter: drop-shadow(0 0 5px color-mix(in srgb, #ffe27a 55%, transparent)); }
+svg.xprism { animation: mxRainbow 5s linear infinite; }
+.x-ultra-tag { background: linear-gradient(90deg, #ffe27a, #ff3df0, #3de7ff) !important; color: #1a0a24 !important; }
 @keyframes xaPulse { 0%, 100% { opacity: .35; transform: scale(.94); } 50% { opacity: .75; transform: scale(1.05); } }
 @keyframes xaPulse2 { 0%, 100% { transform: scale(.97) rotate(0deg); } 50% { transform: scale(1.03) rotate(4deg); } }
 @keyframes xaFlap { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.08) translateY(-1px); } }
@@ -3452,6 +3457,69 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
     }),
     tusks: () => ({ front: MIR(`<path d="M26 47q-1 5 2 8 0-4 1-7z" fill="#fff8e6"/>`) }),
     moon: () => ({ top: `<path d="M44 6a8 8 0 1 0 6 12 6.5 6.5 0 1 1-6-12z" fill="#fff4c4" class="xa-bob"/>` }),
+    cosmicwings: (d, k) => ({
+      back: `<g class="xa-flap">${MIR(`<path d="M16 38C2 38-3 22 1 6c5 7 9 9 14 10-2-5-1-10 2-14 3 8 8 14 13 18z" fill="url(#cw${k})" stroke="${lighten(d.c3, 0.4)}" stroke-opacity=".7" stroke-width="1"/><circle cx="7" cy="18" r=".9" fill="#fff"/><circle cx="12" cy="11" r=".6" fill="#fff"/><circle cx="5" cy="28" r=".7" fill="#fff"/><circle cx="14" cy="24" r=".5" fill="#fff"/><path d="M3 22q7 2 12 8" stroke="${lighten(d.c3, 0.5)}" stroke-opacity=".45" stroke-width="1" fill="none"/>`)}</g>`,
+      defs: RG(`cw${k}`, [ST(0, lighten(d.c3, 0.3)), ST(0.45, d.c1), ST(1, d.c2)], 0.3, 0.3, 0.9),
+    }),
+    fireaura: (d, k) => {
+      let f = '';
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2 - Math.PI / 2,
+          x = 32 + Math.cos(a) * 21,
+          y = 37 + Math.sin(a) * 21,
+          deg = (a * 180) / Math.PI + 90;
+        f += `<path d="M0 3c-3-3-2-7 0-11 2 4 3 8 0 11z" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${deg.toFixed(0)}) scale(${i % 2 ? 1 : 1.35})" fill="url(#fa${k})"/>`;
+      }
+      return { back: `<g class="xa-spin3"><g class="xa-flick">${f}</g></g>`, defs: LG(`fa${k}`, [ST(0, '#fff6b0'), ST(0.5, d.c3), ST(1, d.c1)]) };
+    },
+    unihorn: (d, k) => ({
+      top: `<path d="M29 20L32 1l3 19z" fill="url(#uh${k})" stroke="#fff" stroke-opacity=".8" stroke-width=".8" stroke-linejoin="round"/><path d="M29.8 16l4.6-2M30.4 11l3.4-1.6M31 6.5l2.2-1" stroke="#fff" stroke-opacity=".8" stroke-width=".9"/><circle cx="32" cy="2" r="2.4" fill="#fff" opacity=".7" class="xa-pulse"/>`,
+      defs: LG(`uh${k}`, [ST(0, '#ffffff'), ST(0.5, d.c3), ST(1, lighten(d.c3, 0.5))]),
+    }),
+    demonhorns: d => ({
+      top: MIR(`<path d="M20 25C12 22 8 14 10 3c2 6 6 9 12 12-3 2-3 5-2 10z" fill="${d.c3}" stroke="#000" stroke-opacity=".35" stroke-width="1"/><path d="M11 7q3 5 8 7" stroke="#fff" stroke-opacity=".4" stroke-width="1" fill="none"/>`),
+    }),
+    shell: (d, k) => {
+      let hx = '';
+      for (const [x, y] of [[32, 50], [24, 53], [40, 53], [28, 58], [36, 58]]) hx += `<path d="M${x - 4} ${y}l2-3.5h4l2 3.5-2 3.5h-4z" fill="none" stroke="${lighten(d.c3, 0.35)}" stroke-width="1" opacity=".8"/>`;
+      return { back: `<path d="M8 50C8 34 56 34 56 50c0 8-10 12-24 12S8 58 8 50z" fill="url(#sh${k})" stroke="${d.c2}" stroke-width="1.4"/>${hx}`, defs: RG(`sh${k}`, [ST(0, d.c3), ST(1, d.c2)], 0.5, 0.2, 0.9) };
+    },
+    ringplanet: d => ({
+      back: `<ellipse cx="32" cy="38" rx="31" ry="8" fill="none" stroke="${d.c3}" stroke-width="3" opacity=".55" transform="rotate(-16 32 38)"/>`,
+      front: `<path d="M1.5 44.5A31 8 -16 0 0 62.5 27" fill="none" stroke="${lighten(d.c3, 0.3)}" stroke-width="3" opacity=".9" transform="rotate(0)"/><circle cx="58" cy="28" r="2" fill="#fff" class="xa-blink"/>`,
+    }),
+    multieyes: d => ({
+      front: [[18, 24, 2.2], [46, 23, 2.4], [15, 44, 1.8], [49, 44, 2], [32, 20, 2.6]]
+        .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r + 0.8}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${r}" fill="${d.eye}"/><circle cx="${x}" cy="${y}" r="${r * 0.45}" fill="#12061c"/>`)
+        .join('') + `<g class="xa-blink">${[[18, 24], [49, 44]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.4" fill="${d.eye}" opacity=".35"/>`).join('')}</g>`,
+    }),
+    flowercrown: d => {
+      const fl = (x, y, c) => `<g transform="translate(${x} ${y})">${[0, 72, 144, 216, 288].map(r => `<ellipse cx="0" cy="-2.6" rx="1.8" ry="2.6" fill="${c}" transform="rotate(${r})"/>`).join('')}<circle r="1.4" fill="#ffe066"/></g>`;
+      return { top: fl(20, 21, '#ff9ecf') + fl(27, 17, '#fff') + fl(34, 16, d.c3) + fl(41, 18, '#ff9ecf') + fl(47, 22, '#fff') };
+    },
+    moonback: d => ({
+      back: `<path d="M47 3a15 15 0 1 0 14 21 12 12 0 1 1-14-21z" fill="${lighten(d.c3, 0.5)}" opacity=".95"/><circle cx="52" cy="14" r="15" fill="${d.c3}" opacity=".16" class="xa-pulse"/>`,
+    }),
+    lightmane: d => {
+      let z = '';
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2 - Math.PI / 2,
+          x0 = 32 + Math.cos(a) * 19,
+          y0 = 36 + Math.sin(a) * 19,
+          x1 = 32 + Math.cos(a) * 29,
+          y1 = 36 + Math.sin(a) * 29,
+          mx = (x0 + x1) / 2 + Math.cos(a + 1.3) * 3,
+          my = (y0 + y1) / 2 + Math.sin(a + 1.3) * 3;
+        z += `<path d="M${x0.toFixed(1)} ${y0.toFixed(1)}L${mx.toFixed(1)} ${my.toFixed(1)}L${x1.toFixed(1)} ${y1.toFixed(1)}" stroke="${d.c3}" stroke-width="2.2" fill="none" stroke-linejoin="round"/>`;
+      }
+      return { back: `<g class="xa-blink">${z}</g><g opacity=".4" class="xa-spin3">${z}</g>` };
+    },
+    tail: (d, k) => ({
+      back: `<g class="xa-sway"><path d="M46 50c10 4 16-2 15-10-1-5 2-8 3-9-5 0-8 3-8 7 0 6-5 8-10 6z" fill="${d.c1}" stroke="${d.c3}" stroke-width="1"/><path d="M61 30l3-4-1 6z" fill="${d.c3}"/></g>`,
+    }),
+    tentaclecrown: d => ({
+      top: `<g class="xa-sway">${[16, 24, 32, 40, 48].map((x, i) => `<path d="M${x} 24c${i % 2 ? -4 : 4}-6 ${i % 2 ? 3 : -3}-12 0-${16 + (i === 2 ? 4 : 0)}" stroke="${d.c3}" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="${x}" cy="${8 - (i === 2 ? 4 : 0)}" r="1.8" fill="${lighten(d.c3, 0.5)}"/>`).join('')}</g>`,
+    }),
     orbit: d => ({ back: `<g class="xa-spin2"><ellipse cx="32" cy="36" rx="30" ry="9" fill="none" stroke="${d.c3}" stroke-width="1.4" opacity=".7" transform="rotate(-18 32 36)"/><circle cx="4" cy="42" r="2.4" fill="${lighten(d.c3, 0.5)}"/></g>` }),
   };
 
@@ -3502,6 +3570,13 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
     frost: () => `<g stroke="#fff" stroke-width="1" opacity=".75"><path d="M18 28v6M15 31h6M16 29l4 4M20 29l-4 4"/><path d="M46 44v5M43.5 46.5h5"/></g>`,
     tiger: d => `<path d="M14 34q5-1 8 2M50 34q-5-1-8 2M16 42q4 0 7 3M48 42q-4 0-7 3M32 19v6M27 20l2 5M37 20l-2 5" stroke="${d.c2}" stroke-width="2.4" stroke-linecap="round" fill="none"/>`,
     glow: d => `<circle cx="32" cy="44" r="9" fill="${d.c3}" opacity=".3" class="xa-pulse"/>`,
+    pixel: d => {
+      let s = '';
+      for (let y = 18; y < 58; y += 5) for (let x = 12; x < 54; x += 5) if ((x * 7 + y * 13) % 5 < 2) s += `<rect x="${x}" y="${y}" width="4" height="4" fill="${(x + y) % 3 ? d.c3 : '#fff'}" opacity="${(x + y) % 3 ? 0.5 : 0.25}"/>`;
+      return s;
+    },
+    skull: () => `<path d="M24 46h16M26 46v4M30 46v4M34 46v4M38 46v4" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/><path d="M22 26c3-4 17-4 20 0" stroke="#fff" stroke-opacity=".5" stroke-width="1.4" fill="none"/>`,
+    lava: d => `<path d="M12 44c6-3 10 3 16 0s10-4 16-1 8 2 10 0V60H12z" fill="${d.c3}" opacity=".75" class="xa-glow"/><path d="M18 30l5 4-1 5M44 28l-4 5 3 4" stroke="${d.c3}" stroke-width="1.8" fill="none" class="xa-glow"/>`,
   };
 
   /* ---------------- faces ---------------- */
@@ -3514,6 +3589,12 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
       return `${glow}${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="4.2" fill="${e}"/><ellipse cx="${x}" cy="${y}" rx="1" ry="3.4" fill="#12061c"/><circle cx="${x + 1.2}" cy="${y - 1.6}" r=".9" fill="#fff"/>`).join('')}`;
     if (style === 'angry')
       return `${glow}${[L, R].map(([x, y], i) => `<ellipse cx="${x}" cy="${y}" rx="3.4" ry="3.2" fill="${e}"/><circle cx="${x}" cy="${y}" r="1.4" fill="#12061c"/><path d="M${x - 4} ${y - (i ? 3 : 6)}L${x + 4} ${y - (i ? 6 : 3)}" stroke="#12061c" stroke-width="1.8" stroke-linecap="round"/>`).join('')}`;
+    if (style === 'spiral')
+      return `${glow}${[L, R].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4.4" fill="#fff"/><g class="xa-spin4" style="transform-origin:${x}px ${y}px"><path d="M${x} ${y}m0-1a1 1 0 1 1-1 1 2 2 0 1 1 2 2 3 3 0 1 1-3-3 3.6 3.6 0 0 1 3.6 3.6" stroke="${e}" stroke-width="1.2" fill="none"/></g>`).join('')}`;
+    if (style === 'star')
+      return `${glow}${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.8" ry="4.4" fill="#170a26"/>${star4(x, y, 3.2, e)}<circle cx="${x + 1.3}" cy="${y - 1.9}" r="1" fill="#fff"/>`).join('')}`;
+    if (style === 'void')
+      return `${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.8" ry="2.6" fill="#000"/><ellipse cx="${x}" cy="${y}" rx="1.6" ry="1.1" fill="${e}" class="xa-pulse"/>`).join('')}`;
     if (style === 'visor') return `<rect x="19" y="31" width="26" height="8" rx="4" fill="#0a0f1c"/><rect x="21" y="33" width="22" height="4" rx="2" fill="${e}" class="xa-scan"/>`;
     if (style === 'cute')
       return `${glow}${[L, R].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="3.8" ry="4.6" fill="#170a26"/><ellipse cx="${x}" cy="${y + 1.5}" rx="2.6" ry="1.6" fill="${e}" opacity=".85"/><circle cx="${x + 1.3}" cy="${y - 1.8}" r="1.4" fill="#fff"/>`).join('')}`;
@@ -3527,6 +3608,8 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
     snout: `<ellipse cx="32" cy="45" rx="7" ry="4.6" fill="#000" opacity=".22"/><ellipse cx="29.5" cy="45" rx="1.2" ry="1.6" fill="#12061c"/><ellipse cx="34.5" cy="45" rx="1.2" ry="1.6" fill="#12061c"/>`,
     o: `<ellipse cx="32" cy="44.5" rx="2" ry="2.4" fill="#12061c"/>`,
     none: '',
+    zigzag: `<path d="M25 43l2.3 3 2.3-3 2.4 3 2.4-3 2.3 3 2.3-3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M24 42.5q8 6 16 0" stroke="#12061c" stroke-width="1.6" fill="none"/>`,
+    tongue: `<path d="M28.5 43q3.5 3 7 0" stroke="#12061c" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M31 44.6q1 3.4 2.4 0" fill="#ff5c8a"/>`,
   };
 
   /* ---------------- the exotic roster ----------------
@@ -3558,6 +3641,31 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
     { id: 'x_quantumaxolotl', name: 'Quantum Axolotl', el: 'tech', c1: '#ff9ed2', c2: '#b8337a', c3: '#3dffe0', eye: '#15051a', f: ['gills', 'eye3'], pat: 'glow', eyes: 'cute', mouth: 'smile', perk: 'passive', base: 300, perk2: 'xpPct', base2: 0.5, desc: 'Exists in two portfolios at once.' },
     { id: 'x_glitchling', name: 'Glitchling', el: 'tech', c1: '#1b1b1b', c2: '#000000', c3: '#39ff88', eye: '#39ff88', f: ['ears', 'eye3', 'bolts'], pat: 'circuit', eyes: 'visor', mouth: 'none', perk: 'packLuck', base: 1.2, perk2: 'packTimer', base2: 0.6, desc: 'ERR0R: t00 p0werful. D0 n0t tr4de.' },
     { id: 'x_hydra', name: 'Abyss Hydra', el: 'water', c1: '#0e4d4a', c2: '#031a1a', c3: '#6bffd5', eye: '#ff3d6e', f: ['hood', 'horns', 'eye3'], pat: 'scales', eyes: 'slit', mouth: 'fangs', perk: 'coinPct', base: 1.4, perk2: 'newsSense', base2: 0.5, desc: 'Cut off one loss, two gains grow back.' },
+    // ---- wave 2 ----
+    { id: 'x_cosmicdragon', name: 'Cosmic Dragon', el: 'void', ultra: true, c1: '#3b1fa3', c2: '#0a0428', c3: '#7ce7ff', eye: '#fff36b', f: ['cosmicwings', 'demonhorns', 'tail', 'orbit'], pat: 'galaxy', eyes: 'slit', mouth: 'fangs', perk: 'coinPct', base: 1.8, perk2: 'packLuck', base2: 0.9, desc: 'Born inside a black hole. Eats galaxies for breakfast.' },
+    { id: 'x_infernotitan', name: 'Inferno Titan', el: 'fire', ultra: true, c1: '#5a1a0a', c2: '#1a0502', c3: '#ff7a1a', eye: '#fff36b', f: ['fireaura', 'demonhorns'], pat: 'lava', eyes: 'angry', mouth: 'zigzag', perk: 'passive', base: 520, perk2: 'coinPct', base2: 0.8, desc: 'The market’s hottest asset. Literally on fire.' },
+    { id: 'x_thundergod', name: 'Thunder God', el: 'sky', ultra: true, c1: '#2d3b8f', c2: '#0c1238', c3: '#fff36b', eye: '#bff4ff', f: ['lightmane', 'crown', 'bolts'], pat: 'none', eyes: 'orb', mouth: 'fangs', perk: 'xpPct', base: 1.6, perk2: 'newsSense', base2: 0.8, desc: 'Every lightning bolt is a green candle.' },
+    { id: 'x_voidreaper', name: 'Void Reaper', el: 'void', c1: '#1a1024', c2: '#050208', c3: '#b35cff', eye: '#d6a8ff', f: ['hood', 'wisps'], pat: 'skull', eyes: 'void', mouth: 'none', perk: 'packLuck', base: 1.3, perk2: 'passive', base2: 140, desc: 'Collects the souls of bad trades.' },
+    { id: 'x_hypnoowl', name: 'Hypno Owl', el: 'sky', c1: '#7d4cff', c2: '#2a0f73', c3: '#ff7ae6', eye: '#ff3df0', f: ['wings', 'crest'], pat: 'none', eyes: 'spiral', mouth: 'beak', perk: 'newsSense', base: 0.9, perk2: 'xpPct', base2: 0.6, desc: 'Look into its eyes. Buy the dip. Buy the dip.' },
+    { id: 'x_mechabull', name: 'Mecha Bull', el: 'tech', c1: '#8a96a8', c2: '#2c3440', c3: '#39ff88', eye: '#39ff88', f: ['bullhorns', 'bolts'], pat: 'circuit', eyes: 'visor', mouth: 'snout', perk: 'coinPct', base: 1.5, perk2: 'packTimer', base2: 0.6, desc: 'Fully automated bull market. Batteries included.' },
+    { id: 'x_crystalunicorn', name: 'Crystal Unicorn', el: 'sky', ultra: true, c1: '#f2fbff', c2: '#9cc7e8', c3: '#d18bff', eye: '#7b6cff', f: ['unihorn', 'crystalwings', 'roundears'], pat: 'crystal', eyes: 'star', mouth: 'smile', perk: 'packLuck', base: 1.7, perk2: 'loginPct', base2: 1.4, desc: 'So rare it has only been seen in charts.' },
+    { id: 'x_lavaturtle', name: 'Magma Turtle', el: 'fire', c1: '#4a3a2e', c2: '#1a120c', c3: '#ff6a1a', eye: '#ffcf3d', f: ['shell'], pat: 'lava', eyes: 'cute', mouth: 'smile', perk: 'passive', base: 340, perk2: 'loginPct', base2: 1.0, desc: 'Slow and steady wins the compound interest.' },
+    { id: 'x_planetcat', name: 'Planet Cat', el: 'void', c1: '#ff9e5c', c2: '#8a3a1a', c3: '#ffd89e', eye: '#2d1b4d', f: ['ears', 'ringplanet'], pat: 'spots', eyes: 'cute', mouth: 'tongue', perk: 'xpPct', base: 1.2, perk2: 'coinPct', base2: 0.6, desc: 'Has its own gravity. And its own moons.' },
+    { id: 'x_starfox', name: 'Starlight Fox', el: 'sky', ultra: true, c1: '#1b1f5c', c2: '#070924', c3: '#9dd6ff', eye: '#fff36b', f: ['tails9', 'ears'], pat: 'galaxy', eyes: 'star', mouth: 'smile', perk: 'packLuck', base: 1.5, perk2: 'xpPct', base2: 1.0, desc: 'Nine tails, each one a constellation.' },
+    { id: 'x_marketeye', name: 'Eye of the Market', el: 'void', c1: '#6b0f3a', c2: '#1a0210', c3: '#ff3d6e', eye: '#ffcf3d', f: ['tentacles', 'multieyes'], pat: 'glow', eyes: 'slit', mouth: 'zigzag', perk: 'newsSense', base: 1.1, perk2: 'coinPct', base2: 0.7, desc: 'It sees every trade. Every. Single. One.' },
+    { id: 'x_bluephoenix', name: 'Azure Phoenix', el: 'fire', c1: '#1f6fff', c2: '#0a1f6b', c3: '#7ce7ff', eye: '#ffffff', f: ['flames', 'wings', 'crown'], pat: 'glow', eyes: 'orb', mouth: 'beak', perk: 'coinPct', base: 1.4, perk2: 'xpPct', base2: 0.7, desc: 'Burns hotter than the red one. Blue chips only.' },
+    { id: 'x_blossomdragon', name: 'Blossom Dragon', el: 'earth', c1: '#ffc2dc', c2: '#c2527f', c3: '#7dffb0', eye: '#c2185b', f: ['flowercrown', 'horns', 'wings'], pat: 'scales', eyes: 'cute', mouth: 'smile', perk: 'loginPct', base: 1.6, perk2: 'passive', base2: 160, desc: 'Every spring its portfolio blooms.' },
+    { id: 'x_frostwyrm', name: 'Frost Wyrm', el: 'water', c1: '#9fe4ff', c2: '#1f5f99', c3: '#e6fbff', eye: '#3db4ff', f: ['batwings', 'spikes', 'tail'], pat: 'frost', eyes: 'slit', mouth: 'fangs', perk: 'passive', base: 300, perk2: 'packLuck', base2: 0.6, desc: 'Freezes your losses solid.' },
+    { id: 'x_goldkraken', name: 'Golden Kraken', el: 'water', ultra: true, c1: '#ffcf3d', c2: '#8a5a00', c3: '#fff2b0', eye: '#ff3d3d', f: ['tentaclecrown', 'tentacles', 'crown'], pat: 'spots', eyes: 'angry', mouth: 'o', perk: 'coinPct', base: 2.0, perk2: 'passive', base2: 200, desc: 'Pulls whole ships of gold down to its treasury.' },
+    { id: 'x_eclipsewolf', name: 'Eclipse Wolf', el: 'void', c1: '#1c1c2e', c2: '#06060d', c3: '#ffb13d', eye: '#ffb13d', f: ['moonback', 'ears'], pat: 'none', eyes: 'slit', mouth: 'fangs', perk: 'xpPct', base: 1.2, perk2: 'newsSense', base2: 0.6, desc: 'Only howls during a total market eclipse.' },
+    { id: 'x_prismjelly', name: 'Prism Jelly', el: 'water', c1: '#ff7ae6', c2: '#5b2bff', c3: '#7dffe8', eye: '#ffffff', f: ['tentacles', 'orbit'], pat: 'glow', eyes: 'cute', mouth: 'o', perk: 'packLuck', base: 1.2, perk2: 'loginPct', base2: 0.9, desc: 'Refracts profits into every color.', prism: true },
+    { id: 'x_plaguedrake', name: 'Plague Drake', el: 'void', c1: '#2f5c1a', c2: '#0c1a05', c3: '#b6ff3d', eye: '#e8ff3d', f: ['batwings', 'spikes'], pat: 'spots', eyes: 'slit', mouth: 'fangs', perk: 'coinPct', base: 1.3, perk2: 'packTimer', base2: 0.6, desc: 'Its breath melts short sellers.' },
+    { id: 'x_neonshark', name: 'Neon Shark', el: 'tech', c1: '#0f1a3a', c2: '#03060f', c3: '#16e0ff', eye: '#ff3df0', f: ['fins'], pat: 'circuit', eyes: 'slit', mouth: 'zigzag', perk: 'coinPct', base: 1.3, perk2: 'newsSense', base2: 0.5, desc: 'Smells a dip from a mile away.' },
+    { id: 'x_bitbeast', name: 'Bit Beast', el: 'tech', c1: '#241a4d', c2: '#0a0620', c3: '#39ff88', eye: '#39ff88', f: ['ears', 'eye3'], pat: 'pixel', eyes: 'visor', mouth: 'zigzag', perk: 'packTimer', base: 0.8, perk2: 'packLuck', base2: 0.8, desc: '8-bit body, 64-bit brain.' },
+    { id: 'x_lunarkirin', name: 'Lunar Kirin', el: 'sky', c1: '#e9e3ff', c2: '#7a6fc0', c3: '#fff1b0', eye: '#5f4bd6', f: ['antlers', 'moonback', 'halo'], pat: 'none', eyes: 'star', mouth: 'smile', perk: 'loginPct', base: 1.5, perk2: 'xpPct', base2: 0.8, desc: 'Appears only on the luckiest full moons.' },
+    { id: 'x_diamondtitan', name: 'Diamond Titan', el: 'earth', c1: '#dffcff', c2: '#6aa8c9', c3: '#ffffff', eye: '#3de7ff', f: ['spikes', 'crystalwings'], pat: 'crystal', eyes: 'angry', mouth: 'none', perk: 'packLuck', base: 1.4, perk2: 'coinPct', base2: 0.8, desc: 'Diamond hands. Diamond feet. Diamond everything.' },
+    { id: 'x_hellhound', name: 'Hellhound', el: 'fire', c1: '#3a0a0a', c2: '#120202', c3: '#ff3d1a', eye: '#ffcf3d', f: ['fireaura', 'ears'], pat: 'cracks', eyes: 'angry', mouth: 'fangs', perk: 'coinPct', base: 1.4, perk2: 'xpPct', base2: 0.7, desc: 'Guards the gates of the bear market.' },
+    { id: 'x_bubblegum', name: 'Bubblegum Blob', el: 'earth', c1: '#ffb3e6', c2: '#e05aa8', c3: '#9ef0ff', eye: '#2d1b4d', f: ['roundears', 'tentaclecrown'], pat: 'spots', eyes: 'big', mouth: 'tongue', perk: 'xpPct', base: 1.3, perk2: 'loginPct', base2: 1.1, desc: 'Sticky gains. Very sticky.' },
   ];
 
   /* ---------------- mutations ---------------- */
@@ -3622,8 +3730,11 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
       `<circle cx="${HX}" cy="${HY}" r="${HR}" fill="url(#xh${k})" stroke="${lighten(d.c3, 0.3)}" stroke-width="1.4"${d.ghost ? ' opacity=".8"' : ''}/>` +
       (d.pat && P[d.pat] ? `<g clip-path="url(#xc${k})">${P[d.pat](d)}</g>` : '') +
       `<ellipse cx="25" cy="27" rx="7" ry="3.6" fill="#fff" opacity=".3" transform="rotate(-28 25 27)"/>`;
+    const ultra = d.ultra
+      ? `<g class="xa-spin3" opacity=".85"><circle cx="32" cy="36" r="30.5" fill="none" stroke="${d.c3}" stroke-width="1.2" stroke-dasharray="2 3.2"/>${[0, 90, 180, 270].map(a => { const t = (a * Math.PI) / 180; return `<path d="M${(32 + Math.cos(t) * 30.5).toFixed(1)} ${(36 + Math.sin(t) * 30.5).toFixed(1)}l2 2-2 2-2-2z" fill="#fff"/>`; }).join('')}</g><circle cx="32" cy="36" r="27" fill="none" stroke="${lighten(d.c3, 0.4)}" stroke-width=".8" opacity=".5" class="xa-pulse"/>`
+      : '';
     return (
-      `<svg viewBox="0 0 64 64" class="art xart" aria-hidden="true"><defs>${defs}</defs>` +
+      `<svg viewBox="0 0 64 64" class="art xart${d.ultra ? ' xultra' : ''}${d.prism ? ' xprism' : ''}" aria-hidden="true"><defs>${defs}</defs>` + ultra +
       `<circle cx="32" cy="36" r="31" fill="url(#xa${k})" class="xa-pulse"/>${ring}` +
       back.join('') +
       head +
@@ -8516,7 +8627,7 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
       // exotic pets, exotic eggs and mutation serums become normal game items everywhere in the admin
       if (XA) {
         const sh = id => id.replace(/^x_/, '');
-        XA.PETS.forEach(p => GAME_ITEMS.push(['xpet_' + sh(p.id), 'exotic pet', p.name, null, 'x']));
+        XA.PETS.forEach(p => GAME_ITEMS.push(['xpet_' + sh(p.id), 'exotic pet', p.name + (p.ultra ? ' (ULTRA)' : ''), null, 'x']));
         [
           ['egg_x_any', 'Exotic Egg'],
           ['egg_x_inferno', 'Inferno Egg'],
@@ -8525,6 +8636,7 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
           ['egg_x_sky', 'Celestial Egg'],
           ['egg_x_tech', 'Cyber Egg'],
           ['egg_x_earth', 'Titan Egg'],
+          ['egg_x_ultra', 'Ultra Egg (ULTRA exotics only)'],
           ['egg_x_mutant', 'Mutant Egg (always mutated)'],
         ].forEach(([id, n]) => GAME_ITEMS.push([id, 'exotic egg', n, null, 'x']));
         XA.MUTS.forEach(m => GAME_ITEMS.push(['mut_' + m.id, 'mutation serum', `${m.name} Serum (perk ×${m.mult})`, null, 'x']));
