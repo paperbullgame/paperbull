@@ -10755,6 +10755,20 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
         .tw td .row-act, .tw td:last-child { flex-wrap: wrap; }
         .tw td:last-child:not([data-l]) { justify-content: flex-end; padding-top: 8px !important; }
         .ab-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+      }
+      #mNav { display: none; }
+      @media (max-width: 900px) {
+        #mNav { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; gap: 2px; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; box-shadow: 0 -8px 24px rgba(0,0,0,.18); }
+        #mNav::-webkit-scrollbar { display: none; }
+        #mNav a { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px; border-radius: 12px; color: var(--mut); font-size: 10.5px; font-weight: 700; text-decoration: none; position: relative; white-space: nowrap; }
+        #mNav a svg { width: 21px; height: 21px; flex: none; }
+        #mNav a span:not(.cnt):not(:has(svg)) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 9.5px; }
+        #mNav a.on, #mNav a.active, #mNav a[aria-current] { color: var(--acc, #ff9a1f); background: color-mix(in srgb, var(--acc, #ff9a1f) 12%, transparent); }
+        #mNav .cnt { position: absolute; top: 2px; right: 10px; font-size: 9px; }
+        .view { padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important; }
+        #subnav { overflow-x: auto; scrollbar-width: none; }
+        #subnav::-webkit-scrollbar { display: none; }
+        #subnav a, #subnav button { flex: none; }
         .ab-grid > * { padding: 10px !important; min-width: 0; }
         .ab-grid small, .ab-grid p { font-size: 11.5px; }
       }
@@ -10775,6 +10789,18 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
         var q = 0;
         new MutationObserver(function () { if (!q) q = requestAnimationFrame(function () { q = 0; label(); }); }).observe(document.body, { childList: true, subtree: true });
         label();
+      })();
+      (function () {
+        function build() {
+          var nav = document.getElementById('nav');
+          if (!nav) return;
+          var m = document.getElementById('mNav');
+          if (!m) { m = document.createElement('nav'); m.id = 'mNav'; m.setAttribute('aria-label', 'Sections'); document.body.appendChild(m); }
+          var h = nav.innerHTML;
+          if (m._h !== h) { m._h = h; m.innerHTML = h; [].forEach.call(m.querySelectorAll('[id]'), function (e) { e.removeAttribute('id'); }); var SH = { overview: 'Home', players: 'Players', rewards: 'Gifts', live: 'Events', community: 'Chat', economy: 'Market', settings: 'Settings' }; [].forEach.call(m.querySelectorAll('a[data-g]'), function (a) { var sp = [].filter.call(a.querySelectorAll('span:not(.cnt)'), function (x) { return !x.querySelector('svg') && !x.children.length; }).pop(); if (sp && SH[a.dataset.g]) sp.textContent = SH[a.dataset.g]; }); }
+        }
+        setInterval(build, 700);
+        addEventListener('hashchange', function () { setTimeout(build, 50); });
       })();
     </script>
   </body>
