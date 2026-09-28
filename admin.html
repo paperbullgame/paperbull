@@ -2812,6 +2812,315 @@
           max-width: none;
         }
       }
+      /* ---------- chat moderation + social ---------- */
+      .chg {
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+      }
+      .chg > div {
+        min-width: 0;
+      }
+      .chm {
+        padding: 14px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .chm:first-child {
+        padding-top: 2px;
+      }
+      .chm:last-child {
+        border-bottom: 0;
+        padding-bottom: 2px;
+      }
+      .chm-h {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .chm-h .t {
+        flex: 1;
+        min-width: 0;
+      }
+      .chm-h .t b {
+        display: block;
+        font-size: 13.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chm-h .t small {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        color: var(--mut);
+        font-size: 12px;
+      }
+      .chm-h .t small .pill {
+        height: 20px;
+        padding: 0 8px;
+        font-size: 11px;
+      }
+      .chm a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .chm a:hover {
+        color: var(--brand);
+      }
+      .chq {
+        margin: 10px 0 0 44px;
+        padding: 9px 12px;
+        background: var(--panel2);
+        border-radius: 10px;
+        border-left: 3px solid var(--line2);
+        font-size: 13.5px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+      .rep .chq {
+        border-left-color: var(--dn);
+      }
+      .chm.hid .chq {
+        opacity: 0.55;
+        text-decoration: line-through;
+        text-decoration-color: color-mix(in srgb, var(--mut) 60%, transparent);
+      }
+      .chm-m {
+        margin: 8px 0 0 44px;
+        color: var(--mut);
+        font-size: 12.5px;
+        overflow-wrap: anywhere;
+      }
+      .chm-a {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 10px 0 0 44px;
+      }
+      .chm-a .btn svg.i {
+        width: 15px;
+        height: 15px;
+      }
+      .chlive {
+        max-height: 720px;
+        overflow: auto;
+        margin: 0 -18px;
+        padding: 0 18px;
+      }
+      .chlive .chm {
+        padding: 11px 0;
+      }
+      .chlive .chq {
+        margin-top: 6px;
+        background: transparent;
+        border-left: 0;
+        padding: 0;
+      }
+      .chlive .chm-a {
+        margin-top: 8px;
+      }
+      .chroom {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .chroom .in {
+        height: 34px;
+        width: 150px;
+      }
+      .chroom .tabs button {
+        padding: 5px 11px;
+      }
+      .chhelp {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--mut);
+        font-size: 13px;
+        display: grid;
+        gap: 8px;
+      }
+      .chhelp b {
+        color: var(--tx);
+      }
+      .mute-pick {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin: 4px 0 14px;
+      }
+      .mute-pick button {
+        border: 1px solid var(--line2);
+        background: var(--panel);
+        border-radius: 10px;
+        padding: 10px 6px;
+        font-weight: 700;
+        cursor: pointer;
+        color: var(--tx);
+      }
+      .mute-pick button.on {
+        border-color: var(--brand);
+        background: var(--brand-soft);
+        color: var(--brand);
+      }
+      .h-cnt {
+        display: inline-grid;
+        place-items: center;
+        min-width: 22px;
+        height: 20px;
+        padding: 0 6px;
+        margin-left: 6px;
+        border-radius: 10px;
+        background: var(--dn);
+        color: #fff;
+        font-size: 11.5px;
+        font-weight: 750;
+        vertical-align: 2px;
+      }
+      .ssn-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: var(--panel2);
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+      .ssn-top .cd {
+        font: 750 22px/1 var(--mono);
+        letter-spacing: -0.02em;
+      }
+      .ssn-top small {
+        display: block;
+        color: var(--mut);
+        font-size: 12px;
+        font-weight: 650;
+        margin-bottom: 4px;
+      }
+      .ssn-top .sp {
+        flex: 1;
+      }
+      .rk {
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        font: 750 12px var(--mono);
+        background: var(--panel2);
+        color: var(--mut);
+        flex: none;
+      }
+      .rk.r1 {
+        background: #f5b301;
+        color: #2a1a00;
+      }
+      .rk.r2 {
+        background: #c3cad6;
+        color: #1c2130;
+      }
+      .rk.r3 {
+        background: #d08a4e;
+        color: #2a1300;
+      }
+      .prz {
+        font: 650 12px var(--mono);
+        color: var(--warn);
+        white-space: nowrap;
+      }
+      .past + .past {
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+      }
+      .past h4 {
+        margin: 0 0 4px;
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .cl-e {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: var(--panel2);
+        display: grid;
+        place-items: center;
+        font-size: 17px;
+        flex: none;
+      }
+      .mstat {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .mstat .stat b {
+        font-size: 18px;
+      }
+      .vs {
+        white-space: nowrap;
+      }
+      .vs em {
+        font-style: normal;
+        color: var(--dim);
+        font-size: 11.5px;
+        margin: 0 6px;
+      }
+      .comm {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .comm a.stat {
+        color: inherit;
+        text-decoration: none;
+        transition: background 0.15s;
+      }
+      .comm a.stat:hover {
+        background: color-mix(in srgb, var(--brand) 10%, var(--panel2));
+      }
+      .comm .stat b {
+        font-size: 18px;
+      }
+      .comm .stat.alert b {
+        color: var(--dn);
+      }
+      @media (max-width: 1100px) {
+        .chg {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 560px) {
+        .chq,
+        .chm-m,
+        .chm-a {
+          margin-left: 0;
+        }
+        .chlive {
+          margin: 0 -14px;
+          padding: 0 14px;
+          max-height: 560px;
+        }
+        .mute-pick {
+          grid-template-columns: 1fr 1fr;
+        }
+        .comm {
+          grid-template-columns: 1fr 1fr;
+        }
+        .mstat .stat b {
+          font-size: 16px;
+        }
+        .chroom .in {
+          width: 120px;
+        }
+      }
 </style>
   </head>
   <body>
@@ -2822,7 +3131,7 @@
       const API = 'https://amnbnuabxoxhggidlhcn.supabase.co/rest/v1/rpc/';
       const ANON =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtbmJudWFieG94aGdnaWRsaGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjc5ODAsImV4cCI6MjEwNTYwMzk4MH0.WwHTYzYEwKtW2_fjoyPiltnxI331-Ve5IGolTpavISo';
-      const GAME_ITEMS = [["th_amber", "theme", "Amber", 150, "c"], ["th_mint", "theme", "Mint", 150, "c"], ["th_ice", "theme", "Ice", 400, "r"], ["th_violet", "theme", "Ultraviolet", 400, "r"], ["th_rose", "theme", "Rose", 1000, "e"], ["th_gold", "theme", "24K Gold", 2500, "l"], ["sk_classic", "skin", "Classic", 150, "c"], ["sk_retro", "skin", "Retro Terminal", 150, "c"], ["sk_mono", "skin", "Monochrome", 400, "r"], ["sk_ocean", "skin", "Deep Ocean", 400, "r"], ["sk_neon", "skin", "Neon Nights", 1000, "e"], ["sk_lava", "skin", "Lava", 2500, "l"], ["av_bull", "avatar", "Bull", 150, "c"], ["av_bear", "avatar", "Bear", 150, "c"], ["av_fox", "avatar", "Fox", 150, "c"], ["av_frog", "avatar", "Frog", 150, "c"], ["av_shark", "avatar", "Shark", 400, "r"], ["av_wolf", "avatar", "Wolf", 400, "r"], ["av_ape", "avatar", "Ape", 400, "r"], ["av_rocket", "avatar", "Rocket", 1000, "e"], ["av_diamond", "avatar", "Diamond", 1000, "e"], ["av_robot", "avatar", "Algo", 1000, "e"], ["av_whale", "avatar", "Whale", 2500, "l"], ["av_crown", "avatar", "Crown", 2500, "l"], ["ti_rookie", "title", "Rookie", 150, "c"], ["ti_dip", "title", "Dip Buyer", 150, "c"], ["ti_hodl", "title", "HODLer", 150, "c"], ["ti_chart", "title", "Chart Wizard", 400, "r"], ["ti_degen", "title", "Certified Degen", 400, "r"], ["ti_hands", "title", "Diamond Hands", 1000, "e"], ["ti_wolf", "title", "Wolf of Sim Street", 1000, "e"], ["ti_oracle", "title", "The Oracle", 2500, "l"], ["ti_whale", "title", "Market Whale", 2500, "l"], ["pu_xp", "power", "XP Booster", 120, "c"], ["pu_cash", "power", "Cash Drop", 250, "c"], ["pu_tip", "power", "Insider Tip", 300, "r"], ["pu_mult", "power", "Profit Multiplier", 350, "r"], ["pu_shield", "power", "Loss Shield", 300, "r"], ["pu_mega", "power", "Mega Cash Drop", null, "l"], ["co_s", "coins", "Coin Pouch", null, "c"], ["co_m", "coins", "Coin Sack", null, "r"], ["co_l", "coins", "Coin Vault", null, "e"], ["th_lime", "theme", "Lime", 150, "c"], ["th_coral", "theme", "Coral", 150, "c"], ["th_teal", "theme", "Lagoon", 400, "r"], ["th_sakura", "theme", "Sakura", 1000, "e"], ["th_ruby", "theme", "Ruby", 2500, "l"], ["sk_sunset", "skin", "Sunset", 150, "c"], ["sk_matrix", "skin", "The Matrix", 400, "r"], ["sk_candy", "skin", "Cotton Candy", 400, "r"], ["sk_arctic", "skin", "Arctic", 1000, "e"], ["sk_vapor", "skin", "Vaporwave", 2500, "l"], ["av_cowboy", "avatar", "Cowboy", 150, "c"], ["av_panda", "avatar", "Panda", 150, "c"], ["av_koala", "avatar", "Koala", 150, "c"], ["av_lion", "avatar", "Lion", 400, "r"], ["av_tiger", "avatar", "Tiger", 400, "r"], ["av_ninja", "avatar", "Ninja", 400, "r"], ["av_hero", "avatar", "Hero", 400, "r"], ["av_trex", "avatar", "T-Rex", 1000, "e"], ["av_alien", "avatar", "Alien", 1000, "e"], ["av_wizard", "avatar", "Wizard", 1000, "e"], ["ti_bag", "title", "Bag Holder", 150, "c"], ["ti_moon", "title", "Moon Boy", 150, "c"], ["ti_tape", "title", "Tape Reader", 150, "c"], ["ti_fomo", "title", "FOMO Survivor", 150, "c"], ["ti_tiger", "title", "Paper Tiger", 400, "r"], ["ti_candle", "title", "Candle Whisperer", 400, "r"], ["ti_bearw", "title", "Bear Whisperer", 1000, "e"], ["ti_stonk", "title", "Stonk Lord", 2500, "l"], ["pu_coin2", "power", "Coin Doubler", 220, "r"], ["pu_luck", "power", "Lucky Charm", 400, "r"], ["pu_refresh", "power", "Pack Refresh", 200, "c"], ["pu_streak", "power", "Streak Saver", 150, "c"], ["egg_c", "egg", "Pet Egg", 350, "r"], ["egg_r", "egg", "Shiny Egg", 1000, "e"], ["egg_l", "egg", "Golden Egg", 3000, "l"], ["tr_snack", "treat", "Snack", 40, "c"], ["tr_toy", "treat", "Squeaky Toy", 80, "c"], ["tr_feast", "treat", "Feast", 140, "r"], ["tr_potion", "treat", "Growth Potion", 260, "r"], ["th_sky", "theme", "Sky", 150, "c"], ["th_peach", "theme", "Peach", 150, "c"], ["th_lav", "theme", "Lavender", 400, "r"], ["th_forest", "theme", "Forest", 400, "r"], ["th_aurora", "theme", "Aurora", 1000, "e"], ["th_diamond", "theme", "Diamond", 2500, "l"], ["sk_forest", "skin", "Forest Floor", 150, "c"], ["sk_berry", "skin", "Berry", 150, "c"], ["sk_ice", "skin", "Glacier", 400, "r"], ["sk_fire", "skin", "Wildfire", 400, "r"], ["sk_galaxy", "skin", "Galaxy", 1000, "e"], ["sk_gold", "skin", "Solid Gold", 2500, "l"], ["av_chef", "avatar", "Chef", 150, "c"], ["av_pirate", "avatar", "Pirate", 150, "c"], ["av_dj", "avatar", "DJ", 400, "r"], ["av_detective", "avatar", "Detective", 400, "r"], ["av_pumpkin", "avatar", "Pumpkin", 400, "r"], ["av_ghost", "avatar", "Ghost", 1000, "e"], ["av_viking", "avatar", "Viking", 1000, "e"], ["av_astro", "avatar", "Astronaut", 2500, "l"], ["ti_paper", "title", "Paper Hands", 150, "c"], ["ti_bhsl", "title", "Buy High, Sell Low", 150, "c"], ["ti_doodle", "title", "Chart Doodler", 150, "c"], ["ti_rider", "title", "Trend Rider", 400, "r"], ["ti_green", "title", "Green Day Hero", 400, "r"], ["ti_wick", "title", "Wick Watcher", 400, "r"], ["ti_pattern", "title", "Pattern Master", 1000, "e"], ["ti_tamer", "title", "Bull Tamer", 1000, "e"], ["ti_sensei", "title", "Candle Sensei", 1000, "e"], ["ti_legend2", "title", "Market Legend", 2500, "l"], ["ti_goat", "title", "The GOAT Trader", 2500, "l"], ["ti_glitch", "title", "Infinite Money Glitch", 2500, "l"], ["tr_apple", "treat", "Apple", 25, "c"], ["tr_bone", "treat", "Chew Bone", 60, "c"], ["tr_cake", "treat", "Party Cake", 180, "r"], ["tr_sushi", "treat", "Sushi Roll", 220, "r"], ["tr_golden", "treat", "Golden Apple", 600, "e"], ["egg_frost", "egg", "Frost Egg", 1800, "e"], ["egg_cosmic", "egg", "Cosmic Egg", 5000, "l"], ["egg_speckled", "egg", "Speckled Egg", 200, "c"], ["egg_lucky", "egg", "Lucky Egg", 600, "r"], ["egg_mystery", "egg", "Mystery Egg", 777, "e"], ["egg_coin", "egg", "Coin Egg", 900, "r"], ["egg_scholar", "egg", "Scholar Egg", 900, "r"], ["egg_idle", "egg", "Idle Egg", 900, "r"], ["egg_ember", "egg", "Ember Egg", 1200, "e"], ["egg_ocean", "egg", "Ocean Egg", 1500, "e"], ["egg_jade", "egg", "Jade Egg", 2200, "e"], ["egg_obsidian", "egg", "Obsidian Egg", 4000, "l"], ["egg_rainbow", "egg", "Rainbow Egg", 7500, "l"], ["th_obsidian", "theme", "Obsidian Gold", 2500, "l"], ["th_vipgold", "theme", "VIP Gold", 2500, "l"], ["sk_holo", "skin", "Holographic", 2500, "l"], ["av_goldbull", "avatar", "Golden Bull", 2500, "l"], ["ti_mm", "title", "Market Maker", 2500, "l"], ["ti_whaleclub", "title", "Whale Club", 2500, "l"], ["egg_mythic", "egg", "Mythic Egg", null, "l"], ["pack:basic", "pack", "Starter Pack", 150, null], ["pack:pro", "pack", "Pro Pack", 450, null], ["pack:whale", "pack", "Whale Pack", 1200, null], ["pack:mega", "pack", "Mega Pack", 2500, null], ["pack:pocket", "pack", "Pocket Pack", 60, null], ["pack:snack", "pack", "Snack Pack", 200, null], ["pack:title", "pack", "Title Pack", 250, null], ["pack:color", "pack", "Color Pack", 300, null], ["pack:skin", "pack", "Chart Skin Pack", 350, null], ["pack:avatar", "pack", "Avatar Pack", 400, null], ["pack:power", "pack", "Power Pack", 600, null], ["pack:lucky", "pack", "Lucky Pack", 777, null], ["pack:bull", "pack", "Bull Pack", 800, null], ["pack:bear", "pack", "Bear Pack", 800, null], ["pack:mystery", "pack", "Mystery Pack", 999, null], ["pack:frost", "pack", "Frost Pack", 1000, null], ["pack:rocket", "pack", "Rocket Pack", 1600, null], ["pack:inferno", "pack", "Inferno Pack", 1800, null], ["pack:trophy", "pack", "Trophy Pack", 2200, null], ["pack:moon", "pack", "Moon Pack", 4000, null], ["pack:galaxy", "pack", "Galaxy Pack", 5000, null], ["pack:legend", "pack", "Legend Pack", 9000, null]];
+      const GAME_ITEMS = [["th_amber", "theme", "Amber", 150, "c"], ["th_mint", "theme", "Mint", 150, "c"], ["th_ice", "theme", "Ice", 400, "r"], ["th_violet", "theme", "Ultraviolet", 400, "r"], ["th_rose", "theme", "Rose", 1000, "e"], ["th_gold", "theme", "24K Gold", 2500, "l"], ["sk_classic", "skin", "Classic", 150, "c"], ["sk_retro", "skin", "Retro Terminal", 150, "c"], ["sk_mono", "skin", "Monochrome", 400, "r"], ["sk_ocean", "skin", "Deep Ocean", 400, "r"], ["sk_neon", "skin", "Neon Nights", 1000, "e"], ["sk_lava", "skin", "Lava", 2500, "l"], ["av_bull", "avatar", "Bull", 150, "c"], ["av_bear", "avatar", "Bear", 150, "c"], ["av_fox", "avatar", "Fox", 150, "c"], ["av_frog", "avatar", "Frog", 150, "c"], ["av_shark", "avatar", "Shark", 400, "r"], ["av_wolf", "avatar", "Wolf", 400, "r"], ["av_ape", "avatar", "Ape", 400, "r"], ["av_rocket", "avatar", "Rocket", 1000, "e"], ["av_diamond", "avatar", "Diamond", 1000, "e"], ["av_robot", "avatar", "Algo", 1000, "e"], ["av_whale", "avatar", "Whale", 2500, "l"], ["av_crown", "avatar", "Crown", 2500, "l"], ["ti_rookie", "title", "Rookie", 150, "c"], ["ti_dip", "title", "Dip Buyer", 150, "c"], ["ti_hodl", "title", "HODLer", 150, "c"], ["ti_chart", "title", "Chart Wizard", 400, "r"], ["ti_degen", "title", "Certified Degen", 400, "r"], ["ti_hands", "title", "Diamond Hands", 1000, "e"], ["ti_wolf", "title", "Wolf of Sim Street", 1000, "e"], ["ti_oracle", "title", "The Oracle", 2500, "l"], ["ti_whale", "title", "Market Whale", 2500, "l"], ["pu_xp", "power", "XP Booster", 120, "c"], ["pu_cash", "power", "Cash Drop", 250, "c"], ["pu_tip", "power", "Insider Tip", 300, "r"], ["pu_mult", "power", "Profit Multiplier", 350, "r"], ["pu_shield", "power", "Loss Shield", 300, "r"], ["pu_mega", "power", "Mega Cash Drop", null, "l"], ["co_s", "coins", "Coin Pouch", null, "c"], ["co_m", "coins", "Coin Sack", null, "r"], ["co_l", "coins", "Coin Vault", null, "e"], ["th_lime", "theme", "Lime", 150, "c"], ["th_coral", "theme", "Coral", 150, "c"], ["th_teal", "theme", "Lagoon", 400, "r"], ["th_sakura", "theme", "Sakura", 1000, "e"], ["th_ruby", "theme", "Ruby", 2500, "l"], ["sk_sunset", "skin", "Sunset", 150, "c"], ["sk_matrix", "skin", "The Matrix", 400, "r"], ["sk_candy", "skin", "Cotton Candy", 400, "r"], ["sk_arctic", "skin", "Arctic", 1000, "e"], ["sk_vapor", "skin", "Vaporwave", 2500, "l"], ["av_cowboy", "avatar", "Cowboy", 150, "c"], ["av_panda", "avatar", "Panda", 150, "c"], ["av_koala", "avatar", "Koala", 150, "c"], ["av_lion", "avatar", "Lion", 400, "r"], ["av_tiger", "avatar", "Tiger", 400, "r"], ["av_ninja", "avatar", "Ninja", 400, "r"], ["av_hero", "avatar", "Hero", 400, "r"], ["av_trex", "avatar", "T-Rex", 1000, "e"], ["av_alien", "avatar", "Alien", 1000, "e"], ["av_wizard", "avatar", "Wizard", 1000, "e"], ["ti_bag", "title", "Bag Holder", 150, "c"], ["ti_moon", "title", "Moon Boy", 150, "c"], ["ti_tape", "title", "Tape Reader", 150, "c"], ["ti_fomo", "title", "FOMO Survivor", 150, "c"], ["ti_tiger", "title", "Paper Tiger", 400, "r"], ["ti_candle", "title", "Candle Whisperer", 400, "r"], ["ti_bearw", "title", "Bear Whisperer", 1000, "e"], ["ti_stonk", "title", "Stonk Lord", 2500, "l"], ["pu_coin2", "power", "Coin Doubler", 220, "r"], ["pu_luck", "power", "Lucky Charm", 400, "r"], ["pu_refresh", "power", "Pack Refresh", 200, "c"], ["pu_streak", "power", "Streak Saver", 150, "c"], ["egg_c", "egg", "Pet Egg", 350, "r"], ["egg_r", "egg", "Shiny Egg", 1000, "e"], ["egg_l", "egg", "Golden Egg", 3000, "l"], ["tr_snack", "treat", "Snack", 40, "c"], ["tr_toy", "treat", "Squeaky Toy", 80, "c"], ["tr_feast", "treat", "Feast", 140, "r"], ["tr_potion", "treat", "Growth Potion", 260, "r"], ["th_sky", "theme", "Sky", 150, "c"], ["th_peach", "theme", "Peach", 150, "c"], ["th_lav", "theme", "Lavender", 400, "r"], ["th_forest", "theme", "Forest", 400, "r"], ["th_aurora", "theme", "Aurora", 1000, "e"], ["th_diamond", "theme", "Diamond", 2500, "l"], ["sk_forest", "skin", "Forest Floor", 150, "c"], ["sk_berry", "skin", "Berry", 150, "c"], ["sk_ice", "skin", "Glacier", 400, "r"], ["sk_fire", "skin", "Wildfire", 400, "r"], ["sk_galaxy", "skin", "Galaxy", 1000, "e"], ["sk_gold", "skin", "Solid Gold", 2500, "l"], ["av_chef", "avatar", "Chef", 150, "c"], ["av_pirate", "avatar", "Pirate", 150, "c"], ["av_dj", "avatar", "DJ", 400, "r"], ["av_detective", "avatar", "Detective", 400, "r"], ["av_pumpkin", "avatar", "Pumpkin", 400, "r"], ["av_ghost", "avatar", "Ghost", 1000, "e"], ["av_viking", "avatar", "Viking", 1000, "e"], ["av_astro", "avatar", "Astronaut", 2500, "l"], ["ti_paper", "title", "Paper Hands", 150, "c"], ["ti_bhsl", "title", "Buy High, Sell Low", 150, "c"], ["ti_doodle", "title", "Chart Doodler", 150, "c"], ["ti_rider", "title", "Trend Rider", 400, "r"], ["ti_green", "title", "Green Day Hero", 400, "r"], ["ti_wick", "title", "Wick Watcher", 400, "r"], ["ti_pattern", "title", "Pattern Master", 1000, "e"], ["ti_tamer", "title", "Bull Tamer", 1000, "e"], ["ti_sensei", "title", "Candle Sensei", 1000, "e"], ["ti_legend2", "title", "Market Legend", 2500, "l"], ["ti_goat", "title", "The GOAT Trader", 2500, "l"], ["ti_glitch", "title", "Infinite Money Glitch", 2500, "l"], ["tr_apple", "treat", "Apple", 25, "c"], ["tr_bone", "treat", "Chew Bone", 60, "c"], ["tr_cake", "treat", "Party Cake", 180, "r"], ["tr_sushi", "treat", "Sushi Roll", 220, "r"], ["tr_golden", "treat", "Golden Apple", 600, "e"], ["egg_frost", "egg", "Frost Egg", 1800, "e"], ["egg_cosmic", "egg", "Cosmic Egg", 5000, "l"], ["egg_speckled", "egg", "Speckled Egg", 200, "c"], ["egg_lucky", "egg", "Lucky Egg", 600, "r"], ["egg_mystery", "egg", "Mystery Egg", 777, "e"], ["egg_coin", "egg", "Coin Egg", 900, "r"], ["egg_scholar", "egg", "Scholar Egg", 900, "r"], ["egg_idle", "egg", "Idle Egg", 900, "r"], ["egg_ember", "egg", "Ember Egg", 1200, "e"], ["egg_ocean", "egg", "Ocean Egg", 1500, "e"], ["egg_jade", "egg", "Jade Egg", 2200, "e"], ["egg_obsidian", "egg", "Obsidian Egg", 4000, "l"], ["egg_rainbow", "egg", "Rainbow Egg", 7500, "l"], ["th_obsidian", "theme", "Obsidian Gold", 2500, "l"], ["th_vipgold", "theme", "VIP Gold", 2500, "l"], ["sk_holo", "skin", "Holographic", 2500, "l"], ["av_goldbull", "avatar", "Golden Bull", 2500, "l"], ["ti_mm", "title", "Market Maker", 2500, "l"], ["ti_whaleclub", "title", "Whale Club", 2500, "l"], ["egg_mythic", "egg", "Mythic Egg", null, "l"], ["ti_loyal", "title", "Loyal Bull", 2500, "l"], ["ti_p1", "title", "Reborn", 1000, "e"], ["ti_p5", "title", "Ascended", 2500, "l"], ["ti_p10", "title", "Eternal Bull", 2500, "l"], ["pack:basic", "pack", "Starter Pack", 150, null], ["pack:pro", "pack", "Pro Pack", 450, null], ["pack:whale", "pack", "Whale Pack", 1200, null], ["pack:mega", "pack", "Mega Pack", 2500, null], ["pack:pocket", "pack", "Pocket Pack", 60, null], ["pack:snack", "pack", "Snack Pack", 200, null], ["pack:title", "pack", "Title Pack", 250, null], ["pack:color", "pack", "Color Pack", 300, null], ["pack:skin", "pack", "Chart Skin Pack", 350, null], ["pack:avatar", "pack", "Avatar Pack", 400, null], ["pack:power", "pack", "Power Pack", 600, null], ["pack:lucky", "pack", "Lucky Pack", 777, null], ["pack:bull", "pack", "Bull Pack", 800, null], ["pack:bear", "pack", "Bear Pack", 800, null], ["pack:mystery", "pack", "Mystery Pack", 999, null], ["pack:frost", "pack", "Frost Pack", 1000, null], ["pack:rocket", "pack", "Rocket Pack", 1600, null], ["pack:inferno", "pack", "Inferno Pack", 1800, null], ["pack:trophy", "pack", "Trophy Pack", 2200, null], ["pack:moon", "pack", "Moon Pack", 4000, null], ["pack:galaxy", "pack", "Galaxy Pack", 5000, null], ["pack:legend", "pack", "Legend Pack", 9000, null]];
       const GAME_ASSETS = [["AAPL", "Apple", "stock"], ["TSLA", "Tesla", "stock"], ["NVDA", "NVIDIA", "stock"], ["MSFT", "Microsoft", "stock"], ["AMZN", "Amazon", "stock"], ["SPY", "S&P 500 ETF", "stock"], ["QQQ", "Nasdaq-100 ETF", "stock"], ["GOOGL", "Alphabet", "stock"], ["META", "Meta Platforms", "stock"], ["NFLX", "Netflix", "stock"], ["AMD", "AMD", "stock"], ["PLTR", "Palantir", "stock"], ["COIN", "Coinbase", "stock"], ["GME", "GameStop", "stock"], ["DIS", "Disney", "stock"], ["NKE", "Nike", "stock"], ["KO", "Coca-Cola", "stock"], ["JPM", "JPMorgan Chase", "stock"], ["BA", "Boeing", "stock"], ["UBER", "Uber", "stock"], ["SBUX", "Starbucks", "stock"], ["BTC", "Bitcoin", "crypto"], ["ETH", "Ethereum", "crypto"], ["SOL", "Solana", "crypto"], ["DOGE", "Dogecoin", "crypto"], ["XRP", "XRP", "crypto"], ["ADA", "Cardano", "crypto"], ["AVAX", "Avalanche", "crypto"], ["LINK", "Chainlink", "crypto"], ["LTC", "Litecoin", "crypto"], ["SHIB", "Shiba Inu", "crypto"], ["PEPE", "Pepe", "crypto"]];
       const ITEM_TYPE = { theme: 'Theme', skin: 'Chart skin', avatar: 'Avatar', title: 'Title', power: 'Power-up', egg: 'Egg', treat: 'Pet treat', coins: 'Coins', pack: 'Pack' };
       const RAR = { c: 'Common', r: 'Rare', e: 'Epic', l: 'Legendary' };
@@ -2887,6 +3196,8 @@
         site: ['#8fc2ff', '#2563eb', NF('<path d="M4 7h16M4 12h16M4 17h16"/><circle class="k" cx="9" cy="7" r="2.4"/><circle class="k" cx="15.5" cy="12" r="2.4"/><circle class="k" cx="7" cy="17" r="2.4"/>')],
         admins: ['#ff8aa0', '#e11d48', NF('<path class="f" d="M12 3 19.5 5.8v5.8c0 4.5-3.1 8-7.5 9.4-4.4-1.4-7.5-4.9-7.5-9.4V5.8z"/><path d="M12 3 19.5 5.8v5.8c0 4.5-3.1 8-7.5 9.4-4.4-1.4-7.5-4.9-7.5-9.4V5.8z"/><path d="m12 8.2 1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z"/>')],
         audit: ['#6ff0dc', '#0d9488', NF('<rect class="f" x="4.5" y="4.5" width="15" height="16.5" rx="2"/><rect x="4.5" y="4.5" width="15" height="16.5" rx="2"/><rect x="8.5" y="2.8" width="7" height="3.6" rx="1.2"/><path d="m8 11 1.3 1.3L11.5 10M8 16l1.3 1.3 2.2-2.3M13.5 11.5h3M13.5 16.5h3"/>')],
+        chat: ['#a5b4fc', '#4f46e5', NF('<path class="f" d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z"/><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z"/><path d="M8.5 8.8h7M8.5 12h4.5"/>')],
+        social: ['#f0abfc', '#a21caf', NF('<path class="f" d="M4 8.5 8 12l4-6.5 4 6.5 4-3.5-1.6 9.5H5.6z"/><path d="M4 8.5 8 12l4-6.5 4 6.5 4-3.5-1.6 9.5H5.6z"/><path d="M5.6 21h12.8"/><circle class="k" cx="12" cy="4.3" r="1.2"/>')],
       };
       const navIco = r => {
         const n = NI[r];
@@ -2952,6 +3263,10 @@
         ),
         pin: I('<path d="M9 4h6l-1 6 4 3v1H6v-1l4-3zM12 14v6"/>'),
         power: I('<path d="M12 3v8M6.3 6.6a8 8 0 1 0 11.4 0"/>'),
+        chat: I('<path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H10l-4 3.5V15.5a2 2 0 0 1-1.5-2z"/>'),
+        mute: I('<path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H10l-4 3.5V15.5a2 2 0 0 1-1.5-2z"/><path d="m9.5 7.5 5 5M14.5 7.5l-5 5"/>'),
+        crown: I('<path d="M4 8.5 8 12l4-6.5 4 6.5 4-3.5-1.6 9.5H5.6z"/>'),
+        swords: I('<path d="M4 4l9 9M4 4h3.5M4 4v3.5M20 4l-9 9M20 4h-3.5M20 4v3.5M7 14l3 3M17 14l-3 3M5.5 18.5l2-2M18.5 18.5l-2-2"/>'),
       };
 
       /* ================= api ================= */
@@ -2996,6 +3311,9 @@
         bad_status: 'Invalid status.',
         bad_role: 'Pick a role.',
         bad_password: 'Password must be 6+ characters.',
+        muted: 'That player is muted from chat.',
+        no_room: 'That chat room doesn’t exist.',
+        feature_off: 'That feature is turned off in Site controls.',
         network:
           'Can’t reach the PAPERBULL server (supabase.co). This Wi-Fi, a VPN or an ad blocker may be blocking it. Try phone data or turn the blocker off.',
         offline: 'You’re offline. Connect to the internet and try again.',
@@ -3393,11 +3711,13 @@
         ['gifts', 'Gifts', IC.gift, 'moderator'],
         ['promos', 'Promo codes', IC.ticket, 'moderator'],
         ['transactions', 'Transactions', IC.tx, 'moderator'],
+        ['chat', 'Chat moderation', IC.chat, 'moderator'],
         ['-', 'Game'],
         ['market', 'Market', IC.chart, 'moderator'],
         ['shop', 'Shop items', IC.coin, 'moderator'],
         ['store', 'Store ($)', IC.coin, 'moderator'],
         ['content', 'Content', IC.content, 'moderator'],
+        ['social', 'Social & seasons', IC.crown, 'moderator'],
         ['-', 'Settings'],
         ['site', 'Site controls', IC.site, 'moderator'],
         ['admins', 'Admin accounts', IC.shield, 'owner'],
@@ -3406,7 +3726,7 @@
       function shell() {
         $('#root').innerHTML = `<div class="app" id="app">
     <aside class="side" id="side"><div class="logo"><span class="mark">${LOGO}</span>PAPERBULL <small>Admin</small></div>
-      <nav class="nav" id="nav">${NAV.map(n => (n[0] === '-' ? `<div class="sec">${n[1]}</div>` : can(n[3]) ? `<a data-r="${n[0]}" href="#/${n[0]}">${navIco(n[0]) || n[2]}<span>${n[1]}</span>${n[0] === 'site' ? '<span class="cnt" id="mntBadge" hidden>ON</span>' : ''}</a>` : '')).join('')}</nav>
+      <nav class="nav" id="nav">${NAV.map(n => (n[0] === '-' ? `<div class="sec">${n[1]}</div>` : can(n[3]) ? `<a data-r="${n[0]}" href="#/${n[0]}">${navIco(n[0]) || n[2]}<span>${n[1]}</span>${n[0] === 'site' ? '<span class="cnt" id="mntBadge" hidden>ON</span>' : n[0] === 'chat' ? '<span class="cnt" id="chatBadge" hidden></span>' : ''}</a>` : '')).join('')}</nav>
       <div class="live" id="liveBox" data-s="off"><i></i><div><b>Live link</b><small id="liveTxt">Connecting…</small></div></div>
       <div class="me">${avatar(S.me.username)}<div style="flex:1;min-width:0"><b>${esc(S.me.username)}</b><span class="role muted">${esc(S.me.role)}</span></div>
         <button class="btn ghost sm icon" id="outBtn" title="Sign out" aria-label="Sign out">${IC.out}</button></div></aside>
@@ -3627,6 +3947,7 @@
       ${k('', IC.tx, 'Shop purchases', num(s.purchases), `${num(s.catalog)} gifts on sale`, 'purchases')}
       ${k('c2', IC.gift, 'Admin gifts given', num(s.grants), 'Items and coins from staff')}
       ${k('c4', IC.users, 'Friendships', num(s.friendships), `${num(s.content)} live posts`)}</div>
+      <div id="dComm"></div>
       <div class="grid g2 dash-live"><div class="card onl-card"><div class="card-h"><h3>Online now</h3><span class="small muted">Updates every 30 seconds</span></div><div class="onl" id="onl">${skeleton(2)}</div></div>
       <div class="card"><div class="card-h"><h3>Live feed</h3><span class="small muted">What players are doing</span></div><div class="feed" id="feed">${skeleton(4)}</div></div></div>
       <div class="grid g2"><div class="card"><div class="card-h"><h3>New users · 30 days</h3>${legend([{ name: 'Signups', color: col(1) }])}</div><div class="chart" id="c1"></div></div>
@@ -3645,6 +3966,21 @@
           paintOnline();
           paintFeed();
           this.charts();
+          this.comm();
+        },
+        async comm() {
+          let c, so;
+          try {
+            [c, so] = await Promise.all([A('pba_chat', { p_room: 'global' }).catch(() => null), A('pba_social').catch(() => null)]);
+          } catch (e) {}
+          const box = $('#dComm');
+          if (!box || (!c && !so)) return;
+          const open = c ? +(c.stats || {}).open_reports || 0 : null;
+          if (c) chatBadge(open);
+          const st = (href, l, val, sub, alert) => `<a class="stat ${alert ? 'alert' : ''}" href="${href}"><small>${l}</small><b class="mono">${val}</b><div class="small muted">${sub}</div></a>`;
+          box.innerHTML = `<div class="card" style="margin-bottom:16px"><div class="card-h"><h3>Community</h3><span class="small muted">Chat, duels and the weekly season</span></div><div class="comm">
+        ${c ? st('#/chat', 'Open chat reports', num(open), open ? 'Needs a look →' : 'All clear', open > 0) + st('#/chat', 'Chat messages today', num(c.stats && c.stats.today), `${num((c.muted || []).length)} muted`) : ''}
+        ${so ? st('#/social', 'Live duels', num(so.duels && so.duels.active), `${num(so.duels && so.duels.today)} today`) + st('#/social', 'Season players', num(so.season && so.season.players), `${num((so.clans || []).length)} clans`) : ''}</div></div>`;
         },
         charts() {
           const s = this.s;
@@ -3715,6 +4051,13 @@
         admin_create: 'Created admin',
         admin_update: 'Updated admin',
         admin_delete: 'Deleted admin',
+        chat_hide: 'Hid a chat message',
+        chat_restore: 'Restored a chat message',
+        chat_dismiss: 'Dismissed a chat report',
+        chat_mute: 'Muted from chat',
+        chat_unmute: 'Unmuted in chat',
+        chat_purge: 'Purged a player’s chat (24h)',
+        clan_delete: 'Deleted a clan',
       };
       const actLabel = a => ACT[a] || a;
 
@@ -5175,6 +5518,12 @@
         ['online', 'Online leaderboard', 'Global rankings on the Ranks page'],
         ['friends', 'Friends', 'Adding friends'],
         ['gifts', 'Friend gifts', 'Sending coins to friends'],
+        ['chat', 'Chat', 'Global room, clan rooms and friend messages'],
+        ['clans', 'Clans', 'Creating, joining and clan leaderboards'],
+        ['duels', 'Duels', 'Head-to-head trading battles between friends'],
+        ['modes', 'Game modes', 'Speed run, Up or down, Crash and Replay'],
+        ['pass', 'Battle pass', 'Seasonal reward track (free and premium)'],
+        ['copy', 'Copy trading', 'Following and copying top traders'],
       ];
       VIEWS.site = {
         async render(v) {
@@ -5197,7 +5546,8 @@
             bw = s.badwords || [],
             ro = !can('admin');
           const mLiveOn = s.live ? !!s.live.maintenance.on : !!m.on;
-          const g = Object.assign({ daily_bonus: 50, free_pack_hours: 4, vol_mult: 1, news_every_s: 55 }, s.game || {});
+          const g = Object.assign({ daily_bonus: 50, free_pack_hours: 4, vol_mult: 1, news_every_s: 55, market_events: 1, max_leverage: 10 }, s.game || {});
+          const optList = (list, cur) => (list.some(([x]) => +cur === x) ? list : list.concat([[+cur, cur + '× (custom)']])).map(([x, l]) => `<option value="${x}" ${+cur === x ? 'selected' : ''}>${l}</option>`).join('');
           this.game = g;
           v.innerHTML =
             head(
@@ -5223,8 +5573,10 @@
         <label class="f"><span>Daily login bonus (coins)</span><input class="in" type="number" id="gDaily" min="0" max="10000" step="5" value="${g.daily_bonus}" ${ro ? 'disabled' : ''}></label>
         <label class="f"><span>Free pack every (hours)</span><input class="in" type="number" id="gPack" min="0.25" max="168" step="0.25" value="${g.free_pack_hours}" ${ro ? 'disabled' : ''}></label>
         <label class="f"><span>Market volatility</span><select class="in" id="gVol" ${ro ? 'disabled' : ''}>${[[0.5, 'Calm · 0.5×'], [0.75, 'Quiet · 0.75×'], [1, 'Normal · 1×'], [1.5, 'Lively · 1.5×'], [2, 'Wild · 2×'], [3, 'Chaos · 3×']].map(([x, l]) => `<option value="${x}" ${+g.vol_mult === x ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-        <label class="f"><span>Seconds between headlines</span><input class="in" type="number" id="gNews" min="10" max="600" step="5" value="${g.news_every_s}" ${ro ? 'disabled' : ''}></label></div>
-        <p class="small muted" style="margin:-4px 0 12px">Volatility scales how much every price moves; headlines are the company news items that push prices around. Coin and XP multipliers live under <b>Live event</b>.</p>
+        <label class="f"><span>Seconds between headlines</span><input class="in" type="number" id="gNews" min="10" max="600" step="5" value="${g.news_every_s}" ${ro ? 'disabled' : ''}></label>
+        <label class="f"><span>Market events</span><select class="in" id="gEvt" ${ro ? 'disabled' : ''}>${optList([[0, 'Off'], [0.5, 'Rare · 0.5×'], [1, 'Normal · 1×'], [2, 'Often · 2×'], [4, 'Chaos · 4×']], g.market_events)}</select></label>
+        <label class="f"><span>Max leverage</span><select class="in" id="gLev" ${ro ? 'disabled' : ''}>${optList([[1, '1× (off)'], [2, '2×'], [5, '5×'], [10, '10×'], [20, '20×']], g.max_leverage)}</select></label></div>
+        <p class="small muted" style="margin:-4px 0 12px">Volatility scales how much every price moves; headlines are the company news items that push prices around. Market events are the big surprises (crashes, squeezes, rallies). Max leverage caps the multiplier players can trade with. Coin and XP multipliers live under <b>Live event</b>.</p>
         ${ro ? '' : '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="gSave">Save game settings</button><button class="btn" id="gReset">Back to defaults</button></div>'}</div>
       <div class="card"><div class="card-h"><h3>Blocked words</h3><span class="small muted">${bw.length} word${bw.length === 1 ? '' : 's'}</span></div>
         <p class="small muted" style="margin:0 0 10px">Usernames and display names containing any of these are rejected. One word per line, not case sensitive.</p>
@@ -5303,7 +5655,7 @@
             };
           if ($('#gSave'))
             $('#gSave').onclick = async () => {
-              const val = { daily_bonus: +$('#gDaily').value, free_pack_hours: +$('#gPack').value, vol_mult: +$('#gVol').value, news_every_s: +$('#gNews').value };
+              const val = { daily_bonus: +$('#gDaily').value, free_pack_hours: +$('#gPack').value, vol_mult: +$('#gVol').value, news_every_s: +$('#gNews').value, market_events: +$('#gEvt').value, max_leverage: +$('#gLev').value };
               if (!(val.daily_bonus >= 0 && val.daily_bonus <= 10000)) return toast('Daily bonus must be 0 to 10,000 coins.', 'err');
               if (!(val.free_pack_hours >= 0.25 && val.free_pack_hours <= 168)) return toast('Free pack timer must be 0.25 to 168 hours.', 'err');
               if (!(val.news_every_s >= 10 && val.news_every_s <= 600)) return toast('Headlines: 10 to 600 seconds.', 'err');
@@ -5314,7 +5666,7 @@
           if ($('#gReset'))
             $('#gReset').onclick = async () => {
               try {
-                await act(A('pba_site_set', { p_key: 'game', p_value: { daily_bonus: 50, free_pack_hours: 4, vol_mult: 1, news_every_s: 55 } }), 'Game settings back to defaults');
+                await act(A('pba_site_set', { p_key: 'game', p_value: { daily_bonus: 50, free_pack_hours: 4, vol_mult: 1, news_every_s: 55, market_events: 1, max_leverage: 10 } }), 'Game settings back to defaults');
                 this.render(v);
               } catch (e) {}
             };
@@ -5758,6 +6110,364 @@
                 try {
                   await act(A('pba_entitle', args), `@${u.username}: ${b.textContent}`);
                   this.load(v);
+                } catch (e) {}
+              })
+          );
+        },
+      };
+
+      /* ---------- chat moderation ---------- */
+      const MUTE_OPTS = [[1, '1 hour'], [24, '24 hours'], [168, '7 days'], [720, '30 days']];
+      const uLink = (id, name) => (id ? `<a href="#/user/${esc(id)}">@${esc(name || 'unknown')}</a>` : `<span>@${esc(name || 'unknown')}</span>`);
+      const roomName = r => {
+        r = String(r || '');
+        return r === 'global' ? 'Global' : r.startsWith('clan:') ? 'Clan #' + r.slice(5) : r.startsWith('dm:') ? 'Direct message' : r;
+      };
+      const roomPill = r => {
+        r = String(r || '');
+        return `<span class="pill ${r === 'global' ? 'p-info' : r.startsWith('clan:') ? 'p-brand' : 'p-mut'}">${esc(roomName(r))}</span>`;
+      };
+      const chatAct = (action, o = {}) =>
+        A('pba_chat_act', { p_action: action, p_msg: o.msg ?? null, p_user: o.user ?? null, p_hours: o.hours ?? null });
+      function chatBadge(n) {
+        const b = $('#chatBadge');
+        if (!b) return;
+        b.hidden = !(n > 0);
+        b.textContent = n > 99 ? '99+' : String(n || '');
+      }
+      function muteDialog(user, name, msg) {
+        return new Promise(res => {
+          let h = 24;
+          modal({
+            title: `Mute @${name || 'player'}`,
+            ok: 'Mute',
+            okClass: 'dan',
+            body: `<p class="small muted" style="margin:0 0 12px">They can still read chat but can’t send messages in any room until the mute ends.${msg ? ' The report on this message is closed too.' : ''}</p>
+        <span class="small" style="font-weight:650">How long</span><div class="mute-pick" id="mpk">${MUTE_OPTS.map(([x, l]) => `<button type="button" data-h="${x}" class="${x === h ? 'on' : ''}">${l}</button>`).join('')}</div><div class="err"></div>`,
+            onMount: ov => {
+              $$('[data-h]', ov).forEach(
+                b =>
+                  (b.onclick = () => {
+                    h = +b.dataset.h;
+                    $$('[data-h]', ov).forEach(x => x.classList.toggle('on', x === b));
+                  })
+              );
+              ov.addEventListener('click', e => {
+                if (e.target === ov || e.target.closest('[data-x]')) res(false);
+              });
+            },
+            onOk: async () => {
+              await chatAct('mute', { user, msg: msg ?? null, hours: h });
+              toast(`@${name} muted for ${MUTE_OPTS.find(x => x[0] === h)[1]}`);
+              res(true);
+            },
+          });
+        });
+      }
+      VIEWS.chat = {
+        room: 'global',
+        d: null,
+        err: null,
+        busy: false,
+        again: false,
+        poll: 0,
+        render(v) {
+          v.innerHTML =
+            head('Chat moderation', 'Reports, the live room and muted players. Hidden messages disappear for every player right away.', `<button class="btn" id="chRf">Refresh</button>`) +
+            `<div class="kpis" id="chK">${Array.from({ length: 4 }, () => `<div class="kpi">${skeleton(2)}</div>`).join('')}</div>
+      <div class="chg"><div>
+        <div class="card"><div class="card-h"><h3>Reports<span class="h-cnt" id="chRn" hidden></span></h3><span class="small muted">Grouped by message · newest first</span></div><div id="chRep">${skeleton(4)}</div></div>
+        <div class="card"><div class="card-h"><h3>Live room · <span id="chRl">${esc(roomName(this.room))}</span></h3>
+          <form class="chroom" id="chRoomF"><div class="tabs"><button type="button" data-room="global" class="${this.room === 'global' ? 'on' : ''}">Global</button></div><input class="in mono" id="chRoom" placeholder="clan:12" value="${this.room === 'global' ? '' : esc(this.room)}" aria-label="Room" autocomplete="off" spellcheck="false"><button class="btn sm">Open</button></form></div>
+          <div class="chlive" id="chLive">${skeleton(6)}</div></div>
+      </div><div>
+        <div class="card"><div class="card-h"><h3>Muted players</h3><span class="small muted" id="chMn"></span></div><div id="chMut">${skeleton(3)}</div></div>
+        <div class="card"><div class="card-h"><h3>How it works</h3></div><ul class="chhelp">
+          <li><b>Hide</b> removes a message for everyone and closes its reports. <b>Restore</b> brings it back.</li>
+          <li><b>Dismiss</b> closes the reports and leaves the message up.</li>
+          <li><b>Mute</b> stops a player from posting in every room. They can still read.</li>
+          <li><b>Purge 24h</b> hides everything a player posted in the last day, in every room.</li>
+          <li>Links are stripped and blocked words are masked by the server before anyone sees them.</li></ul></div>
+      </div></div>`;
+          $('#chRf').onclick = () => this.load();
+          $('[data-room]', v).onclick = () => this.setRoom('global');
+          $('#chRoomF').onsubmit = e => {
+            e.preventDefault();
+            let r = $('#chRoom').value.trim().toLowerCase().replace(/\s+/g, '');
+            if (/^\d+$/.test(r)) r = 'clan:' + r;
+            if (!r) r = 'global';
+            if (!/^(global|clan:\d+|dm:[a-z0-9:-]+)$/.test(r)) return toast('Type a room like clan:12 (or leave it empty for Global).', 'err');
+            this.setRoom(r);
+          };
+          clearInterval(this.poll);
+          this.poll = setInterval(() => {
+            if (V.cur !== this || !$('#chLive')) return clearInterval(this.poll);
+            if (LV.state !== 'on' && document.visibilityState === 'visible') this.load();
+          }, 15000);
+          this.load();
+        },
+        setRoom(r) {
+          this.room = r;
+          $('#chRl').textContent = roomName(r);
+          $$('[data-room]').forEach(b => b.classList.toggle('on', r === 'global'));
+          $('#chRoom').value = r === 'global' ? '' : r;
+          $('#chLive').innerHTML = skeleton(6);
+          this.load();
+        },
+        onLive(k) {
+          if (k !== 'chat' || !$('#chLive')) return;
+          clearTimeout(this.lt);
+          this.lt = setTimeout(() => this.load(), 400);
+        },
+        async load() {
+          if (this.busy) {
+            this.again = true;
+            return;
+          }
+          this.busy = true;
+          const room = this.room;
+          try {
+            const d = await A('pba_chat', { p_room: room });
+            if (room === this.room) {
+              this.d = d || {};
+              this.err = null;
+            }
+          } catch (e) {
+            this.err = e.message;
+          }
+          this.busy = false;
+          this.paint();
+          if (this.again) {
+            this.again = false;
+            this.load();
+          }
+        },
+        paint() {
+          if (!$('#chLive')) return;
+          if (this.err && !this.d) {
+            ['#chRep', '#chLive', '#chMut'].forEach(id => ($(id).innerHTML = `<div class="empty">${esc(this.err)}</div>`));
+            $('#chK').innerHTML = '';
+            return;
+          }
+          if (this.err) toast(this.err, 'err');
+          const d = this.d,
+            st = d.stats || {},
+            recent = d.recent || [],
+            muted = d.muted || [];
+          /* reports come one row per report — group them by message */
+          const groups = [],
+            byMsg = {};
+          for (const r of d.reports || []) {
+            let g = byMsg[r.message_id];
+            if (!g) {
+              g = byMsg[r.message_id] = Object.assign({}, r, { reporters: [], reasons: [] });
+              groups.push(g);
+            }
+            if (r.reporter && !g.reporters.includes(r.reporter)) g.reporters.push(r.reporter);
+            if (r.reason && !g.reasons.includes(r.reason)) g.reasons.push(r.reason);
+            g.count = Math.max(+g.count || 0, +r.count || 0, g.reporters.length);
+          }
+          this.groups = groups;
+          const open = +st.open_reports || 0,
+            hid = recent.filter(m => m.hidden).length;
+          chatBadge(open);
+          $('#chK').innerHTML = `
+        <div class="kpi c4"><small><span class="ic">${IC.chat}</span>Messages today</small><b class="mono">${num(st.today)}</b><em>across every room</em></div>
+        <div class="kpi c5"><small><span class="ic">${IC.bad}</span>Open reports</small><b class="mono">${num(open)}</b><em>${open ? `${num(groups.length)} message${groups.length === 1 ? '' : 's'} to review` : 'All clear'}</em></div>
+        <div class="kpi c3"><small><span class="ic">${IC.mute}</span>Muted players</small><b class="mono">${num(muted.length)}</b><em>can read, can’t post</em></div>
+        <div class="kpi"><small><span class="ic">${IC.eyeoff}</span>Hidden in view</small><b class="mono">${num(hid)}</b><em>of the latest ${num(recent.length)} in ${esc(roomName(this.room))}</em></div>`;
+          const rn = $('#chRn');
+          rn.hidden = !groups.length;
+          rn.textContent = groups.length;
+          const ts = s => `<span title="${esc(dt(s))}">${ago(s)}</span>`;
+          $('#chRep').innerHTML = groups.length
+            ? groups
+                .map(
+                  (r, i) => `<div class="chm rep ${r.hidden ? 'hid' : ''}"><div class="chm-h">${avatar(r.author)}<div class="t"><b>${uLink(r.author_id, r.author)}</b><small>${roomPill(r.room)}<span>reported ${ts(r.at)}</span>${r.hidden ? '<span class="pill p-mut">Hidden</span>' : ''}</small></div><span class="pill p-dn">${num(r.count)} report${+r.count === 1 ? '' : 's'}</span></div>
+          <div class="chq">${esc(r.body)}</div>
+          <div class="chm-m">By ${r.reporters.map(x => '@' + esc(x)).join(', ') || 'a player'}${r.reasons.length ? ` · “${r.reasons.map(esc).join('”, “')}”` : ''}</div>
+          <div class="chm-a">${r.hidden ? `<button class="btn sm" data-ra="restore" data-i="${i}">${IC.eye}Restore</button>` : `<button class="btn sm dan" data-ra="hide" data-i="${i}">${IC.eyeoff}Hide message</button>`}<button class="btn sm" data-ra="dismiss" data-i="${i}">${IC.ok}Dismiss</button>${r.author_id ? `<button class="btn sm" data-ra="mute" data-i="${i}">${IC.mute}Mute author</button>` : ''}</div></div>`
+                )
+                .join('')
+            : `<div class="empty">${IC.ok}<p style="margin:6px 0 0">No open reports. Nice and quiet.</p></div>`;
+          $('#chLive').innerHTML = recent.length
+            ? recent
+                .map((m, i) => {
+                  const sys = m.kind === 'system' || !m.author_id;
+                  return `<div class="chm ${m.hidden ? 'hid' : ''}"><div class="chm-h">${sys ? `<span class="av">${IC.pulse}</span>` : avatar(m.author)}<div class="t"><b>${sys ? 'System' : uLink(m.author_id, m.author)}</b><small>${ts(m.at)}${m.kind && m.kind !== 'text' ? `<span class="pill p-mut">${esc(m.kind === 'quick' ? 'Quick chat' : m.kind === 'emote' ? 'Emote' : m.kind === 'system' ? 'System' : m.kind)}</span>` : ''}${m.hidden ? '<span class="pill p-dn">Hidden</span>' : ''}</small></div></div>
+            <div class="chq">${esc(m.body)}</div>
+            <div class="chm-a">${m.hidden ? `<button class="btn sm" data-la="restore" data-i="${i}">${IC.eye}Restore</button>` : `<button class="btn sm" data-la="hide" data-i="${i}">${IC.eyeoff}Hide</button>`}${sys ? '' : `<button class="btn sm" data-la="mute" data-i="${i}">${IC.mute}Mute author</button><button class="btn sm dan-o" data-la="purge" data-i="${i}">${IC.trash}Purge last 24h</button>`}</div></div>`;
+                })
+                .join('')
+            : `<div class="empty">No messages in ${esc(roomName(this.room))} yet.</div>`;
+          $('#chMn').textContent = muted.length ? `${muted.length} right now` : '';
+          $('#chMut').innerHTML = muted.length
+            ? `<div class="list">${muted
+                .slice()
+                .sort((a, b) => new Date(a.until) - new Date(b.until))
+                .map(
+                  (u, i) => `<div class="li">${avatar(u.username)}<div class="t"><b>${uLink(u.id, u.username)}</b><small title="${esc(dt(u.until))}">${leftIn(u.until)} left · until ${esc(dt(u.until))}</small></div><button class="btn sm" data-um="${esc(u.id)}" data-n="${esc(u.username)}">Unmute</button></div>`
+                )
+                .join('')}</div>`
+            : '<div class="empty">Nobody is muted.</div>';
+          this.wire();
+        },
+        wire() {
+          const run = async (b, p, msg) => {
+            b.disabled = true;
+            try {
+              await act(p, msg);
+              this.load();
+            } catch (e) {
+              b.disabled = false;
+            }
+          };
+          $$('[data-ra]').forEach(
+            b =>
+              (b.onclick = async () => {
+                const r = this.groups[+b.dataset.i],
+                  a = b.dataset.ra;
+                if (a === 'mute') {
+                  if (await muteDialog(r.author_id, r.author, r.message_id)) this.load();
+                  return;
+                }
+                run(b, chatAct(a, { msg: r.message_id }), a === 'hide' ? 'Message hidden · report closed' : a === 'restore' ? 'Message restored · report closed' : 'Report dismissed');
+              })
+          );
+          $$('[data-la]').forEach(
+            b =>
+              (b.onclick = async () => {
+                const m = (this.d.recent || [])[+b.dataset.i],
+                  a = b.dataset.la;
+                if (!m) return;
+                if (a === 'mute') {
+                  if (await muteDialog(m.author_id, m.author, null)) this.load();
+                  return;
+                }
+                if (a === 'purge') {
+                  const ok = await confirmBox({ title: `Purge @${m.author}’s chat?`, text: `Every message @${esc(m.author)} sent in the last 24 hours gets hidden, in every room. You can restore single messages afterwards.`, ok: 'Purge 24h' });
+                  if (!ok) return;
+                  return run(b, chatAct('purge', { user: m.author_id }), `Purged @${m.author}’s last 24h`);
+                }
+                run(b, chatAct(a, { msg: m.id }), a === 'hide' ? 'Message hidden' : 'Message restored');
+              })
+          );
+          $$('[data-um]').forEach(b => (b.onclick = () => run(b, chatAct('unmute', { user: b.dataset.um }), `@${b.dataset.n} can chat again`)));
+        },
+      };
+
+      /* ---------- social & seasons ---------- */
+      const MODE_L = { speed: 'Speed run', updown: 'Up or down', crash: 'Crash', replay: 'Replay' };
+      function countdown(s) {
+        const d = Math.max(0, (new Date(s) - Date.now()) / 1000);
+        if (!s || isNaN(d)) return '—';
+        const D = Math.floor(d / 86400),
+          H = Math.floor((d % 86400) / 3600),
+          M = Math.floor((d % 3600) / 60);
+        return d <= 0 ? 'Ending…' : D ? `${D}d ${H}h` : H ? `${H}h ${M}m` : `${M}m`;
+      }
+      const rkBadge = n => `<span class="rk ${n <= 3 ? 'r' + n : ''}">${n}</span>`;
+      const pctOrDash = n => (n == null || isNaN(+n) ? '<span class="muted">—</span>' : `<span class="mono ${cls(+n)}">${pct(+n)}</span>`);
+      const duelPill = s =>
+        ({ active: '<span class="pill p-ok"><i></i>Live</span>', pending: '<span class="pill p-warn"><i></i>Waiting</span>', done: '<span class="pill p-info">Finished</span>', declined: '<span class="pill p-mut">Declined</span>', expired: '<span class="pill p-mut">Expired</span>', cancelled: '<span class="pill p-mut">Cancelled</span>' })[s] || `<span class="pill p-mut">${esc(s)}</span>`;
+      VIEWS.social = {
+        d: null,
+        q: '',
+        tick: 0,
+        render(v) {
+          v.innerHTML = head('Social & seasons', 'Weekly season, clans, duels, game modes and copy trading at a glance.', `<button class="btn" id="soRf">Refresh</button>`) + `<div class="kpis">${Array.from({ length: 4 }, () => `<div class="kpi">${skeleton(2)}</div>`).join('')}</div><div class="card">${skeleton(6)}</div>`;
+          $('#soRf').onclick = () => this.load(v);
+          this.load(v);
+        },
+        onLive(k) {
+          if ((k === 'duel' || k === 'clan' || k === 'season') && $('#soK')) {
+            clearTimeout(this.lt);
+            this.lt = setTimeout(() => this.load($('#view')), 600);
+          }
+        },
+        async load(v) {
+          try {
+            this.d = (await A('pba_social')) || {};
+          } catch (e) {
+            if (!this.d || !$('#soK')) v.innerHTML = head('Social & seasons', '') + `<div class="card empty">${esc(e.message)}</div>`;
+            else toast(e.message, 'err');
+            return;
+          }
+          if (V.cur === this) this.paint(v);
+        },
+        paint(v) {
+          const d = this.d,
+            se = d.season || {},
+            top = (se.top || []).slice(0, 10),
+            prizes = se.prizes || [],
+            du = d.duels || {},
+            clans = d.clans || [],
+            modes = d.modes || {},
+            cp = d.copy || {},
+            ps = d.pass || {};
+          let past = d.past || [];
+          if (!past.length && se.last && se.last.length) past = [{ season: 'Last week', winners: se.last }];
+          const modeRows = Object.keys(Object.assign({ speed: 0, updown: 0, crash: 0, replay: 0 }, modes)).map(k => [k, +modes[k] || 0]),
+            mMax = Math.max(1, ...modeRows.map(x => x[1])),
+            mCol = { speed: 'var(--c1)', updown: 'var(--c2)', crash: 'var(--c5)', replay: 'var(--c4)' };
+          const passEnds = ps.ends_at ? `ends ${dday(ps.ends_at)}` : 'no season running';
+          v.innerHTML =
+            head('Social & seasons', 'Weekly season, clans, duels, game modes and copy trading at a glance.', `<button class="btn" id="soRf">Refresh</button>`) +
+            `<div class="kpis" id="soK">
+        <div class="kpi c3"><small><span class="ic">${IC.trophy}</span>Season players</small><b class="mono">${num(se.players)}</b><em>${esc(se.season || 'This week')} · ends in <span data-cd="${esc(se.ends_at || '')}">${countdown(se.ends_at)}</span></em></div>
+        <div class="kpi c4"><small><span class="ic">${IC.users}</span>Clans</small><b class="mono">${num(clans.length)}</b><em>${num(clans.reduce((a, c) => a + (+c.members || 0), 0))} members in total</em></div>
+        <div class="kpi c2"><small><span class="ic">${IC.swords}</span>Live duels</small><b class="mono">${num(du.active)}</b><em>${num(du.today)} today · ${num(du.total)} all time</em></div>
+        <div class="kpi"><small><span class="ic">${IC.crown}</span>Battle pass owners</small><b class="mono">${num(ps.owners)}</b><em>Season ${num(ps.season)} · ${passEnds}</em></div></div>
+      <div class="grid g2"><div class="card"><div class="card-h"><h3>Weekly season</h3><span class="pill p-ok"><i></i>${esc(se.season || 'Current')}</span></div>
+          <div class="ssn-top"><div><small>Ends in</small><span class="cd" data-cd="${esc(se.ends_at || '')}">${countdown(se.ends_at)}</span></div><span class="sp"></span><div style="text-align:right"><small>Players</small><b class="mono">${num(se.players)}</b></div><div style="text-align:right"><small>Prize pool</small><b class="mono">${num(prizes.reduce((a, b) => a + (+b || 0), 0))}</b> <span class="small muted">coins</span></div></div>
+          <div class="list">${top.length ? top.map((t, i) => `<div class="li">${rkBadge(i + 1)}${avatar(t.name || t.username)}<div class="t"><b>${esc(t.name || t.username)}</b><small>@${esc(t.username)}</small></div>${pctOrDash(t.ret)}${prizes[i] ? `<span class="prz">+${num(prizes[i])}</span>` : ''}</div>`).join('') : '<div class="empty">No one has played this season yet.</div>'}</div>
+          <p class="small muted" style="margin:10px 0 0">Resets every Monday (UTC). Prizes are paid as gifts automatically.</p></div>
+        <div class="card"><div class="card-h"><h3>Past winners</h3><span class="small muted">Last ${past.length || 0} season${past.length === 1 ? '' : 's'}</span></div>
+          ${past.length ? past.map(p => `<div class="past"><h4><span>${esc(p.season)}</span><span class="small muted" style="font-weight:600">${p.at ? dday(p.at) : ''}</span></h4><div class="list">${(p.winners || []).slice(0, 3).map(w => `<div class="li">${rkBadge(+w.rank || 0)}<div class="t"><b>@${esc(w.username)}</b></div>${pctOrDash(w.ret)}<span class="prz">+${num(w.prize)}</span></div>`).join('') || '<div class="empty" style="padding:10px">No winners.</div>'}</div></div>`).join('') : '<div class="empty">No finished seasons yet. The first winners appear after Monday’s reset.</div>'}</div></div>
+      <div class="card" style="margin-top:16px"><div class="card-h"><h3>Clans <span class="small muted" style="font-weight:600">${num(clans.length)}</span></h3><input class="in" id="soQ" placeholder="Filter clans…" style="max-width:220px" value="${esc(this.q)}"></div><div id="soCl"></div></div>
+      <div class="card"><div class="card-h"><h3>Duels</h3><span class="small muted">Latest ${num((du.recent || []).length)}</span></div>
+        <div class="mstat"><div class="stat"><small>Live now</small><b class="mono">${num(du.active)}</b></div><div class="stat"><small>Started today</small><b class="mono">${num(du.today)}</b></div><div class="stat"><small>All time</small><b class="mono">${num(du.total)}</b></div></div>
+        ${(du.recent || []).length ? `<div class="tw"><table><thead><tr><th>Players</th><th>Status</th><th class="r">Returns</th><th>Winner</th><th>Started</th></tr></thead><tbody>${du.recent.map(x => `<tr><td class="vs"><b>@${esc(x.a)}</b><em>vs</em><b>@${esc(x.b)}</b></td><td>${duelPill(x.status)}</td><td class="r">${pctOrDash(x.a_ret)} <span class="muted">/</span> ${pctOrDash(x.b_ret)}</td><td>${x.winner ? `<b>@${esc(x.winner)}</b>` : x.status === 'done' ? '<span class="muted">Tie</span>' : '<span class="muted">—</span>'}</td><td>${ago(x.at)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No duels yet.</div>'}</div>
+      <div class="grid g3" style="margin-top:16px">
+        <div class="card"><div class="card-h"><h3>Game modes</h3><span class="small muted">Players this week</span></div><div class="bars">${modeRows.map(([k, n]) => `<div class="bar"><span>${esc(MODE_L[k] || k[0].toUpperCase() + k.slice(1))}</span><i><b style="width:${Math.round((n / mMax) * 100)}%;background:${mCol[k] || 'var(--brand)'}"></b></i><span class="mono">${num(n)}</span></div>`).join('')}</div></div>
+        <div class="card"><div class="card-h"><h3>Copy trading</h3></div><div class="stats" style="margin:0"><div class="stat"><small>Trades shared (24h)</small><b class="mono">${num(cp.trades_24h)}</b></div><div class="stat"><small>Traders sharing (7d)</small><b class="mono">${num(cp.publishers)}</b></div></div><p class="small muted" style="margin:12px 0 0">Players can follow a top trader and copy their buys and sells. Anyone can opt out of being copied.</p></div>
+        <div class="card"><div class="card-h"><h3>Battle pass</h3>${ps.ends_at ? '<span class="pill p-ok"><i></i>Live</span>' : ''}</div><div class="stats" style="margin:0"><div class="stat"><small>Season</small><b class="mono">${num(ps.season)}</b></div><div class="stat"><small>Premium owners</small><b class="mono">${num(ps.owners)}</b></div></div><p class="small muted" style="margin:12px 0 0">${ps.ends_at ? `Season ${num(ps.season)} ends ${esc(dt(ps.ends_at))} (in <span data-cd="${esc(ps.ends_at)}">${countdown(ps.ends_at)}</span>).` : 'No season is running.'} 4-week seasons; VIP includes premium.</p></div></div>`;
+          $('#soRf').onclick = () => this.load(v);
+          $('#soQ').oninput = () => {
+            this.q = $('#soQ').value.trim().toLowerCase();
+            this.clans();
+          };
+          this.clans();
+          clearInterval(this.tick);
+          this.tick = setInterval(() => {
+            const els = $$('[data-cd]');
+            if (V.cur !== this || !els.length) return clearInterval(this.tick);
+            els.forEach(e => e.dataset.cd && (e.textContent = countdown(e.dataset.cd)));
+          }, 30000);
+        },
+        clans() {
+          const box = $('#soCl');
+          if (!box) return;
+          const adm = can('admin'),
+            q = this.q;
+          const rows = (this.d.clans || []).filter(c => !q || [c.name, c.tag, c.owner].some(x => String(x || '').toLowerCase().includes(q)));
+          box.innerHTML = rows.length
+            ? `<div class="tw"><table><thead><tr><th>Clan</th><th>Owner</th><th class="r">Members</th><th class="r">Avg return</th><th class="r">Total value</th><th>Joining</th>${adm ? '<th class="r"></th>' : ''}</tr></thead><tbody>${rows
+                .map(
+                  c => `<tr><td><div class="who"><span class="cl-e">${esc(c.emoji || '🛡️')}</span><div><b>${esc(c.name)} <span class="tag sm mono">${esc(c.tag)}</span></b><small style="white-space:normal;max-width:320px;display:block">${esc(c.about || 'No description')}</small></div></div></td><td>${c.owner ? '@' + esc(c.owner) : '<span class="muted">—</span>'}</td><td class="r mono">${num(c.members)}<span class="muted">/30</span></td><td class="r">${pctOrDash(c.avg_return)}</td><td class="r mono">${usd(+c.total_value || 0)}</td><td>${c.open ? '<span class="pill p-ok">Open</span>' : '<span class="pill p-mut">Invite only</span>'}</td>${adm ? `<td class="r"><button class="btn sm dan-o" data-cdel="${esc(c.id)}" aria-label="Delete clan ${esc(c.name)}">${IC.trash}Delete</button></td>` : ''}</tr>`
+                )
+                .join('')}</tbody></table></div>`
+            : `<div class="empty">${q ? 'No clans match.' : 'No clans yet.'}</div>`;
+          $$('[data-cdel]', box).forEach(
+            b =>
+              (b.onclick = async () => {
+                const c = this.d.clans.find(x => String(x.id) === b.dataset.cdel);
+                const ok = await confirmBox({ title: `Delete ${c.name}?`, text: `The clan, its roster and its chat room are removed for all ${num(c.members)} member${+c.members === 1 ? '' : 's'}. This can’t be undone.`, ok: 'Delete clan', type: c.tag });
+                if (!ok) return;
+                try {
+                  await act(A('pba_clan_delete', { p_id: c.id }), `${c.name} deleted`);
+                  this.d.clans = this.d.clans.filter(x => x !== c);
+                  this.load($('#view'));
                 } catch (e) {}
               })
           );
