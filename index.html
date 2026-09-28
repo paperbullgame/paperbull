@@ -43068,6 +43068,43 @@ html.real-mode #nav a[data-go="bank"] { display: none !important; }
   }
 }
 
+/* ---------- minted gold coin (replaces the flat dot) ---------- */
+.coin {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='r' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fff4c2'/%3E%3Cstop offset='.45' stop-color='%23f6b72b'/%3E%3Cstop offset='1' stop-color='%23a8620a'/%3E%3C/linearGradient%3E%3CradialGradient id='f' cx='.38' cy='.32' r='.8'%3E%3Cstop offset='0' stop-color='%23ffefb0'/%3E%3Cstop offset='.55' stop-color='%23fbc238'/%3E%3Cstop offset='1' stop-color='%23d98a0b'/%3E%3C/radialGradient%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23b86f08'/%3E%3Cstop offset='1' stop-color='%238a4f04'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='31' fill='url%28%23r%29'/%3E%3Ccircle cx='32' cy='32' r='25.5' fill='url%28%23f%29' stroke='%239a5806' stroke-opacity='.7' stroke-width='2.4'/%3E%3Cg transform='translate%280 1.2%29' fill='%23fff6cf' opacity='.7'%3E%3Cpath d='M14 21c3 8 9 10 13 8h10c4 2 10 0 13-8-1 9-6 13-11 13v4c0 6-3 10-7 10s-7-4-7-10v-4c-5 0-10-4-11-13z'/%3E%3C/g%3E%3Cpath d='M14 21c3 8 9 10 13 8h10c4 2 10 0 13-8-1 9-6 13-11 13v4c0 6-3 10-7 10s-7-4-7-10v-4c-5 0-10-4-11-13z' fill='url%28%23b%29'/%3E%3Cellipse cx='29' cy='42' rx='1.5' ry='1.9' fill='%23f8c24a'/%3E%3Cellipse cx='35' cy='42' rx='1.5' ry='1.9' fill='%23f8c24a'/%3E%3Cpath d='M11 22A23 23 0 0 1 36 9.5' stroke='%23fff' stroke-opacity='.75' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat !important;
+  box-shadow: none !important;
+  border-radius: 50%;
+  filter: drop-shadow(0 1px 1.2px rgba(80, 45, 0, 0.45));
+  position: relative;
+}
+.coin.xl,
+.coin-big .coin,
+.bp-coin .coin,
+.st-coins .coin,
+.coin.sfx-fly,
+#top .coin-chip .coin {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='r' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fff4c2'/%3E%3Cstop offset='.45' stop-color='%23f6b72b'/%3E%3Cstop offset='1' stop-color='%23a8620a'/%3E%3C/linearGradient%3E%3CradialGradient id='f' cx='.38' cy='.32' r='.8'%3E%3Cstop offset='0' stop-color='%23ffefb0'/%3E%3Cstop offset='.55' stop-color='%23fbc238'/%3E%3Cstop offset='1' stop-color='%23d98a0b'/%3E%3C/radialGradient%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23b86f08'/%3E%3Cstop offset='1' stop-color='%238a4f04'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='31' fill='url%28%23r%29'/%3E%3Ccircle cx='32' cy='32' r='28.2' fill='none' stroke='%239c5a05' stroke-opacity='.55' stroke-width='3' stroke-dasharray='1.4 1.6'/%3E%3Ccircle cx='32' cy='32' r='24.5' fill='url%28%23f%29' stroke='%239a5806' stroke-opacity='.7' stroke-width='1.6'/%3E%3Cg transform='translate%280 1.2%29' fill='%23fff6cf' opacity='.7'%3E%3Cpath d='M14 21c3 8 9 10 13 8h10c4 2 10 0 13-8-1 9-6 13-11 13v4c0 6-3 10-7 10s-7-4-7-10v-4c-5 0-10-4-11-13z'/%3E%3C/g%3E%3Cpath d='M14 21c3 8 9 10 13 8h10c4 2 10 0 13-8-1 9-6 13-11 13v4c0 6-3 10-7 10s-7-4-7-10v-4c-5 0-10-4-11-13z' fill='url%28%23b%29'/%3E%3Cellipse cx='29' cy='42' rx='1.5' ry='1.9' fill='%23f8c24a'/%3E%3Cellipse cx='35' cy='42' rx='1.5' ry='1.9' fill='%23f8c24a'/%3E%3Cpath d='M11 22A23 23 0 0 1 36 9.5' stroke='%23fff' stroke-opacity='.75' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='21' cy='17' rx='7' ry='3.2' fill='%23fff' opacity='.35' transform='rotate%28-35 21 17%29'/%3E%3C/svg%3E") !important;
+}
+.coin.xl { filter: drop-shadow(0 3px 6px rgba(80, 45, 0, 0.5)) drop-shadow(0 0 18px rgba(255, 197, 61, 0.35)); }
+.coin-big .coin,
+.bp-coin .coin { filter: drop-shadow(0 2px 3px rgba(80, 45, 0, 0.5)); }
+#top .coin-chip .coin { overflow: hidden; }
+#top .coin-chip .coin::after {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.85) 50%, transparent 62%);
+  transform: translateX(-120%);
+  animation: coinShine 6s ease-in-out 1.5s infinite;
+  pointer-events: none;
+}
+@keyframes coinShine {
+  0%, 82% { transform: translateX(-120%); }
+  92%, 100% { transform: translateX(120%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #top .coin-chip .coin::after { animation: none; display: none; }
+}
+
 </style>
 <style id="pbSettings">
 /* ===== Settings page (src/settings.js) ===== */
