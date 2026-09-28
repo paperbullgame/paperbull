@@ -21496,7 +21496,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   setTimeout(fixGear, 0);
 
   /* phone navigation: 4 main tabs + a More sheet */
-  const MORE = ['play', 'social', 'pass', 'store', 'learn', 'shop', 'pets', 'garden', 'bank', 'ranks', 'profile', 'settings'];
+  const MORE = ['shop', 'play', 'social', 'profile', 'pass', 'ranks', 'news', 'settings'];
   const LBL = {
     play: 'Play',
     social: 'Social',
@@ -21506,6 +21506,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     shop: 'Shop',
     pets: 'Pets',
     garden: 'Garden',
+    news: 'News',
+    inventory: 'Inventory',
     bank: 'Bank',
     ranks: 'Ranks',
     profile: 'Profile',
@@ -35162,10 +35164,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
 (() => {
   /* ---------- grouped sidebar ---------- */
   const GROUPS = [
-    [null, ['home', 'markets', 'news', 'portfolio']],
-    ['Play', ['play', 'pass', 'social', 'ranks']],
-    ['Collect', ['shop', 'store', 'pets', 'garden', 'bank']],
-    ['You', ['learn', 'profile']],
+    [null, ['home', 'markets', 'portfolio', 'inventory']],
+    ['Fun', ['shop', 'play', 'social', 'profile']],
   ];
   function tidyNav() {
     const nav = document.getElementById('nav');
@@ -38090,13 +38090,581 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   window.PBAbuse = { apply, end, panel, active: () => A, _begin: begin };
 })();
 
-/* placeholder */
+/* ===================== INVENTORY: pets, eggs, items, assets in one place ===================== */
+(() => {
+  try {
+    const R = r => (RARITY[r] || RARITY.c);
+    const n = id => acct.inv[id] || 0;
+    let tab = 'all';
+    const TABS = [
+      ['all', 'Everything'],
+      ['pets', 'Pets'],
+      ['eggs', 'Eggs'],
+      ['items', 'Items'],
+      ['look', 'Cosmetics'],
+      ['assets', 'Assets'],
+    ];
+    const card = (id, title, sub, body, more) =>
+      `<section class="card inv-sec" id="${id}"><div class="card-h"><h3>${title}</h3>${sub ? `<span class="muted small">${sub}</span>` : ''}${more || ''}</div>${body}</section>`;
+    const empty = (t, btn) => `<div class="inv-empty"><span>${t}</span>${btn || ''}</div>`;
 
-/* placeholder */
+    function pets() {
+      const list = acct.pets.list.slice().sort((a, b) => 'xlerc'.indexOf((PET[a.id] || {}).r) - 'xlerc'.indexOf((PET[b.id] || {}).r) || b.lvl - a.lvl);
+      if (!list.length) return empty('No pets yet. Hatch an egg to get your first one.', '<button class="btn sm primary" data-go="shop">Get eggs</button>');
+      return `<div class="inv-grid">${list
+        .map(p => {
+          const d = PET[p.id] || {},
+            rc = R(d.r),
+            on = p.uid === acct.pets.active;
+          return `<button class="inv-it pet ${on ? 'on' : ''}" data-r="${d.r}" data-pet="${p.uid}" style="--rc:${rc.color}">
+            ${d.r === 'x' ? `<span class="inv-tag">${d.ultra ? 'ULTRA' : 'EXOTIC'}</span>` : ''}${p.mut && window.PBExotic ? PBExotic.pill(p.mut) : ''}
+            <span class="inv-art">${petArt(p.id)}</span><b>${esc(p.name)}</b><small style="color:${rc.color}">${rc.name} · Lv ${p.lvl}</small>
+            ${on ? '<span class="inv-eq">Active</span>' : '<span class="inv-act">Make active</span>'}</button>`;
+        })
+        .join('')}</div>`;
+    }
+    function eggs() {
+      const es = ITEMS.filter(i => i.type === 'egg' && n(i.id) > 0);
+      const serums = (window.PBExotic ? PBExotic.MUTS : []).filter(m => n('mut_' + m.id) > 0);
+      if (!es.length && !serums.length) return empty('No eggs right now. Eggs drop from packs and the shop.', '<button class="btn sm primary" data-go="shop">Shop</button>');
+      return `<div class="inv-grid">${es
+        .map(e => {
+          const rc = e.r && RARITY[e.r] ? RARITY[e.r].color : (e.shell || [])[1] || '#999';
+          return `<div class="inv-it egg" style="--rc:${rc}"><span class="inv-n">×${n(e.id)}</span><span class="inv-art egg-wob">${eggFace(e, true)}</span><b>${esc(e.name)}</b><button class="btn sm primary" data-ihatch="${e.id}">Hatch</button></div>`;
+        })
+        .join('')}${serums
+        .map(m => `<div class="inv-it serum" style="--rc:${m.c || m.color || '#b36bff'}"><span class="inv-n">×${n('mut_' + m.id)}</span><span class="inv-art inv-vial"><i></i></span><b>${esc(m.name)} Serum</b><button class="btn sm" data-iserum="mut_${m.id}">Use</button></div>`)
+        .join('')}</div>`;
+    }
+    function items() {
+      const pw = ITEMS.filter(i => i.type === 'power' && n(i.id) > 0),
+        tr = ITEMS.filter(i => i.type === 'treat' && n(i.id) > 0);
+      if (!pw.length && !tr.length) return empty('No power-ups or treats. Grab some in the Shop.', '<button class="btn sm primary" data-go="shop">Shop</button>');
+      return `<div class="inv-grid">${pw
+        .map(i => `<div class="inv-it"><span class="inv-n">×${n(i.id)}</span><span class="inv-art sm">${itemFace(i)}</span><b>${esc(i.name)}</b><small class="muted">${esc(i.desc || 'Power-up')}</small><button class="btn sm primary" data-iuse="${i.id}">Use</button></div>`)
+        .join('')}${tr
+        .map(i => `<div class="inv-it"><span class="inv-n">×${n(i.id)}</span><span class="inv-art sm">${art(i.id)}</span><b>${esc(i.name)}</b><small class="muted">Pet treat · feed on Pets</small><button class="btn sm" data-go="pets">Feed</button></div>`)
+        .join('')}</div>`;
+    }
+    let lookT = 'avatar';
+    function look() {
+      const own = ITEMS.filter(i => i.type === lookT && owns(i.id));
+      return `<div class="seg inv-seg" id="invLook">${COSMETIC_TYPES.map(t => `<button data-lt="${t}" class="${t === lookT ? 'on' : ''}">${t === 'skin' ? 'Charts' : TYPE_LABEL[t] + 's'} <em>${ITEMS.filter(i => i.type === t && owns(i.id)).length}</em></button>`).join('')}</div>
+        <div class="inv-grid">${own
+          .map(i => {
+            const on = acct.equip[i.type] === i.id;
+            return `<button class="inv-it ${on ? 'on' : ''}" data-equip="${i.id}" style="--rc:${R(i.r).color}"><span class="inv-art sm">${itemFace(i)}</span><b>${esc(i.name)}</b><small style="color:${R(i.r).color}">${R(i.r).name}</small>${on ? '<span class="inv-eq">Equipped</span>' : '<span class="inv-act">Equip</span>'}</button>`;
+          })
+          .join('')}</div>`;
+    }
+    function assets() {
+      const v = valuation(),
+        rows = Object.entries(acct.positions)
+          .map(([s, p]) => ({ s, v: p.qty * (priceOf(s) ?? p.avgCost), pl: p.qty * ((priceOf(s) ?? p.avgCost) - p.avgCost) }))
+          .sort((a, b) => b.v - a.v);
+      return `<div class="inv-money"><div><small>Total</small><b>${fmtUSD(v.total)}</b></div><div><small>Cash</small><b>${fmtUSD(acct.cash)}</b></div><div><small>Stocks</small><b>${fmtUSD(v.stocks)}</b></div><div><small>Crypto</small><b>${fmtUSD(v.crypto)}</b></div><div><small>Coins</small><b>${acct.coins.toLocaleString()}</b></div></div>
+        ${rows.length
+          ? `<div class="inv-rows">${rows.slice(0, 12).map(r => `<button class="inv-row" data-go="asset/${esc(r.s)}">${assetIcon(r.s)}<span><b>${esc(r.s)}</b><small>${esc(SIM[r.s]?.name || '')}</small></span><span class="mono"><b>${fmtUSD(r.v)}</b><small class="${cls(r.pl)}">${fmtSigned(r.pl)}</small></span></button>`).join('')}</div>`
+          : empty('You don’t own any stocks or coins yet.', '<button class="btn sm primary" data-go="markets">Find one</button>')}`;
+    }
+    function garden() {
+      const G = acct.garden || {},
+        bank = Math.floor(G.bank || 0),
+        k = (G.slots || []).length || Math.min(acct.pets.list.length, 3);
+      return `<button class="inv-garden" data-go="garden"><span class="ig-sky"><i class="ig-sun"></i><i class="ig-hill a"></i><i class="ig-hill b"></i>${acct.pets.list.slice(0, 4).map((p, i) => `<span class="ig-pet" style="--i:${i}">${petArt(p.id)}</span>`).join('')}</span>
+        <span class="ig-t"><b>Pet Garden</b><small>${k ? `${k} pet${k === 1 ? '' : 's'} living here` : 'Your pets’ home'}${bank ? ` · ${bank.toLocaleString()} coins waiting` : ''}</small></span><span class="btn sm primary">Visit</span></button>`;
+    }
 
-/* placeholder */
+    const Inventory = {
+      mount(v) {
+        this.v = v;
+        this.render();
+      },
+      render() {
+        const v = this.v;
+        if (!v || !v.isConnected) return;
+        const cnt = {
+          pets: acct.pets.list.length,
+          eggs: ITEMS.filter(i => i.type === 'egg').reduce((s, i) => s + n(i.id), 0),
+          items: ITEMS.filter(i => i.type === 'power' || i.type === 'treat').reduce((s, i) => s + n(i.id), 0),
+          look: ITEMS.filter(i => COSMETIC_TYPES.includes(i.type) && owns(i.id)).length,
+        };
+        const show = k => tab === 'all' || tab === k;
+        let h = `<div class="inv-tabs seg">${TABS.map(([k, l]) => `<button data-it="${k}" class="${k === tab ? 'on' : ''}">${l}${cnt[k] ? ` <em>${cnt[k]}</em>` : ''}</button>`).join('')}</div>`;
+        if (tab === 'all') h += garden();
+        if (show('pets')) h += card('invPets', 'Pets', `${cnt.pets} owned`, pets(), '<button class="linkish" data-go="pets">Care for pets →</button>');
+        if (show('eggs')) h += card('invEggs', 'Eggs & serums', '', eggs());
+        if (show('items')) h += card('invItems', 'Power-ups & treats', '', items());
+        if (show('look')) h += card('invLook2', 'Cosmetics', `${cnt.look} owned`, look());
+        if (show('assets')) h += card('invAssets', 'Assets', '', assets());
+        const head = v.querySelector(':scope > .pg-h, :scope > .hub-tabs');
+        [...v.children].forEach(c => { if (!c.matches('.pg-h, .hub-tabs')) c.remove(); });
+        v.insertAdjacentHTML('beforeend', `<div class="inv-wrap">${h}</div>`);
+        const w = v.querySelector('.inv-wrap');
+        w.onclick = e => {
+          const b = e.target.closest('button');
+          if (!b) return;
+          const d = b.dataset;
+          if (d.it) { tab = d.it; return this.render(); }
+          if (d.lt) { lookT = d.lt; return this.render(); }
+          if (d.pet) { if (acct.pets.active !== d.pet) { acct.pets.active = d.pet; saveAcct(true); toast('Active pet changed', 'ok'); } return this.render(); }
+          if (d.ihatch) { hatchEgg(d.ihatch); return setTimeout(() => this.render(), 50); }
+          if (d.iserum && window.PBExotic) return PBExotic.serumModal(d.iserum);
+          if (d.iuse) { usePower(d.iuse); return setTimeout(() => this.render(), 50); }
+          if (d.equip) { equip(d.equip); return this.render(); }
+        };
+        void head;
+      },
+      unmount() { this.v = null; },
+    };
+    SCREENS.inventory = Inventory;
+    window.PBInventory = Inventory;
+    if (window.PBPages) PBPages.inventory = ['Inventory', () => 'Your pets, eggs, items and money in one place'];
+  } catch (e) {
+    console.error('inventory', e);
+  }
+})();
 
-/* placeholder */
+/* ===================== IN-GAME NOTIFICATIONS ===================== */
+(() => {
+  try {
+    const KEY = 'pb2.notifs';
+    let L = [];
+    try { L = JSON.parse(localStorage.getItem(KEY) || '[]') || []; } catch (e) {}
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(L.slice(0, 60))); } catch (e) {} };
+    const ICN = { msg: '💬', gift: '🎁', abuse: '⚡', alert: '🔔', duel: '⚔️', pet: '🐾', trade: '📈', xp: '⭐', ok: '✅', err: '⚠️', info: '📣' };
+    let lastInput = 0;
+    for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => (lastInput = Date.now()), true);
+    const ago = t => { const s = (Date.now() - t) / 1000; return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : s < 86400 ? Math.floor(s / 3600) + 'h' : Math.floor(s / 86400) + 'd'; };
+    const E = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+    function push(o) {
+      const title = String(o.title || '').slice(0, 90), body = String(o.body || '').slice(0, 200);
+      if (!title && !body) return;
+      const dup = L[0] && L[0].title === title && L[0].body === body && Date.now() - L[0].t < 15000;
+      if (dup) return;
+      L.unshift({ id: Date.now() + Math.random(), kind: o.kind || 'info', title, body, go: o.go || '', room: o.room || '', t: Date.now(), read: !!o.read });
+      L = L.slice(0, 60);
+      save();
+      paint();
+      if (!o.read) { const b = document.getElementById('nfBell'); if (b) { b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring'); } }
+    }
+    const unread = () => L.filter(x => !x.read).length;
+    function paint() {
+      const c = document.getElementById('nfCount'), u = unread();
+      if (c) { c.textContent = u > 9 ? '9+' : u; c.hidden = !u; }
+      const t = document.title.replace(/^\(\d+\+?\)\s*/, '');
+      document.title = u ? `(${u > 9 ? '9+' : u}) ${t}` : t;
+      if (document.getElementById('nfPanel')) list();
+    }
+    function list() {
+      const p = document.getElementById('nfList');
+      if (!p) return;
+      p.innerHTML = L.length
+        ? L.map(x => `<button class="nf-it ${x.read ? '' : 'new'} k-${E(x.kind)}" data-nid="${x.id}"><span class="nf-ic">${ICN[x.kind] || '📣'}</span><span class="nf-tx"><b>${E(x.title)}</b>${x.body ? `<small>${E(x.body)}</small>` : ''}</span><time>${ago(x.t)}</time></button>`).join('')
+        : '<div class="nf-empty"><span>🔔</span><b>You’re all caught up</b><small>Messages, gifts, price alerts and events show up here.</small></div>';
+    }
+    function close() {
+      const p = document.getElementById('nfPanel');
+      if (p) p.remove();
+      document.removeEventListener('pointerdown', outside, true);
+    }
+    function outside(e) { if (!e.target.closest('#nfPanel, #nfBell')) close(); }
+    function open() {
+      if (document.getElementById('nfPanel')) return close();
+      const el = document.createElement('div');
+      el.id = 'nfPanel';
+      el.innerHTML = `<div class="nf-h"><b>Notifications</b><span><button data-nf="read">Mark all read</button><button data-nf="clear">Clear</button></span></div><div class="nf-list" id="nfList"></div>`;
+      document.body.appendChild(el);
+      list();
+      setTimeout(() => document.addEventListener('pointerdown', outside, true), 0);
+      el.onclick = e => {
+        const a = e.target.closest('[data-nf]');
+        if (a) { if (a.dataset.nf === 'clear') L = []; else L.forEach(x => (x.read = true)); save(); paint(); return; }
+        const it = e.target.closest('[data-nid]');
+        if (!it) return;
+        const x = L.find(y => String(y.id) === it.dataset.nid);
+        if (!x) return;
+        x.read = true; save(); paint(); close();
+        if (x.room && window.PBSocial) { go('social'); setTimeout(() => PBSocial.open('chat', x.room), 200); }
+        else if (x.go) go(x.go);
+      };
+    }
+    function bell() {
+      if (document.getElementById('nfBell')) return;
+      const anchor = document.querySelector('#top .coin-chip');
+      if (!anchor) return;
+      anchor.insertAdjacentHTML('beforebegin', `<button class="nf-bell" id="nfBell" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><i id="nfCount" hidden></i></button>`);
+      document.getElementById('nfBell').onclick = open;
+      paint();
+    }
+    bell();
+    setTimeout(bell, 0);
+    setTimeout(bell, 1500);
+
+    /* toasts that weren't caused by a tap become notifications */
+    const t0 = toast;
+    toast = function (msg, kind = 'info', icon) {
+      const r = t0.apply(this, arguments);
+      try {
+        if (Date.now() - lastInput > 1500 && !/^Playing as guest/.test(msg)) {
+          const k = /challenged you|duel/i.test(msg) ? 'duel' : /price alert|crossed/i.test(msg) ? 'alert' : /pet|mission|garden/i.test(msg) ? 'pet' : /filled|order|margin/i.test(msg) ? 'trade' : kind;
+          push({ kind: k, title: msg, go: k === 'duel' ? 'social' : k === 'pet' ? 'pets' : k === 'trade' ? 'portfolio' : '' });
+        }
+      } catch (e) {}
+      return r;
+    };
+    /* popups that show up on their own (gifts from the team, announcements) */
+    const m0 = modal;
+    modal = function (o) {
+      const r = m0.apply(this, arguments);
+      try {
+        if (o && o.title && Date.now() - lastInput > 1500) {
+          const gift = /gift|adjustment/i.test(o.title);
+          const tmp = document.createElement('div');
+          tmp.innerHTML = o.html || '';
+          push({ kind: gift ? 'gift' : 'info', title: String(o.title).replace(/<[^>]+>/g, ''), body: tmp.textContent.replace(/\s+/g, ' ').trim().slice(0, 140), go: gift ? 'inventory' : '' });
+        }
+      } catch (e) {}
+      return r;
+    };
+    /* new direct messages */
+    let dmSeen = {};
+    try { dmSeen = JSON.parse(localStorage.getItem('pb2.nfDm') || 'null'); } catch (e) {}
+    setInterval(() => {
+      try {
+        const dms = window.PBSocial && PBSocial.state && PBSocial.state.dms;
+        if (!Array.isArray(dms)) return;
+        const first = !dmSeen;
+        dmSeen ||= {};
+        let ch = false;
+        for (const d of dms) {
+          const at = Date.parse(d.at) || 0;
+          if (at > (dmSeen[d.room] || 0)) {
+            if (!first && !d.mine) push({ kind: 'msg', title: `New message from @${d.with || 'friend'}`, body: d.last || '', room: d.room });
+            dmSeen[d.room] = at;
+            ch = true;
+          }
+        }
+        if (ch) localStorage.setItem('pb2.nfDm', JSON.stringify(dmSeen));
+      } catch (e) {}
+    }, 4000);
+    /* admin abuse events */
+    let abId = null;
+    setInterval(() => {
+      try {
+        const a = window.PBAbuse && PBAbuse.active();
+        const id = a ? a.id || a.type || a.kind || JSON.stringify(a).slice(0, 60) : null;
+        if (id && id !== abId) push({ kind: 'abuse', title: `Admin Abuse started: ${a.name || a.title || a.type || 'event'}`, body: 'Join in for exotic pets and rewards!' });
+        abId = id;
+      } catch (e) {}
+    }, 2500);
+
+    window.PBNotify = { push, list: () => L, unread, open };
+  } catch (e) {
+    console.error('notify', e);
+  }
+})();
+
+/* ===================== STOCKS+: fullscreen chart, insights, alerts, watchlist, related ===================== */
+(() => {
+  try {
+    const LS = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } };
+    const SV = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+    let watch = LS('pb2.watch', []);
+    let alerts = LS('pb2.alerts', []);
+    const isW = s => watch.includes(s);
+    const toggleW = s => { watch = isW(s) ? watch.filter(x => x !== s) : [s, ...watch].slice(0, 40); SV('pb2.watch', watch); };
+    window.PBWatch = { list: () => watch.slice(), has: isW, toggle: toggleW };
+    const pc = x => `<span class="${cls(x)}">${fmtPct(x)}</span>`;
+    const safe = (f, d = 0) => { try { const v = f(); return Number.isFinite(v) ? v : d; } catch (e) { return d; } };
+    const STAR = on => `<svg viewBox="0 0 24 24" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>`;
+    const FS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+
+    function rating(a) {
+      const d = safe(() => chg24(a)), m = safe(() => chgSince(a, 'h1', 720)), y = safe(() => chgSince(a, 'd1', 365));
+      const s = Math.max(-1, Math.min(1, d * 6 + m * 2.5 + y * 0.8));
+      const lbl = s > 0.45 ? 'Strong buy' : s > 0.12 ? 'Buy' : s > -0.12 ? 'Hold' : s > -0.45 ? 'Sell' : 'Strong sell';
+      return { s, lbl };
+    }
+    function bar(lo, hi, px) {
+      const f = hi > lo ? Math.max(0, Math.min(1, (px - lo) / (hi - lo))) : 0.5;
+      return `<div class="sk-rng"><small>${fmtUSD(lo)}</small><span><i style="left:${(f * 100).toFixed(1)}%"></i></span><small>${fmtUSD(hi)}</small></div>`;
+    }
+    function related(sym) {
+      const a = SIM[sym], sec = safe(() => sectorOf(sym), '') || '';
+      return ASSETS.filter(b => b.sym !== sym && b.type === a.type && b.price > 0 && (a.type !== 'stock' || sectorOf(b.sym) === sec)).slice(0, 40)
+        .sort((x, y) => Math.abs(safe(() => chg24(y))) - Math.abs(safe(() => chg24(x)))).slice(0, 6);
+    }
+    function insights(sym) {
+      const a = SIM[sym];
+      if (!a) return '';
+      const spy = SIM.SPY || SIM.BTC, [lo, hi] = range24(a);
+      const y = safe(() => chgSince(a, 'd1', 365)), yLo = Math.min(a.price, a.price / (1 + Math.max(y, -0.9)) * 0.9), yHi = Math.max(a.price, a.price / (1 + Math.max(y, -0.9)) * 1.12);
+      const r = rating(a), cmp = spy && spy !== a ? [['24h', chg24(a), chg24(spy)], ['30 days', chgSince(a, 'h1', 720), chgSince(spy, 'h1', 720)], ['1 year', chgSince(a, 'd1', 365), chgSince(spy, 'd1', 365)]] : [];
+      const my = alerts.filter(x => x.sym === sym);
+      return `<div class="sk-in">
+        <div class="sk-box"><h4>Today’s range</h4>${bar(lo, hi, a.price)}<h4>1-year range</h4>${bar(yLo, yHi, a.price)}</div>
+        <div class="sk-box sk-rate"><h4>Buck’s rating</h4><div class="sk-gauge"><span class="sk-g"><i style="left:${((r.s + 1) * 50).toFixed(1)}%"></i></span><div class="sk-gl"><small>Sell</small><small>Hold</small><small>Buy</small></div></div><b class="${r.s > 0.12 ? 'up' : r.s < -0.12 ? 'dn' : ''}">${r.lbl}</b><small class="muted">Game rating from price momentum. Not real advice.</small></div>
+        ${cmp.length ? `<div class="sk-box"><h4>vs ${spy.sym}</h4><div class="sk-cmp">${cmp.map(([k, x, z]) => `<div><small>${k}</small><span>${pc(x)}</span><span class="muted">${pc(z)}</span></div>`).join('')}</div><small class="muted">${sym} vs ${spy.sym} (${spy.sym === 'SPY' ? 'the S&P 500' : 'Bitcoin'})</small></div>` : ''}
+        <div class="sk-box"><h4>Price alert</h4><div class="sk-al"><input class="txt" id="skAlPx" inputmode="decimal" placeholder="${a.price.toFixed(a.price < 1 ? 4 : 2)}"><button class="btn sm" id="skAlSet">Set</button></div>
+          <div class="sk-als">${my.map(x => `<span class="sk-chip">${x.dir === 'up' ? '▲ above' : '▼ below'} ${fmtUSD(x.px)}<button data-alx="${x.id}" aria-label="Remove">×</button></span>`).join('') || '<small class="muted">Get a notification when the price hits your number.</small>'}</div></div>
+      </div>
+      <div class="sk-rel"><h4>Related</h4><div class="sk-relg">${related(sym).map(b => `<button class="sk-rc" data-go="asset/${esc(b.sym)}">${assetIcon(b.sym)}<span><b>${esc(b.sym)}</b><small class="mono">${fmtUSD(b.price)}</small></span>${pc(chg24(b))}</button>`).join('')}</div></div>`;
+    }
+    function paintInsights(force) {
+      const box = document.getElementById('skIns');
+      if (!box || !Asset.sym) return;
+      if (!force && box.contains(document.activeElement)) return;
+      const h = insights(Asset.sym);
+      if (box._h !== h) { box.innerHTML = h; box._h = h; }
+    }
+    function header(sym) {
+      const top = document.querySelector('#view .asset-top');
+      if (!top || top.querySelector('.sk-star')) return;
+      top.insertAdjacentHTML('beforeend', `<div class="sk-hbtns"><button class="sk-star ${isW(sym) ? 'on' : ''}" id="skStar" title="Watchlist">${STAR(isW(sym))}<span>${isW(sym) ? 'Watching' : 'Watch'}</span></button><button class="sk-fsb" id="skFsBtn" title="Full screen">${FS}<span>Full screen</span></button></div>`);
+      document.getElementById('skStar').onclick = e => {
+        toggleW(sym);
+        const b = e.currentTarget, on = isW(sym);
+        b.classList.toggle('on', on);
+        b.innerHTML = `${STAR(on)}<span>${on ? 'Watching' : 'Watch'}</span>`;
+        toast(on ? `${sym} added to your watchlist` : `${sym} removed from watchlist`, 'ok');
+      };
+      document.getElementById('skFsBtn').onclick = () => enterFs(sym);
+      const tools = document.querySelector('#view .chart-tools');
+      if (tools && !tools.querySelector('[data-skfs]')) {
+        tools.insertAdjacentHTML('beforeend', `<button data-skfs aria-label="Full screen" title="Full screen">${FS}</button>`);
+        tools.querySelector('[data-skfs]').onclick = () => enterFs(sym);
+      }
+    }
+
+    /* ---------- fullscreen ---------- */
+    let fs = null;
+    function enterFs(sym) {
+      if (fs) return;
+      const wrap = document.querySelector('#view .chart-wrap');
+      if (!wrap) return;
+      const a = SIM[sym];
+      const ph = document.createComment('chart');
+      wrap.before(ph);
+      const el = document.createElement('div');
+      el.id = 'skFs';
+      el.innerHTML = `<div class="skf-top"><div class="skf-id">${assetIcon(sym)}<div><b>${esc(sym)}</b><small>${esc(a.name)}</small></div><span class="mono skf-px" id="skfPx"></span><span id="skfChg"></span></div>
+        <div class="skf-ctl"><div class="seg" id="skfR">${RANGES.map(([r]) => `<button data-r="${r}" class="${r === DetailChart.range ? 'on' : ''}">${r}</button>`).join('')}</div>
+        <select class="mk-select" id="skfMode">${CHART_MODES.map(([k, l]) => `<option value="${k}" ${k === DetailChart.style ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        <button class="btn sm sell" data-skq="sell">Sell</button><button class="btn sm buy" data-skq="buy">Buy</button><button class="skf-x" id="skfX" aria-label="Exit full screen">✕</button></div></div><div class="skf-body"></div>`;
+      document.body.appendChild(el);
+      el.querySelector('.skf-body').appendChild(wrap);
+      document.body.classList.add('sk-fs-on');
+      fs = { sym, wrap, ph, el };
+      const tick = () => {
+        const p = document.getElementById('skfPx'), c = document.getElementById('skfChg');
+        if (p) p.textContent = fmtUSD(SIM[sym].price);
+        if (c) { const x = chg24(SIM[sym]); c.className = 'skf-c ' + cls(x); c.textContent = fmtPct(x); }
+      };
+      tick();
+      fs.iv = setInterval(tick, 1000);
+      el.querySelector('#skfR').onclick = e => {
+        const b = e.target.closest('[data-r]');
+        if (!b) return;
+        el.querySelectorAll('#skfR button').forEach(x => x.classList.toggle('on', x === b));
+        document.querySelectorAll('#rangeSeg button').forEach(x => x.classList.toggle('on', x.dataset.r === b.dataset.r));
+        DetailChart.range = b.dataset.r;
+        DetailChart.draw(true);
+      };
+      el.querySelector('#skfMode').onchange = e => { DetailChart.style = e.target.value; const s = document.getElementById('chartMode'); if (s) s.value = e.target.value; DetailChart.draw(true); };
+      el.querySelectorAll('[data-skq]').forEach(b => (b.onclick = () => { exitFs(); openQuickTrade(sym, b.dataset.skq); }));
+      el.querySelector('#skfX').onclick = exitFs;
+      const rq = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (rq) try { const p = rq.call(el); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+      setTimeout(() => { try { DetailChart.fit(); } catch (e) {} }, 120);
+    }
+    function exitFs() {
+      if (!fs) return;
+      const f = fs;
+      fs = null;
+      clearInterval(f.iv);
+      if (f.ph.parentNode) f.ph.replaceWith(f.wrap);
+      f.el.remove();
+      document.body.classList.remove('sk-fs-on');
+      const d = document.fullscreenElement || document.webkitFullscreenElement;
+      if (d) try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
+      setTimeout(() => { try { DetailChart.fit(); } catch (e) {} }, 120);
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && fs) exitFs(); });
+    const onFsChange = () => { if (fs && !(document.fullscreenElement || document.webkitFullscreenElement) && fs.el.dataset.was) exitFs(); else if (fs) fs.el.dataset.was = document.fullscreenElement ? '1' : ''; };
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    window.PBStockFs = { enter: enterFs, exit: exitFs };
+
+    /* ---------- asset page hooks ---------- */
+    const m0 = Asset.mount;
+    Asset.mount = function (v, arg) {
+      exitFs();
+      const r = m0.apply(this, arguments);
+      try {
+        const sym = this.sym;
+        if (!sym || !SIM[sym]) return r;
+        header(sym);
+        const pos = document.getElementById('aPos');
+        if (pos && !document.getElementById('skIns')) pos.insertAdjacentHTML('beforebegin', '<section class="card sk-card" id="skIns"></section>');
+        paintInsights(true);
+        const box = document.getElementById('skIns');
+        box.onclick = e => {
+          const x = e.target.closest('[data-alx]');
+          if (x) { alerts = alerts.filter(a => String(a.id) !== x.dataset.alx); SV('pb2.alerts', alerts); return paintInsights(true); }
+          if (e.target.id === 'skAlSet') {
+            const px = parseFloat(String(document.getElementById('skAlPx').value).replace(/[$,]/g, ''));
+            if (!(px > 0)) return toast('Type a price first', 'err');
+            const cur = SIM[sym].price;
+            if (Math.abs(px - cur) / cur < 0.0005) return toast('That’s the current price. Pick a higher or lower one.', 'err');
+            alerts.push({ id: Date.now(), sym, px, dir: px > cur ? 'up' : 'dn' });
+            alerts = alerts.slice(-30);
+            SV('pb2.alerts', alerts);
+            toast(`Alert set: ${sym} ${px > cur ? 'above' : 'below'} ${fmtUSD(px)}`, 'ok');
+            paintInsights(true);
+          }
+        };
+      } catch (e) {
+        console.error(e);
+      }
+      return r;
+    };
+    const u0 = Asset.unmount;
+    Asset.unmount = function () { exitFs(); return u0 ? u0.apply(this, arguments) : undefined; };
+    let n = 0;
+    setInterval(() => {
+      try {
+        /* alerts, for every symbol, on any screen */
+        if (alerts.length) {
+          let hit = false;
+          for (const al of alerts) {
+            const a = SIM[al.sym];
+            if (!a) continue;
+            if ((al.dir === 'up' && a.price >= al.px) || (al.dir === 'dn' && a.price <= al.px)) {
+              al.done = 1;
+              hit = true;
+              const msg = `${al.sym} is ${al.dir === 'up' ? 'above' : 'below'} ${fmtUSD(al.px)} (now ${fmtUSD(a.price)})`;
+              toast('🔔 Price alert: ' + msg, 'info');
+              window.PBNotify && PBNotify.push({ kind: 'alert', title: 'Price alert: ' + al.sym, body: msg, go: 'asset/' + al.sym });
+              try { SFX.play('news'); } catch (e) {}
+            }
+          }
+          if (hit) { alerts = alerts.filter(a => !a.done); SV('pb2.alerts', alerts); paintInsights(true); }
+        }
+        if (++n % 2 === 0 && (curRoute || '').startsWith('asset/')) paintInsights(false);
+        if ((curRoute || '').split('/')[0] === 'markets') watchStrip();
+      } catch (e) {}
+    }, 1500);
+
+    /* ---------- markets: watchlist strip ---------- */
+    function watchStrip() {
+      const v = document.getElementById('view');
+      if (!v) return;
+      let s = document.getElementById('skWatch');
+      const ws = watch.filter(x => SIM[x]);
+      if (!ws.length) { if (s) s.remove(); return; }
+      if (!s) {
+        const anchor = v.querySelector('.hub-tabs') || v.querySelector('.pg-h');
+        if (!anchor) return;
+        anchor.insertAdjacentHTML('afterend', '<section class="sk-watch" id="skWatch"></section>');
+        s = document.getElementById('skWatch');
+      }
+      const h = `<div class="sk-wh">${STAR(true)}<b>Watchlist</b></div><div class="sk-wl">${ws.map(x => { const a = SIM[x], c = chg24(a); return `<button class="sk-wi" data-go="asset/${esc(x)}">${assetIcon(x)}<span><b>${esc(x)}</b><small class="mono">${fmtUSD(a.price)}</small></span><em class="${cls(c)}">${fmtPct(c)}</em></button>`; }).join('')}</div>`;
+      if (s._h !== h) { s.innerHTML = h; s._h = h; }
+    }
+    const mk0 = Markets.mount;
+    Markets.mount = function () {
+      const r = mk0.apply(this, arguments);
+      setTimeout(() => { try { watchStrip(); } catch (e) {} }, 30);
+      return r;
+    };
+  } catch (e) {
+    console.error('stocks-plus', e);
+  }
+})();
+
+/* ===================== HUBS: fewer tabs, related pages grouped with sub-tabs ===================== */
+(() => {
+  try {
+    const HUBS = {
+      markets: ['markets', 'news'],
+      portfolio: ['portfolio', 'bank'],
+      inventory: ['inventory', 'pets', 'garden'],
+      shop: ['shop', 'store'],
+      play: ['play', 'tourney', 'pass', 'ranks'],
+      social: ['social'],
+      profile: ['profile', 'learn'],
+    };
+    const LBL = { markets: 'Stocks & coins', news: 'News', portfolio: 'Holdings', bank: 'Bank', inventory: 'Overview', pets: 'Pets', garden: 'Garden', shop: 'Shop', store: 'Store', play: 'Modes', tourney: 'Tournaments', pass: 'Battle Pass', ranks: 'Leaderboard', profile: 'Profile', learn: 'Learn' };
+    const hubOf = {};
+    for (const [h, ks] of Object.entries(HUBS)) for (const k of ks) hubOf[k] = h;
+    hubOf.asset = 'markets';
+    window.PBHubs = { HUBS, hubOf };
+
+    const IC = window.PBIcons || {};
+    IC.inventory =
+      '<svg viewBox="0 0 24 24" class="pbi" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6V4.8A1.8 1.8 0 0 1 10.8 3h2.4A1.8 1.8 0 0 1 15 4.8V6"/><path class="du" d="M5.5 6h13A1.5 1.5 0 0 1 20 7.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6z"/><path d="M4 12h16M10 12v2.2h4V12"/></svg>';
+    if (window.PBTabColors) PBTabColors.inventory = ['#fcd34d', '#f97316'];
+
+    const nav = document.getElementById('nav');
+    function fixNav() {
+      if (!nav) return;
+      if (!nav.querySelector('a[data-go="inventory"]')) {
+        const pf = nav.querySelector('a[data-go="portfolio"]');
+        if (pf) pf.insertAdjacentHTML('afterend', `<a data-go="inventory" data-s="inventory" tabindex="0" role="link">${IC.inventory}<span>Inventory</span></a>`);
+      }
+      for (const a of nav.querySelectorAll('a[data-s]')) {
+        const k = a.dataset.s;
+        a.classList.toggle('hub-sub', !!hubOf[k] && hubOf[k] !== k);
+      }
+    }
+    fixNav();
+    setTimeout(fixNav, 0);
+    setTimeout(fixNav, 900);
+    setTimeout(fixNav, 2500);
+
+    const icon = k => {
+      const a = nav && nav.querySelector(`a[data-go="${k}"] svg`);
+      return IC[k] || (a ? a.outerHTML : '');
+    };
+    const r0 = router;
+    router = function () {
+      const out = r0.apply(this, arguments);
+      try {
+        fixNav();
+        const name = (curRoute || 'home').split('/')[0],
+          h = hubOf[name];
+        if (h) {
+          for (const a of nav.querySelectorAll('a[data-s]')) a.classList.toggle('on', a.dataset.s === h);
+          const nm = document.getElementById('navMore');
+          if (nm) nm.classList.toggle('on', !['home', 'markets', 'portfolio', 'inventory'].includes(h));
+          const ks = HUBS[h].filter(k => SCREENS[k]);
+          const v = document.getElementById('view');
+          if (ks.length > 1 && name !== 'asset' && v && !v.querySelector(':scope > .hub-tabs')) {
+            const html = `<nav class="hub-tabs" aria-label="${h}">${ks.map(k => `<button data-hub="${k}" class="${k === name ? 'on' : ''}">${icon(k)}<span>${LBL[k] || k}</span></button>`).join('')}</nav>`;
+            const hd = v.querySelector(':scope > .pg-h');
+            if (hd) {
+              hd.insertAdjacentHTML('afterend', html);
+              const P = window.PBPages && PBPages[h];
+              const t = hd.querySelector('h1');
+              if (P && t && h !== name) t.textContent = P[0];
+            } else v.insertAdjacentHTML('afterbegin', html);
+            v.querySelector(':scope > .hub-tabs').onclick = e => {
+              const b = e.target.closest('[data-hub]');
+              if (b && b.dataset.hub !== name) go(b.dataset.hub);
+            };
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      return out;
+    };
+  } catch (e) {
+    console.error('hubs', e);
+  }
+})();
 
 /* SHOP-PLUS:END */
 init();
@@ -49839,15 +50407,190 @@ html:not(.dark) .ap-plate.ap-pr-l {
 
 </style>
 <style id="pbInv">
-/* placeholder */
+/* ===================== INVENTORY ===================== */
+.inv-wrap { display: flex; flex-direction: column; gap: 14px; }
+.inv-tabs { display: flex; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+.inv-tabs::-webkit-scrollbar { display: none; }
+.inv-tabs button, .inv-seg button { white-space: nowrap; flex: 1 0 auto; }
+.inv-tabs em, .inv-seg em { font-style: normal; font-size: 11px; opacity: 0.6; margin-left: 3px; }
+.inv-sec .card-h { flex-wrap: wrap; gap: 6px 12px; }
+.inv-sec .linkish { margin-left: auto; background: none; border: 0; color: var(--amber); font: 700 12.5px var(--sans); cursor: pointer; }
+.inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 10px; }
+.inv-seg { margin-bottom: 12px; display: flex; overflow-x: auto; }
+.inv-it { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 10px 12px; border-radius: 16px; border: 1px solid var(--line); background: linear-gradient(180deg, color-mix(in srgb, var(--rc, #888) 14%, transparent), transparent 70%), var(--bg2); color: var(--tx); font: inherit; text-align: center; cursor: default; transition: transform 0.15s, border-color 0.15s; min-width: 0; }
+button.inv-it { cursor: pointer; }
+button.inv-it:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--rc, #888) 60%, transparent); }
+.inv-it.on { border-color: var(--rc, var(--amber)); box-shadow: 0 0 0 1px var(--rc, var(--amber)) inset, 0 8px 24px -12px var(--rc, var(--amber)); }
+.inv-it b { font-size: 13.5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inv-it small { font-size: 11.5px; line-height: 1.3; }
+.inv-it .btn { margin-top: 4px; width: 100%; }
+.inv-art { width: 84px; height: 84px; display: grid; place-items: center; }
+.inv-art svg { width: 100%; height: 100%; }
+.inv-art.sm { width: 60px; height: 60px; }
+.inv-art .face, .inv-art .face.big { width: auto; height: auto; }
+.inv-art .face.big svg { width: 58px; height: 74px; }
+.inv-it.pet .inv-art { filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.3)); }
+.inv-it.pet[data-r='x'] .inv-art { filter: drop-shadow(0 0 12px color-mix(in srgb, var(--rc) 70%, transparent)); }
+.inv-it.pet[data-r='l'] .inv-art { filter: drop-shadow(0 0 10px rgba(255, 178, 36, 0.55)); }
+.inv-tag { position: absolute; top: 8px; left: 8px; font: 900 9px var(--sans); letter-spacing: 0.08em; padding: 3px 6px; border-radius: 6px; color: #fff; background: linear-gradient(90deg, #ff3d7f, #8b5cff, #22d3ee); }
+.inv-it .mut-pill { position: absolute; top: 8px; right: 8px; transform: scale(0.85); transform-origin: top right; }
+.inv-n { position: absolute; top: 8px; right: 10px; font: 800 12px var(--sans); color: var(--mut); }
+.inv-eq { font: 800 11px var(--sans); color: var(--rc, var(--amber)); }
+.inv-act { font: 700 11px var(--sans); color: var(--mut); }
+.egg-wob { animation: invWob 3.2s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes invWob { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-7deg); } 90% { transform: rotate(6deg); } 95% { transform: rotate(-3deg); } }
+.inv-vial { position: relative; }
+.inv-vial i { width: 26px; height: 52px; border-radius: 6px 6px 14px 14px; border: 2px solid rgba(255, 255, 255, 0.7); background: linear-gradient(0deg, var(--rc) 0 62%, rgba(255, 255, 255, 0.08) 62%); box-shadow: 0 0 18px var(--rc); }
+.inv-empty { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border-radius: 14px; border: 1px dashed var(--line); color: var(--mut); font-size: 13px; }
+.inv-money { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.inv-money div { padding: 12px; border-radius: 14px; background: var(--bg2); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 3px; }
+.inv-money small { color: var(--mut); font-size: 11.5px; }
+.inv-money b { font-size: 16px; }
+.inv-rows { display: flex; flex-direction: column; gap: 6px; }
+.inv-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg2); color: var(--tx); font: inherit; cursor: pointer; text-align: left; }
+.inv-row > span:nth-child(2) { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.inv-row > span:last-child { display: flex; flex-direction: column; align-items: flex-end; }
+.inv-row small { font-size: 11.5px; color: var(--mut); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inv-garden { display: flex; align-items: center; gap: 14px; padding: 10px 14px 10px 10px; border-radius: 18px; border: 1px solid var(--line); background: var(--bg2); color: var(--tx); font: inherit; cursor: pointer; text-align: left; }
+.ig-sky { position: relative; width: 150px; height: 84px; flex: none; border-radius: 13px; overflow: hidden; background: linear-gradient(180deg, #7cc7ff, #c8ecff 70%); }
+.ig-sun { position: absolute; top: 8px; right: 14px; width: 18px; height: 18px; border-radius: 50%; background: #ffe066; box-shadow: 0 0 16px #ffd23f; }
+.ig-hill { position: absolute; bottom: -30px; width: 140px; height: 60px; border-radius: 50%; }
+.ig-hill.a { left: -30px; background: #6fcf57; }
+.ig-hill.b { right: -40px; background: #4caf3e; bottom: -36px; }
+.ig-pet { position: absolute; bottom: 6px; left: calc(8px + var(--i) * 34px); width: 36px; height: 36px; animation: igHop 1.6s ease-in-out infinite; animation-delay: calc(var(--i) * 0.25s); }
+.ig-pet svg { width: 100%; height: 100%; }
+@keyframes igHop { 50% { transform: translateY(-5px); } }
+.ig-t { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ig-t b { font-size: 16px; }
+.ig-t small { color: var(--mut); font-size: 12.5px; }
+
+/* hub sub-tabs (combined pages) */
+.hub-tabs { display: flex; gap: 6px; margin: 0 0 14px; padding: 4px; border-radius: 14px; background: var(--bg2); border: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+.hub-tabs::-webkit-scrollbar { display: none; }
+.hub-tabs button { flex: 1 0 auto; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 14px; border: 0; border-radius: 10px; background: none; color: var(--mut); font: 700 13.5px var(--sans); cursor: pointer; white-space: nowrap; }
+.hub-tabs button svg { width: 17px; height: 17px; }
+.hub-tabs button.on { background: var(--amber); color: #111; }
+.hub-tabs button:not(.on):hover { color: var(--tx); background: color-mix(in srgb, var(--tx) 6%, transparent); }
+html body #nav:not(#_):not(#_):not(#_):not(#_):not(#_) a.hub-sub, html body #nav:not(#_):not(#_):not(#_):not(#_):not(#_) a.hub-sub.on { display: none !important; }
+@media (max-width: 600px) {
+  .inv-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .inv-art { width: 70px; height: 70px; }
+  .ig-sky { width: 110px; height: 70px; }
+  .inv-garden .btn { display: none; }
+  .hub-tabs button { padding: 8px 11px; font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) { .egg-wob, .ig-pet { animation: none; } }
+.hub-tabs svg { fill: none; stroke: currentColor; stroke-width: 1.9; }
+.hub-tabs svg .du { fill: currentColor; fill-opacity: 0.18; }
 
 </style>
 <style id="pbNotify">
-/* placeholder */
+/* ===================== NOTIFICATIONS ===================== */
+.nf-bell { position: relative; display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 12px; border: 1px solid var(--line); background: var(--bg2); color: var(--tx); cursor: pointer; }
+.nf-bell svg { width: 19px; height: 19px; }
+.nf-bell i { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #f43f5e; color: #fff; font: 800 10.5px/18px var(--sans); font-style: normal; text-align: center; box-shadow: 0 0 0 2px var(--bg); }
+.nf-bell.ring svg { animation: nfRing 0.9s ease; transform-origin: 50% 10%; }
+@keyframes nfRing { 15% { transform: rotate(16deg); } 30% { transform: rotate(-14deg); } 45% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } 80% { transform: rotate(2deg); } }
+#nfPanel { position: fixed; z-index: 400; top: 64px; right: 16px; width: min(380px, calc(100vw - 24px)); max-height: min(520px, 75vh); display: flex; flex-direction: column; border-radius: 18px; border: 1px solid var(--line); background: var(--bg1, var(--bg2, #16171d)); box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.6); overflow: hidden; animation: nfIn 0.18s ease; }
+@keyframes nfIn { from { opacity: 0; transform: translateY(-6px) scale(0.98); } }
+.nf-h { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.nf-h b { font-size: 15px; }
+.nf-h button { background: none; border: 0; color: var(--amber); font: 700 12px var(--sans); cursor: pointer; margin-left: 10px; }
+.nf-list { overflow-y: auto; padding: 6px; }
+.nf-it { width: 100%; display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 0; border-radius: 12px; background: none; color: var(--tx); font: inherit; text-align: left; cursor: pointer; }
+.nf-it:hover { background: color-mix(in srgb, var(--tx) 6%, transparent); }
+.nf-it.new { background: color-mix(in srgb, var(--amber) 9%, transparent); }
+.nf-ic { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 10px; background: var(--bg2); font-size: 17px; }
+.nf-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.nf-tx b { font-size: 13px; font-weight: 700; line-height: 1.3; }
+.nf-tx small { font-size: 12px; color: var(--mut); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.nf-it time { font-size: 11px; color: var(--mut); flex: none; }
+.nf-it.new time::after { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); margin-left: 6px; vertical-align: middle; }
+.nf-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 34px 20px; text-align: center; color: var(--mut); }
+.nf-empty span { font-size: 30px; }
+.nf-empty b { color: var(--tx); }
+@media (max-width: 600px) { .nf-bell { width: 34px; height: 34px; border-radius: 10px; } #nfPanel { top: 56px; right: 12px; } }
 
 </style>
 <style id="pbStocks">
-/* placeholder */
+/* ===================== STOCKS+ ===================== */
+#view .asset-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sk-hbtns { margin-left: auto; display: flex; gap: 8px; }
+.sk-hbtns button { display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg2); color: var(--tx); font: 700 13px var(--sans); cursor: pointer; }
+.sk-hbtns svg { width: 17px; height: 17px; }
+.sk-star.on { color: #fbbf24; border-color: color-mix(in srgb, #fbbf24 55%, transparent); background: color-mix(in srgb, #fbbf24 10%, var(--bg2)); }
+.sk-fsb:hover, .sk-star:hover { border-color: var(--amber); }
+.chart-tools [data-skfs] svg { width: 15px; height: 15px; }
+@media (min-width: 601px) { .chart-tools [data-skfs] { display: none !important; } }
+#skFs .seg { display: flex; overflow-x: auto; scrollbar-width: none; }
+#skFs .seg button { flex: 1 0 auto; }
+.sk-card { padding: 16px; }
+.sk-in { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.sk-box { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 16px; background: var(--bg2); border: 1px solid var(--line); min-width: 0; }
+.sk-box h4, .sk-rel h4 { margin: 0; font: 700 12px var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--mut); }
+.sk-box small { font-size: 11.5px; }
+.sk-rng { display: flex; align-items: center; gap: 8px; }
+.sk-rng small { font: 600 11px var(--mono, monospace); color: var(--mut); white-space: nowrap; }
+.sk-rng span { position: relative; flex: 1; height: 6px; border-radius: 6px; background: linear-gradient(90deg, var(--dn), var(--amber), var(--up)); opacity: 0.85; }
+.sk-rng i { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35); }
+.sk-rate b { font-size: 20px; }
+.sk-g { position: relative; display: block; height: 10px; border-radius: 10px; background: linear-gradient(90deg, #ef4444, #f59e0b 50%, #22c55e); }
+.sk-g i { position: absolute; top: -4px; width: 4px; height: 18px; margin-left: -2px; border-radius: 3px; background: var(--tx); box-shadow: 0 0 0 2px var(--bg2); transition: left 0.5s; }
+.sk-gl { display: flex; justify-content: space-between; margin-top: 4px; color: var(--mut); }
+.sk-cmp { display: flex; flex-direction: column; gap: 6px; }
+.sk-cmp div { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; font: 700 13px var(--mono, monospace); }
+.sk-cmp small { font-family: var(--sans); color: var(--mut); font-weight: 600; }
+.sk-al { display: flex; gap: 6px; }
+.sk-al input { flex: 1; min-width: 0; height: 36px; }
+.sk-als { display: flex; flex-wrap: wrap; gap: 6px; }
+.sk-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border-radius: 99px; background: color-mix(in srgb, var(--amber) 14%, transparent); font: 700 12px var(--sans); }
+.sk-chip button { width: 20px; height: 20px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.25); color: var(--tx); cursor: pointer; line-height: 1; }
+.sk-rel { margin-top: 14px; }
+.sk-relg { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 8px; }
+.sk-rc, .sk-wi { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg2); color: var(--tx); font: inherit; cursor: pointer; text-align: left; min-width: 0; }
+.sk-rc:hover, .sk-wi:hover { border-color: var(--amber); }
+.sk-rc > span:nth-of-type(1), .sk-wi > span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sk-rc b, .sk-wi b { font-size: 13px; }
+.sk-rc small, .sk-wi small { font-size: 11px; color: var(--mut); }
+.sk-rc > span:last-child, .sk-wi em { font: 700 12px var(--mono, monospace); font-style: normal; }
+.sk-rc .tk-badge, .sk-wi .tk-badge, .sk-rc > :first-child, .sk-wi > :first-child { flex: none; }
+.sk-watch { margin: 0 0 14px; padding: 12px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg2); }
+.sk-wh { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #fbbf24; }
+.sk-wh svg { width: 16px; height: 16px; }
+.sk-wh b { color: var(--tx); font-size: 14px; }
+.sk-wl { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.sk-wl::-webkit-scrollbar { display: none; }
+.sk-wi { flex: none; min-width: 168px; background: var(--bg1, var(--bg)); }
+
+/* fullscreen chart */
+#skFs { position: fixed; inset: 0; z-index: 900; display: flex; flex-direction: column; background: var(--bg, #0b0c10); padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
+.skf-top { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.skf-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.skf-id > div { display: flex; flex-direction: column; }
+.skf-id b { font-size: 17px; }
+.skf-id small { color: var(--mut); font-size: 12px; }
+.skf-px { font-size: 22px; font-weight: 800; margin-left: 8px; }
+.skf-c { font: 700 14px var(--mono, monospace); }
+.skf-ctl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.skf-ctl .seg button { padding: 6px 10px; }
+.skf-ctl .btn { min-width: 70px; }
+.skf-x { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg2); color: var(--tx); font-size: 16px; cursor: pointer; }
+.skf-body { flex: 1; min-height: 0; display: flex; padding-top: 10px; }
+.skf-body .chart-wrap { flex: 1; display: flex; min-height: 0; }
+#skFs .chart, #skFs .chart.tall, #skFs .chart.xl { flex: 1; height: 100% !important; min-height: 0 !important; width: 100%; }
+body.sk-fs-on { overflow: hidden; }
+body.sk-fs-on #buckFab, body.sk-fs-on .buck-fab, body.sk-fs-on #tradeBar { display: none !important; }
+@media (max-width: 600px) {
+  .sk-hbtns { margin-left: 0; width: 100%; }
+  .sk-hbtns button { flex: 1; justify-content: center; }
+  .sk-in { grid-template-columns: 1fr; }
+  .sk-relg { grid-template-columns: repeat(2, 1fr); }
+  .skf-ctl { width: 100%; }
+  .skf-ctl .seg { flex: 1 1 100%; order: -1; }
+  .skf-ctl select { flex: 1; min-width: 0; }
+  .skf-ctl .btn { flex: 1; }
+  .skf-px { font-size: 18px; }
+}
 
 </style>
 <style id="pbGarden">
