@@ -42020,19 +42020,1598 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   }
 })();
 
+/* =====================================================================
+   THE OFFICE — hire traders who buy and sell for you.
+   · Workers (Intern → Quant) trade with your real cash, fees included
+   · Skill = how well they read a stock's fair value; better staff
+     buy the dips that actually bounce and cut the ones that don't
+   · Managers lift the skill and mood of the workers under them
+   · Salaries are paid from your cash while the game is open
+   · Office levels add desks: Garage → Skyscraper
+   · Watch it in 2D here, or in 3D (office3d.js)
+   ===================================================================== */
+(() => {
+  try {
+    /* ---------------- catalog ---------------- */
+    const ROLES = [
+      { id: 'intern', name: 'Intern', skill: 0.3, hire: 1000, pay: 5, size: 0.008, color: '#94a3b8' },
+      { id: 'analyst', name: 'Analyst', skill: 0.45, hire: 6000, pay: 18, size: 0.012, color: '#38bdf8' },
+      { id: 'trader', name: 'Trader', skill: 0.58, hire: 22000, pay: 40, size: 0.016, color: '#22c55e' },
+      { id: 'senior', name: 'Senior Trader', skill: 0.7, hire: 65000, pay: 90, size: 0.022, color: '#a855f7' },
+      { id: 'quant', name: 'Quant', skill: 0.82, hire: 180000, pay: 180, size: 0.03, color: '#f59e0b' },
+    ];
+    const MGRS = [
+      { id: 'lead', name: 'Team Lead', boost: 0.06, span: 3, hire: 25000, pay: 45, color: '#0ea5e9' },
+      { id: 'manager', name: 'Manager', boost: 0.1, span: 5, hire: 90000, pay: 110, color: '#6366f1' },
+      { id: 'director', name: 'Director', boost: 0.15, span: 9, hire: 300000, pay: 240, color: '#e11d48' },
+    ];
+    const LEVELS = [
+      { name: 'Garage', desks: 2, cost: 0, floor: 'garage' },
+      { name: 'Startup Loft', desks: 4, cost: 15000, floor: 'loft' },
+      { name: 'Office Floor', desks: 8, cost: 80000, floor: 'office' },
+      { name: 'Trading Floor', desks: 14, cost: 350000, floor: 'floor' },
+      { name: 'Skyscraper', desks: 22, cost: 1200000, floor: 'tower' },
+    ];
+    const ETF = ['SPY', 'QQQ', 'DIA', 'IWM', 'VTI', 'VOO', 'ARKK', 'XLK', 'XLF', 'GLD'];
+    const BLUE = ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'JPM', 'V', 'KO', 'WMT', 'JNJ', 'PG', 'COST', 'BRK.B', 'MA', 'HD'];
+    const STRATS = {
+      value: { name: 'Bargain hunter', tip: 'Buys stocks trading below fair value and sells when they recover.' },
+      momentum: { name: 'Momentum', tip: 'Buys pullbacks in stocks that are up on the day.' },
+      blue: { name: 'Blue chips', tip: 'Only big, famous companies.' },
+      index: { name: 'Index funds', tip: 'Sticks to ETFs like SPY and QQQ. Calm, small moves.' },
+      crypto: { name: 'Crypto', tip: 'Trades coins. Bigger swings both ways.' },
+      news: { name: 'News chaser', tip: 'Jumps on stocks that just had good news.' },
+    };
+    const FIRST = ['Maya', 'Leo', 'Ava', 'Noah', 'Zoe', 'Eli', 'Mia', 'Owen', 'Ivy', 'Kai', 'Nora', 'Liam', 'Ruby', 'Theo', 'Lena', 'Omar', 'Sofia', 'Jax', 'Aria', 'Finn', 'Isla', 'Milo', 'Priya', 'Ravi', 'Hana', 'Diego', 'Yuki', 'Sam', 'Tess', 'Amir', 'Cleo', 'Rex', 'Nia', 'Jonah', 'Elena', 'Marco', 'Wren', 'Felix', 'Iris', 'Hugo'];
+    const LAST = ['Park', 'Stone', 'Reyes', 'Chen', 'Walsh', 'Okafor', 'Silva', 'Novak', 'Hart', 'Kim', 'Price', 'Moreno', 'Ito', 'Blake', 'Cruz', 'Patel', 'Vance', 'Quinn', 'Ross', 'Nakamura', 'Ford', 'Lund', 'Sato', 'Bishop'];
+    const SKIN = ['#f5d0b5', '#e8b996', '#d49a6a', '#b07a4f', '#8d5a3b', '#5e3b26'];
+    const HAIR = ['#1f1b18', '#3b2618', '#6b4226', '#a0522d', '#d6a651', '#e8d8b0', '#7a7a7a', '#b3261e'];
+
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const pick = a => a[(Math.random() * a.length) | 0];
+    const E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const roleOf = w => (w.kind === 'mgr' ? MGRS.find(r => r.id === w.role) : ROLES.find(r => r.id === w.role)) || ROLES[0];
+    const money = (v, d = 0) => fmtUSD(v, d);
+    const gz = () => {
+      try {
+        return gauss();
+      } catch (e) {
+        return (Math.random() + Math.random() + Math.random() - 1.5) * 1.4;
+      }
+    };
+
+    /* ---------------- state ---------------- */
+    const O = () => {
+      if (!acct) return null;
+      const o = (acct.office ||= {});
+      o.lvl ??= 0;
+      o.staff ||= [];
+      o.lots ||= [];
+      o.log ||= [];
+      o.budget ??= 0.3;
+      o.paused ??= false;
+      o.stats ||= { pnl: 0, trades: 0, wins: 0, paid: 0, fees: 0 };
+      o.owed ??= 0;
+      o.seq ??= 0;
+      return o;
+    };
+    const level = () => LEVELS[Math.min(LEVELS.length - 1, O().lvl)];
+    const workers = () => O().staff.filter(s => s.kind !== 'mgr');
+    const managers = () => O().staff.filter(s => s.kind === 'mgr');
+    const payRate = () => O().staff.reduce((t, s) => t + roleOf(s).pay, 0);
+    const staffValue = () => O().lots.reduce((t, l) => t + (SIM[l.sym] ? l.qty * SIM[l.sym].price : 0), 0);
+    const budgetCap = () => {
+      try {
+        return valuation().total * O().budget;
+      } catch (e) {
+        return acct.cash * O().budget;
+      }
+    };
+    let ver = 0;
+    const bump = () => ver++;
+    const listeners = [];
+    const emit = (type, d) => {
+      for (const f of listeners)
+        try {
+          f(type, d);
+        } catch (e) {}
+    };
+
+    /* who manages whom: the strongest managers take the best-paid workers first */
+    function assign() {
+      const o = O(),
+        ms = managers().sort((a, b) => roleOf(b).boost - roleOf(a).boost),
+        ws = workers().sort((a, b) => roleOf(b).pay - roleOf(a).pay);
+      for (const w of ws) w.boss = null;
+      let i = 0;
+      for (const m of ms) {
+        const r = roleOf(m);
+        for (let k = 0; k < r.span && i < ws.length; k++, i++) ws[i].boss = m.id;
+      }
+      return o;
+    }
+    function effSkill(w) {
+      const r = roleOf(w),
+        m = w.boss && O().staff.find(s => s.id === w.boss),
+        boost = m ? roleOf(m).boost : 0,
+        moodK = w.mood < 30 ? -0.08 : w.mood > 80 ? 0.02 : 0;
+      return Math.max(0.1, Math.min(0.97, r.skill + (w.talent || 0) + boost + moodK));
+    }
+
+    function newPerson(kind, role) {
+      const o = O();
+      return {
+        id: 'st' + ++o.seq + Math.random().toString(36).slice(2, 5),
+        kind,
+        role,
+        name: pick(FIRST) + ' ' + pick(LAST),
+        strat: kind === 'mgr' ? null : pick(Object.keys(STRATS)),
+        talent: Math.round(rnd(-0.04, 0.05) * 100) / 100,
+        mood: 80,
+        hired: Date.now(),
+        look: { skin: pick(SKIN), hair: pick(HAIR), style: (Math.random() * 4) | 0 },
+        st: { trades: 0, wins: 0, pnl: 0 },
+        next: Date.now() + rnd(4000, 12000),
+      };
+    }
+    /* a small pool of candidates, refreshed every few minutes */
+    function candidates(kind) {
+      const o = O();
+      o.cands ||= {};
+      const c = o.cands[kind];
+      if (c && Date.now() - c.at < 5 * 60 * 1000) return c.list;
+      const list = (kind === 'mgr' ? MGRS : ROLES).map(r => newPerson(kind, r.id));
+      o.cands[kind] = { at: Date.now(), list };
+      return list;
+    }
+
+    /* ---------------- actions ---------------- */
+    function hire(kind, id) {
+      const o = O(),
+        list = candidates(kind),
+        p = list.find(x => x.id === id);
+      if (!p) return false;
+      const r = roleOf(p);
+      if (o.staff.length >= level().desks) return toast('Every desk is taken. Upgrade the office for more room.', 'info'), false;
+      if (acct.cash < r.hire) return toast(`You need ${money(r.hire)} in cash to hire a ${r.name}.`, 'err'), false;
+      acct.cash -= r.hire;
+      o.stats.paid += r.hire;
+      p.hired = Date.now();
+      p.next = Date.now() + rnd(3000, 8000);
+      o.staff.push(p);
+      o.cands[kind].list = list.filter(x => x !== p);
+      o.cands[kind].list.push(newPerson(kind, p.role));
+      assign();
+      logAdd(p, `joined as ${r.name}.`, null);
+      saveAcct(true);
+      bump();
+      emit('staff');
+      try {
+        SFX.play('coin');
+      } catch (e) {}
+      return true;
+    }
+    function fire(id) {
+      const o = O(),
+        p = o.staff.find(s => s.id === id);
+      if (!p) return;
+      // their open positions stay in your portfolio; they just stop managing them
+      o.lots = o.lots.filter(l => l.by !== id);
+      o.staff = o.staff.filter(s => s !== p);
+      assign();
+      logAdd(p, 'left the company.', null);
+      saveAcct(true);
+      bump();
+      emit('staff');
+    }
+    function promoteCost(p) {
+      const L = p.kind === 'mgr' ? MGRS : ROLES,
+        i = L.findIndex(r => r.id === p.role);
+      return i >= 0 && i < L.length - 1 ? Math.round((L[i + 1].hire - L[i].hire) * 0.6) : null;
+    }
+    function promote(id) {
+      const o = O(),
+        p = o.staff.find(s => s.id === id),
+        c = p && promoteCost(p);
+      if (!c) return;
+      if (acct.cash < c) return toast(`A promotion costs ${money(c)} in cash.`, 'err');
+      const L = p.kind === 'mgr' ? MGRS : ROLES;
+      acct.cash -= c;
+      o.stats.paid += c;
+      p.role = L[L.findIndex(r => r.id === p.role) + 1].id;
+      p.mood = Math.min(100, p.mood + 25);
+      assign();
+      logAdd(p, `was promoted to ${roleOf(p).name}.`, null);
+      saveAcct(true);
+      bump();
+      emit('staff');
+      try {
+        SFX.play('legend');
+      } catch (e) {}
+    }
+    function upgrade() {
+      const o = O(),
+        nx = LEVELS[o.lvl + 1];
+      if (!nx) return;
+      if (acct.cash < nx.cost) return toast(`Moving to the ${nx.name} costs ${money(nx.cost)} in cash.`, 'err');
+      acct.cash -= nx.cost;
+      o.stats.paid += nx.cost;
+      o.lvl++;
+      logAdd(null, `You moved into the ${nx.name}. ${nx.desks} desks!`, null);
+      saveAcct(true);
+      bump();
+      emit('level');
+      try {
+        confetti();
+        SFX.play('legend');
+      } catch (e) {}
+    }
+    function closeAll() {
+      const o = O();
+      let n = 0;
+      for (const l of [...o.lots]) {
+        const w = o.staff.find(s => s.id === l.by) || { id: l.by, name: 'Staff', st: { trades: 0, wins: 0, pnl: 0 } };
+        if (sell(w, l, 'closed on your order')) n++;
+      }
+      toast(n ? `Your staff closed ${n} position${n === 1 ? '' : 's'}.` : 'Your staff have nothing open.', 'info');
+    }
+    function logAdd(p, text, pnl, sym) {
+      const o = O();
+      o.log.unshift({ t: Date.now(), by: p ? p.name : '', role: p ? roleOf(p).name : '', text, pnl, sym });
+      if (o.log.length > 80) o.log.length = 80;
+    }
+
+    /* ---------------- trading brain ---------------- */
+    // research: where this person thinks the price will be in ~10 minutes.
+    // The market model knows; skill decides how blurry their read of it is.
+    const HZ = 600,
+      INFO = 0.35; // how much of the real move research can see
+    function outlook(a, sk) {
+      let f = 0;
+      try {
+        const W = window.World,
+          t = typeof simT === 'number' && simT > 0 ? simT : nowSec();
+        if (W && W.price) f = (W.price(a, t + HZ) / a.price - 1) * (window.__ofInfo ?? INFO);
+      } catch (e) {}
+      return f + gz() * (a.vol || 0.4) * 0.011 * (1.3 - sk * 1.15);
+    }
+    const costOf = a => 2 * (window.PBFees && PBFees.spreadOf ? PBFees.spreadOf(a) : 0.001) + 0.0022;
+    function pool(strat) {
+      const live = s => SIM[s] && !SIM[s].hidden && SIM[s].price > 0;
+      if (strat === 'index') {
+        const x = ETF.filter(live);
+        return x.length ? x.map(s => SIM[s]) : BLUE.filter(live).map(s => SIM[s]);
+      }
+      if (strat === 'blue') return BLUE.filter(live).map(s => SIM[s]);
+      if (strat === 'crypto') return CORE.filter(a => a.type === 'crypto' && !a.hidden && !MEME.has(a.sym));
+      const st = CORE.filter(a => a.type !== 'crypto' && !a.hidden);
+      if (strat === 'news') {
+        const now = nowSec();
+        const hot = st.filter(a => a.lastNewsUp && now - (a.lastNewsT || 0) < 900);
+        return hot.length ? hot : st;
+      }
+      return st;
+    }
+    function tradeQuiet(o) {
+      // staff trades don't hand out your XP, coins or sounds
+      const ax = addXP,
+        cg = coinGain,
+        ff = FF.active;
+      addXP = () => {};
+      coinGain = () => 0;
+      FF.active = true;
+      try {
+        return executeTrade(o);
+      } finally {
+        addXP = ax;
+        coinGain = cg;
+        FF.active = ff;
+      }
+    }
+    function buy(w, a) {
+      const o = O(),
+        sk = effSkill(w),
+        r = roleOf(w);
+      let usd = Math.min(budgetCap() - staffValue(), valuation().total * r.size * (0.8 + sk * 0.4), availableCash() * 0.5);
+      if (usd < 50) return false;
+      const qty = floorTo(usd / a.price, qtyDecimals(a));
+      if (!(qty > 0)) return false;
+      const res = tradeQuiet({ sym: a.sym, side: 'buy', qty, price: a.price, kind: 'office' });
+      if (!res || !res.ok) return false;
+      const tr = res.trade;
+      tr.by = w.name;
+      o.lots.push({ id: tr.id, by: w.id, sym: a.sym, qty: tr.qty, px: tr.price, cost: tr.value + (tr.fee || 0), t: Date.now() });
+      o.stats.trades++;
+      o.stats.fees += tr.fee || 0;
+      w.st.trades++;
+      w.last = { side: 'buy', sym: a.sym, t: Date.now() };
+      logAdd(w, `bought ${fmtQty(tr.qty)} ${a.sym} at ${money(tr.price, 2)}`, null, a.sym);
+      bump();
+      emit('trade', { who: w.id, side: 'buy', sym: a.sym });
+      return true;
+    }
+    function sell(w, l, why) {
+      const o = O(),
+        a = SIM[l.sym];
+      if (!a) {
+        o.lots = o.lots.filter(x => x !== l);
+        return false;
+      }
+      const qty = Math.min(l.qty, availableQty(l.sym));
+      if (!(qty > 0)) {
+        // you sold it yourself; nothing left for them to manage
+        o.lots = o.lots.filter(x => x !== l);
+        bump();
+        return false;
+      }
+      const res = tradeQuiet({ sym: l.sym, side: 'sell', qty, price: a.price, kind: 'office' });
+      if (!res || !res.ok) return false;
+      const tr = res.trade;
+      tr.by = w.name;
+      const got = tr.value - (tr.fee || 0),
+        pnl = got - l.cost * (qty / l.qty);
+      o.lots = o.lots.filter(x => x !== l);
+      o.stats.pnl += pnl;
+      o.stats.sells = (o.stats.sells || 0) + 1;
+      w.st.sells = (w.st.sells || 0) + 1;
+      o.stats.trades++;
+      o.stats.fees += tr.fee || 0;
+      if (pnl > 0) o.stats.wins++;
+      w.st.trades++;
+      w.st.pnl += pnl;
+      if (pnl > 0) w.st.wins++;
+      w.mood = Math.max(0, Math.min(100, (w.mood || 70) + (pnl > 0 ? 4 : -3)));
+      w.last = { side: 'sell', sym: l.sym, t: Date.now(), pnl };
+      logAdd(w, `sold ${l.sym} ${why ? '(' + why + ')' : ''}`, pnl, l.sym);
+      if (Math.abs(pnl) >= 1000 && window.PBNotify)
+        try {
+          PBNotify.push({ kind: pnl > 0 ? 'trade' : 'info', title: `${w.name} ${pnl > 0 ? 'made' : 'lost'} ${money(Math.abs(pnl))} on ${l.sym}`, go: 'office' });
+        } catch (e) {}
+      bump();
+      emit('trade', { who: w.id, side: 'sell', sym: l.sym, pnl });
+      return true;
+    }
+    function act(w) {
+      const o = O(),
+        sk = effSkill(w),
+        mine = o.lots.filter(l => l.by === w.id);
+      // 1) look after what they own
+      for (const l of mine) {
+        const a = SIM[l.sym];
+        if (!a) continue;
+        const ret = a.price / l.px - 1,
+          age = (Date.now() - l.t) / 60000,
+          stop = -(0.008 + (a.vol || 0.4) * 0.025),
+          view = outlook(a, sk);
+        if (ret <= stop) return sell(w, l, 'stop loss');
+        if (age < 3) continue;
+        if (view < -costOf(a) * 0.6) return sell(w, l, ret > 0 ? 'took profit' : 'expects it to fall');
+        if (age > 30 + sk * 40) return sell(w, l, 'held too long');
+      }
+      // 2) maybe open something new
+      w.wait = '';
+      if (mine.length >= 1 + Math.floor(sk * 4)) return (w.wait = 'Watching their positions');
+      if (staffValue() >= budgetCap() - 50) return (w.wait = 'Budget is full');
+      if (availableCash() < 100) return (w.wait = 'Waiting for cash');
+      let P = pool(w.strat).filter(a => !mine.some(l => l.sym === a.sym));
+      if (w.strat === 'momentum') P = P.filter(a => chg24(a) > 0);
+      if (!P.length) return (w.wait = w.strat === 'momentum' ? 'Nothing is trending up' : 'No setups right now');
+      // good staff sit out when they expect the whole market to drop
+      const mk = SIM.SPY || SIM.QQQ;
+      if (mk && Math.random() < sk && outlook(mk, sk) < -0.004) return (w.wait = 'Sitting out a falling market');
+      if (Math.random() < (1 - sk) * 0.08) return buy(w, pick(P)); // a rookie mistake
+      const looks = 3 + Math.round(sk * 14);
+      let best = null,
+        bs = -Infinity;
+      for (let i = 0; i < looks; i++) {
+        const a = pick(P);
+        const s = outlook(a, sk) - costOf(a);
+        if (s > bs) {
+          bs = s;
+          best = a;
+        }
+      }
+      // clear-sighted staff act on smaller edges; guessers need a big-looking one
+      if (best && bs > 0.0012 + (1 - sk) * 0.004) buy(w, best);
+      else w.wait = 'Looking for a good trade';
+    }
+
+    /* ---------------- clock: salaries + turns ---------------- */
+    let last = Date.now();
+    function tick() {
+      if (!acct) return;
+      const o = O(),
+        now = Date.now(),
+        dt = Math.max(0, Math.min(60, (now - last) / 1000));
+      last = now;
+      if (!o.staff.length) return;
+      if (window.PBMode && PBMode.real && PBMode.real()) return;
+      // salaries accrue by the second and are paid in whole dollars
+      o.owed += (payRate() * dt) / 3600;
+      if (o.owed >= 1) {
+        const d = Math.floor(o.owed);
+        if (acct.cash >= d) {
+          acct.cash -= d;
+          o.stats.paid += d;
+          o.owed -= d;
+          o.unpaid = 0;
+        } else {
+          o.unpaid = (o.unpaid || 0) + dt;
+        }
+      }
+      const broke = (o.unpaid || 0) > 5;
+      for (const s of o.staff) {
+        // morale drifts toward 70; managers keep it higher, unpaid wages crush it
+        const hasBoss = s.boss && o.staff.some(m => m.id === s.boss);
+        const target = broke ? 0 : 70 + (hasBoss ? 12 : 0);
+        s.mood = (s.mood ?? 70) + (target - (s.mood ?? 70)) * Math.min(1, dt / (broke ? 90 : 900));
+      }
+      if (broke) {
+        const q = o.staff.find(s => s.mood < 3);
+        if (q) {
+          toast(`${q.name} quit: you couldn't pay their salary.`, 'err');
+          logAdd(q, 'quit over unpaid wages.', null);
+          fire(q.id);
+        }
+        return;
+      }
+      if (o.paused) return;
+      for (const w of workers()) {
+        if (now < (w.next || 0)) continue;
+        const sk = effSkill(w);
+        w.next = now + (75 - sk * 35) * 1000 * rnd(0.7, 1.3);
+        try {
+          act(w);
+        } catch (e) {
+          console.error('office', e);
+        }
+      }
+    }
+    setInterval(tick, 1000);
+    // test hook: run the office against a supplied clock
+    const tickAt = t => {
+      const n0 = Date.now;
+      Date.now = () => t;
+      try {
+        tick();
+      } finally {
+        Date.now = n0;
+      }
+    };
+
+    /* ---------------- people art (2D) ---------------- */
+    function personSVG(p, pose) {
+      const r = roleOf(p),
+        L = p.look || {},
+        sh = r.color,
+        mgr = p.kind === 'mgr';
+      const hair = [
+        `<path d="M13 15c0-7 4.5-10 11-10s11 3 11 10c-2-3-6-4.5-11-4.5S15 12 13 15z" fill="${L.hair}"/>`,
+        `<path d="M12.5 17c-1-9 5-12 11.5-12s12.5 3 11.5 12c-1.5-5-5-6.5-11.5-6.5S14 12 12.5 17z" fill="${L.hair}"/>`,
+        `<path d="M13 16c0-8 5-11 11-11s11 3 11 11l-1 6c-1-7-4-9-10-9s-9 2-10 9z" fill="${L.hair}"/>`,
+        `<circle cx="24" cy="8" r="4.5" fill="${L.hair}"/><path d="M13 16c0-7 4.5-10 11-10s11 3 11 10c-2-3-6-4.5-11-4.5S15 13 13 16z" fill="${L.hair}"/>`,
+      ][L.style || 0];
+      return `<svg viewBox="0 0 48 64" class="of-pp ${pose || ''}" aria-hidden="true">
+        <ellipse cx="24" cy="61" rx="13" ry="2.6" fill="#000" opacity=".18"/>
+        <path d="M8 60c0-14 7-22 16-22s16 8 16 22z" fill="${sh}"/>
+        <path d="M18 39l6 7 6-7" fill="#fff" opacity=".9"/>
+        ${mgr ? `<path d="M22.6 44h2.8l1.4 11-2.8 3-2.8-3z" fill="#0f172a"/>` : ''}
+        <rect x="20.5" y="31" width="7" height="8" rx="3" fill="${L.skin}"/>
+        <circle cx="24" cy="21" r="11" fill="${L.skin}"/>
+        ${hair}
+        <circle cx="20" cy="22.5" r="1.4" fill="#1e293b"/><circle cx="28" cy="22.5" r="1.4" fill="#1e293b"/>
+        <path d="M20.5 27c2 1.6 5 1.6 7 0" stroke="#1e293b" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      </svg>`;
+    }
+
+    /* ---------------- desk layout (shared by 2D and 3D) ---------------- */
+    function layout() {
+      const n = level().desks,
+        cols = n <= 2 ? 2 : n <= 4 ? 4 : n <= 8 ? 4 : n <= 14 ? 5 : 6,
+        rows = Math.ceil(n / cols),
+        out = [];
+      for (let i = 0; i < n; i++) {
+        const c = i % cols,
+          rw = Math.floor(i / cols);
+        out.push({ i, c, r: rw, x: (c + 0.5) / cols, y: (rw + 0.5) / rows, cols, rows });
+      }
+      return out;
+    }
+    const seated = () => {
+      // workers take desks first, then managers get the corner desks
+      const d = layout(),
+        o = O(),
+        w = workers(),
+        m = managers(),
+        map = {};
+      w.forEach((p, i) => d[i] && (map[p.id] = d[i]));
+      m.forEach((p, i) => {
+        const k = d.length - 1 - i;
+        if (d[k] && !Object.values(map).includes(d[k])) map[p.id] = d[k];
+      });
+      return { desks: d, map, staff: o.staff };
+    };
+
+    /* ---------------- 2D view ---------------- */
+    const Two = {
+      el: null,
+      wanders: {},
+      mount(stage) {
+        this.el = stage;
+        this.render();
+      },
+      render() {
+        const el = this.el;
+        if (!el) return;
+        const { desks, map, staff } = seated(),
+          lv = level(),
+          by = {};
+        for (const p of staff) if (map[p.id]) by[map[p.id].i] = p;
+        const rows = desks.length ? desks[0].rows : 1;
+        el.innerHTML = `<div class="of2 f-${lv.floor}">
+          <div class="of2-wall"><div class="of2-win">${skyline()}</div><div class="of2-board"><small>OFFICE P/L</small><b id="of2Pnl"></b><i id="of2Tape"></i></div></div>
+          <div class="of2-floor" style="--rows:${rows}">
+            ${desks
+              .map(d => {
+                const p = by[d.i],
+                  mgr = p && p.kind === 'mgr';
+                const scr = p && p.last ? (p.last.side === 'buy' ? 'buy' : p.last.pnl >= 0 ? 'win' : 'loss') : 'idle';
+                return `<div class="of2-desk ${p ? '' : 'empty'} ${mgr ? 'mgr' : ''}" style="left:${(d.x * 100).toFixed(2)}%;top:${(d.y * 100).toFixed(2)}%" data-desk="${d.i}" ${p ? `data-who="${p.id}" tabindex="0" role="button" aria-label="${E(p.name)}, ${E(roleOf(p).name)}"` : 'data-hire="1" tabindex="0" role="button" aria-label="Empty desk: hire someone"'}>
+                  ${p ? `<div class="of2-p ${p.mood < 30 ? 'sad' : ''}">${personSVG(p, 'type')}</div><div class="of2-bub" data-bub="${p.id}"></div>` : `<div class="of2-plus">+</div>`}
+                  <div class="of2-table"><span class="of2-mon s-${scr}" data-mon="${p ? p.id : ''}"><i></i></span><span class="of2-mug"></span></div>
+                  ${p ? `<div class="of2-tag"><b>${E(p.name.split(' ')[0])}</b><small>${E(roleOf(p).name)}</small></div>` : ''}
+                </div>`;
+              })
+              .join('')}
+            <div class="of2-plant a"></div><div class="of2-plant b"></div><div class="of2-cooler"></div>
+          </div>
+        </div>`;
+        this.paint();
+      },
+      paint() {
+        const o = O(),
+          b = this.el && this.el.querySelector('#of2Pnl');
+        if (b) {
+          const v = o.stats.pnl;
+          b.textContent = (v >= 0 ? '+' : '−') + money(Math.abs(v));
+          b.className = v >= 0 ? 'up' : 'dn';
+        }
+        const tp = this.el && this.el.querySelector('#of2Tape');
+        if (tp && o.log[0]) tp.textContent = `${o.log[0].by ? o.log[0].by.split(' ')[0] + ' ' : ''}${o.log[0].text}`;
+      },
+      event(type, d) {
+        if (!this.el) return;
+        if (type === 'staff' || type === 'level') return this.render();
+        if (type === 'trade') {
+          const w = O().staff.find(s => s.id === d.who);
+          const mon = this.el.querySelector(`[data-mon="${d.who}"]`);
+          if (mon) mon.className = `of2-mon s-${d.side === 'buy' ? 'buy' : d.pnl >= 0 ? 'win' : 'loss'} flash`;
+          const bub = this.el.querySelector(`[data-bub="${d.who}"]`);
+          if (bub && w) {
+            bub.textContent = d.side === 'buy' ? `Buying ${d.sym}` : `${d.pnl >= 0 ? '+' : '−'}${money(Math.abs(d.pnl))}`;
+            bub.className = `of2-bub on ${d.side === 'buy' ? '' : d.pnl >= 0 ? 'up' : 'dn'}`;
+            clearTimeout(bub._t);
+            bub._t = setTimeout(() => (bub.className = 'of2-bub'), 2600);
+          }
+          this.paint();
+        }
+      },
+      unmount() {
+        this.el = null;
+      },
+    };
+    function skyline() {
+      let h = '';
+      let x = 0;
+      for (let i = 0; i < 22; i++) {
+        const w = 18 + ((i * 37) % 23),
+          ht = 30 + ((i * 53) % 55);
+        h += `<rect x="${x}" y="${100 - ht}" width="${w}" height="${ht}" rx="1"/>`;
+        x += w + 3;
+      }
+      return `<svg viewBox="0 0 520 100" preserveAspectRatio="xMidYMax slice"><defs><linearGradient id="ofSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc0ff"/><stop offset="1" stop-color="#d9efff"/></linearGradient></defs><rect width="520" height="100" fill="url(#ofSky)"/><g fill="#6d86a8" opacity=".75">${h}</g></svg>`;
+    }
+
+    /* ---------------- the screen ---------------- */
+    const want3D = () => {
+      try {
+        return localStorage.getItem('pb2.o3d') === '1';
+      } catch (e) {
+        return false;
+      }
+    };
+    let viewMode = '2d';
+    let paintedVer = -1;
+    const Screen = {
+      mount(v) {
+        const o = O();
+        assign();
+        v.innerHTML = `<section class="card of-hero">
+          <div class="of-head">
+            <div class="of-h1"><small>Your staff’s profit</small><b id="ofPnl" class="mono">$0</b><span id="ofSub" class="muted small"></span></div>
+            <div class="of-tools">
+              <div class="seg of-seg" role="tablist" aria-label="Office view"><button data-view="2d" role="tab">2D</button><button data-view="3d" role="tab">3D</button></div>
+              <button class="btn sm" id="ofFs" aria-label="Full screen" title="Full screen"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+            </div>
+          </div>
+          <div class="of-stage" id="ofStage"></div>
+        </section>
+        <div class="of-kpis" id="ofKpis"></div>
+        <section class="card of-ctl">
+          <div class="of-ctl-row"><div><b>Trading budget</b><small class="muted">Your staff can invest up to this share of your account.</small></div>
+            <div class="of-bud"><input type="range" id="ofBud" min="5" max="80" step="5" value="${Math.round(o.budget * 100)}" aria-label="Staff trading budget"><output id="ofBudV" class="mono"></output></div></div>
+          <div class="of-ctl-row"><div><b>Trading</b><small class="muted">Pause stops new trades. Salaries still get paid.</small></div>
+            <div class="of-btns"><button class="btn sm" id="ofPause"></button><button class="btn sm" id="ofClose">Sell all staff positions</button></div></div>
+        </section>
+        <section class="card"><div class="card-h"><h3>Your team</h3><span class="muted small" id="ofDesks"></span></div><div id="ofStaff" class="of-staff"></div></section>
+        <section class="card" id="ofHireCard"><div class="card-h"><h3>Hire</h3><div class="seg of-seg sm" id="ofHireTabs"><button data-ht="w" class="on">Workers</button><button data-ht="m">Managers</button></div></div><p class="muted small" id="ofHireTip"></p><div id="ofHire" class="of-hire"></div></section>
+        <section class="card" id="ofLvl"></section>
+        <section class="card"><div class="card-h"><h3>Office activity</h3><span class="muted small">Newest first</span></div><div id="ofLog" class="of-log"></div></section>`;
+        this.v = v;
+        this.ht = 'w';
+        v.querySelector('#ofBud').oninput = e => {
+          O().budget = +e.target.value / 100;
+          this.ctl();
+          saveAcct();
+        };
+        v.querySelector('#ofPause').onclick = () => {
+          O().paused = !O().paused;
+          saveAcct(true);
+          this.ctl();
+        };
+        v.querySelector('#ofClose').onclick = () =>
+          modal({ title: 'Sell everything your staff bought?', html: '<p>Every position your staff opened is sold at the current price. Positions you bought yourself are not touched.</p>', confirm: 'Sell all', variant: 'danger', onConfirm: () => closeAll() });
+        v.querySelector('#ofHireTabs').onclick = e => {
+          const b = e.target.closest('[data-ht]');
+          if (!b) return;
+          this.ht = b.dataset.ht;
+          v.querySelectorAll('#ofHireTabs button').forEach(x => x.classList.toggle('on', x === b));
+          this.hireList();
+        };
+        v.querySelector('.of-seg').onclick = e => {
+          const b = e.target.closest('[data-view]');
+          if (b) this.setView(b.dataset.view, true);
+        };
+        v.querySelector('#ofFs').onclick = () => {
+          const h = v.querySelector('.of-hero');
+          try {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else if (h.requestFullscreen) h.requestFullscreen();
+            else h.classList.toggle('of-fs');
+          } catch (e) {
+            h.classList.toggle('of-fs');
+          }
+        };
+        v.addEventListener('click', e => {
+          const who = e.target.closest('[data-who]');
+          if (who && who.closest('#ofStage')) return this.focus(who.dataset.who);
+          if (e.target.closest('[data-hire]')) return document.getElementById('ofHireCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const h = e.target.closest('[data-hireid]');
+          if (h) return hire(h.dataset.kind, h.dataset.hireid) && this.all();
+          const pr = e.target.closest('[data-promote]');
+          if (pr) return promote(pr.dataset.promote), this.all();
+          const f = e.target.closest('[data-fire]');
+          if (f) {
+            const p = O().staff.find(s => s.id === f.dataset.fire);
+            if (p)
+              modal({
+                title: `Let ${E(p.name)} go?`,
+                html: `<p>${E(p.name)} leaves right away. Anything they bought stays in your portfolio for you to manage. Hiring fees aren’t refunded.</p>`,
+                confirm: 'Let go',
+                variant: 'danger',
+                onConfirm: () => {
+                  fire(p.id);
+                  this.all();
+                },
+              });
+            return;
+          }
+          const st = e.target.closest('[data-strat]');
+          if (st) return this.stratPick(st.dataset.strat);
+          if (e.target.closest('#ofUp')) return upgrade(), this.all();
+        });
+        v.addEventListener('keydown', e => {
+          if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('#ofStage [data-who],#ofStage [data-hire]')) {
+            e.preventDefault();
+            e.target.click();
+          }
+        });
+        this.setView(want3D() ? '3d' : '2d', false);
+        this.all();
+      },
+      setView(m, user) {
+        const stage = this.v && this.v.querySelector('#ofStage');
+        if (!stage) return;
+        if (m === '3d' && !(window.PBOffice3D && PBOffice3D.ok())) m = '2d';
+        viewMode = m;
+        this.v.querySelectorAll('.of-seg [data-view]').forEach(b => {
+          b.classList.toggle('on', b.dataset.view === m);
+          b.setAttribute('aria-selected', b.dataset.view === m);
+        });
+        if (user)
+          try {
+            localStorage.setItem('pb2.o3d', m === '3d' ? '1' : '0');
+          } catch (e) {}
+        Two.unmount();
+        window.PBOffice3D && PBOffice3D.leave();
+        stage.innerHTML = '';
+        stage.classList.toggle('is3d', m === '3d');
+        if (m === '3d')
+          PBOffice3D.enter(stage, API).catch(() => {
+            toast('3D isn’t available on this device, so here’s the 2D office.', 'info');
+            this.setView('2d', false);
+          });
+        else Two.mount(stage);
+      },
+      focus(id) {
+        const c = this.v && this.v.querySelector(`#ofStaff [data-card="${id}"]`);
+        if (c) {
+          c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          c.classList.remove('hl');
+          void c.offsetWidth;
+          c.classList.add('hl');
+        }
+      },
+      stratPick(id) {
+        const p = O().staff.find(s => s.id === id);
+        if (!p) return;
+        modal({
+          title: `${E(p.name)}’s trading style`,
+          html: `<div class="of-strats">${Object.entries(STRATS)
+            .map(([k, s]) => `<label class="of-strat"><input type="radio" name="ofSt" value="${k}" ${p.strat === k ? 'checked' : ''}><span><b>${s.name}</b><small>${s.tip}</small></span></label>`)
+            .join('')}</div>`,
+          confirm: 'Save',
+          onConfirm: r => {
+            const v = r.querySelector('input[name=ofSt]:checked');
+            if (v) {
+              p.strat = v.value;
+              saveAcct(true);
+              bump();
+              this.all();
+            }
+          },
+        });
+      },
+      ctl() {
+        const o = O(),
+          v = this.v;
+        if (!v) return;
+        v.querySelector('#ofBudV').textContent = `${Math.round(o.budget * 100)}% · ${money(budgetCap())}`;
+        const pb = v.querySelector('#ofPause');
+        pb.textContent = o.paused ? 'Resume trading' : 'Pause trading';
+        pb.classList.toggle('primary', o.paused);
+      },
+      kpis() {
+        const o = O(),
+          v = this.v;
+        if (!v) return;
+        const pnl = o.stats.pnl,
+          open = o.lots.reduce((t, l) => t + (SIM[l.sym] ? l.qty * SIM[l.sym].price - l.cost : 0), 0),
+          sells = o.stats.sells || 0;
+        const pe = v.querySelector('#ofPnl');
+        pe.textContent = (pnl >= 0 ? '+' : '−') + money(Math.abs(pnl), 2);
+        pe.className = 'mono ' + (pnl >= 0 ? 'up' : 'dn');
+        v.querySelector('#ofSub').textContent = `${open >= 0 ? '+' : '−'}${money(Math.abs(open), 2)} in open positions · ${money(o.stats.paid)} spent on staff and office`;
+        const k = [
+          ['Invested by staff', `${money(staffValue())} <small>of ${money(budgetCap())}</small>`],
+          ['Salaries', `${money(payRate())}<small>/hour</small>`],
+          ['Win rate', sells ? `${Math.round((o.stats.wins / sells) * 100)}%` : '—'],
+          ['Open positions', String(o.lots.length)],
+        ];
+        const h = k.map(([a, b]) => `<div class="of-kpi"><small>${a}</small><b class="mono">${b}</b></div>`).join('');
+        const kp = v.querySelector('#ofKpis');
+        if (kp._h !== h) kp.innerHTML = kp._h = h;
+        Two.paint();
+      },
+      staff() {
+        const o = O(),
+          v = this.v;
+        if (!v) return;
+        v.querySelector('#ofDesks').textContent = `${o.staff.length} of ${level().desks} desks`;
+        const box = v.querySelector('#ofStaff');
+        if (!o.staff.length) {
+          box.innerHTML = `<div class="of-empty"><b>Nobody works here yet.</b><span>Hire an Intern below. They’ll start trading within a few seconds.</span></div>`;
+          return;
+        }
+        const card = p => {
+          const r = roleOf(p),
+            mgr = p.kind === 'mgr',
+            sk = mgr ? null : effSkill(p),
+            boss = p.boss && o.staff.find(s => s.id === p.boss),
+            team = mgr ? workers().filter(w => w.boss === p.id) : [],
+            pc = promoteCost(p),
+            wr = p.st.sells ? Math.round((p.st.wins / p.st.sells) * 100) : null;
+          return `<article class="of-card ${mgr ? 'mgr' : ''}" data-card="${p.id}" style="--rc:${r.color}">
+            <div class="of-ava">${personSVG(p)}</div>
+            <div class="of-cb">
+              <div class="of-ct"><b>${E(p.name)}</b><span class="of-role">${r.name}</span></div>
+              ${
+                mgr
+                  ? `<small class="muted">Leads ${team.length} of ${r.span} · +${Math.round(r.boost * 100)} skill to their team</small>`
+                  : `<small class="muted"><button class="linkish" data-strat="${p.id}">${STRATS[p.strat]?.name || 'Style'}</button>${boss ? ` · reports to ${E(boss.name.split(' ')[0])}` : ''}</small>`
+              }
+              <div class="of-bars">${!mgr ? `<span class="of-bar" title="Skill"><i style="width:${Math.round(sk * 100)}%"></i><em>Skill ${Math.round(sk * 100)}</em></span>` : ''}<span class="of-bar mood" title="Mood"><i style="width:${Math.round(p.mood)}%"></i><em>Mood ${Math.round(p.mood)}</em></span></div>
+            </div>
+            <div class="of-cs">${mgr ? `<b class="mono">${money(r.pay)}<small>/hr</small></b>` : `<b class="mono ${p.st.pnl >= 0 ? 'up' : 'dn'}">${p.st.pnl >= 0 ? '+' : '−'}${money(Math.abs(p.st.pnl))}</b><small class="muted">${p.st.trades ? `${p.st.trades} trades${wr != null ? ` · ${wr}% wins` : ''}` : E(p.wait || 'Getting settled')}</small>`}
+              <div class="of-ca">${pc ? `<button class="btn sm" data-promote="${p.id}" title="Promote for ${money(pc)}">Promote · ${money(pc)}</button>` : ''}<button class="btn sm ghost" data-fire="${p.id}" aria-label="Let ${E(p.name)} go">Let go</button></div>
+            </div>
+          </article>`;
+        };
+        const ms = managers(),
+          ws = workers();
+        box.innerHTML = [...ms, ...ws].map(card).join('');
+      },
+      hireList() {
+        const v = this.v;
+        if (!v) return;
+        const kind = this.ht === 'm' ? 'mgr' : 'w',
+          list = candidates(kind),
+          full = O().staff.length >= level().desks;
+        v.querySelector('#ofHireTip').textContent =
+          kind === 'mgr'
+            ? 'Managers don’t trade. Each one lifts the skill and mood of the workers they lead.'
+            : 'Workers trade with your cash. Better roles read prices more accurately, trade bigger and cost more.';
+        v.querySelector('#ofHire').innerHTML = list
+          .map(p => {
+            const r = roleOf(p),
+              can = !full && acct.cash >= r.hire;
+            return `<div class="of-cand" style="--rc:${r.color}"><div class="of-ava sm">${personSVG(p)}</div>
+              <div class="of-cb"><b>${r.name}</b><small class="muted">${E(p.name)}${p.strat ? ` · ${STRATS[p.strat].name}` : ''}</small>
+              <small>${kind === 'mgr' ? `Leads ${r.span} · +${Math.round(r.boost * 100)} skill` : `Skill ${Math.round((r.skill + p.talent) * 100)} · trades ${Math.round(r.size * 100)}% of your account`}</small></div>
+              <div class="of-cs"><b class="mono">${money(r.hire)}</b><small class="muted">${money(r.pay)}/hr</small>
+              <button class="btn sm ${can ? 'primary' : ''}" data-hireid="${p.id}" data-kind="${kind}" ${can ? '' : 'disabled'}>${full ? 'No desk' : 'Hire'}</button></div></div>`;
+          })
+          .join('');
+      },
+      lvl() {
+        const o = O(),
+          v = this.v,
+          lv = level(),
+          nx = LEVELS[o.lvl + 1];
+        if (!v) return;
+        v.querySelector('#ofLvl').innerHTML = `<div class="of-lv"><div><small class="muted">Your office</small><b>${lv.name}</b><span class="muted small">${lv.desks} desks</span></div>
+          ${nx ? `<div class="of-lv-nx"><span>Next: <b>${nx.name}</b> · ${nx.desks} desks</span><button class="btn ${acct.cash >= nx.cost ? 'primary' : ''}" id="ofUp" ${acct.cash >= nx.cost ? '' : 'disabled'}>Move in · ${money(nx.cost)}</button></div>` : '<div class="of-lv-nx"><span>You’ve got the whole tower.</span></div>'}</div>`;
+      },
+      logs() {
+        const v = this.v;
+        if (!v) return;
+        const L = O().log.slice(0, 25);
+        v.querySelector('#ofLog').innerHTML = L.length
+          ? L.map(l => `<div class="of-li"><span class="of-lt">${timeAgo(l.t)}</span><span class="of-lx">${l.by ? `<b>${E(l.by)}</b> ` : ''}${E(l.text)}</span>${l.pnl != null ? `<b class="mono ${l.pnl >= 0 ? 'up' : 'dn'}">${l.pnl >= 0 ? '+' : '−'}${money(Math.abs(l.pnl), 2)}</b>` : ''}</div>`).join('')
+          : '<p class="muted small">Nothing yet. Hire someone and their trades show up here.</p>';
+      },
+      all() {
+        paintedVer = ver;
+        this.ctl();
+        this.kpis();
+        this.staff();
+        this.hireList();
+        this.lvl();
+        this.logs();
+      },
+      update() {
+        if (!this.v || !this.v.isConnected) return;
+        this.kpis();
+        if (paintedVer !== ver) {
+          paintedVer = ver;
+          this.staff();
+          this.logs();
+          this.hireList();
+          this.lvl();
+        }
+      },
+      unmount() {
+        Two.unmount();
+        window.PBOffice3D && PBOffice3D.leave();
+        this.v = null;
+      },
+    };
+    listeners.push((t, d) => {
+      if (viewMode === '2d') Two.event(t, d);
+      if (viewMode === '3d' && window.PBOffice3D) PBOffice3D.event(t, d);
+    });
+
+    SCREENS.office = Screen;
+    if (window.PBPages) PBPages.office = ['Office', () => 'Hire traders and managers who invest for you'];
+    const API = {
+      O,
+      seated,
+      level,
+      roleOf,
+      effSkill,
+      LEVELS,
+      money,
+      focus: id => Screen.focus(id),
+      hireScroll: () => document.getElementById('ofHireCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    };
+    window.PBOffice = { O, hire, fire, promote, upgrade, closeAll, candidates, tick, tickAt, effSkill, roleOf, level, seated, ROLES, MGRS, LEVELS, STRATS, api: API, on: f => listeners.push(f), ver: () => ver };
+  } catch (e) {
+    console.error('office', e);
+  }
+})();
+
+/* =====================================================================
+   THE OFFICE IN 3D — a trading floor you look over from behind the desks.
+   Screens show each worker's last trade, managers walk the aisles,
+   the city outside follows your clock. three.js loads on demand;
+   anything goes wrong and the 2D office takes over.
+   ===================================================================== */
+(() => {
+  try {
+    const CDN = [
+      'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js',
+      'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js',
+      'https://unpkg.com/three@0.160.0/build/three.module.min.js',
+    ];
+    let T = null,
+      loadP = null;
+    const load = () => {
+      if (T) return Promise.resolve(T);
+      if (loadP) return loadP;
+      loadP = (async () => {
+        let err;
+        for (const u of CDN) {
+          try {
+            const m = await import(/* webpackIgnore: true */ u);
+            if (m && m.WebGLRenderer) return (T = m);
+          } catch (e) {
+            err = e;
+          }
+        }
+        loadP = null;
+        throw err || new Error('three.js failed to load');
+      })();
+      return loadP;
+    };
+    const webgl = () => {
+      try {
+        const c = document.createElement('canvas');
+        return !!(c.getContext('webgl2') || c.getContext('webgl'));
+      } catch (e) {
+        return false;
+      }
+    };
+    const reduced = () => matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+    const FLOORS = {
+      garage: { floor: '#7d8288', wall: '#9aa0a6', trim: '#5b6168', rug: null },
+      loft: { floor: '#9a6a3f', wall: '#b9624a', trim: '#3d2b20', rug: '#2f4858' },
+      office: { floor: '#4f5b73', wall: '#e8e6e1', trim: '#8b93a3', rug: '#394559' },
+      floor: { floor: '#2c3342', wall: '#1d2330', trim: '#0f1320', rug: '#1f5f8b' },
+      tower: { floor: '#d8d3ca', wall: '#f4f2ee', trim: '#b8a987', rug: '#1c2b3f' },
+    };
+    const SX = 3.3,
+      SZ = 3.6;
+
+    let S = null; // live scene state
+    let enterSeq = 0;
+
+    function skyCanvas(w, h) {
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      const g = c.getContext('2d'),
+        hr = new Date().getHours(),
+        night = hr < 6 || hr >= 20,
+        dusk = (hr >= 17 && hr < 20) || (hr >= 6 && hr < 8);
+      const sky = g.createLinearGradient(0, 0, 0, h);
+      if (night) sky.addColorStop(0, '#0b1026'), sky.addColorStop(1, '#27305a');
+      else if (dusk) sky.addColorStop(0, '#3b3f8f'), sky.addColorStop(0.6, '#f08a5d'), sky.addColorStop(1, '#ffd29d');
+      else sky.addColorStop(0, '#5aa9f0'), sky.addColorStop(1, '#cfe9ff');
+      g.fillStyle = sky;
+      g.fillRect(0, 0, w, h);
+      if (night)
+        for (let i = 0; i < 90; i++) {
+          g.fillStyle = `rgba(255,255,255,${0.3 + Math.random() * 0.6})`;
+          g.fillRect(Math.random() * w, Math.random() * h * 0.5, 1.5, 1.5);
+        }
+      // two layers of towers
+      for (const [shade, base, hmin, hmax, lit] of [
+        [night ? '#1a2140' : dusk ? '#6d5a7a' : '#8aa4c4', 0.62, 0.15, 0.4, 0.15],
+        [night ? '#0d1226' : dusk ? '#3d3350' : '#5f7899', 0.75, 0.25, 0.62, 0.35],
+      ]) {
+        let x = -10;
+        while (x < w) {
+          const bw = 30 + Math.random() * 70,
+            bh = h * (hmin + Math.random() * (hmax - hmin));
+          g.fillStyle = shade;
+          g.fillRect(x, h - bh, bw, bh);
+          for (let yy = h - bh + 8; yy < h - 6; yy += 12)
+            for (let xx = x + 6; xx < x + bw - 6; xx += 10)
+              if (Math.random() < (night ? lit + 0.25 : 0.08)) {
+                g.fillStyle = night ? '#ffd98a' : 'rgba(255,255,255,.55)';
+                g.fillRect(xx, yy, 5, 6);
+              }
+          x += bw + 4;
+        }
+        void base;
+      }
+      return c;
+    }
+    function monitorCanvas() {
+      const c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 80;
+      return c;
+    }
+    function drawMonitor(m, state, sym) {
+      const g = m.canvas.getContext('2d'),
+        col = state === 'win' ? '#22c55e' : state === 'loss' ? '#ef4444' : state === 'buy' ? '#38bdf8' : '#64748b';
+      g.fillStyle = '#0b1220';
+      g.fillRect(0, 0, 128, 80);
+      g.strokeStyle = 'rgba(148,163,184,.18)';
+      for (let y = 20; y < 80; y += 20) {
+        g.beginPath();
+        g.moveTo(0, y);
+        g.lineTo(128, y);
+        g.stroke();
+      }
+      g.strokeStyle = col;
+      g.lineWidth = 3;
+      g.beginPath();
+      let y = 50;
+      const dir = state === 'loss' ? 1 : state === 'idle' ? 0 : -1;
+      for (let x = 4; x <= 124; x += 8) {
+        y = Math.max(10, Math.min(70, y + (Math.random() - 0.5) * 16 + dir * 2.4));
+        x === 4 ? g.moveTo(x, y) : g.lineTo(x, y);
+      }
+      g.stroke();
+      if (sym) {
+        g.fillStyle = '#e2e8f0';
+        g.font = 'bold 15px sans-serif';
+        g.fillText(sym, 6, 17);
+      }
+      m.tex.needsUpdate = true;
+    }
+    function boardCanvas() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 160;
+      return c;
+    }
+    function drawBoard(api) {
+      if (!S) return;
+      const o = api.O(),
+        c = S.board.canvas,
+        g = c.getContext('2d'),
+        v = o.stats.pnl;
+      g.fillStyle = '#05080f';
+      g.fillRect(0, 0, 512, 160);
+      g.fillStyle = '#94a3b8';
+      g.font = '600 20px sans-serif';
+      g.fillText('OFFICE P/L', 22, 36);
+      g.fillStyle = v >= 0 ? '#34d399' : '#f87171';
+      g.font = '800 58px sans-serif';
+      g.fillText((v >= 0 ? '+' : '−') + api.money(Math.abs(v)), 22, 98);
+      const l = o.log[0];
+      g.fillStyle = '#cbd5e1';
+      g.font = '500 20px sans-serif';
+      if (l) g.fillText(((l.by ? l.by.split(' ')[0] + ' ' : '') + l.text).slice(0, 44), 22, 140);
+      S.board.tex.needsUpdate = true;
+    }
+
+    function person(p, api, standing) {
+      const g = new T.Group(),
+        r = api.roleOf(p),
+        L = p.look || {},
+        shirt = new T.MeshStandardMaterial({ color: r.color, roughness: 0.7 }),
+        skin = new T.MeshStandardMaterial({ color: L.skin || '#e8b996', roughness: 0.6 }),
+        hair = new T.MeshStandardMaterial({ color: L.hair || '#3b2618', roughness: 0.9 }),
+        dark = new T.MeshStandardMaterial({ color: '#1f2937', roughness: 0.8 });
+      const torso = new T.Mesh(new T.CapsuleGeometry(0.3, 0.46, 6, 12), shirt);
+      torso.position.y = standing ? 1.25 : 1.05;
+      torso.castShadow = true;
+      g.add(torso);
+      const head = new T.Mesh(new T.SphereGeometry(0.25, 20, 16), skin);
+      head.position.y = torso.position.y + 0.62;
+      head.castShadow = true;
+      g.add(head);
+      const hr = new T.Mesh(new T.SphereGeometry(0.265, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hair);
+      hr.position.copy(head.position);
+      hr.position.y += 0.02;
+      hr.rotation.x = -0.25;
+      g.add(hr);
+      if (p.kind === 'mgr') {
+        const tie = new T.Mesh(new T.BoxGeometry(0.08, 0.34, 0.03), new T.MeshStandardMaterial({ color: '#111827' }));
+        tie.position.set(0, torso.position.y + 0.12, 0.29);
+        g.add(tie);
+      }
+      const armG = new T.CapsuleGeometry(0.085, 0.42, 4, 8),
+        arms = [];
+      for (const s of [-1, 1]) {
+        const a = new T.Mesh(armG, shirt);
+        a.position.set(s * 0.36, torso.position.y + 0.12, standing ? 0 : -0.18);
+        a.rotation.x = standing ? 0 : -1.1;
+        a.castShadow = true;
+        g.add(a);
+        arms.push(a);
+      }
+      if (standing) {
+        for (const s of [-1, 1]) {
+          const leg = new T.Mesh(new T.CapsuleGeometry(0.11, 0.55, 4, 8), dark);
+          leg.position.set(s * 0.14, 0.42, 0);
+          leg.castShadow = true;
+          g.add(leg);
+        }
+      }
+      g.userData = { id: p.id, head, arms, torso, base: torso.position.y };
+      return g;
+    }
+    function desk(api, empty) {
+      const g = new T.Group(),
+        wood = new T.MeshStandardMaterial({ color: S.pal.trim === '#3d2b20' ? '#6b4a2f' : '#e7e2d8', roughness: 0.6 }),
+        metal = new T.MeshStandardMaterial({ color: '#2b313c', roughness: 0.4, metalness: 0.5 });
+      const top = new T.Mesh(new T.BoxGeometry(2.1, 0.08, 1.05), wood);
+      top.position.y = 0.95;
+      top.castShadow = top.receiveShadow = true;
+      g.add(top);
+      for (const [x, z] of [
+        [-0.98, -0.45],
+        [0.98, -0.45],
+        [-0.98, 0.45],
+        [0.98, 0.45],
+      ]) {
+        const leg = new T.Mesh(new T.BoxGeometry(0.06, 0.95, 0.06), metal);
+        leg.position.set(x, 0.475, z);
+        g.add(leg);
+      }
+      // monitor faces the worker (and us, looking over their shoulder)
+      const mc = monitorCanvas(),
+        tex = new T.CanvasTexture(mc);
+      tex.colorSpace = T.SRGBColorSpace;
+      const frame = new T.Mesh(new T.BoxGeometry(1.0, 0.64, 0.05), metal);
+      frame.position.set(0, 1.42, -0.32);
+      g.add(frame);
+      const scr = new T.Mesh(new T.PlaneGeometry(0.92, 0.56), new T.MeshBasicMaterial({ map: tex }));
+      scr.position.set(0, 1.42, -0.29);
+      g.add(scr);
+      const stand = new T.Mesh(new T.BoxGeometry(0.08, 0.36, 0.08), metal);
+      stand.position.set(0, 1.12, -0.34);
+      g.add(stand);
+      const kb = new T.Mesh(new T.BoxGeometry(0.62, 0.03, 0.2), metal);
+      kb.position.set(0, 1.0, 0.05);
+      g.add(kb);
+      const mug = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 0.14, 12), new T.MeshStandardMaterial({ color: ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6'][(Math.random() * 4) | 0] }));
+      mug.position.set(0.72, 1.06, 0.15);
+      g.add(mug);
+      // chair behind the desk, on the camera side
+      const seat = new T.Mesh(new T.BoxGeometry(0.62, 0.1, 0.6), new T.MeshStandardMaterial({ color: '#111827', roughness: 0.8 }));
+      seat.position.set(0, 0.55, 0.85);
+      g.add(seat);
+      const back = new T.Mesh(new T.BoxGeometry(0.62, 0.7, 0.08), seat.material);
+      back.position.set(0, 0.95, 1.14);
+      g.add(back);
+      const pole = new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 0.5, 8), metal);
+      pole.position.set(0, 0.28, 0.85);
+      g.add(pole);
+      const mon = { canvas: mc, tex, state: 'idle' };
+      drawMonitor(mon, empty ? 'idle' : 'idle', empty ? '' : '');
+      g.userData = { mon };
+      return g;
+    }
+
+    function build(api) {
+      const o = api.O(),
+        { desks, map, staff } = api.seated(),
+        lv = api.level(),
+        pal = FLOORS[lv.floor] || FLOORS.office;
+      S.pal = pal;
+      const cols = desks.length ? desks[0].cols : 2,
+        rows = desks.length ? desks[0].rows : 1,
+        W = cols * SX + 5,
+        D = rows * SZ + 7;
+      S.dim = { W, D };
+      const root = new T.Group();
+      // floor
+      const fl = new T.Mesh(new T.PlaneGeometry(W, D), new T.MeshStandardMaterial({ color: pal.floor, roughness: 0.85 }));
+      fl.rotation.x = -Math.PI / 2;
+      fl.receiveShadow = true;
+      root.add(fl);
+      if (pal.rug) {
+        const rug = new T.Mesh(new T.PlaneGeometry(W - 3, D - 5), new T.MeshStandardMaterial({ color: pal.rug, roughness: 1 }));
+        rug.rotation.x = -Math.PI / 2;
+        rug.position.set(0, 0.01, 0.4);
+        rug.receiveShadow = true;
+        root.add(rug);
+      }
+      // back wall: one long window onto the city, with the board in the middle
+      const wallM = new T.MeshStandardMaterial({ color: pal.wall, roughness: 0.9 });
+      const back = new T.Mesh(new T.PlaneGeometry(W, 5), wallM);
+      back.position.set(0, 2.5, -D / 2);
+      root.add(back);
+      const sky = new T.CanvasTexture(skyCanvas(1024, 256));
+      sky.colorSpace = T.SRGBColorSpace;
+      const win = new T.Mesh(new T.PlaneGeometry(W - 1.2, 2.6), new T.MeshBasicMaterial({ map: sky }));
+      win.position.set(0, 2.55, -D / 2 + 0.02);
+      root.add(win);
+      const trimM = new T.MeshStandardMaterial({ color: pal.trim, roughness: 0.5 });
+      for (let x = -(W - 1.2) / 2; x <= (W - 1.2) / 2 + 0.01; x += (W - 1.2) / Math.max(2, Math.round(W / 3.5))) {
+        const mull = new T.Mesh(new T.BoxGeometry(0.08, 2.6, 0.06), trimM);
+        mull.position.set(x, 2.55, -D / 2 + 0.05);
+        root.add(mull);
+      }
+      const sill = new T.Mesh(new T.BoxGeometry(W - 1.1, 0.1, 0.25), trimM);
+      sill.position.set(0, 1.22, -D / 2 + 0.1);
+      root.add(sill);
+      // side walls
+      for (const s of [-1, 1]) {
+        const sw = new T.Mesh(new T.PlaneGeometry(D, 5), wallM);
+        sw.position.set((s * W) / 2, 2.5, 0);
+        sw.rotation.y = (-s * Math.PI) / 2;
+        root.add(sw);
+      }
+      // the P/L board hangs in front of the window
+      const bc = boardCanvas(),
+        btex = new T.CanvasTexture(bc);
+      btex.colorSpace = T.SRGBColorSpace;
+      S.board = { canvas: bc, tex: btex };
+      const bw = Math.min(5.5, W * 0.45);
+      const board = new T.Mesh(new T.PlaneGeometry(bw, bw * 0.3125), new T.MeshBasicMaterial({ map: btex }));
+      board.position.set(0, 4.3, -D / 2 + 0.3);
+      root.add(board);
+      const bframe = new T.Mesh(new T.BoxGeometry(bw + 0.14, bw * 0.3125 + 0.14, 0.08), new T.MeshStandardMaterial({ color: '#0b0f18' }));
+      bframe.position.set(0, 4.3, -D / 2 + 0.25);
+      root.add(bframe);
+      // plants in the corners, a water cooler
+      const potM = new T.MeshStandardMaterial({ color: '#c2410c', roughness: 0.8 }),
+        leafM = new T.MeshStandardMaterial({ color: '#16a34a', roughness: 0.7 });
+      for (const [x, z] of [
+        [-W / 2 + 0.8, -D / 2 + 0.9],
+        [W / 2 - 0.8, -D / 2 + 0.9],
+        [-W / 2 + 0.8, D / 2 - 1],
+      ]) {
+        const pot = new T.Mesh(new T.CylinderGeometry(0.3, 0.24, 0.5, 14), potM);
+        pot.position.set(x, 0.25, z);
+        pot.castShadow = true;
+        root.add(pot);
+        for (let i = 0; i < 5; i++) {
+          const lf = new T.Mesh(new T.SphereGeometry(0.34, 10, 8), leafM);
+          lf.position.set(x + Math.sin(i * 1.3) * 0.18, 0.75 + i * 0.14, z + Math.cos(i * 1.3) * 0.18);
+          lf.scale.set(1, 1.3, 1);
+          lf.castShadow = true;
+          root.add(lf);
+        }
+      }
+      const cool = new T.Mesh(new T.CylinderGeometry(0.22, 0.22, 0.5, 14), new T.MeshStandardMaterial({ color: '#7dd3fc', transparent: true, opacity: 0.75, roughness: 0.1 }));
+      cool.position.set(W / 2 - 0.8, 1.35, D / 2 - 1);
+      root.add(cool);
+      const coolB = new T.Mesh(new T.BoxGeometry(0.5, 1.1, 0.5), new T.MeshStandardMaterial({ color: '#e5e7eb' }));
+      coolB.position.set(W / 2 - 0.8, 0.55, D / 2 - 1);
+      root.add(coolB);
+      // desks and people
+      S.desks = [];
+      S.people = {};
+      S.walkers = [];
+      const x0 = -((cols - 1) * SX) / 2,
+        z0 = -D / 2 + 3.2;
+      const byDesk = {};
+      for (const p of staff) if (map[p.id]) byDesk[map[p.id].i] = p;
+      for (const d of desks) {
+        const p = byDesk[d.i],
+          dk = desk(api, !p);
+        dk.position.set(x0 + d.c * SX, 0, z0 + d.r * SZ);
+        root.add(dk);
+        S.desks.push({ d, g: dk, p });
+        if (p && p.kind !== 'mgr') {
+          const pg = person(p, api, false);
+          pg.position.set(dk.position.x, 0, dk.position.z + 0.8);
+          pg.rotation.y = Math.PI; // facing the screen
+          root.add(pg);
+          S.people[p.id] = { g: pg, desk: dk, seated: true, phase: Math.random() * 6 };
+          const last = p.last;
+          if (last) drawMonitor(dk.userData.mon, last.side === 'buy' ? 'buy' : last.pnl >= 0 ? 'win' : 'loss', last.sym);
+          else drawMonitor(dk.userData.mon, 'idle', '');
+        }
+      }
+      // managers walk the floor instead of sitting
+      const aisleX = [];
+      for (let c = 0; c <= cols; c++) aisleX.push(x0 - SX / 2 + c * SX);
+      for (const p of staff.filter(s => s.kind === 'mgr')) {
+        const pg = person(p, api, true);
+        const sx = aisleX[(Math.random() * aisleX.length) | 0];
+        pg.position.set(sx, 0, z0 + Math.random() * rows * SZ);
+        root.add(pg);
+        const w = { g: pg, p, target: null, wait: 1 + Math.random() * 2, speed: 1.1 + Math.random() * 0.4 };
+        S.walkers.push(w);
+        S.people[p.id] = { g: pg, seated: false, phase: Math.random() * 6 };
+      }
+      S.aisleX = aisleX;
+      S.z0 = z0;
+      S.rows = rows;
+      return root;
+    }
+
+    function labels(api) {
+      const ov = S.ov,
+        { staff } = api.seated();
+      ov.innerHTML = staff
+        .filter(p => S.people[p.id])
+        .map(p => `<div class="o3-tag ${p.kind === 'mgr' ? 'mgr' : ''}" data-tag="${p.id}"><b>${E(p.name.split(' ')[0])}</b><small>${E(api.roleOf(p).name)}</small><i class="o3-bub" data-b3="${p.id}"></i></div>`)
+        .join('') + S.desks.filter(x => !x.p).map((x, i) => `<button class="o3-hire" data-hire="1" data-dk="${i}">+ Hire</button>`).join('');
+    }
+
+    function rebuild(api) {
+      if (!S) return;
+      if (S.root) {
+        S.scene.remove(S.root);
+        S.root.traverse(o => {
+          if (o.geometry) o.geometry.dispose();
+          if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => (m.map && m.map.dispose(), m.dispose()));
+        });
+      }
+      S.root = build(api);
+      S.scene.add(S.root);
+      labels(api);
+      drawBoard(api);
+      const { W, D } = S.dim;
+      S.cam.target = new T.Vector3(0, 1.2, -D * 0.1);
+      S.cam.dist = Math.max(9, Math.max(W * 0.95, D * 1.25));
+      S.cam.min = S.cam.dist * 0.45;
+      S.cam.max = S.cam.dist * 1.5;
+    }
+
+    async function enter(stage, api) {
+      if (!webgl()) throw new Error('no webgl');
+      const my = ++enterSeq;
+      stage.innerHTML = '<div class="o3-load">Building your office…</div>';
+      await load();
+      if (my !== enterSeq || !stage.isConnected) return;
+      leave();
+      const phone = innerWidth < 700;
+      const renderer = new T.WebGLRenderer({ antialias: !phone, powerPreference: 'high-performance' });
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, phone ? 1.5 : 2));
+      renderer.outputColorSpace = T.SRGBColorSpace;
+      renderer.shadowMap.enabled = !phone;
+      renderer.shadowMap.type = T.PCFSoftShadowMap;
+      stage.innerHTML = '';
+      stage.appendChild(renderer.domElement);
+      renderer.domElement.className = 'o3-canvas';
+      renderer.domElement.setAttribute('aria-label', 'Your office in 3D. Drag to look around, scroll or pinch to zoom.');
+      renderer.domElement.setAttribute('role', 'img');
+      const ov = document.createElement('div');
+      ov.className = 'o3-ov';
+      stage.appendChild(ov);
+      const hint = document.createElement('div');
+      hint.className = 'o3-hint';
+      hint.textContent = 'Drag to look around · scroll or pinch to zoom · tap someone to see their card';
+      stage.appendChild(hint);
+      setTimeout(() => hint.classList.add('gone'), 4000);
+      const scene = new T.Scene();
+      scene.background = new T.Color('#0e1320');
+      scene.fog = new T.Fog('#0e1320', 30, 70);
+      const camera = new T.PerspectiveCamera(45, 1, 0.1, 200);
+      const hemi = new T.HemisphereLight('#dbeafe', '#3b3024', 1.1);
+      scene.add(hemi);
+      const sun = new T.DirectionalLight('#fff4e0', 1.6);
+      sun.position.set(6, 14, 8);
+      sun.castShadow = !phone;
+      sun.shadow.mapSize.set(1024, 1024);
+      sun.shadow.camera.left = sun.shadow.camera.bottom = -20;
+      sun.shadow.camera.right = sun.shadow.camera.top = 20;
+      scene.add(sun);
+      const fill = new T.PointLight('#93c5fd', 0.6, 30);
+      fill.position.set(0, 4, 0);
+      scene.add(fill);
+      S = { renderer, scene, camera, stage, ov, api, cam: { yaw: 0.35, pitch: 0.62, dist: 14, target: null }, raf: 0, t0: performance.now(), last: performance.now() };
+      rebuild(api);
+      // look-around controls
+      const el = renderer.domElement;
+      let drag = null,
+        pinch = null;
+      const ptrs = new Map();
+      el.addEventListener('pointerdown', e => {
+        ptrs.set(e.pointerId, e);
+        el.setPointerCapture(e.pointerId);
+        if (ptrs.size === 1) drag = { x: e.clientX, y: e.clientY, yaw: S.cam.yaw, pitch: S.cam.pitch, moved: 0 };
+        if (ptrs.size === 2) {
+          const [a, b] = [...ptrs.values()];
+          pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), dist: S.cam.dist };
+          drag = null;
+        }
+      });
+      el.addEventListener('pointermove', e => {
+        if (!S) return;
+        ptrs.set(e.pointerId, e);
+        if (pinch && ptrs.size === 2) {
+          const [a, b] = [...ptrs.values()];
+          const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+          S.cam.dist = Math.max(S.cam.min, Math.min(S.cam.max, (pinch.dist * pinch.d) / Math.max(20, d)));
+          return;
+        }
+        if (!drag) return;
+        const dx = e.clientX - drag.x,
+          dy = e.clientY - drag.y;
+        drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy));
+        S.cam.yaw = Math.max(-1.0, Math.min(1.0, drag.yaw - dx * 0.006));
+        S.cam.pitch = Math.max(0.25, Math.min(1.2, drag.pitch + dy * 0.004));
+      });
+      const up = e => {
+        ptrs.delete(e.pointerId);
+        if (drag && drag.moved < 6 && S) pickAt(e);
+        if (ptrs.size < 2) pinch = null;
+        if (!ptrs.size) drag = null;
+      };
+      el.addEventListener('pointerup', up);
+      el.addEventListener('pointercancel', up);
+      el.addEventListener(
+        'wheel',
+        e => {
+          if (!S) return;
+          e.preventDefault();
+          S.cam.dist = Math.max(S.cam.min, Math.min(S.cam.max, S.cam.dist * (1 + Math.sign(e.deltaY) * 0.08)));
+        },
+        { passive: false }
+      );
+      ov.addEventListener('click', e => {
+        const t = e.target.closest('[data-tag]');
+        if (t) return api.focus && api.focus(t.dataset.tag);
+        if (e.target.closest('[data-hire]')) api.hireScroll && api.hireScroll();
+      });
+      const ro = new ResizeObserver(() => size());
+      ro.observe(stage);
+      S.ro = ro;
+      size();
+      loop();
+    }
+    function pickAt(e) {
+      const r = S.renderer.domElement.getBoundingClientRect(),
+        m = new T.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1),
+        rc = new T.Raycaster();
+      rc.setFromCamera(m, S.camera);
+      const hits = rc.intersectObjects(Object.values(S.people).map(x => x.g), true);
+      if (hits.length) {
+        let o = hits[0].object;
+        while (o && !(o.userData && o.userData.id)) o = o.parent;
+        if (o && S.api.focus) S.api.focus(o.userData.id);
+      }
+    }
+    function size() {
+      if (!S) return;
+      const w = S.stage.clientWidth || 600,
+        h = S.stage.clientHeight || 340;
+      S.renderer.setSize(w, h, false);
+      S.renderer.domElement.style.width = w + 'px';
+      S.renderer.domElement.style.height = h + 'px';
+      S.camera.aspect = w / h;
+      S.camera.updateProjectionMatrix();
+    }
+    const tmp = { v: null };
+    function loop() {
+      if (!S) return;
+      S.raf = requestAnimationFrame(loop);
+      if (document.hidden || !S.stage.isConnected) return;
+      const now = performance.now(),
+        dt = Math.min(0.05, (now - S.last) / 1000),
+        t = (now - S.t0) / 1000;
+      S.last = now;
+      const c = S.cam,
+        rm = reduced();
+      const sway = rm ? 0 : Math.sin(t * 0.15) * 0.04;
+      const yaw = c.yaw + sway;
+      S.camera.position.set(c.target.x + Math.sin(yaw) * Math.cos(c.pitch) * c.dist, c.target.y + Math.sin(c.pitch) * c.dist, c.target.z + Math.cos(yaw) * Math.cos(c.pitch) * c.dist);
+      S.camera.lookAt(c.target);
+      // typing, breathing
+      for (const id in S.people) {
+        const P = S.people[id],
+          u = P.g.userData;
+        if (P.seated && !rm) {
+          u.arms[0].rotation.x = -1.1 + Math.sin(t * 14 + P.phase) * 0.12;
+          u.arms[1].rotation.x = -1.1 + Math.sin(t * 14 + P.phase + 1.7) * 0.12;
+          u.head.rotation.y = Math.sin(t * 0.6 + P.phase) * 0.18;
+        }
+        if (P.jump) {
+          P.jump = Math.max(0, P.jump - dt * 2.2);
+          P.g.position.y = Math.sin(P.jump * Math.PI) * 0.35;
+        }
+      }
+      // managers walk the aisles and stop by desks
+      for (const w of S.walkers) {
+        if (w.wait > 0) {
+          w.wait -= dt;
+          continue;
+        }
+        if (!w.target) {
+          const x = S.aisleX[(Math.random() * S.aisleX.length) | 0],
+            z = S.z0 + 0.8 + Math.random() * (S.rows * SZ - 1.6);
+          w.target = new T.Vector3(x, 0, z);
+        }
+        const d = w.target.clone().sub(w.g.position);
+        d.y = 0;
+        const dist = d.length();
+        if (dist < 0.08) {
+          w.target = null;
+          w.wait = 1.5 + Math.random() * 3;
+          continue;
+        }
+        d.normalize();
+        w.g.position.addScaledVector(d, Math.min(dist, w.speed * dt));
+        const want = Math.atan2(d.x, d.z);
+        w.g.rotation.y += ((((want - w.g.rotation.y + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 6);
+        if (!rm) w.g.position.y = Math.abs(Math.sin(t * 9)) * 0.05;
+      }
+      S.renderer.render(S.scene, S.camera);
+      // pin name tags over heads
+      const W = S.stage.clientWidth,
+        H = S.stage.clientHeight;
+      tmp.v ||= new T.Vector3();
+      for (const el of S.ov.children) {
+        let pos = null;
+        if (el.dataset.tag) {
+          const P = S.people[el.dataset.tag];
+          if (P) {
+            P.g.userData.head.getWorldPosition(tmp.v);
+            tmp.v.y += 0.55;
+            pos = tmp.v;
+          }
+        } else if (el.dataset.dk != null) {
+          const x = S.desks.filter(d => !d.p)[+el.dataset.dk];
+          if (x) {
+            tmp.v.set(x.g.position.x, 1.6, x.g.position.z + 0.4);
+            pos = tmp.v;
+          }
+        }
+        if (!pos) continue;
+        pos.project(S.camera);
+        const vis = pos.z < 1 && pos.x > -1.1 && pos.x < 1.1 && pos.y > -1.1 && pos.y < 1.1;
+        el.style.display = vis ? '' : 'none';
+        if (vis) el.style.transform = `translate(${((pos.x + 1) / 2) * W}px, ${((1 - pos.y) / 2) * H}px) translate(-50%, -100%)`;
+      }
+    }
+    function leave() {
+      enterSeq++;
+      if (!S) return;
+      cancelAnimationFrame(S.raf);
+      try {
+        S.ro && S.ro.disconnect();
+        S.root &&
+          S.root.traverse(o => {
+            if (o.geometry) o.geometry.dispose();
+            if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => (m.map && m.map.dispose(), m.dispose()));
+          });
+        S.renderer.dispose();
+        S.renderer.forceContextLoss && S.renderer.forceContextLoss();
+        S.renderer.domElement.remove();
+      } catch (e) {}
+      S = null;
+    }
+    function event(type, d) {
+      if (!S) return;
+      if (type === 'staff' || type === 'level') return rebuild(S.api);
+      if (type === 'trade') {
+        const P = S.people[d.who];
+        const dk = P && P.desk;
+        if (dk) drawMonitor(dk.userData.mon, d.side === 'buy' ? 'buy' : d.pnl >= 0 ? 'win' : 'loss', d.sym);
+        if (P && d.side === 'sell' && d.pnl > 0) P.jump = 1;
+        const b = S.ov.querySelector(`[data-b3="${d.who}"]`);
+        if (b) {
+          b.textContent = d.side === 'buy' ? `Buying ${d.sym}` : `${d.pnl >= 0 ? '+' : '−'}${S.api.money(Math.abs(d.pnl))}`;
+          b.className = `o3-bub on ${d.side === 'buy' ? '' : d.pnl >= 0 ? 'up' : 'dn'}`;
+          clearTimeout(b._t);
+          b._t = setTimeout(() => (b.className = 'o3-bub'), 2600);
+        }
+        drawBoard(S.api);
+      }
+    }
+    window.PBOffice3D = { ok: webgl, enter, leave, event, state: () => S };
+  } catch (e) {
+    console.error('office3d', e);
+  }
+})();
+
 /* ===================== HUBS: fewer tabs, related pages grouped with sub-tabs ===================== */
 (() => {
   try {
     const HUBS = {
       markets: ['markets', 'news'],
-      portfolio: ['portfolio', 'bank'],
+      portfolio: ['portfolio', 'office', 'bank'],
       inventory: ['inventory', 'pets', 'garden'],
       shop: ['shop', 'store'],
       play: ['play', 'tourney', 'pass', 'ranks'],
       social: ['social'],
       profile: ['profile', 'learn'],
     };
-    const LBL = { markets: 'Stocks & coins', news: 'News', portfolio: 'Holdings', bank: 'Bank', inventory: 'Overview', pets: 'Pets', garden: 'Garden', shop: 'Shop', store: 'Store', play: 'Modes', tourney: 'Tournaments', pass: 'Battle Pass', ranks: 'Leaderboard', profile: 'Profile', learn: 'Learn' };
+    const LBL = { markets: 'Stocks & coins', news: 'News', portfolio: 'Holdings', office: 'Office', bank: 'Bank', inventory: 'Overview', pets: 'Pets', garden: 'Garden', shop: 'Shop', store: 'Store', play: 'Modes', tourney: 'Tournaments', pass: 'Battle Pass', ranks: 'Leaderboard', profile: 'Profile', learn: 'Learn' };
     const hubOf = {};
     for (const [h, ks] of Object.entries(HUBS)) for (const k of ks) hubOf[k] = h;
     hubOf.asset = 'markets';
@@ -42121,6 +43700,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       settings: S(`<path ${W} d="M10.3 2.5h3.4l.5 2.6 1.7.8 2.3-1.4 2.4 2.4-1.4 2.3.8 1.7 2.6.5v3.4l-2.6.5-.8 1.7 1.4 2.3-2.4 2.4-2.3-1.4-1.7.8-.5 2.6h-3.4l-.5-2.6-1.7-.8-2.3 1.4-2.4-2.4 1.4-2.3-.8-1.7-2.6-.5v-3.4l2.6-.5.8-1.7L4.1 7 6.5 4.6l2.3 1.4 1.7-.8z"/><circle cx="12" cy="12" r="3.4" fill="#000" fill-opacity=".3"/>`),
       pets: S(`<ellipse ${W} cx="5.6" cy="10.4" rx="2.1" ry="2.6"/><ellipse ${W} cx="9.4" cy="5.8" rx="2.1" ry="2.7"/><ellipse ${W} cx="14.6" cy="5.8" rx="2.1" ry="2.7"/><ellipse ${W} cx="18.4" cy="10.4" rx="2.1" ry="2.6"/><path ${W} d="M12 11.2c-3 0-6 3.7-6 6.6 0 1.8 1.4 3.2 3.1 3.2 1.2 0 1.8-.6 2.9-.6s1.7.6 2.9.6c1.7 0 3.1-1.4 3.1-3.2 0-2.9-3-6.6-6-6.6z"/>`),
       garden: S(`<path ${H} d="M3.5 21h17v-1.5a2 2 0 0 0-2-2h-13a2 2 0 0 0-2 2z"/><path d="M12 17.5v-7" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path ${W} d="M12 11.5C12 7.4 9.3 5 4.6 5c0 4.2 2.8 6.5 7.4 6.5zM12 9.8c0-3.8 2.7-6.3 7.4-6.3 0 3.9-2.7 6.3-7.4 6.3z"/>`),
+      office: S(`<path ${W} d="M5 3.5h9A1.5 1.5 0 0 1 15.5 5v16H3.5V5A1.5 1.5 0 0 1 5 3.5z"/><path ${H} d="M15.5 9h4A1.5 1.5 0 0 1 21 10.5V21h-5.5z"/><path d="M6.5 7h2M10.5 7h2M6.5 10.5h2M10.5 10.5h2M6.5 14h2M10.5 14h2M17.5 12.5h1.5M17.5 16h1.5" stroke="#000" stroke-opacity=".3" stroke-width="1.8" stroke-linecap="round"/><rect x="8" y="17.5" width="3" height="3.5" rx=".6" fill="#000" fill-opacity=".3"/>`),
       bank: S(`<path ${W} d="M12 2.5 21.5 7.6c.5.3.3 1.1-.3 1.1H2.8c-.6 0-.8-.8-.3-1.1z"/><path ${H} d="M5 10h2.6v7.5H5zM10.7 10h2.6v7.5h-2.6zM16.4 10H19v7.5h-2.6z"/><rect ${W} x="2.5" y="18.5" width="19" height="3" rx="1.2"/>`),
       pass: S(`<path ${W} d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v2.6a2.5 2.5 0 0 0 0 4.8V17a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 17v-2.6a2.5 2.5 0 0 0 0-4.8V7A1.5 1.5 0 0 1 4 5.5z"/><path d="M15 6.5v2M15 11v2M15 15.5v2" stroke="#000" stroke-opacity=".3" stroke-width="1.6" stroke-linecap="round"/><path d="m8.6 9 .9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3z" fill="#000" fill-opacity=".3"/>`),
       store: S(`<path ${W} d="M6.3 3.5h11.4l4 5.6L12 21 2.3 9.1z"/><path ${H} d="M2.3 9.1h19.4L12 21z"/><path d="M8.5 3.5 12 9.1l3.5-5.6" stroke="#000" stroke-opacity=".2" stroke-width="1.4" fill="none"/>`),
@@ -42160,6 +43740,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         }
         const sv = pic.querySelector('svg');
         if (sv && !sv.classList.contains('pbx') && (G[sk] || G[hk])) sv.outerHTML = G[sk] || G[hk];
+        else if (!sv && (G[hk] || G[sk])) pic.innerHTML = G[hk] || G[sk];
       }
       for (const s of document.querySelectorAll('.hub-tabs button[data-hub] > svg:not(.pbx)')) {
         const k = s.parentElement.dataset.hub;
@@ -54857,6 +56438,158 @@ body.sk-fs-on #buckFab, body.sk-fs-on .buck-fab, body.sk-fs-on #tradeBar { displ
 .np-chart.dn { color: var(--dn); }
 .np-cl { position: absolute; left: 8px; top: 2px; font: 700 10.5px var(--sans); color: var(--mut); }
 @media (max-width: 520px) { .np-chart { min-height: 70px; } .np-chart svg { min-height: 70px; } }
+
+</style>
+<style id="pbOffice">
+/* ===================== THE OFFICE ===================== */
+.of-hero { padding: 0; overflow: hidden; }
+.of-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 16px 18px 12px; flex-wrap: wrap; }
+.of-h1 { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.of-h1 small { font: 700 11px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--mut); }
+.of-h1 b { font: 800 clamp(30px, 6vw, 44px) / 1.05 var(--sans); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.of-h1 b.up { color: var(--up); }
+.of-h1 b.dn { color: var(--dn); }
+.of-tools { display: flex; gap: 8px; align-items: center; }
+.of-seg { display: inline-flex; }
+.of-seg button { min-width: 48px; }
+.of-seg.sm button { min-width: 0; padding: 6px 12px; font-size: 12.5px; }
+.of-stage { position: relative; aspect-ratio: 16 / 8.5; min-height: 280px; background: #0e1320; overflow: hidden; }
+.of-hero.of-fs, .of-hero:fullscreen { position: fixed; inset: 0; z-index: 9500; border-radius: 0; display: flex; flex-direction: column; background: var(--bg); }
+.of-hero:fullscreen .of-stage, .of-hero.of-fs .of-stage { flex: 1; aspect-ratio: auto; }
+@media (max-width: 600px) { .of-stage { aspect-ratio: 4 / 3.4; } }
+
+/* 2D office */
+.of2 { position: absolute; inset: 0; display: flex; flex-direction: column; --fl: #7d8288; --wl: #9aa0a6; --tr: #5b6168; }
+.of2.f-loft { --fl: #9a6a3f; --wl: #b9624a; --tr: #3d2b20; }
+.of2.f-office { --fl: #55607a; --wl: #e8e6e1; --tr: #8b93a3; }
+.of2.f-floor { --fl: #2c3342; --wl: #1d2330; --tr: #0f1320; }
+.of2.f-tower { --fl: #d8d3ca; --wl: #f4f2ee; --tr: #b8a987; }
+.of2-wall { position: relative; flex: 0 0 26%; background: var(--wl); display: flex; align-items: center; justify-content: center; padding: 3% 4% 0; gap: 3%; border-bottom: 6px solid var(--tr); }
+.of2-win { flex: 1; height: 82%; border: 5px solid var(--tr); border-bottom-width: 7px; border-radius: 4px; overflow: hidden; background: linear-gradient(90deg, transparent 49.4%, var(--tr) 49.4% 50.6%, transparent 50.6%); position: relative; }
+.of2-win svg { width: 100%; height: 100%; display: block; }
+.of2-board { position: absolute; left: 50%; top: 14%; transform: translateX(-50%); min-width: 34%; padding: 6px 14px 7px; border-radius: 6px; background: #05080f; border: 3px solid #1e293b; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; align-items: flex-start; }
+.of2-board small { font: 700 9px var(--sans); letter-spacing: 0.12em; color: #94a3b8; }
+.of2-board b { font: 800 clamp(15px, 3vw, 24px) / 1.1 var(--sans); font-variant-numeric: tabular-nums; }
+.of2-board b.up { color: #34d399; }
+.of2-board b.dn { color: #f87171; }
+.of2-board i { font: 500 10px var(--sans); font-style: normal; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 38ch; }
+.of2-floor { position: relative; flex: 1; background: var(--fl); background-image: linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px); background-size: 40px 40px; margin: 0; }
+.of2.f-loft .of2-floor { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 46px); background-size: auto; }
+.of2-desk { position: absolute; width: clamp(64px, 13%, 120px); transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; cursor: pointer; border-radius: 12px; outline-offset: 4px; }
+.of2-desk .of2-p { width: 56%; margin-bottom: -24%; margin-right: 22%; position: relative; z-index: 3; }
+.of2-p svg { width: 100%; height: auto; display: block; }
+.of2-p .type { animation: ofBob 0.9s ease-in-out infinite; transform-origin: 50% 100%; }
+.of2-p.sad .type { animation-duration: 2.4s; filter: saturate(0.6); }
+@keyframes ofBob { 50% { transform: translateY(1.5px); } }
+.of2-table { position: relative; z-index: 2; width: 100%; height: clamp(22px, 3.2vw, 34px); border-radius: 6px 6px 3px 3px; background: linear-gradient(#f3efe7, #d9d2c3); box-shadow: 0 5px 0 #a49a86, 0 10px 16px -6px rgba(0, 0, 0, 0.5); display: flex; align-items: flex-start; justify-content: center; }
+.of2.f-loft .of2-table, .of2.f-floor .of2-table { background: linear-gradient(#8a6443, #6b4a2f); box-shadow: 0 5px 0 #4a3220, 0 10px 16px -6px rgba(0, 0, 0, 0.5); }
+.of2-mon { position: absolute; top: -78%; left: 66%; transform: translateX(-50%) perspective(80px) rotateY(-18deg); width: 40%; aspect-ratio: 16 / 10; border-radius: 3px; background: #0b1220; border: 2px solid #1f2937; overflow: hidden; }
+.of2-mon i { position: absolute; inset: 22% 10%; background: linear-gradient(135deg, transparent 45%, var(--mc, #64748b) 45% 58%, transparent 58%); }
+.of2-mon.s-buy { --mc: #38bdf8; }
+.of2-mon.s-win { --mc: #22c55e; }
+.of2-mon.s-loss { --mc: #ef4444; }
+.of2-mon.s-loss i { transform: scaleY(-1); }
+.of2-mon.flash { animation: ofFlash 0.8s ease-out; }
+@keyframes ofFlash { 0% { box-shadow: 0 0 0 0 var(--mc); } 40% { box-shadow: 0 0 14px 4px var(--mc); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.of2-mug { position: absolute; left: 10%; top: 18%; width: 8%; aspect-ratio: 1; border-radius: 2px 2px 4px 4px; background: #ef4444; }
+.of2-tag { margin-top: 10px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; padding: 3px 8px; border-radius: 8px; background: rgba(8, 11, 20, 0.72); color: #fff; }
+.of2-tag b { font: 700 11px var(--sans); }
+.of2-tag small { font: 600 9px var(--sans); color: #cbd5e1; }
+.of2-desk.mgr .of2-tag { background: rgba(79, 70, 229, 0.85); }
+.of2-desk.empty { opacity: 0.55; }
+.of2-desk.empty:hover, .of2-desk.empty:focus-visible { opacity: 0.9; }
+.of2-plus { width: 38%; aspect-ratio: 1; margin-bottom: 10%; border-radius: 50%; border: 2px dashed rgba(255, 255, 255, 0.7); color: #fff; display: grid; place-items: center; font: 800 18px var(--sans); }
+.of2-bub { position: absolute; bottom: 100%; left: 50%; transform: translate(-50%, 6px) scale(0.8); opacity: 0; padding: 4px 9px; border-radius: 10px; background: #fff; color: #0f172a; font: 800 11px var(--sans); white-space: nowrap; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3); transition: opacity 0.2s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; z-index: 5; }
+.of2-bub.on { opacity: 1; transform: translate(-50%, -2px) scale(1); }
+.of2-bub.up { background: #dcfce7; color: #166534; }
+.of2-bub.dn { background: #fee2e2; color: #991b1b; }
+.of2-plant { position: absolute; width: 5%; aspect-ratio: 1 / 1.4; bottom: 4%; background: radial-gradient(circle at 50% 30%, #22c55e 0 34%, transparent 35%), radial-gradient(circle at 30% 45%, #16a34a 0 28%, transparent 29%), radial-gradient(circle at 70% 45%, #15803d 0 28%, transparent 29%), linear-gradient(transparent 62%, #c2410c 62%); border-radius: 0 0 6px 6px; }
+.of2-plant.a { left: 2%; }
+.of2-plant.b { right: 2%; }
+.of2-cooler { position: absolute; right: 8%; bottom: 4%; width: 3%; aspect-ratio: 1 / 2.4; background: linear-gradient(#7dd3fc 0 38%, #e5e7eb 38%); border-radius: 30% 30% 3px 3px; }
+@media (prefers-reduced-motion: reduce) { .of2-p .type, .of2-mon.flash { animation: none; } }
+
+/* 3D office */
+.of-stage.is3d { background: #0e1320; }
+.o3-canvas { display: block; touch-action: none; cursor: grab; }
+.o3-canvas:active { cursor: grabbing; }
+.o3-ov { position: absolute; inset: 0; pointer-events: none; }
+.o3-tag, .o3-hire { position: absolute; left: 0; top: 0; pointer-events: auto; }
+.o3-tag { display: flex; flex-direction: column; align-items: center; padding: 3px 8px; border-radius: 8px; background: rgba(8, 11, 20, 0.72); color: #fff; line-height: 1.1; cursor: pointer; white-space: nowrap; }
+.o3-tag b { font: 700 11px var(--sans); }
+.o3-tag small { font: 600 9px var(--sans); color: #cbd5e1; }
+.o3-tag.mgr { background: rgba(79, 70, 229, 0.85); }
+.o3-hire { padding: 5px 10px; border-radius: 999px; border: 1.5px dashed rgba(255, 255, 255, 0.75); background: rgba(8, 11, 20, 0.45); color: #fff; font: 700 11px var(--sans); cursor: pointer; }
+.o3-bub { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translate(-50%, 6px) scale(0.8); opacity: 0; padding: 4px 9px; border-radius: 10px; background: #fff; color: #0f172a; font: 800 11px var(--sans); font-style: normal; white-space: nowrap; transition: opacity 0.2s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.o3-bub.on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.o3-bub.up { background: #dcfce7; color: #166534; }
+.o3-bub.dn { background: #fee2e2; color: #991b1b; }
+.o3-hint { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); padding: 6px 12px; border-radius: 999px; background: rgba(8, 11, 20, 0.7); color: #e2e8f0; font: 600 12px var(--sans); white-space: nowrap; transition: opacity 0.6s; pointer-events: none; }
+.o3-hint.gone { opacity: 0; }
+.o3-load { position: absolute; inset: 0; display: grid; place-items: center; color: #cbd5e1; font: 600 14px var(--sans); }
+
+/* numbers and controls */
+.of-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.of-kpi { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg2); display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.of-kpi small { color: var(--mut); font-size: 12px; }
+.of-kpi b { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.of-kpi b small { font-size: 12px; font-weight: 600; }
+@media (max-width: 700px) { .of-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.of-ctl { display: flex; flex-direction: column; gap: 14px; }
+.of-ctl-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.of-ctl-row > div:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 200px; flex: 1; }
+.of-bud { display: flex; align-items: center; gap: 12px; min-width: 240px; }
+.of-bud input { flex: 1; accent-color: var(--amber); }
+.of-bud output { font-size: 13px; white-space: nowrap; }
+.of-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* team + hiring */
+.of-staff, .of-hire { display: flex; flex-direction: column; gap: 8px; }
+.of-card, .of-cand { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg2); border-left: 4px solid var(--rc); }
+.of-card.hl { animation: ofHl 1.4s ease-out; }
+@keyframes ofHl { 0% { box-shadow: 0 0 0 3px var(--rc); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.of-ava { width: 48px; height: 58px; border-radius: 12px; background: color-mix(in srgb, var(--rc) 18%, transparent); display: grid; place-items: end center; overflow: hidden; }
+.of-ava.sm { width: 42px; height: 50px; }
+.of-ava svg { width: 88%; height: auto; display: block; }
+.of-cb { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.of-ct { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.of-ct b { font-size: 15px; }
+.of-role { font: 700 11px var(--sans); letter-spacing: 0.04em; color: var(--rc); text-transform: uppercase; }
+.of-cb .linkish { background: none; border: 0; padding: 0; color: var(--amber); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.of-bars { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.of-bar { position: relative; width: 120px; height: 18px; border-radius: 6px; background: color-mix(in srgb, var(--tx) 8%, transparent); overflow: hidden; }
+.of-bar i { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--rc) 55%, transparent); border-radius: 6px; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.of-bar.mood i { background: color-mix(in srgb, #f59e0b 50%, transparent); }
+.of-bar em { position: relative; font: 700 10.5px/18px var(--sans); font-style: normal; padding-left: 7px; }
+.of-cs { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; text-align: right; }
+.of-cs b { font-size: 15px; }
+.of-cs b.up { color: var(--up); }
+.of-cs b.dn { color: var(--dn); }
+.of-cs b small { font-size: 11px; font-weight: 600; }
+.of-ca { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.of-empty { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 14px; border: 1px dashed var(--line); color: var(--mut); }
+.of-empty b { color: var(--tx); }
+.of-cand .of-cb small:last-child { font-size: 12px; }
+@media (max-width: 600px) {
+  .of-card, .of-cand { grid-template-columns: auto 1fr; }
+  .of-cs { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .of-bar { width: 100px; }
+}
+.of-lv { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.of-lv > div:first-child { display: flex; flex-direction: column; gap: 2px; }
+.of-lv > div:first-child b { font-size: 20px; }
+.of-lv-nx { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.of-log { display: flex; flex-direction: column; }
+.of-li { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: 13px; align-items: baseline; }
+.of-li:last-child { border-bottom: 0; }
+.of-lt { color: var(--mut); font-size: 12px; }
+.of-li b.up { color: var(--up); }
+.of-li b.dn { color: var(--dn); }
+.of-strats { display: flex; flex-direction: column; gap: 8px; }
+.of-strat { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); cursor: pointer; }
+.of-strat:has(input:checked) { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, transparent); }
+.of-strat span { display: flex; flex-direction: column; gap: 2px; }
+.of-strat small { color: var(--mut); }
 
 </style>
 <style id="pbCalm">
