@@ -26076,8 +26076,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       <div class="pb-rd-t"><b>Have a promo code?</b><small>Type it in for free coins, cash or items.</small></div>
       <form class="pb-rd-f" id="pbRdF" autocomplete="off"><input id="pbRdIn" maxlength="24" placeholder="ENTER CODE" aria-label="Promo code" autocapitalize="characters" spellcheck="false"><button class="btn primary" id="pbRdGo" type="submit">Redeem</button></form>
       <div class="pb-rd-msg" id="pbRdMsg" role="status"></div></section>`;
-    if (anchor) anchor.insertAdjacentHTML('afterend', html);
-    else v.insertAdjacentHTML('afterbegin', html);
+    // the packs lead the Shop; the code box waits at the bottom
+    v.insertAdjacentHTML('beforeend', html);
     document.getElementById('pbRdF').onsubmit = e => {
       e.preventDefault();
       redeem(document.getElementById('pbRdIn').value, document.getElementById('pbRdGo'), document.getElementById('pbRdMsg'));
@@ -30574,7 +30574,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       if (!acct) return;
       const busy = document.body.classList.contains('gated') || document.querySelector('#modalRoot.open,#packRoot.open,#authGate');
       stable = busy ? 0 : stable + 1;
-      if (stable >= 3) dailyPrompt();
+      if (stable >= 3 && !window.PBCalm) dailyPrompt();
     } catch (e) {}
   }, 1000);
 
@@ -31011,6 +31011,9 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
 
   window.PBProgress = {
     addPoints: n => addPts(n, 'api'),
+    // the daily calendar, for the Home card
+    calToday: () => (acct && calCanClaim() ? { day: C().days.length + 1, of: CAL_DAYS, rewards: calReward(C().days.length + 1).map(r => ({ name: rwName(r), face: rwFace(r), rar: rwRar(r) })) } : null),
+    claimCal: () => claimCalendar(),
     prestige: () => (acct ? prestige() : 0),
     badge: n => badge(n == null ? prestige() : n, 'inl'),
     season,
@@ -42681,6 +42684,116 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   setTimeout(contrast, 300);
 
   window.PBLegal = { contrast, download, notice, links: LINKS };
+})();
+
+/* ===================== CALM: make it feel made, not generated =====================
+   - nothing pops up on its own at launch: the daily reward is a card on Home
+   - one toast at a time, no news toasts in the first seconds, no emoji bullets
+   - Home leads with the account value; the stat strip keeps only what matters
+   - the floating Buck button never covers the last thing on a page
+================================================================================== */
+(() => {
+  window.PBCalm = true;
+  const T0 = Date.now();
+  const EMO = /^(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}☀-➿️‍]|\s)+/u;
+  const deEmoji = s => (typeof s === 'string' ? s.replace(EMO, '') : s);
+
+  /* ---------- toasts: one voice at a time ---------- */
+  const t0 = toast;
+  toast = function (msg, kind, icon) {
+    if (kind === 'news' && Date.now() - T0 < 9000) {
+      // quiet start: headlines still land in the bell, just not on screen
+      try {
+        window.PBNotify && PBNotify.push({ kind: 'news', title: deEmoji(String(msg)) });
+      } catch (e) {}
+      return;
+    }
+    return t0.call(this, deEmoji(msg), kind, kind === 'news' ? '' : icon);
+  };
+
+  /* ---------- headlines read like headlines ---------- */
+  const an0 = addNews;
+  addNews = function (item, quiet) {
+    if (item && typeof item.text === 'string') item.text = deEmoji(item.text);
+    return an0.call(this, item, quiet);
+  };
+  try {
+    (window.NEWS || (typeof NEWS !== 'undefined' ? NEWS : [])).forEach(n => n && typeof n.text === 'string' && (n.text = deEmoji(n.text)));
+  } catch (e) {}
+
+  /* ---------- Home: one hero, three numbers ---------- */
+  try {
+    if (typeof STAT_CARDS !== 'undefined') {
+      for (let i = STAT_CARDS.length - 1; i >= 0; i--) if (['coins', 'luck', 'rank'].includes(STAT_CARDS[i][0])) STAT_CARDS.splice(i, 1);
+      const pl = STAT_CARDS.find(x => x[0] === 'port');
+      if (pl) pl[1] = 'Invested';
+    }
+  } catch (e) {}
+
+  /* ---------- daily reward lives on Home, not in a pop-up ---------- */
+  function dailyCard() {
+    const P = window.PBProgress;
+    const d = P && P.calToday && P.calToday();
+    let el = document.getElementById('cmDaily');
+    if (!d) {
+      if (el) el.remove();
+      return;
+    }
+    const v = document.getElementById('view');
+    if (!v || document.body.dataset.screen !== 'home') return;
+    const html = `<div class="cm-d-t"><small>Daily reward</small><b>Day ${d.day} <span>of ${d.of}</span></b></div>
+      <div class="cm-d-rw">${d.rewards.map(r => `<span class="cm-d-gi r-${r.rar}">${r.face}<em>${esc(r.name)}</em></span>`).join('')}</div>
+      <button class="btn primary cm-d-go" type="button">Claim</button>`;
+    if (!el) {
+      el = document.createElement('section');
+      el.id = 'cmDaily';
+      el.className = 'card cm-daily';
+      el.setAttribute('aria-label', 'Daily reward');
+      const after = v.querySelector('.stats-wrap') || v.querySelector('.card');
+      if (after) after.insertAdjacentElement('afterend', el);
+      else v.prepend(el);
+    }
+    if (el._h !== html) {
+      el._h = html;
+      el.innerHTML = html;
+      el.querySelector('.cm-d-go').onclick = () => {
+        P.claimCal();
+        el.classList.add('done');
+        setTimeout(() => el.remove(), 450);
+      };
+    }
+  }
+  const hm0 = Home.mount;
+  Home.mount = function () {
+    const r = hm0.apply(this, arguments);
+    setTimeout(dailyCard, 50);
+    return r;
+  };
+  setInterval(dailyCard, 5000);
+
+  /* ---------- the floating Buck button leaves room at the bottom ---------- */
+  document.documentElement.classList.add('cm-on');
+
+  /* ---------- Profile: tidy copy ---------- */
+  const pm = SCREENS.profile && SCREENS.profile.mount;
+  if (pm)
+    SCREENS.profile.mount = function (v) {
+      const r = pm.apply(this, arguments);
+      try {
+        // guests: the status line only repeated the paragraph under it
+        if (!(acct && acct.user)) v.querySelector('#olStatus')?.remove();
+        const su = v.querySelector('#suBtn');
+        if (su) su.textContent = 'Create account';
+        v.querySelectorAll('.card-h h3').forEach(h => {
+          if (h.textContent.trim() === 'Cheat codes') {
+            h.textContent = 'Secret codes';
+            const p = h.closest('section').querySelector('p');
+            if (p && !p.querySelector('.sim-pill')) p.textContent = 'Found a code somewhere in the game? Enter it here.';
+          }
+        });
+      } catch (e) {}
+      return r;
+    };
 })();
 
 /* SHOP-PLUS:END */
@@ -54744,6 +54857,56 @@ body.sk-fs-on #buckFab, body.sk-fs-on .buck-fab, body.sk-fs-on #tradeBar { displ
 .np-chart.dn { color: var(--dn); }
 .np-cl { position: absolute; left: 8px; top: 2px; font: 700 10.5px var(--sans); color: var(--mut); }
 @media (max-width: 520px) { .np-chart { min-height: 70px; } .np-chart svg { min-height: 70px; } }
+
+</style>
+<style id="pbCalm">
+/* ===================== CALM ===================== */
+.cm-daily { display: flex; align-items: center; gap: 18px; padding: 14px 16px; border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); background: linear-gradient(100deg, color-mix(in srgb, var(--amber) 13%, var(--bg2)), var(--bg2) 60%); transition: opacity 0.4s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.cm-daily.done { opacity: 0; transform: scale(0.97); }
+.cm-d-t { display: flex; flex-direction: column; gap: 2px; min-width: 96px; }
+.cm-d-t small { font: 700 11px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--amber); }
+.cm-d-t b { font: 800 22px/1.1 var(--sans); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.cm-d-t b span { font-size: 13px; font-weight: 600; color: var(--mut); letter-spacing: 0; }
+.cm-d-rw { flex: 1; display: flex; gap: 8px; overflow: hidden; min-width: 0; }
+.cm-d-gi { display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 12px; background: color-mix(in srgb, var(--tx) 5%, transparent); min-width: 0; }
+.cm-d-gi > :first-child { width: 34px; height: 34px; flex: none; display: grid; place-items: center; }
+.cm-d-gi svg { max-width: 100%; max-height: 100%; }
+.cm-d-gi em { font: 700 13px var(--sans); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cm-d-gi b { display: none; }
+.cm-d-go { flex: none; min-width: 110px; }
+.cm-d-go:active { transform: scale(0.96); }
+@media (max-width: 600px) {
+  .cm-daily { flex-wrap: wrap; gap: 12px; }
+  .cm-d-rw { order: 3; flex-basis: 100%; }
+  .cm-d-go { margin-left: auto; }
+}
+/* the floating Buck button never sits on the last row of a page */
+html.cm-on #view { padding-bottom: 96px; }
+@media (max-width: 899px) { html.cm-on #view { padding-bottom: 24px; } }
+/* one or two toasts, never a stack */
+#toasts > :not(:nth-last-child(-n + 2)) { display: none !important; }
+/* tidy status lines */
+.ol-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ol-line .ol-dot { flex: none; transform: translateY(-1px); }
+/* the balance in the phone header fits instead of trailing off */
+@media (max-width: 600px) {
+  #top .top-val b, .top-val b#topVal { font-size: clamp(15px, 4.6vw, 19px) !important; max-width: none !important; overflow: visible !important; text-overflow: clip !important; white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) { .cm-daily { transition: none; } }
+/* three numbers sit on one line, even on a phone */
+html.cm-on .stat-row { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+@media (max-width: 600px) {
+  html.cm-on .stat-row { gap: 8px !important; }
+  html.cm-on .stat-card { padding: 12px 10px !important; min-width: 0; }
+  html.cm-on .stat-card::after { display: none !important; }
+  html.cm-on .stat-label { font-size: 11.5px !important; }
+  html.cm-on .stat-value { font-size: clamp(13px, 4vw, 16px) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+}
+html.cm-on .stat-value { letter-spacing: -0.01em; }
+@media (max-width: 600px) { html.cm-on .stat-value { font-size: clamp(12px, 3.6vw, 16px) !important; } }
+/* profile facts: spaced, not dot-separated soup */
+html.cm-on .prof-meta { display: flex !important; flex-wrap: wrap; gap: 2px 14px; }
+html.cm-on .prof-meta > span::before, html.cm-on .prof-meta > span::after { content: none !important; display: none !important; }
 
 </style>
 <style id="pbLegal">

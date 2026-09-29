@@ -900,8 +900,8 @@
       <div class="pb-rd-t"><b>Have a promo code?</b><small>Type it in for free coins, cash or items.</small></div>
       <form class="pb-rd-f" id="pbRdF" autocomplete="off"><input id="pbRdIn" maxlength="24" placeholder="ENTER CODE" aria-label="Promo code" autocapitalize="characters" spellcheck="false"><button class="btn primary" id="pbRdGo" type="submit">Redeem</button></form>
       <div class="pb-rd-msg" id="pbRdMsg" role="status"></div></section>`;
-    if (anchor) anchor.insertAdjacentHTML('afterend', html);
-    else v.insertAdjacentHTML('afterbegin', html);
+    // the packs lead the Shop; the code box waits at the bottom
+    v.insertAdjacentHTML('beforeend', html);
     document.getElementById('pbRdF').onsubmit = e => {
       e.preventDefault();
       redeem(document.getElementById('pbRdIn').value, document.getElementById('pbRdGo'), document.getElementById('pbRdMsg'));
