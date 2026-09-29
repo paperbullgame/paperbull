@@ -22,10 +22,13 @@ i=s.rindex('</body>'); s=s[:i]+block+s[i:]
 open(p,'w',encoding='utf-8').write(s); print('ok', len(s))
 # ---- brand: favicon + app icons ----
 import urllib.parse as _u
+GAME_CSP="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://assets.parqet.com https://financialmodelingprep.com https://coin-images.coingecko.com https://cdn.jsdelivr.net; font-src 'self' data:; connect-src 'self' https://amnbnuabxoxhggidlhcn.supabase.co wss://amnbnuabxoxhggidlhcn.supabase.co https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; media-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'"
+ADMIN_CSP="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://assets.parqet.com https://financialmodelingprep.com https://coin-images.coingecko.com https://cdn.jsdelivr.net; font-src 'self' data:; connect-src https://amnbnuabxoxhggidlhcn.supabase.co wss://amnbnuabxoxhggidlhcn.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'"
+LEGAL_CSP="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://amnbnuabxoxhggidlhcn.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'"
 _logo=open('src/brand/logo.svg',encoding='utf-8').read().strip()
 _fav='data:image/svg+xml,'+_u.quote(_logo)
 _ati='data:image/png;base64,'+base64.b64encode(open('src/brand/icon-180.png','rb').read()).decode()
-_head='<!-- BRAND:START -->\n<link rel="icon" type="image/svg+xml" href="'+_fav+'">\n<link rel="apple-touch-icon" href="'+_ati+'">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="PAPERBULL">\n<meta name="description" content="PAPERBULL: trade stocks and crypto with fake money. Learn, compete with friends and climb the leaderboard.">\n<!-- BRAND:END -->\n'
+_head='<!-- BRAND:START -->\n<meta http-equiv="Content-Security-Policy" content="%s">\n<meta name="referrer" content="strict-origin-when-cross-origin">\n'%GAME_CSP+'<link rel="icon" type="image/svg+xml" href="'+_fav+'">\n<link rel="apple-touch-icon" href="'+_ati+'">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="PAPERBULL">\n<meta name="description" content="PAPERBULL: trade stocks and crypto with fake money. Learn, compete with friends and climb the leaderboard.">\n<!-- BRAND:END -->\n'
 s2=open('index.html',encoding='utf-8').read()
 s2=re.sub(r'<!-- BRAND:START -->.*?<!-- BRAND:END -->\n','',s2,flags=re.S)
 s2=s2.replace('<title>PAPERBULL</title>\n','<title>PAPERBULL</title>\n'+_head,1)
@@ -47,7 +50,7 @@ for _m in re.finditer(r"\{\s*id: '([a-z0-9_]+)',\s*type: '([a-z]+)',\s*name: '([
 for _i,_n,_pr in re.findall(r"id: '([a-z]+)',\s*name: '([^']+)',\s*price: (\d+),\s*cards", s)+re.findall(r"\[\s*'([a-z]+)',\s*'([^']+ Pack)',\s*(\d+),\s*\d+,", s):
     if 'pack:'+_i not in [x[0] for x in _items]: _items.append(['pack:'+_i,'pack',_n,int(_pr),None])
 _assets=re.findall(r"^  \['([A-Z0-9.]+)', '([^']+)', '(stock|crypto)', ", s, flags=re.M)
-_a=open('src/admin.html',encoding='utf-8').read().replace('/*__ADMIN_ABUSE__*/',open('src/admin-abuse.js',encoding='utf-8').read()).replace('__EXOTIC_CSS__',open('src/exotic.css',encoding='utf-8').read()+'\n'+open('src/abuse.css',encoding='utf-8').read()).replace('__EXOTIC_JS__',open('src/exotic-art.js',encoding='utf-8').read()+'\n'+open('src/abuse-fx.js',encoding='utf-8').read()+'\n'+open('src/abuse-icons.js',encoding='utf-8').read()).replace('__ITEMS__',_j.dumps(_items)).replace('__ASSETS__',_j.dumps(_assets)).replace('__SANS__',f64('sans.woff2')).replace('__MONO5__',f64('mono-500.woff2')).replace('__FAVICON__',_fav).replace('__LOGO__',_j.dumps(_logo.replace('xmlns="http://www.w3.org/2000/svg" ','').replace('pbLg','pbLgA')))
+_a=open('src/admin.html',encoding='utf-8').read().replace('/*__ADMIN_ABUSE__*/',open('src/admin-abuse.js',encoding='utf-8').read()).replace('__EXOTIC_CSS__',open('src/exotic.css',encoding='utf-8').read()+'\n'+open('src/abuse.css',encoding='utf-8').read()).replace('__EXOTIC_JS__',open('src/exotic-art.js',encoding='utf-8').read()+'\n'+open('src/abuse-fx.js',encoding='utf-8').read()+'\n'+open('src/abuse-icons.js',encoding='utf-8').read()).replace('__ITEMS__',_j.dumps(_items)).replace('__ASSETS__',_j.dumps(_assets)).replace('__SANS__',f64('sans.woff2')).replace('__MONO5__',f64('mono-500.woff2')).replace('__FAVICON__',_fav).replace('<!--__CSP__-->','<meta http-equiv="Content-Security-Policy" content="%s" />'%ADMIN_CSP).replace('__LOGO__',_j.dumps(_logo.replace('xmlns="http://www.w3.org/2000/svg" ','').replace('pbLg','pbLgA')))
 open('admin.html','w',encoding='utf-8').write(_a); print('admin ok', len(_a))
 # ---- legal pages ----
 import glob as _g
@@ -62,6 +65,7 @@ for _p,_lbl in _pages:
     _nav=''.join('<a href="%s.html"%s>%s</a>'%(q,' aria-current="page"' if q==_p else '',l) for q,l in _pages)
     _h='''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="%s"><meta name="referrer" content="strict-origin-when-cross-origin">
 <title>%s · PAPERBULL</title><meta name="description" content="PAPERBULL %s">
 <link rel="icon" type="image/svg+xml" href="%s"><link rel="stylesheet" href="legal.css"><script src="site.js"></script></head>
 <body><a class="skip" href="#main">Skip to content</a>
@@ -71,6 +75,6 @@ for _p,_lbl in _pages:
 </article></main>
 <footer class="lg-f">© <span id="lgYear">2026</span> PAPERBULL · <span data-l="operator"></span> · <span data-l="region"></span> · A game with virtual money. Not financial advice. · <a href="../">Back to the game</a></footer>
 </body></html>
-'''%(_t,_t,_fav,_nav,_b.replace('__ANON__',_anon))
+'''%(LEGAL_CSP,_t,_t,_fav,_nav,_b.replace('__ANON__',_anon))
     open('legal/%s.html'%_p,'w',encoding='utf-8').write(_h)
 print('legal ok')
