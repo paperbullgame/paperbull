@@ -26227,6 +26227,53 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     }
   });
 })();
+/* ---------- login screen always wins: popups wait until you're logged in ---------- */
+(() => {
+  try {
+    const gateUp = () => {
+      const g = document.getElementById('authGate');
+      return !!(g && g.isConnected && !g.hidden && getComputedStyle(g).display !== 'none' && g.querySelector('#agForm'));
+    };
+    const clearModal = () => {
+      const m = document.getElementById('modalRoot');
+      if (m && m.classList.contains('open')) {
+        m.classList.remove('open');
+        m.innerHTML = '';
+      }
+    };
+    const queue = [];
+    const m0 = modal;
+    modal = function () {
+      if (gateUp()) {
+        queue.push([this, arguments]);
+        return;
+      }
+      return m0.apply(this, arguments);
+    };
+    const s0 = Gate.show.bind(Gate);
+    Gate.show = function () {
+      clearModal();
+      return s0.apply(this, arguments);
+    };
+    const h0 = Gate.hide.bind(Gate);
+    Gate.hide = function () {
+      const r = h0.apply(this, arguments);
+      // show anything that waited (daily reward, gifts…) once the player is in; skip stale ones
+      setTimeout(() => {
+        const q = queue.splice(0);
+        if (q.length && !gateUp()) {
+          const [ctx, args] = q[q.length - 1];
+          try {
+            m0.apply(ctx, args);
+          } catch (e) {}
+        }
+      }, 600);
+      return r;
+    };
+  } catch (e) {
+    console.error('gate-first', e);
+  }
+})();
 
 /* =====================================================================
    LIVE — admin changes reach every open game within about a second.
@@ -41740,10 +41787,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       } catch (e) {
         console.warn('3D garden: three.js unavailable', e && e.message);
         loader.remove();
-        stage.classList.remove('g3d');
+        st.classList.remove('g3d');
         document.documentElement.classList.remove('g3d-on');
-        stage = null;
         disabled = true;
+        if (my !== enterSeq || stage !== st) return;
+        stage = null;
         toast('The 3D garden needs an internet connection. Showing the 2D garden for now.', 'info');
         const v = document.getElementById('view');
         if (v) PG().Garden.mount(v);
