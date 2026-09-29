@@ -39042,6 +39042,139 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   }
 })();
 
+/* ===================== NEWS+: a real front page ===================== */
+(() => {
+  try {
+    const N = SCREENS.news;
+    if (!N) return;
+    const CAT = n => {
+      const t = String(n.text || '');
+      if (n.kind === 'regime') return /^CRASH|plunge|sell-off/i.test(t) ? ['CRASH', 'dn'] : ['BULL RUN', 'up'];
+      if (n.kind === 'earnings') return ['EARNINGS', 'blue'];
+      if (n.kind === 'dividend') return ['DIVIDEND', 'green'];
+      if (n.kind === 'split') return ['SPLIT', 'violet'];
+      if (n.kind === 'ipo') return ['IPO', 'violet'];
+      if (!n.sym) return [n.group === 'crypto' ? 'CRYPTO' : 'ECONOMY', 'amber'];
+      if (/BREAKING/i.test(t) || n.mega) return ['BREAKING', 'dn'];
+      if (SIM[n.sym] && SIM[n.sym].type === 'crypto') return ['CRYPTO', 'amber'];
+      return ['STOCKS', 'blue'];
+    };
+    const clean = t => String(t || '').replace(/^(EARNINGS|DIVIDEND|SPLIT|IPO|BREAKING):\s*/i, '');
+    const score = n => Math.abs(n.pct || 0) * (n.mega ? 2.5 : 1) * (n.sym ? 1 : 1.6) / (1 + (nowSec() - n.t) / 1800);
+    const imp = n => {
+      const p = n.pct || 0,
+        w = Math.min(100, Math.abs(p) * 900);
+      return `<span class="np-imp ${n.up ? 'up' : 'dn'}"><b>${n.up ? '▲' : '▼'} ${fmtPct(p, 1).replace(/^[+-]/, '')}</b><i><em style="width:${w.toFixed(0)}%"></em></i></span>`;
+    };
+    const tag = n => {
+      const [c, k] = CAT(n);
+      return `<span class="np-tag t-${k}">${c}</span>`;
+    };
+    const logo = (n, big) => (n.sym && SIM[n.sym] ? assetIcon(n.sym, big) : `<span class="np-mac">${n.group === 'crypto' ? '₿' : '$'}</span>`);
+    const link = n => (n.sym && SIM[n.sym] ? `data-go="asset/${esc(n.sym)}" tabindex="0" role="link"` : '');
+    const spark = (sym, w = 120, h = 36) => {
+      const a = SIM[sym];
+      try {
+        return a && typeof sparkSVG === 'function' ? sparkSVG(a, w, h) : '';
+      } catch (e) {
+        return '';
+      }
+    };
+    function top() {
+      const pool = NEWS.filter(n => nowSec() - n.t < 6 * 3600).slice(0, 80);
+      return pool.sort((a, b) => score(b) - score(a)).slice(0, 5);
+    }
+    function heroHTML(list) {
+      if (!list.length) return '';
+      const [h, ...rest] = list;
+      const a = h.sym && SIM[h.sym];
+      return `<article class="np-hero ${h.up ? 'up' : 'dn'}" ${link(h)}>
+          <div class="np-hl">${tag(h)}<span class="np-when">${timeAgo(h.t * 1000)}</span></div>
+          <h2>${esc(clean(h.text))}</h2>
+          ${h.why ? `<p>${esc(h.why)}</p>` : ''}
+          ${a ? `<div class="np-chart ${chg24(a) >= 0 ? 'up' : 'dn'}">${spark(h.sym, 600, 120)}<span class="np-cl">${esc(h.sym)} · last 24h</span></div>` : ''}
+          <div class="np-hf">${logo(h, true)}${a ? `<span class="np-hs"><b>${esc(h.sym)}</b><small>${esc(a.name)}</small></span><span class="mono np-px">${fmtUSD(a.price)}</span>` : `<span class="np-hs"><b>Whole market</b><small>${h.group === 'crypto' ? 'Every coin feels this' : 'Stocks and coins can move'}</small></span>`}${imp(h)}${a ? '<span class="btn sm primary np-go">Trade</span>' : ''}</div>
+        </article>
+        <div class="np-cards">${rest
+          .map(
+            n => `<article class="np-card ${n.up ? 'up' : 'dn'}" ${link(n)}><div class="np-hl">${tag(n)}<span class="np-when">${timeAgo(n.t * 1000)}</span></div><b>${esc(clean(n.text))}</b><div class="np-cf">${logo(n)}<span class="np-sym">${n.sym ? esc(n.sym) : 'Market'}</span>${imp(n)}</div></article>`
+          )
+          .join('')}</div>`;
+    }
+    function itemHTML(n) {
+      return `<div class="np-it ${n.up ? 'up' : 'dn'}" ${link(n)}>${logo(n)}<div class="np-ib"><div class="np-hl">${tag(n)}<span class="np-sym">${n.sym ? esc(n.sym) : ''}</span><span class="np-when">${timeAgo(n.t * 1000)}</span></div><b>${esc(clean(n.text))}</b>${n.why ? `<small class="np-why">${esc(n.why)}</small>` : ''}</div>${imp(n)}</div>`;
+    }
+    function movers() {
+      const xs = CORE.filter(a => !a.hidden).map(a => [a, chg24(a)]);
+      xs.sort((a, b) => b[1] - a[1]);
+      const pick = [...xs.slice(0, 4), ...xs.slice(-4).reverse()];
+      return pick.map(([a, c]) => `<button class="np-mv ${c >= 0 ? 'up' : 'dn'}" data-go="asset/${esc(a.sym)}">${assetIcon(a.sym)}<span><b>${esc(a.sym)}</b><small class="mono">${fmtUSD(a.price)}</small></span><em class="mono">${fmtPct(c)}</em></button>`).join('');
+    }
+
+    const m0 = N.mount;
+    N.mount = function (v) {
+      const r = m0.apply(this, arguments);
+      try {
+        const hero = v.querySelector('.nd-hero');
+        if (hero) {
+          const d = new Date();
+          hero.classList.add('np-mast');
+          hero.innerHTML = `<div class="np-mt"><span class="np-date">${d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span><h1>The PAPERBULL <em>Times</em></h1><span class="np-live"><i></i>LIVE · updates every few seconds</span></div>`;
+          hero.insertAdjacentHTML('afterend', '<section class="np-front" id="npFront"></section><section class="card np-movers"><div class="card-h"><h3>Biggest movers today</h3><span class="muted small">Tap one to trade it</span></div><div class="np-mvs" id="npMv"></div></section>');
+        }
+        // the quick guide folds away
+        const guide = v.querySelector('.nd-guide');
+        if (guide) {
+          const card = guide.closest('section');
+          const h3 = card && card.querySelector('h3');
+          if (card && h3) {
+            card.classList.add('np-guide');
+            card.innerHTML = `<details><summary><b>What moves the market?</b><span class="muted small">A 1-minute guide</span></summary>${guide.outerHTML}</details>`;
+          }
+        }
+        this.front(true);
+      } catch (e) {
+        console.error(e);
+      }
+      return r;
+    };
+    N.front = function (full) {
+      const el = document.getElementById('npFront');
+      if (!el) return;
+      const t = top(),
+        k = t.map(n => n.id).join('|');
+      if (full || el._k !== k || Date.now() - (el._t || 0) > 20000) {
+        el._k = k;
+        el._t = Date.now();
+        el.innerHTML = t.length ? heroHTML(t) : '<div class="card empty">The newsroom is quiet. The first headline is on its way…</div>';
+      }
+      const mv = document.getElementById('npMv');
+      if (mv && (full || Date.now() - (mv._t || 0) > 5000)) {
+        mv._t = Date.now();
+        mv.innerHTML = movers();
+      }
+    };
+    const f0 = N.feed;
+    N.feed = function (full) {
+      const el = document.getElementById('ndFeed');
+      if (!el) return f0.apply(this, arguments);
+      const xs = NEWS.filter(n => (this.f === 'all' ? true : this.f === 'macro' ? !n.sym : this.f === 'mine' ? n.sym && acct.positions[n.sym] : n.sym ? SIM[n.sym]?.type === this.f : n.group === this.f)).slice(0, 40);
+      const key = this.f + '|' + (xs[0]?.id || '') + xs.length;
+      if (full || el._k !== key || Date.now() - (el._t || 0) > 15000) {
+        el._k = key;
+        el._t = Date.now();
+        el.classList.add('np-feed');
+        el.innerHTML = xs.length ? xs.map(itemHTML).join('') : `<div class="empty">${this.f === 'mine' ? 'No headlines about stocks you own yet.' : 'Waiting for the next headline…'}</div>`;
+      }
+      try {
+        this.front(false);
+      } catch (e) {}
+    };
+  } catch (e) {
+    console.error('news+', e);
+  }
+})();
+
 /* ===================== HUBS: fewer tabs, related pages grouped with sub-tabs ===================== */
 (() => {
   try {
@@ -39122,6 +39255,89 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     };
   } catch (e) {
     console.error('hubs', e);
+  }
+})();
+/* ===================== TAB ICONS v2: glossy app-style tiles with solid glyphs ===================== */
+(() => {
+  try {
+    const S = b => `<svg viewBox="0 0 24 24" class="pbi pbx" aria-hidden="true">${b}</svg>`;
+    const W = 'fill="#fff"',
+      H = 'fill="#fff" fill-opacity=".55"';
+    const G = {
+      home: S(`<path ${W} d="M12 3.2 2.8 10.4c-.6.5-.2 1.4.5 1.4H5v7.6c0 .9.7 1.6 1.6 1.6H10v-5.2c0-.6.4-1 1-1h2c.6 0 1 .4 1 1V21h3.4c.9 0 1.6-.7 1.6-1.6v-7.6h1.7c.7 0 1.1-.9.5-1.4z"/>`),
+      markets: S(`<rect ${H} x="4" y="9" width="4.2" height="9" rx="1.2"/><path ${H} d="M6.1 5.5v3.5M6.1 18v2.5" stroke="#fff" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round"/><rect ${W} x="10" y="5" width="4.2" height="11" rx="1.2"/><path d="M12.1 2.5V5M12.1 16v3" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><rect ${W} x="16" y="8" width="4.2" height="7" rx="1.2"/><path d="M18.1 5.5V8M18.1 15v3.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`),
+      news: S(`<path ${W} d="M4.5 4h11A1.5 1.5 0 0 1 17 5.5V19a2 2 0 0 0 1.2 1.8H5.5A2.5 2.5 0 0 1 3 18.3V5.5A1.5 1.5 0 0 1 4.5 4z"/><path ${H} d="M17.5 8.5h2A1.5 1.5 0 0 1 21 10v8.6a2.2 2.2 0 0 1-3.5 1.8z"/><rect x="5.5" y="7" width="9" height="4" rx="1" fill="#000" fill-opacity=".25"/><path d="M5.8 14h8.5M5.8 17h6" stroke="#000" stroke-opacity=".25" stroke-width="1.6" stroke-linecap="round"/>`),
+      portfolio: S(`<path ${H} d="M13 2.6A9.4 9.4 0 0 1 21.4 11H13z"/><path ${W} d="M11 4.6v8.4h8.4A9.4 9.4 0 1 1 11 4.6z"/>`),
+      inventory: S(`<path ${H} d="M9 5V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1h-1.8V4.2a.4.4 0 0 0-.4-.4h-1.6a.4.4 0 0 0-.4.4V5z"/><path ${W} d="M6 5.5h12A3 3 0 0 1 21 8.5v9A3.5 3.5 0 0 1 17.5 21h-11A3.5 3.5 0 0 1 3 17.5v-9a3 3 0 0 1 3-3z"/><rect x="3" y="11" width="18" height="2.2" fill="#000" fill-opacity=".2"/><rect x="9.5" y="10" width="5" height="4.4" rx="1.2" fill="#000" fill-opacity=".3"/>`),
+      shop: S(`<path ${W} d="M5.2 8h13.6a1 1 0 0 1 1 1.1l-1 10.6A2.4 2.4 0 0 1 16.4 22H7.6a2.4 2.4 0 0 1-2.4-2.3l-1-10.6a1 1 0 0 1 1-1.1z"/><path d="M8.5 10V7a3.5 3.5 0 0 1 7 0v3" stroke="#fff" stroke-opacity=".7" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="8.5" cy="11" r="1.2" fill="#000" fill-opacity=".25"/><circle cx="15.5" cy="11" r="1.2" fill="#000" fill-opacity=".25"/>`),
+      play: S(`<path ${W} d="M7.5 6h9a5.5 5.5 0 0 1 5.4 6.6l-1 4.6a2.8 2.8 0 0 1-4.8 1.3L14 16.3h-4l-2.1 2.2a2.8 2.8 0 0 1-4.8-1.3l-1-4.6A5.5 5.5 0 0 1 7.5 6z"/><path d="M7.5 9.5v4M5.5 11.5h4" stroke="#000" stroke-opacity=".3" stroke-width="1.8" stroke-linecap="round"/><circle cx="15.5" cy="10.2" r="1.3" fill="#000" fill-opacity=".3"/><circle cx="17.8" cy="12.6" r="1.3" fill="#000" fill-opacity=".3"/>`),
+      social: S(`<path ${H} d="M9 3h9a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-.5v2.6c0 .5-.6.8-1 .4L13.4 14H9a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/><path ${W} d="M5 8h9a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H9.6l-3.1 3c-.4.4-1 .1-1-.4V19H5a3 3 0 0 1-3-3v-5a3 3 0 0 1 3-3z"/><circle cx="6.3" cy="13.5" r="1.1" fill="#000" fill-opacity=".3"/><circle cx="9.5" cy="13.5" r="1.1" fill="#000" fill-opacity=".3"/><circle cx="12.7" cy="13.5" r="1.1" fill="#000" fill-opacity=".3"/>`),
+      profile: S(`<circle ${W} cx="12" cy="8" r="4.6"/><path ${W} d="M3.5 20.2C4.4 16 7.8 13.6 12 13.6s7.6 2.4 8.5 6.6c.1.5-.3.8-.8.8H4.3c-.5 0-.9-.3-.8-.8z"/>`),
+      settings: S(`<path ${W} d="M10.3 2.5h3.4l.5 2.6 1.7.8 2.3-1.4 2.4 2.4-1.4 2.3.8 1.7 2.6.5v3.4l-2.6.5-.8 1.7 1.4 2.3-2.4 2.4-2.3-1.4-1.7.8-.5 2.6h-3.4l-.5-2.6-1.7-.8-2.3 1.4-2.4-2.4 1.4-2.3-.8-1.7-2.6-.5v-3.4l2.6-.5.8-1.7L4.1 7 6.5 4.6l2.3 1.4 1.7-.8z"/><circle cx="12" cy="12" r="3.4" fill="#000" fill-opacity=".3"/>`),
+      pets: S(`<ellipse ${W} cx="5.6" cy="10.4" rx="2.1" ry="2.6"/><ellipse ${W} cx="9.4" cy="5.8" rx="2.1" ry="2.7"/><ellipse ${W} cx="14.6" cy="5.8" rx="2.1" ry="2.7"/><ellipse ${W} cx="18.4" cy="10.4" rx="2.1" ry="2.6"/><path ${W} d="M12 11.2c-3 0-6 3.7-6 6.6 0 1.8 1.4 3.2 3.1 3.2 1.2 0 1.8-.6 2.9-.6s1.7.6 2.9.6c1.7 0 3.1-1.4 3.1-3.2 0-2.9-3-6.6-6-6.6z"/>`),
+      garden: S(`<path ${H} d="M3.5 21h17v-1.5a2 2 0 0 0-2-2h-13a2 2 0 0 0-2 2z"/><path d="M12 17.5v-7" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path ${W} d="M12 11.5C12 7.4 9.3 5 4.6 5c0 4.2 2.8 6.5 7.4 6.5zM12 9.8c0-3.8 2.7-6.3 7.4-6.3 0 3.9-2.7 6.3-7.4 6.3z"/>`),
+      bank: S(`<path ${W} d="M12 2.5 21.5 7.6c.5.3.3 1.1-.3 1.1H2.8c-.6 0-.8-.8-.3-1.1z"/><path ${H} d="M5 10h2.6v7.5H5zM10.7 10h2.6v7.5h-2.6zM16.4 10H19v7.5h-2.6z"/><rect ${W} x="2.5" y="18.5" width="19" height="3" rx="1.2"/>`),
+      pass: S(`<path ${W} d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v2.6a2.5 2.5 0 0 0 0 4.8V17a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 17v-2.6a2.5 2.5 0 0 0 0-4.8V7A1.5 1.5 0 0 1 4 5.5z"/><path d="M15 6.5v2M15 11v2M15 15.5v2" stroke="#000" stroke-opacity=".3" stroke-width="1.6" stroke-linecap="round"/><path d="m8.6 9 .9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3z" fill="#000" fill-opacity=".3"/>`),
+      store: S(`<path ${W} d="M6.3 3.5h11.4l4 5.6L12 21 2.3 9.1z"/><path ${H} d="M2.3 9.1h19.4L12 21z"/><path d="M8.5 3.5 12 9.1l3.5-5.6" stroke="#000" stroke-opacity=".2" stroke-width="1.4" fill="none"/>`),
+      ranks: S(`<path ${W} d="M7 3h10v6.5a5 5 0 0 1-10 0z"/><path d="M17 5h2.5v1.8A3.4 3.4 0 0 1 16.4 10M7 5H4.5v1.8A3.4 3.4 0 0 0 7.6 10" stroke="#fff" stroke-opacity=".6" stroke-width="1.8" fill="none"/><path ${H} d="M10.3 14.4h3.4l.5 3.1h-4.4z"/><rect ${W} x="7.5" y="18" width="9" height="3" rx="1.2"/>`),
+      learn: S(`<path ${W} d="M12 3.5 22 8.4 12 13.3 2 8.4z"/><path ${H} d="M6 11v4.2c0 1.8 2.7 3.3 6 3.3s6-1.5 6-3.3V11l-6 3z"/><path d="M21 9v5.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="21" cy="15.2" r="1.3" fill="#fff"/>`),
+      tourney: S(`<path ${W} d="M7 3h10v6.5a5 5 0 0 1-10 0z"/><path d="m12 4.8.9 1.8 2 .3-1.5 1.4.4 2L12 9.3l-1.8 1 .4-2-1.5-1.4 2-.3z" fill="#000" fill-opacity=".3"/><rect ${W} x="7.5" y="18" width="9" height="3" rx="1.2"/><path ${H} d="M10.3 14.4h3.4l.5 3.1h-4.4z"/>`),
+      more: S(`<rect ${W} x="3.5" y="3.5" width="7" height="7" rx="2"/><rect ${H} x="13.5" y="3.5" width="7" height="7" rx="2"/><rect ${H} x="3.5" y="13.5" width="7" height="7" rx="2"/><rect ${W} x="13.5" y="13.5" width="7" height="7" rx="2"/>`),
+    };
+    const IC = window.PBIcons;
+    if (IC) Object.assign(IC, G);
+    if (window.PBTabColors) Object.assign(PBTabColors, { news: ['#fde047', '#ea8a00'], social: ['#7dd3fc', '#2563eb'], profile: ['#5eead4', '#0f9488'] });
+    function swap() {
+      for (const a of document.querySelectorAll('#nav a[data-s], #navMore')) {
+        const k = a.id === 'navMore' ? 'more' : a.dataset.s,
+          t = a.querySelector('.nt');
+        if (!G[k] || !t) continue;
+        const sv = t.querySelector('svg');
+        if (sv && !sv.classList.contains('pbx')) sv.outerHTML = G[k];
+        if (window.PBTabColors && PBTabColors[k]) {
+          t.style.setProperty('--n1', PBTabColors[k][0]);
+          t.style.setProperty('--n2', PBTabColors[k][1]);
+        }
+      }
+      for (const s of document.querySelectorAll('.ms-t .nt svg:not(.pbx), .pg-h .pg-ic svg:not(.pbx)')) {
+        const host = s.closest('.ms-t'),
+          k = host ? host.dataset.mgo : document.body.dataset.screen;
+        if (G[k]) s.outerHTML = G[k];
+      }
+      const pic = document.querySelector('#view > .pg-h .pg-ic'),
+        sk = document.body.dataset.screen,
+        hk = window.PBHubs && PBHubs.hubOf[sk] ? PBHubs.hubOf[sk] : sk;
+      if (pic && window.PBTabColors) {
+        const c = PBTabColors[sk] || PBTabColors[hk];
+        if (c) {
+          pic.style.setProperty('--n1', c[0]);
+          pic.style.setProperty('--n2', c[1]);
+        }
+        const sv = pic.querySelector('svg');
+        if (sv && !sv.classList.contains('pbx') && (G[sk] || G[hk])) sv.outerHTML = G[sk] || G[hk];
+      }
+      for (const s of document.querySelectorAll('.hub-tabs button[data-hub] > svg:not(.pbx)')) {
+        const k = s.parentElement.dataset.hub;
+        if (G[k]) s.outerHTML = G[k];
+      }
+    }
+    swap();
+    setTimeout(swap, 0);
+    setTimeout(swap, 1000);
+    setInterval(swap, 2500);
+    const r0 = router;
+    router = function () {
+      const o = r0.apply(this, arguments);
+      try {
+        setTimeout(swap, 0);
+      } catch (e) {}
+      return o;
+    };
+    new MutationObserver(ms => {
+      for (const m of ms) for (const n of m.addedNodes) if (n.classList && n.classList.contains('more-sheet')) setTimeout(swap, 0);
+    }).observe(document.body, { childList: true });
+  } catch (e) {
+    console.error('tab icons', e);
   }
 })();
 
@@ -50970,6 +51186,24 @@ html body #nav:not(#_):not(#_):not(#_):not(#_):not(#_) a.hub-sub, html body #nav
 @media (prefers-reduced-motion: reduce) { .egg-wob, .ig-pet { animation: none; } }
 .hub-tabs svg { fill: none; stroke: currentColor; stroke-width: 1.9; }
 .hub-tabs svg .du { fill: currentColor; fill-opacity: 0.18; }
+/* ===== tab icons v2: glossy app tiles ===== */
+html body #nav:not(#_):not(#_):not(#_):not(#_):not(#_) a .nt, html body .ms-t .nt:not(#_), html body .pg-h .pg-ic:not(#_) {
+  color: #fff !important;
+  background: radial-gradient(130% 90% at 25% 0%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 55%), linear-gradient(150deg, var(--n1), var(--n2)) !important;
+  box-shadow: 0 3px 8px -3px color-mix(in srgb, var(--n2) 80%, transparent), inset 0 -2px 0 rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  border-radius: 9px !important;
+}
+html body #nav:not(#_):not(#_):not(#_):not(#_):not(#_) a .nt svg.pbx, html body .ms-t .nt svg.pbx { width: 18px !important; height: 18px !important; stroke: none !important; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18)); }
+html body .pg-h .pg-ic:not(#_) svg.pbx { width: 26px !important; height: 26px !important; stroke: none !important; }
+svg.pbx * { stroke-linejoin: round; }
+html body #nav:not(#_):not(#_):not(#_):not(#_):not(#_) a:not(.on) .nt { filter: saturate(0.9); }
+html body #nav:not(#_):not(#_):not(#_):not(#_):not(#_) a:hover .nt { transform: translateY(-1px) scale(1.07) rotate(-3deg) !important; }
+@media (max-width: 899px) {
+  html body #nav:not(#_):not(#_):not(#_):not(#_):not(#_) a:not(.on) .nt { filter: saturate(0.35) opacity(0.75); }
+}
+.hub-tabs svg.pbx { fill: currentColor; }
+.hub-tabs svg.pbx [fill="#fff"] { fill: currentColor; }
+.hub-tabs svg.pbx [stroke="#fff"] { stroke: currentColor; }
 
 </style>
 <style id="pbNotify">
@@ -51079,6 +51313,90 @@ body.sk-fs-on #buckFab, body.sk-fs-on .buck-fab, body.sk-fs-on #tradeBar { displ
   .skf-ctl .btn { flex: 1; }
   .skf-px { font-size: 18px; }
 }
+
+</style>
+<style id="pbNewsPlus">
+/* ===================== NEWS+ ===================== */
+.np-mast { padding: 22px 22px 18px !important; background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, #ffb52e 16%, transparent), transparent 60%), var(--bg2, var(--card)) !important; }
+.np-mt { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; border-bottom: 3px double var(--line); padding-bottom: 12px; }
+.np-mt h1 { margin: 0; font: 900 clamp(26px, 4vw, 40px)/1.05 Georgia, 'Times New Roman', serif; letter-spacing: -0.01em; }
+.np-mt h1 em { font-style: italic; color: var(--amber); }
+.np-date { font: 700 11px var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--mut); }
+.np-live { display: inline-flex; align-items: center; gap: 6px; font: 800 10.5px var(--sans); letter-spacing: 0.08em; color: #ff4d5e; }
+.np-live i { width: 7px; height: 7px; border-radius: 50%; background: #ff4d5e; box-shadow: 0 0 0 0 #ff4d5e; animation: npPulse 1.6s infinite; }
+@keyframes npPulse { 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.np-front { display: grid; grid-template-columns: 1.35fr 1fr; gap: 12px; margin-bottom: 14px; }
+.np-hero { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 22px; border-radius: 20px; border: 1px solid var(--line); background: linear-gradient(160deg, color-mix(in srgb, var(--up) 14%, transparent), transparent 55%), var(--bg2, var(--card)); cursor: pointer; overflow: hidden; min-height: 230px; }
+.np-hero.dn { background: linear-gradient(160deg, color-mix(in srgb, var(--dn) 16%, transparent), transparent 55%), var(--bg2, var(--card)); }
+.np-hero h2 { margin: 0; font: 800 clamp(20px, 2.4vw, 28px)/1.2 Georgia, 'Times New Roman', serif; }
+.np-hero p { margin: 0; color: var(--mut); font-size: 14px; line-height: 1.45; }
+.np-hf { margin-top: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line); }
+.np-hs { display: flex; flex-direction: column; min-width: 0; }
+.np-hs small { color: var(--mut); font-size: 12px; }
+.np-px { font-weight: 700; margin-left: 4px; }
+.np-go { margin-left: auto; }
+.np-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.np-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg2, var(--card)); cursor: pointer; transition: transform 0.12s, border-color 0.12s; min-width: 0; }
+.np-card:hover, .np-hero:hover, .np-it:hover { border-color: color-mix(in srgb, var(--amber) 55%, var(--line)); }
+.np-card:hover { transform: translateY(-2px); }
+.np-card > b { font: 700 14px/1.35 var(--sans); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.np-cf { margin-top: auto; display: flex; align-items: center; gap: 8px; }
+.np-hl { display: flex; align-items: center; gap: 8px; }
+.np-when { font-size: 11.5px; color: var(--mut); }
+.np-sym { font: 800 12px var(--mono, monospace); color: var(--tx); }
+.np-tag { font: 900 9.5px var(--sans); letter-spacing: 0.1em; padding: 3px 7px; border-radius: 5px; color: #fff; }
+.np-tag.t-up { background: #16a34a; }
+.np-tag.t-dn { background: #e11d48; }
+.np-tag.t-blue { background: #2563eb; }
+.np-tag.t-green { background: #0d9488; }
+.np-tag.t-violet { background: #7c3aed; }
+.np-tag.t-amber { background: #d97706; }
+.np-imp { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 3px; margin-left: auto; min-width: 64px; }
+.np-imp b { font: 800 12.5px var(--mono, monospace); }
+.np-imp.up b { color: var(--up); }
+.np-imp.dn b { color: var(--dn); }
+.np-imp i { width: 56px; height: 4px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.np-imp em { display: block; height: 100%; border-radius: 4px; }
+.np-imp.up em { background: var(--up); }
+.np-imp.dn em { background: var(--dn); }
+.np-mac { width: 30px; height: 30px; flex: none; border-radius: 9px; display: grid; place-items: center; font: 900 15px var(--sans); color: #fff; background: linear-gradient(145deg, #ffb52e, #ff5e1a); }
+.np-movers .np-mvs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.np-mv { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg2, var(--card)); color: var(--tx); font: inherit; cursor: pointer; text-align: left; min-width: 0; }
+.np-mv > span:not(.tk-badge) { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.np-mv b { font-size: 13px; }
+.np-mv small { font-size: 11px; color: var(--mut); }
+.np-mv em { font-style: normal; font-weight: 800; font-size: 12.5px; }
+.np-mv.up em { color: var(--up); }
+.np-mv.dn em { color: var(--dn); }
+.np-feed { display: flex; flex-direction: column; gap: 6px; }
+.np-it { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border-radius: 14px; border: 1px solid transparent; border-left: 3px solid var(--line); background: color-mix(in srgb, var(--tx) 2.5%, transparent); cursor: pointer; }
+.np-it.up { border-left-color: color-mix(in srgb, var(--up) 70%, transparent); }
+.np-it.dn { border-left-color: color-mix(in srgb, var(--dn) 70%, transparent); }
+.np-ib { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.np-ib > b { font: 650 14px/1.35 var(--sans); }
+.np-why { color: var(--mut); font-size: 12px; line-height: 1.4; }
+.np-guide details summary { cursor: pointer; display: flex; align-items: center; justify-content: space-between; list-style: none; font-size: 15px; }
+.np-guide details summary::-webkit-details-marker { display: none; }
+.np-guide details[open] summary { margin-bottom: 12px; }
+@media (max-width: 900px) {
+  .np-front { grid-template-columns: 1fr; }
+  .np-movers .np-mvs { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 520px) {
+  .np-cards { grid-template-columns: 1fr; }
+  .np-hero { padding: 16px; min-height: 0; }
+  .np-it { padding: 10px; gap: 10px; }
+  .np-imp { min-width: 52px; }
+  .np-imp i { width: 44px; }
+}
+
+.np-mv > .tk-badge, .np-cf > .tk-badge, .np-hf > .tk-badge, .np-it > .tk-badge { flex: none !important; }
+.np-chart { position: relative; flex: 1; min-height: 90px; margin: 4px -6px 0; }
+.np-chart svg { width: 100%; height: 100%; min-height: 90px; display: block; }
+.np-chart.up { color: var(--up); }
+.np-chart.dn { color: var(--dn); }
+.np-cl { position: absolute; left: 8px; top: 2px; font: 700 10.5px var(--sans); color: var(--mut); }
+@media (max-width: 520px) { .np-chart { min-height: 70px; } .np-chart svg { min-height: 70px; } }
 
 </style>
 <style id="pbGarden">
