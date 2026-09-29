@@ -12,17 +12,70 @@
   try {
     /* ---------------- catalog ---------------- */
     const ROLES = [
-      { id: 'intern', name: 'Intern', skill: 0.3, hire: 1000, pay: 5, size: 0.008, color: '#94a3b8' },
-      { id: 'analyst', name: 'Analyst', skill: 0.45, hire: 6000, pay: 18, size: 0.012, color: '#38bdf8' },
-      { id: 'trader', name: 'Trader', skill: 0.58, hire: 22000, pay: 40, size: 0.016, color: '#22c55e' },
-      { id: 'senior', name: 'Senior Trader', skill: 0.7, hire: 65000, pay: 90, size: 0.022, color: '#a855f7' },
-      { id: 'quant', name: 'Quant', skill: 0.82, hire: 180000, pay: 180, size: 0.03, color: '#f59e0b' },
+      { id: 'intern', name: 'Intern', skill: 0.3, hire: 1000, pay: 5, size: 0.008, color: '#94a3b8', tip: 'Cheap and eager. Mostly learning.' },
+      { id: 'analyst', name: 'Analyst', skill: 0.45, hire: 6000, pay: 18, size: 0.012, color: '#38bdf8', tip: 'Does their homework before buying.' },
+      { id: 'trader', name: 'Trader', skill: 0.58, hire: 22000, pay: 40, size: 0.016, color: '#22c55e', tip: 'Solid all-rounder. Swings bigger.' },
+      { id: 'daytrader', name: 'Day Trader', skill: 0.54, hire: 15000, pay: 30, size: 0.01, speed: 1.9, extraLots: 1, color: '#14b8a6', tip: 'Fast and busy: lots of small, quick trades.' },
+      { id: 'senior', name: 'Senior Trader', skill: 0.7, hire: 65000, pay: 90, size: 0.022, color: '#a855f7', tip: 'Calm under pressure. Few mistakes.' },
+      { id: 'pm', name: 'Portfolio Manager', skill: 0.76, hire: 110000, pay: 130, size: 0.026, extraLots: 1, color: '#ec4899', tip: 'Runs several positions at once.' },
+      { id: 'quant', name: 'Quant', skill: 0.82, hire: 180000, pay: 180, size: 0.03, color: '#f59e0b', tip: 'Wins most trades. Expensive.' },
+      { id: 'bot', name: 'AI Trading Bot', skill: 0.8, hire: 250000, pay: 60, size: 0.02, speed: 2.5, bot: true, color: '#06b6d4', tip: 'Never sleeps, never sulks. Can’t be promoted; upgrade its model instead.' },
+      { id: 'legend', name: 'Wall Street Legend', skill: 0.9, hire: 900000, pay: 400, size: 0.036, extraLots: 1, color: '#eab308', tip: 'The best there is. Needs a big account to pay off.' },
     ];
     const MGRS = [
       { id: 'lead', name: 'Team Lead', boost: 0.06, span: 3, hire: 25000, pay: 45, color: '#0ea5e9' },
       { id: 'manager', name: 'Manager', boost: 0.1, span: 5, hire: 90000, pay: 110, color: '#6366f1' },
       { id: 'director', name: 'Director', boost: 0.15, span: 9, hire: 300000, pay: 240, color: '#e11d48' },
+      { id: 'vp', name: 'VP of Trading', boost: 0.18, span: 13, hire: 700000, pay: 400, color: '#7c3aed' },
+      { id: 'ceo', name: 'CEO', boost: 0.22, span: 22, hire: 2000000, pay: 800, color: '#b91c1c', one: true, perk: '+10 mood for everyone' },
     ];
+    const SUPS = [
+      { id: 'barista', name: 'Barista', hire: 4000, pay: 8, color: '#a16207', perk: '+8 mood for everyone' },
+      { id: 'recruiter', name: 'Recruiter', hire: 20000, pay: 30, color: '#db2777', perk: 'New hires come with +3 talent, and new candidates show up faster' },
+      { id: 'accountant', name: 'Accountant', hire: 30000, pay: 35, color: '#16a34a', perk: 'Every salary is 10% lower' },
+      { id: 'it', name: 'IT Specialist', hire: 12000, pay: 25, color: '#0891b2', perk: 'Your staff decide 20% faster' },
+      { id: 'researcher', name: 'Research Analyst', hire: 40000, pay: 60, color: '#4f46e5', perk: '+3 skill for every worker' },
+      { id: 'risk', name: 'Risk Officer', hire: 50000, pay: 70, color: '#dc2626', perk: 'Stop-losses 30% tighter, so losing trades lose less' },
+    ].map(r => ({ ...r, one: true }));
+    const NEXT = { intern: 'analyst', analyst: 'trader', trader: 'senior', daytrader: 'senior', senior: 'pm', pm: 'quant', quant: 'legend', lead: 'manager', manager: 'director', director: 'vp', vp: 'ceo' };
+    // things to buy for the office: each one does something, and shows up in 2D and 3D
+    const ITEMS = [
+      { id: 'plants', name: 'Office Plants', cost: 1500, lvl: 0, mood: 3, desc: '+3 mood' },
+      { id: 'coffee', name: 'Coffee Machine', cost: 3000, lvl: 0, mood: 5, desc: '+5 mood' },
+      { id: 'whiteboard', name: 'Strategy Whiteboard', cost: 5000, lvl: 0, skill: 0.01, desc: '+1 skill' },
+      { id: 'chairs', name: 'Ergonomic Chairs', cost: 8000, lvl: 0, mood: 4, desc: '+4 mood' },
+      { id: 'monitors', name: 'Dual Monitors', cost: 12000, lvl: 0, skill: 0.02, desc: '+2 skill' },
+      { id: 'pingpong', name: 'Ping-Pong Table', cost: 15000, lvl: 1, mood: 5, desc: '+5 mood' },
+      { id: 'arcade', name: 'Arcade Cabinet', cost: 20000, lvl: 1, mood: 6, desc: '+6 mood' },
+      { id: 'aquarium', name: 'Aquarium', cost: 35000, lvl: 2, mood: 6, desc: '+6 mood' },
+      { id: 'wallscreen', name: 'Giant Market Screen', cost: 45000, lvl: 2, skill: 0.02, desc: '+2 skill' },
+      { id: 'terminals', name: 'Pro Market Terminals', cost: 60000, lvl: 2, skill: 0.04, desc: '+4 skill' },
+      { id: 'fiber', name: 'Low-Latency Fiber', cost: 90000, lvl: 2, fee: 0.25, desc: '25% back on staff trading fees' },
+      { id: 'napods', name: 'Nap Pods', cost: 80000, lvl: 3, mood: 8, desc: '+8 mood' },
+      { id: 'gym', name: 'Office Gym', cost: 150000, lvl: 3, mood: 8, desc: '+8 mood' },
+      { id: 'servers', name: 'AI Server Room', cost: 250000, lvl: 3, bot: 0.06, speed: 0.15, desc: 'AI bots +6 skill, everyone 15% faster' },
+      { id: 'statue', name: 'Golden Bull Statue', cost: 500000, lvl: 4, mood: 5, skill: 0.01, desc: '+5 mood, +1 skill' },
+      { id: 'helipad', name: 'Rooftop Helipad', cost: 2000000, lvl: 4, mood: 10, desc: '+10 mood. The ultimate flex.' },
+    ];
+    const ICONS = {
+      plants: '<ellipse cx="24" cy="44" rx="12" ry="2.5" fill="#000" opacity=".2"/><path d="M15 31h18l-2.5 12h-13z" fill="#c2410c"/><circle cx="24" cy="20" r="8" fill="#22c55e"/><circle cx="17" cy="25" r="6" fill="#16a34a"/><circle cx="31" cy="25" r="6" fill="#15803d"/>',
+      coffee: '<rect x="12" y="10" width="24" height="32" rx="4" fill="#374151"/><rect x="16" y="15" width="16" height="7" rx="2" fill="#0ea5e9"/><rect x="19" y="30" width="10" height="9" rx="2" fill="#fff"/><path d="M21 27c0-2 2-2 2-4M26 27c0-2 2-2 2-4" stroke="#cbd5e1" stroke-width="1.5" fill="none"/>',
+      whiteboard: '<rect x="6" y="9" width="36" height="24" rx="2" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/><path d="M11 27l7-7 5 4 9-10" stroke="#22c55e" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M16 33l-4 9M32 33l4 9" stroke="#64748b" stroke-width="2"/>',
+      chairs: '<rect x="15" y="7" width="18" height="18" rx="5" fill="#1e3a8a"/><rect x="13" y="25" width="22" height="6" rx="3" fill="#1d4ed8"/><path d="M24 31v7M16 42l8-4 8 4" stroke="#475569" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+      monitors: '<rect x="4" y="11" width="19" height="14" rx="2" fill="#0f172a"/><rect x="25" y="11" width="19" height="14" rx="2" fill="#0f172a"/><path d="M7 21l4-4 3 2 6-6M28 20l5-3 3 2 5-4" stroke="#22c55e" stroke-width="1.8" fill="none"/><path d="M13 25v7M34 25v7M8 34h32" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>',
+      pingpong: '<path d="M4 24h40l-4 8H8z" fill="#15803d"/><path d="M24 17v15" stroke="#fff" stroke-width="2"/><path d="M8 32v8M40 32v8" stroke="#475569" stroke-width="2.5"/><circle cx="33" cy="15" r="2.5" fill="#fff"/><circle cx="12" cy="17" r="4" fill="#dc2626"/>',
+      arcade: '<path d="M14 4h20v38H14z" fill="#7c3aed"/><rect x="17" y="9" width="14" height="12" rx="1.5" fill="#22d3ee"/><rect x="14" y="24" width="20" height="5" fill="#4c1d95"/><circle cx="20" cy="26.5" r="1.5" fill="#f43f5e"/><circle cx="28" cy="26.5" r="1.5" fill="#fde047"/>',
+      aquarium: '<rect x="5" y="12" width="38" height="24" rx="3" fill="#38bdf8" opacity=".75"/><path d="M5 18h38" stroke="#bae6fd" stroke-width="1.5"/><path d="M15 26l5-3v6zM20 26c0-2 5-3 7 0-2 3-7 2-7 0z" fill="#f97316"/><circle cx="33" cy="22" r="1.5" fill="#fff"/><rect x="5" y="36" width="38" height="4" fill="#334155"/>',
+      wallscreen: '<rect x="3" y="8" width="42" height="26" rx="2" fill="#020617"/><path d="M8 28l7-8 6 4 8-10 7 5 5-4" stroke="#34d399" stroke-width="2.2" fill="none"/><path d="M20 34v5M28 34v5M14 40h20" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>',
+      terminals: '<rect x="6" y="8" width="36" height="22" rx="2" fill="#111827"/><path d="M10 13h12M10 17h8M10 21h14M26 13h12M26 17h9M26 21h11" stroke="#f59e0b" stroke-width="2"/><rect x="10" y="33" width="28" height="6" rx="2" fill="#374151"/>',
+      fiber: '<path d="M6 34c10 0 10-20 20-20s10 20 16 20" stroke="#22d3ee" stroke-width="3" fill="none"/><path d="M6 28c10 0 10-14 20-14s10 14 16 14" stroke="#a78bfa" stroke-width="3" fill="none"/><circle cx="26" cy="14" r="3" fill="#fff"/>',
+      napods: '<rect x="6" y="14" width="36" height="22" rx="11" fill="#e2e8f0"/><rect x="10" y="18" width="18" height="14" rx="7" fill="#1e293b"/><path d="M33 21h5M33 25h5M33 29h5" stroke="#94a3b8" stroke-width="2"/>',
+      gym: '<rect x="8" y="21" width="32" height="6" rx="2" fill="#475569"/><rect x="4" y="14" width="6" height="20" rx="2" fill="#0f172a"/><rect x="38" y="14" width="6" height="20" rx="2" fill="#0f172a"/><rect x="11" y="17" width="4" height="14" rx="1.5" fill="#dc2626"/><rect x="33" y="17" width="4" height="14" rx="1.5" fill="#dc2626"/>',
+      servers: '<rect x="10" y="4" width="28" height="40" rx="2" fill="#0f172a"/><path d="M13 11h22M13 19h22M13 27h22M13 35h22" stroke="#334155" stroke-width="5"/><circle cx="31" cy="11" r="1.4" fill="#22c55e"/><circle cx="31" cy="19" r="1.4" fill="#22c55e"/><circle cx="31" cy="27" r="1.4" fill="#f59e0b"/><circle cx="31" cy="35" r="1.4" fill="#22c55e"/>',
+      statue: '<rect x="12" y="36" width="24" height="7" rx="1.5" fill="#57534e"/><path d="M10 26c0-7 5-11 14-11s14 4 14 11v4H10z" fill="#eab308"/><path d="M12 17c-3-3-3-7 0-9M36 17c3-3 3-7 0-9" stroke="#ca8a04" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="19" cy="22" r="1.5" fill="#713f12"/><path d="M14 30v6M34 30v6" stroke="#ca8a04" stroke-width="3"/>',
+      helipad: '<circle cx="24" cy="24" r="19" fill="#334155"/><circle cx="24" cy="24" r="15" fill="none" stroke="#fde047" stroke-width="2"/><path d="M17 15v18M31 15v18M17 24h14" stroke="#fff" stroke-width="3.5"/>',
+    };
+    const icon = id => `<svg viewBox="0 0 48 48" aria-hidden="true">${ICONS[id] || ''}</svg>`;
     const LEVELS = [
       { name: 'Garage', desks: 2, cost: 0, floor: 'garage' },
       { name: 'Startup Loft', desks: 4, cost: 15000, floor: 'loft' },
@@ -48,7 +101,8 @@
     const rnd = (a, b) => a + Math.random() * (b - a);
     const pick = a => a[(Math.random() * a.length) | 0];
     const E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-    const roleOf = w => (w.kind === 'mgr' ? MGRS.find(r => r.id === w.role) : ROLES.find(r => r.id === w.role)) || ROLES[0];
+    const LIST = k => (k === 'mgr' ? MGRS : k === 'sup' ? SUPS : ROLES);
+    const roleOf = w => LIST(w.kind).find(r => r.id === w.role) || ROLES[0];
     const money = (v, d = 0) => fmtUSD(v, d);
     const gz = () => {
       try {
@@ -71,12 +125,37 @@
       o.stats ||= { pnl: 0, trades: 0, wins: 0, paid: 0, fees: 0 };
       o.owed ??= 0;
       o.seq ??= 0;
+      o.items ||= {};
+      o.company ||= 'PAPERBULL Capital';
+      if (o.candsV !== 2) {
+        o.cands = {};
+        o.candsV = 2;
+      }
       return o;
     };
     const level = () => LEVELS[Math.min(LEVELS.length - 1, O().lvl)];
-    const workers = () => O().staff.filter(s => s.kind !== 'mgr');
+    const workers = () => O().staff.filter(s => s.kind !== 'mgr' && s.kind !== 'sup');
     const managers = () => O().staff.filter(s => s.kind === 'mgr');
-    const payRate = () => O().staff.reduce((t, s) => t + roleOf(s).pay, 0);
+    const support = () => O().staff.filter(s => s.kind === 'sup');
+    const hasSup = id => O().staff.some(s => s.kind === 'sup' && s.role === id);
+    // everything that boosts the team, from items you own and support staff you've hired
+    function perks() {
+      const o = O(),
+        own = o.items || {},
+        k = { mood: 0, skill: 0, speed: 0, fee: 0, bot: 0 };
+      for (const it of ITEMS) if (own[it.id]) for (const f of ['mood', 'skill', 'speed', 'fee', 'bot']) k[f] += it[f] || 0;
+      if (hasSup('barista')) k.mood += 8;
+      if (hasSup('researcher')) k.skill += 0.03;
+      if (hasSup('it')) k.speed += 0.2;
+      if (o.staff.some(s => s.kind === 'mgr' && s.role === 'ceo')) k.mood += 10;
+      k.speed = Math.min(0.6, k.speed);
+      k.fee = Math.min(0.5, k.fee);
+      k.risk = hasSup('risk');
+      k.pay = hasSup('accountant') ? 0.9 : 1;
+      k.recruit = hasSup('recruiter');
+      return k;
+    }
+    const payRate = () => O().staff.reduce((t, s) => t + roleOf(s).pay, 0) * perks().pay;
     const staffValue = () => O().lots.reduce((t, l) => t + (SIM[l.sym] ? l.qty * SIM[l.sym].price : 0), 0);
     const budgetCap = () => {
       try {
@@ -112,8 +191,9 @@
       const r = roleOf(w),
         m = w.boss && O().staff.find(s => s.id === w.boss),
         boost = m ? roleOf(m).boost : 0,
-        moodK = w.mood < 30 ? -0.08 : w.mood > 80 ? 0.02 : 0;
-      return Math.max(0.1, Math.min(0.97, r.skill + (w.talent || 0) + boost + moodK));
+        pk = perks(),
+        moodK = r.bot ? 0.02 : w.mood < 30 ? -0.08 : w.mood > 90 ? 0.04 : w.mood > 80 ? 0.02 : 0;
+      return Math.max(0.1, Math.min(0.92, (r.skill || 0) + (w.talent || 0) + boost + moodK + pk.skill + (r.bot ? pk.bot : 0)));
     }
 
     function newPerson(kind, role) {
@@ -123,8 +203,8 @@
         kind,
         role,
         name: pick(FIRST) + ' ' + pick(LAST),
-        strat: kind === 'mgr' ? null : pick(Object.keys(STRATS)),
-        talent: Math.round(rnd(-0.04, 0.05) * 100) / 100,
+        strat: kind === 'mgr' || kind === 'sup' ? null : pick(Object.keys(STRATS)),
+        talent: Math.round((rnd(-0.04, 0.05) + (perks().recruit ? 0.03 : 0)) * 100) / 100,
         mood: 80,
         hired: Date.now(),
         look: { skin: pick(SKIN), hair: pick(HAIR), style: (Math.random() * 4) | 0 },
@@ -137,8 +217,8 @@
       const o = O();
       o.cands ||= {};
       const c = o.cands[kind];
-      if (c && Date.now() - c.at < 5 * 60 * 1000) return c.list;
-      const list = (kind === 'mgr' ? MGRS : ROLES).map(r => newPerson(kind, r.id));
+      if (c && Date.now() - c.at < (perks().recruit ? 2 : 5) * 60 * 1000) return c.list;
+      const list = LIST(kind).map(r => newPerson(kind, r.id));
       o.cands[kind] = { at: Date.now(), list };
       return list;
     }
@@ -152,6 +232,7 @@
       const r = roleOf(p);
       if (o.staff.length >= level().desks) return toast('Every desk is taken. Upgrade the office for more room.', 'info'), false;
       if (acct.cash < r.hire) return toast(`You need ${money(r.hire)} in cash to hire a ${r.name}.`, 'err'), false;
+      if (r.one && o.staff.some(s => s.kind === p.kind && s.role === p.role)) return toast(`You already have a ${r.name}.`, 'info'), false;
       acct.cash -= r.hire;
       o.stats.paid += r.hire;
       p.hired = Date.now();
@@ -183,9 +264,9 @@
       emit('staff');
     }
     function promoteCost(p) {
-      const L = p.kind === 'mgr' ? MGRS : ROLES,
-        i = L.findIndex(r => r.id === p.role);
-      return i >= 0 && i < L.length - 1 ? Math.round((L[i + 1].hire - L[i].hire) * 0.6) : null;
+      const nx = NEXT[p.role] && LIST(p.kind).find(r => r.id === NEXT[p.role]);
+      if (!nx || (nx.one && O().staff.some(s => s.kind === p.kind && s.role === nx.id))) return null;
+      return Math.max(1000, Math.round((nx.hire - roleOf(p).hire) * 0.6));
     }
     function promote(id) {
       const o = O(),
@@ -193,10 +274,9 @@
         c = p && promoteCost(p);
       if (!c) return;
       if (acct.cash < c) return toast(`A promotion costs ${money(c)} in cash.`, 'err');
-      const L = p.kind === 'mgr' ? MGRS : ROLES;
       acct.cash -= c;
       o.stats.paid += c;
-      p.role = L[L.findIndex(r => r.id === p.role) + 1].id;
+      p.role = NEXT[p.role];
       p.mood = Math.min(100, p.mood + 25);
       assign();
       logAdd(p, `was promoted to ${roleOf(p).name}.`, null);
@@ -224,6 +304,86 @@
         SFX.play('legend');
       } catch (e) {}
     }
+    const trainCost = p => Math.round(roleOf(p).hire * 0.2);
+    function train(id) {
+      const o = O(),
+        p = o.staff.find(s => s.id === id);
+      if (!p || (p.train || 0) >= 3) return;
+      const c = trainCost(p);
+      if (acct.cash < c) return toast(`Training costs ${money(c)} in cash.`, 'err');
+      acct.cash -= c;
+      o.stats.paid += c;
+      p.train = (p.train || 0) + 1;
+      p.talent = Math.round(((p.talent || 0) + 0.02) * 100) / 100;
+      logAdd(p, roleOf(p).bot ? 'got a model upgrade (+2 skill).' : 'finished a training course (+2 skill).', null);
+      saveAcct(true);
+      bump();
+      emit('staff');
+    }
+    const bonusCost = p => Math.max(200, Math.round(roleOf(p).pay * 8));
+    function bonus(id) {
+      const o = O(),
+        p = o.staff.find(s => s.id === id);
+      if (!p) return;
+      const c = bonusCost(p);
+      if (acct.cash < c) return toast(`A bonus costs ${money(c)} in cash.`, 'err');
+      acct.cash -= c;
+      o.stats.paid += c;
+      p.mood = Math.min(100, (p.mood || 70) + 30);
+      logAdd(p, `got a ${money(c)} bonus and is thrilled.`, null);
+      saveAcct(true);
+      bump();
+      emit('mood', { who: p.id });
+    }
+    const pizzaCost = () => Math.max(300, O().staff.length * 250);
+    function pizza() {
+      const o = O();
+      if (!o.staff.length) return;
+      const wait = (o.pizzaAt || 0) + 30 * 60 * 1000 - Date.now();
+      if (wait > 0) return toast(`Everyone’s still full. Next pizza party in ${Math.ceil(wait / 60000)} min.`, 'info');
+      const c = pizzaCost();
+      if (acct.cash < c) return toast(`A pizza party costs ${money(c)} in cash.`, 'err');
+      acct.cash -= c;
+      o.stats.paid += c;
+      o.pizzaAt = Date.now();
+      for (const s of o.staff) s.mood = Math.min(100, (s.mood || 70) + 20);
+      logAdd(null, `Pizza party! Everyone’s mood went up.`, null);
+      saveAcct(true);
+      bump();
+      emit('party');
+      try {
+        confetti();
+      } catch (e) {}
+    }
+    function buyItem(id) {
+      const o = O(),
+        it = ITEMS.find(x => x.id === id);
+      if (!it || o.items[id]) return;
+      if (o.lvl < it.lvl) return toast(`Needs the ${LEVELS[it.lvl].name} or bigger.`, 'info');
+      if (acct.cash < it.cost) return toast(`${it.name} costs ${money(it.cost)} in cash.`, 'err');
+      acct.cash -= it.cost;
+      o.stats.paid += it.cost;
+      o.items[id] = Date.now();
+      logAdd(null, `New for the office: ${it.name} (${it.desc}).`, null);
+      saveAcct(true);
+      bump();
+      emit('items');
+      try {
+        SFX.play('coin');
+      } catch (e) {}
+    }
+    function rename(n) {
+      const o = O(),
+        v = String(n || '')
+          .replace(/[<>"`]/g, '')
+          .trim()
+          .slice(0, 24);
+      if (!v) return;
+      o.company = v;
+      saveAcct(true);
+      bump();
+      emit('items');
+    }
     function closeAll() {
       const o = O();
       let n = 0;
@@ -243,7 +403,7 @@
     // research: where this person thinks the price will be in ~10 minutes.
     // The market model knows; skill decides how blurry their read of it is.
     const HZ = 600,
-      INFO = 0.35; // how much of the real move research can see
+      INFO = 0.12; // how much of the real move research can see (tuned: interns ~break even, quants reliably profitable)
     function outlook(a, sk) {
       let f = 0;
       try {
@@ -286,6 +446,14 @@
         FF.active = ff;
       }
     }
+    function rebate(tr) {
+      const k = perks().fee;
+      if (k > 0 && tr.fee) {
+        const b = Math.round(tr.fee * k * 100) / 100;
+        acct.cash += b;
+        tr.fee -= b;
+      }
+    }
     function buy(w, a) {
       const o = O(),
         sk = effSkill(w),
@@ -298,6 +466,7 @@
       if (!res || !res.ok) return false;
       const tr = res.trade;
       tr.by = w.name;
+      rebate(tr);
       o.lots.push({ id: tr.id, by: w.id, sym: a.sym, qty: tr.qty, px: tr.price, cost: tr.value + (tr.fee || 0), t: Date.now() });
       o.stats.trades++;
       o.stats.fees += tr.fee || 0;
@@ -326,6 +495,7 @@
       if (!res || !res.ok) return false;
       const tr = res.trade;
       tr.by = w.name;
+      rebate(tr);
       const got = tr.value - (tr.fee || 0),
         pnl = got - l.cost * (qty / l.qty);
       o.lots = o.lots.filter(x => x !== l);
@@ -359,7 +529,7 @@
         if (!a) continue;
         const ret = a.price / l.px - 1,
           age = (Date.now() - l.t) / 60000,
-          stop = -(0.008 + (a.vol || 0.4) * 0.025),
+          stop = -(0.008 + (a.vol || 0.4) * 0.025) * (perks().risk ? 0.7 : 1),
           view = outlook(a, sk);
         if (ret <= stop) return sell(w, l, 'stop loss');
         if (age < 3) continue;
@@ -368,7 +538,7 @@
       }
       // 2) maybe open something new
       w.wait = '';
-      if (mine.length >= 1 + Math.floor(sk * 4)) return (w.wait = 'Watching their positions');
+      if (mine.length >= 1 + Math.floor(sk * 4) + (roleOf(w).extraLots || 0)) return (w.wait = 'Watching their positions');
       if (staffValue() >= budgetCap() - 50) return (w.wait = 'Budget is full');
       if (availableCash() < 100) return (w.wait = 'Waiting for cash');
       let P = pool(w.strat).filter(a => !mine.some(l => l.sym === a.sym));
@@ -417,15 +587,20 @@
           o.unpaid = (o.unpaid || 0) + dt;
         }
       }
-      const broke = (o.unpaid || 0) > 5;
+      const broke = (o.unpaid || 0) > 5,
+        pk = perks();
       for (const s of o.staff) {
         // morale drifts toward 70; managers keep it higher, unpaid wages crush it
         const hasBoss = s.boss && o.staff.some(m => m.id === s.boss);
-        const target = broke ? 0 : 70 + (hasBoss ? 12 : 0);
+        if (roleOf(s).bot) {
+          s.mood = 100;
+          continue;
+        }
+        const target = broke ? 0 : Math.min(100, 70 + (hasBoss ? 12 : 0) + pk.mood);
         s.mood = (s.mood ?? 70) + (target - (s.mood ?? 70)) * Math.min(1, dt / (broke ? 90 : 900));
       }
       if (broke) {
-        const q = o.staff.find(s => s.mood < 3);
+        const q = o.staff.find(s => s.mood < 3 && !roleOf(s).bot);
         if (q) {
           toast(`${q.name} quit: you couldn't pay their salary.`, 'err');
           logAdd(q, 'quit over unpaid wages.', null);
@@ -437,7 +612,7 @@
       for (const w of workers()) {
         if (now < (w.next || 0)) continue;
         const sk = effSkill(w);
-        w.next = now + (75 - sk * 35) * 1000 * rnd(0.7, 1.3);
+        w.next = now + ((75 - sk * 35) * 1000 * rnd(0.7, 1.3)) / ((roleOf(w).speed || 1) * (1 + pk.speed));
         try {
           act(w);
         } catch (e) {
@@ -463,6 +638,14 @@
         L = p.look || {},
         sh = r.color,
         mgr = p.kind === 'mgr';
+      if (r.bot)
+        return `<svg viewBox="0 0 48 64" class="of-pp ${pose || ''}" aria-hidden="true">
+        <ellipse cx="24" cy="61" rx="13" ry="2.6" fill="#000" opacity=".18"/>
+        <path d="M9 60c0-13 6-21 15-21s15 8 15 21z" fill="#64748b"/><rect x="18" y="45" width="12" height="8" rx="2" fill="#0f172a"/><circle cx="21" cy="49" r="1.3" fill="#22d3ee"/><circle cx="27" cy="49" r="1.3" fill="#f59e0b"/>
+        <rect x="21" y="31" width="6" height="8" fill="#475569"/>
+        <rect x="12" y="10" width="24" height="22" rx="7" fill="#94a3b8"/><rect x="15" y="16" width="18" height="8" rx="4" fill="#0f172a"/><rect x="17" y="18.5" width="14" height="3" rx="1.5" fill="#22d3ee"/>
+        <path d="M24 10V4" stroke="#475569" stroke-width="2"/><circle cx="24" cy="3.5" r="2.5" fill="#f43f5e"/>
+      </svg>`;
       const hair = [
         `<path d="M13 15c0-7 4.5-10 11-10s11 3 11 10c-2-3-6-4.5-11-4.5S15 12 13 15z" fill="${L.hair}"/>`,
         `<path d="M12.5 17c-1-9 5-12 11.5-12s12.5 3 11.5 12c-1.5-5-5-6.5-11.5-6.5S14 12 12.5 17z" fill="${L.hair}"/>`,
@@ -474,6 +657,7 @@
         <path d="M8 60c0-14 7-22 16-22s16 8 16 22z" fill="${sh}"/>
         <path d="M18 39l6 7 6-7" fill="#fff" opacity=".9"/>
         ${mgr ? `<path d="M22.6 44h2.8l1.4 11-2.8 3-2.8-3z" fill="#0f172a"/>` : ''}
+        ${p.kind === 'sup' ? `<rect x="26" y="45" width="8" height="10" rx="1.5" fill="#fff" opacity=".9"/><rect x="28" y="47" width="4" height="1.6" fill="${sh}"/>` : ''}
         <rect x="20.5" y="31" width="7" height="8" rx="3" fill="${L.skin}"/>
         <circle cx="24" cy="21" r="11" fill="${L.skin}"/>
         ${hair}
@@ -499,7 +683,7 @@
       // workers take desks first, then managers get the corner desks
       const d = layout(),
         o = O(),
-        w = workers(),
+        w = [...workers(), ...support()],
         m = managers(),
         map = {};
       w.forEach((p, i) => d[i] && (map[p.id] = d[i]));
@@ -525,23 +709,35 @@
           lv = level(),
           by = {};
         for (const p of staff) if (map[p.id]) by[map[p.id].i] = p;
-        const rows = desks.length ? desks[0].rows : 1;
+        // the 2D room re-flows its own grid: fewer columns on a phone, and it grows taller with more rows
+        const narrow = (el.clientWidth || innerWidth) < 560,
+          cols = Math.min(desks.length ? desks[0].cols : 2, narrow ? 4 : 6),
+          rows = Math.max(1, Math.ceil(desks.length / cols));
+        for (const d of desks) {
+          d.c2 = d.i % cols;
+          d.r2 = Math.floor(d.i / cols);
+        }
+        el.style.aspectRatio = String(Math.max(narrow ? 0.42 : 0.95, Math.min(1.9, cols / (rows * (narrow ? 1.6 : 1.5)))));
+        el.style.setProperty('--dw', `${Math.min(120, 58 / cols)}%`);
         el.innerHTML = `<div class="of2 f-${lv.floor}">
-          <div class="of2-wall"><div class="of2-win">${skyline()}</div><div class="of2-board"><small>OFFICE P/L</small><b id="of2Pnl"></b><i id="of2Tape"></i></div></div>
+          <div class="of2-wall"><div class="of2-win">${skyline()}${O().items.helipad ? '<span class="of2-heli" aria-hidden="true"><svg viewBox="0 0 60 24"><path d="M2 3h56" stroke="#1e293b" stroke-width="2"/><path d="M30 3v4" stroke="#1e293b" stroke-width="2"/><path d="M14 9h26c5 0 9 3 9 7s-4 5-9 5H22c-5 0-8-3-8-6z" fill="#eab308"/><path d="M14 13H3l-2-4" stroke="#1e293b" stroke-width="2" fill="none"/><rect x="36" y="11" width="8" height="5" rx="1.5" fill="#bae6fd"/></svg></span>' : ''}</div><div class="of2-board"><small>${E(O().company.toUpperCase())}</small><b id="of2Pnl"></b><i id="of2Tape"></i></div></div>
           <div class="of2-floor" style="--rows:${rows}">
             ${desks
               .map(d => {
                 const p = by[d.i],
                   mgr = p && p.kind === 'mgr';
                 const scr = p && p.last ? (p.last.side === 'buy' ? 'buy' : p.last.pnl >= 0 ? 'win' : 'loss') : 'idle';
-                return `<div class="of2-desk ${p ? '' : 'empty'} ${mgr ? 'mgr' : ''}" style="left:${(d.x * 100).toFixed(2)}%;top:${(d.y * 100).toFixed(2)}%" data-desk="${d.i}" ${p ? `data-who="${p.id}" tabindex="0" role="button" aria-label="${E(p.name)}, ${E(roleOf(p).name)}"` : 'data-hire="1" tabindex="0" role="button" aria-label="Empty desk: hire someone"'}>
+                return `<div class="of2-desk ${p ? '' : 'empty'} ${mgr ? 'mgr' : ''}" style="left:${(((d.c2 + 0.5) / cols) * 100).toFixed(2)}%;top:${(6 + ((d.r2 + 0.5) / rows) * 68).toFixed(2)}%" data-desk="${d.i}" ${p ? `data-who="${p.id}" tabindex="0" role="button" aria-label="${E(p.name)}, ${E(roleOf(p).name)}"` : 'data-hire="1" tabindex="0" role="button" aria-label="Empty desk: hire someone"'}>
                   ${p ? `<div class="of2-p ${p.mood < 30 ? 'sad' : ''}">${personSVG(p, 'type')}</div><div class="of2-bub" data-bub="${p.id}"></div>` : `<div class="of2-plus">+</div>`}
                   <div class="of2-table"><span class="of2-mon s-${scr}" data-mon="${p ? p.id : ''}"><i></i></span><span class="of2-mug"></span></div>
                   ${p ? `<div class="of2-tag"><b>${E(p.name.split(' ')[0])}</b><small>${E(roleOf(p).name)}</small></div>` : ''}
                 </div>`;
               })
               .join('')}
-            <div class="of2-plant a"></div><div class="of2-plant b"></div><div class="of2-cooler"></div>
+            <div class="of2-decor">${ITEMS.filter(it => O().items[it.id] && it.id !== 'helipad' && it.id !== 'fiber')
+              .map(it => `<span class="of2-dc d-${it.id}" title="${E(it.name)}">${icon(it.id)}</span>`)
+              .join('')}</div>
+            <div class="of2-cooler"></div>
           </div>
         </div>`;
         this.paint();
@@ -559,7 +755,18 @@
       },
       event(type, d) {
         if (!this.el) return;
-        if (type === 'staff' || type === 'level') return this.render();
+        if (type === 'staff' || type === 'level' || type === 'items') return this.render();
+        if (type === 'party' || type === 'mood') {
+          const els = type === 'mood' ? [this.el.querySelector(`[data-bub="${d.who}"]`)] : [...this.el.querySelectorAll('[data-bub]')];
+          for (const b of els)
+            if (b) {
+              b.textContent = type === 'party' ? 'Pizza!' : 'Thank you!';
+              b.className = 'of2-bub on up';
+              clearTimeout(b._t);
+              b._t = setTimeout(() => (b.className = 'of2-bub'), 2600);
+            }
+          return;
+        }
         if (type === 'trade') {
           const w = O().staff.find(s => s.id === d.who);
           const mon = this.el.querySelector(`[data-mon="${d.who}"]`);
@@ -606,7 +813,7 @@
         assign();
         v.innerHTML = `<section class="card of-hero">
           <div class="of-head">
-            <div class="of-h1"><small>Your staff’s profit</small><b id="ofPnl" class="mono">$0</b><span id="ofSub" class="muted small"></span></div>
+            <div class="of-h1"><small><span id="ofCo"></span> · staff profit</small><b id="ofPnl" class="mono">$0</b><span id="ofSub" class="muted small"></span></div>
             <div class="of-tools">
               <div class="seg of-seg" role="tablist" aria-label="Office view"><button data-view="2d" role="tab">2D</button><button data-view="3d" role="tab">3D</button></div>
               <button class="btn sm" id="ofFs" aria-label="Full screen" title="Full screen"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
@@ -622,7 +829,9 @@
             <div class="of-btns"><button class="btn sm" id="ofPause"></button><button class="btn sm" id="ofClose">Sell all staff positions</button></div></div>
         </section>
         <section class="card"><div class="card-h"><h3>Your team</h3><span class="muted small" id="ofDesks"></span></div><div id="ofStaff" class="of-staff"></div></section>
-        <section class="card" id="ofHireCard"><div class="card-h"><h3>Hire</h3><div class="seg of-seg sm" id="ofHireTabs"><button data-ht="w" class="on">Workers</button><button data-ht="m">Managers</button></div></div><p class="muted small" id="ofHireTip"></p><div id="ofHire" class="of-hire"></div></section>
+        <section class="card" id="ofPerks"></section>
+        <section class="card" id="ofHireCard"><div class="card-h"><h3>Hire</h3><div class="seg of-seg sm" id="ofHireTabs"><button data-ht="w" class="on">Workers</button><button data-ht="m">Managers</button><button data-ht="s">Support</button></div></div><p class="muted small" id="ofHireTip"></p><div id="ofHire" class="of-hire"></div></section>
+        <section class="card" id="ofShop"><div class="card-h"><h3>Office shop</h3><span class="muted small">Everything here boosts your team and shows up in your office</span></div><div class="of-shop" id="ofShopG"></div></section>
         <section class="card" id="ofLvl"></section>
         <section class="card"><div class="card-h"><h3>Office activity</h3><span class="muted small">Newest first</span></div><div id="ofLog" class="of-log"></div></section>`;
         this.v = v;
@@ -687,6 +896,24 @@
           const st = e.target.closest('[data-strat]');
           if (st) return this.stratPick(st.dataset.strat);
           if (e.target.closest('#ofUp')) return upgrade(), this.all();
+          const tr = e.target.closest('[data-train]');
+          if (tr) return train(tr.dataset.train), this.all();
+          const bo = e.target.closest('[data-bonus]');
+          if (bo) return bonus(bo.dataset.bonus), this.all();
+          const it = e.target.closest('[data-buyitem]');
+          if (it) return buyItem(it.dataset.buyitem), this.all();
+          if (e.target.closest('#ofPizza')) return pizza(), this.all();
+          if (e.target.closest('#ofRename'))
+            return modal({
+              title: 'Name your company',
+              html: `<label class="lg-f"><span>Company name</span><input class="txt" id="ofCoIn" maxlength="24" value="${E(O().company)}"></label>`,
+              confirm: 'Save',
+              onMount: r => setTimeout(() => r.querySelector('#ofCoIn')?.select(), 50),
+              onConfirm: r => {
+                rename(r.querySelector('#ofCoIn').value);
+                this.all();
+              },
+            });
         });
         v.addEventListener('keydown', e => {
           if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('#ofStage [data-who],#ofStage [data-hire]')) {
@@ -713,6 +940,7 @@
         Two.unmount();
         window.PBOffice3D && PBOffice3D.leave();
         stage.innerHTML = '';
+        stage.style.aspectRatio = '';
         stage.classList.toggle('is3d', m === '3d');
         if (m === '3d')
           PBOffice3D.enter(stage, API).catch(() => {
@@ -793,8 +1021,10 @@
         }
         const card = p => {
           const r = roleOf(p),
-            mgr = p.kind === 'mgr',
+            mgr = p.kind === 'mgr' || p.kind === 'sup',
+            sup = p.kind === 'sup',
             sk = mgr ? null : effSkill(p),
+            canTrain = !mgr && (p.train || 0) < 3,
             boss = p.boss && o.staff.find(s => s.id === p.boss),
             team = mgr ? workers().filter(w => w.boss === p.id) : [],
             pc = promoteCost(p),
@@ -804,40 +1034,43 @@
             <div class="of-cb">
               <div class="of-ct"><b>${E(p.name)}</b><span class="of-role">${r.name}</span></div>
               ${
-                mgr
+                sup
+                  ? `<small class="muted">${E(r.perk)}</small>`
+                  : mgr
                   ? `<small class="muted">Leads ${team.length} of ${r.span} · +${Math.round(r.boost * 100)} skill to their team</small>`
                   : `<small class="muted"><button class="linkish" data-strat="${p.id}">${STRATS[p.strat]?.name || 'Style'}</button>${boss ? ` · reports to ${E(boss.name.split(' ')[0])}` : ''}</small>`
               }
-              <div class="of-bars">${!mgr ? `<span class="of-bar" title="Skill"><i style="width:${Math.round(sk * 100)}%"></i><em>Skill ${Math.round(sk * 100)}</em></span>` : ''}<span class="of-bar mood" title="Mood"><i style="width:${Math.round(p.mood)}%"></i><em>Mood ${Math.round(p.mood)}</em></span></div>
+              <div class="of-bars">${!mgr ? `<span class="of-bar" title="Skill"><i style="width:${Math.round(sk * 100)}%"></i><em>Skill ${Math.round(sk * 100)}</em></span>` : ''}${r.bot ? '' : `<span class="of-bar mood" title="Mood"><i style="width:${Math.round(p.mood)}%"></i><em>Mood ${Math.round(p.mood)}</em></span>`}${p.train ? `<span class="of-pill">Trained ×${p.train}</span>` : ''}</div>
             </div>
             <div class="of-cs">${mgr ? `<b class="mono">${money(r.pay)}<small>/hr</small></b>` : `<b class="mono ${p.st.pnl >= 0 ? 'up' : 'dn'}">${p.st.pnl >= 0 ? '+' : '−'}${money(Math.abs(p.st.pnl))}</b><small class="muted">${p.st.trades ? `${p.st.trades} trades${wr != null ? ` · ${wr}% wins` : ''}` : E(p.wait || 'Getting settled')}</small>`}
-              <div class="of-ca">${pc ? `<button class="btn sm" data-promote="${p.id}" title="Promote for ${money(pc)}">Promote · ${money(pc)}</button>` : ''}<button class="btn sm ghost" data-fire="${p.id}" aria-label="Let ${E(p.name)} go">Let go</button></div>
+              <div class="of-ca">${pc ? `<button class="btn sm" data-promote="${p.id}" title="Promote for ${money(pc)}">Promote · ${money(pc)}</button>` : ''}${canTrain ? `<button class="btn sm" data-train="${p.id}" title="+2 skill">${r.bot ? 'Upgrade' : 'Train'} · ${money(trainCost(p))}</button>` : ''}${r.bot ? '' : `<button class="btn sm" data-bonus="${p.id}" title="+30 mood">Bonus · ${money(bonusCost(p))}</button>`}<button class="btn sm ghost" data-fire="${p.id}" aria-label="Let ${E(p.name)} go">Let go</button></div>
             </div>
           </article>`;
         };
-        const ms = managers(),
-          ws = workers();
-        box.innerHTML = [...ms, ...ws].map(card).join('');
+        box.innerHTML = [...managers(), ...workers(), ...support()].map(card).join('');
       },
       hireList() {
         const v = this.v;
         if (!v) return;
-        const kind = this.ht === 'm' ? 'mgr' : 'w',
+        const kind = this.ht === 'm' ? 'mgr' : this.ht === 's' ? 'sup' : 'w',
           list = candidates(kind),
           full = O().staff.length >= level().desks;
         v.querySelector('#ofHireTip').textContent =
           kind === 'mgr'
             ? 'Managers don’t trade. Each one lifts the skill and mood of the workers they lead.'
-            : 'Workers trade with your cash. Better roles read prices more accurately, trade bigger and cost more.';
+            : kind === 'sup'
+              ? 'Support staff don’t trade either. Each one gives the whole office a lasting perk. You can have one of each.'
+              : 'Workers trade with your cash. Better roles read prices more accurately, trade bigger and cost more.';
         v.querySelector('#ofHire').innerHTML = list
           .map(p => {
             const r = roleOf(p),
-              can = !full && acct.cash >= r.hire;
+              dup = r.one && O().staff.some(s => s.kind === kind && s.role === r.id),
+              can = !full && !dup && acct.cash >= r.hire;
             return `<div class="of-cand" style="--rc:${r.color}"><div class="of-ava sm">${personSVG(p)}</div>
               <div class="of-cb"><b>${r.name}</b><small class="muted">${E(p.name)}${p.strat ? ` · ${STRATS[p.strat].name}` : ''}</small>
-              <small>${kind === 'mgr' ? `Leads ${r.span} · +${Math.round(r.boost * 100)} skill` : `Skill ${Math.round((r.skill + p.talent) * 100)} · trades ${Math.round(r.size * 100)}% of your account`}</small></div>
+              <small>${kind === 'mgr' ? `Leads ${r.span} · +${Math.round(r.boost * 100)} skill${r.perk ? ' · ' + r.perk : ''}` : kind === 'sup' ? E(r.perk) : `Skill ${Math.round((r.skill + p.talent) * 100)} · ${E(r.tip)}`}</small></div>
               <div class="of-cs"><b class="mono">${money(r.hire)}</b><small class="muted">${money(r.pay)}/hr</small>
-              <button class="btn sm ${can ? 'primary' : ''}" data-hireid="${p.id}" data-kind="${kind}" ${can ? '' : 'disabled'}>${full ? 'No desk' : 'Hire'}</button></div></div>`;
+              <button class="btn sm ${can ? 'primary' : ''}" data-hireid="${p.id}" data-kind="${kind}" ${can ? '' : 'disabled'}>${dup ? 'Hired' : full ? 'No desk' : 'Hire'}</button></div></div>`;
           })
           .join('');
       },
@@ -849,6 +1082,42 @@
         if (!v) return;
         v.querySelector('#ofLvl').innerHTML = `<div class="of-lv"><div><small class="muted">Your office</small><b>${lv.name}</b><span class="muted small">${lv.desks} desks</span></div>
           ${nx ? `<div class="of-lv-nx"><span>Next: <b>${nx.name}</b> · ${nx.desks} desks</span><button class="btn ${acct.cash >= nx.cost ? 'primary' : ''}" id="ofUp" ${acct.cash >= nx.cost ? '' : 'disabled'}>Move in · ${money(nx.cost)}</button></div>` : '<div class="of-lv-nx"><span>You’ve got the whole tower.</span></div>'}</div>`;
+      },
+      perks() {
+        const v = this.v,
+          o = O();
+        if (!v) return;
+        const k = perks(),
+          wait = (o.pizzaAt || 0) + 30 * 60 * 1000 - Date.now();
+        const chips = [
+          k.skill ? `+${Math.round(k.skill * 100)} skill` : '',
+          k.mood ? `+${k.mood} mood` : '',
+          k.speed ? `${Math.round(k.speed * 100)}% faster` : '',
+          k.fee ? `${Math.round(k.fee * 100)}% of fees back` : '',
+          k.bot ? `bots +${Math.round(k.bot * 100)} skill` : '',
+          k.risk ? 'tighter stop-losses' : '',
+          k.pay < 1 ? 'salaries −10%' : '',
+        ].filter(Boolean);
+        const h = `<div class="card-h"><h3>${E(o.company)}</h3><button class="btn sm ghost" id="ofRename">Rename</button></div>
+          <div class="of-perks">${chips.length ? chips.map(c => `<span class="of-chip">${c}</span>`).join('') : '<span class="muted small">No team boosts yet. Buy things in the Office shop or hire support staff.</span>'}</div>
+          <div class="of-ctl-row" style="margin-top:12px"><div><b>Pizza party</b><small class="muted">+20 mood for everyone. Once every 30 minutes.</small></div>
+          <button class="btn sm ${wait <= 0 && o.staff.length ? 'primary' : ''}" id="ofPizza" ${wait > 0 || !o.staff.length ? 'disabled' : ''}>${wait > 0 ? `Again in ${Math.ceil(wait / 60000)} min` : `Order pizza · ${money(pizzaCost())}`}</button></div>`;
+        const el = v.querySelector('#ofPerks');
+        if (el._h !== h) el.innerHTML = el._h = h;
+        const co = v.querySelector('#ofCo');
+        if (co) co.textContent = o.company;
+      },
+      shop() {
+        const v = this.v,
+          o = O();
+        if (!v) return;
+        v.querySelector('#ofShopG').innerHTML = ITEMS.map(it => {
+          const own = !!o.items[it.id],
+            locked = o.lvl < it.lvl,
+            can = !own && !locked && acct.cash >= it.cost;
+          return `<div class="of-item ${own ? 'own' : ''} ${locked ? 'locked' : ''}"><span class="of-ii">${icon(it.id)}</span><b>${E(it.name)}</b><small>${E(it.desc)}</small>
+            ${own ? '<span class="of-owned">✓ In your office</span>' : locked ? `<span class="muted small">Needs ${LEVELS[it.lvl].name}</span>` : `<button class="btn sm ${can ? 'primary' : ''}" data-buyitem="${it.id}" ${can ? '' : 'disabled'}>${money(it.cost)}</button>`}</div>`;
+        }).join('');
       },
       logs() {
         const v = this.v;
@@ -865,6 +1134,8 @@
         this.staff();
         this.hireList();
         this.lvl();
+        this.perks();
+        this.shop();
         this.logs();
       },
       update() {
@@ -876,7 +1147,9 @@
           this.logs();
           this.hireList();
           this.lvl();
+          this.shop();
         }
+        this.perks();
       },
       unmount() {
         Two.unmount();
@@ -899,10 +1172,12 @@
       effSkill,
       LEVELS,
       money,
+      items: () => O().items,
+      company: () => O().company,
       focus: id => Screen.focus(id),
       hireScroll: () => document.getElementById('ofHireCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
     };
-    window.PBOffice = { O, hire, fire, promote, upgrade, closeAll, candidates, tick, tickAt, effSkill, roleOf, level, seated, ROLES, MGRS, LEVELS, STRATS, api: API, on: f => listeners.push(f), ver: () => ver };
+    window.PBOffice = { O, hire, fire, promote, upgrade, closeAll, candidates, tick, tickAt, effSkill, roleOf, level, seated, train, bonus, pizza, buyItem, rename, perks, ROLES, MGRS, SUPS, ITEMS, LEVELS, STRATS, api: API, on: f => listeners.push(f), ver: () => ver };
   } catch (e) {
     console.error('office', e);
   }

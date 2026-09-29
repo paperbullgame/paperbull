@@ -13,7 +13,7 @@
 .of-stage { position: relative; aspect-ratio: 16 / 8.5; min-height: 280px; background: #0e1320; overflow: hidden; }
 .of-hero.of-fs, .of-hero:fullscreen { position: fixed; inset: 0; z-index: 9500; border-radius: 0; display: flex; flex-direction: column; background: var(--bg); }
 .of-hero:fullscreen .of-stage, .of-hero.of-fs .of-stage { flex: 1; aspect-ratio: auto; }
-@media (max-width: 600px) { .of-stage { aspect-ratio: 4 / 3.4; } }
+@media (max-width: 600px) { .of-stage.is3d { aspect-ratio: 4 / 3.4; } }
 
 /* 2D office */
 .of2 { position: absolute; inset: 0; display: flex; flex-direction: column; --fl: #7d8288; --wl: #9aa0a6; --tr: #5b6168; }
@@ -21,7 +21,7 @@
 .of2.f-office { --fl: #55607a; --wl: #e8e6e1; --tr: #8b93a3; }
 .of2.f-floor { --fl: #2c3342; --wl: #1d2330; --tr: #0f1320; }
 .of2.f-tower { --fl: #d8d3ca; --wl: #f4f2ee; --tr: #b8a987; }
-.of2-wall { position: relative; flex: 0 0 26%; background: var(--wl); display: flex; align-items: center; justify-content: center; padding: 3% 4% 0; gap: 3%; border-bottom: 6px solid var(--tr); }
+.of2-wall { position: relative; flex: 0 0 min(26%, 190px); background: var(--wl); display: flex; align-items: center; justify-content: center; padding: 3% 4% 0; gap: 3%; border-bottom: 6px solid var(--tr); }
 .of2-win { flex: 1; height: 82%; border: 5px solid var(--tr); border-bottom-width: 7px; border-radius: 4px; overflow: hidden; background: linear-gradient(90deg, transparent 49.4%, var(--tr) 49.4% 50.6%, transparent 50.6%); position: relative; }
 .of2-win svg { width: 100%; height: 100%; display: block; }
 .of2-board { position: absolute; left: 50%; top: 14%; transform: translateX(-50%); min-width: 34%; padding: 6px 14px 7px; border-radius: 6px; background: #05080f; border: 3px solid #1e293b; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; align-items: flex-start; }
@@ -32,7 +32,7 @@
 .of2-board i { font: 500 10px var(--sans); font-style: normal; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 38ch; }
 .of2-floor { position: relative; flex: 1; background: var(--fl); background-image: linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px); background-size: 40px 40px; margin: 0; }
 .of2.f-loft .of2-floor { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 46px); background-size: auto; }
-.of2-desk { position: absolute; width: clamp(64px, 13%, 120px); transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; cursor: pointer; border-radius: 12px; outline-offset: 4px; }
+.of2-desk { position: absolute; width: clamp(50px, var(--dw, 13%), 120px); transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; cursor: pointer; border-radius: 12px; outline-offset: 4px; }
 .of2-desk .of2-p { width: 56%; margin-bottom: -24%; margin-right: 22%; position: relative; z-index: 3; }
 .of2-p svg { width: 100%; height: auto; display: block; }
 .of2-p .type { animation: ofBob 0.9s ease-in-out infinite; transform-origin: 50% 100%; }
@@ -147,3 +147,38 @@
 .of-strat:has(input:checked) { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, transparent); }
 .of-strat span { display: flex; flex-direction: column; gap: 2px; }
 .of-strat small { color: var(--mut); }
+
+/* ===== office v2: furniture, shop, perks ===== */
+.of2-decor { position: absolute; left: 3%; right: 12%; bottom: 2.5%; height: min(17%, 64px); display: flex; align-items: flex-end; justify-content: flex-start; gap: 1.2%; pointer-events: none; }
+.of2-dc { height: 100%; aspect-ratio: 1; display: grid; place-items: end center; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3)); animation: ofPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.of2-dc svg { width: 100%; height: 100%; }
+.of2-dc.d-statue { height: 118%; }
+.of2-dc.d-servers .of-blink, .of2-dc.d-servers svg circle { animation: ofBlink 1.2s steps(2) infinite; }
+.of2-dc.d-aquarium svg path:nth-of-type(2) { animation: ofSwim 4s ease-in-out infinite; transform-box: fill-box; }
+@keyframes ofPop { from { transform: scale(0.4); opacity: 0; } }
+@keyframes ofBlink { 50% { opacity: 0.25; } }
+@keyframes ofSwim { 50% { transform: translateX(6px); } }
+.of2-heli { position: absolute; top: 8%; left: -18%; width: 16%; animation: ofHeli 18s linear infinite; }
+.of2-heli svg { width: 100%; height: auto; display: block; }
+@keyframes ofHeli { to { left: 110%; } }
+.of2-desk .of2-p svg .of-pp { transform-origin: 50% 100%; }
+.of-perks { display: flex; flex-wrap: wrap; gap: 6px; }
+.of-chip { padding: 5px 10px; border-radius: 999px; background: color-mix(in srgb, var(--up) 14%, transparent); color: var(--up); font: 700 12px var(--sans); }
+.of-pill { font: 700 10.5px/18px var(--sans); padding: 0 8px; border-radius: 6px; background: color-mix(in srgb, var(--amber) 18%, transparent); color: var(--amber); }
+.of-shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.of-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 12px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg2); }
+.of-item .of-ii { width: 56px; height: 56px; display: grid; place-items: center; }
+.of-item .of-ii svg { width: 100%; height: 100%; }
+.of-item b { font-size: 13.5px; }
+.of-item small { font-size: 12px; color: var(--mut); min-height: 2.6em; }
+.of-item .btn { width: 100%; margin-top: 2px; }
+.of-item.own { border-color: color-mix(in srgb, var(--up) 45%, var(--line)); background: color-mix(in srgb, var(--up) 7%, var(--bg2)); }
+.of-owned { font: 700 12px var(--sans); color: var(--up); }
+.of-item.locked { opacity: 0.6; }
+.of-item.locked .of-ii { filter: grayscale(1); }
+@media (max-width: 600px) { .of-shop { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .of2-heli, .of2-dc, .of2-dc svg * { animation: none !important; } }
+
+.of-stage:not(.is3d) { min-height: 0; }
+@media (max-width: 560px) { .of2-tag small { display: none; } .of2-tag { padding: 2px 6px; } .of2-bub { font-size: 10px; } }
+.of2-cooler { max-height: 70px; }

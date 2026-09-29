@@ -148,7 +148,7 @@
       g.fillRect(0, 0, 512, 160);
       g.fillStyle = '#94a3b8';
       g.font = '600 20px sans-serif';
-      g.fillText('OFFICE P/L', 22, 36);
+      g.fillText(String((api.company && api.company()) || 'OFFICE').toUpperCase().slice(0, 30) + ' · P/L', 22, 36);
       g.fillStyle = v >= 0 ? '#34d399' : '#f87171';
       g.font = '800 58px sans-serif';
       g.fillText((v >= 0 ? '+' : '−') + api.money(Math.abs(v)), 22, 98);
@@ -159,7 +159,45 @@
       S.board.tex.needsUpdate = true;
     }
 
+    function robot(p, api) {
+      const g = new T.Group(),
+        metal = new T.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.3, metalness: 0.8 }),
+        dark = new T.MeshStandardMaterial({ color: '#1e293b', roughness: 0.4, metalness: 0.6 }),
+        glow = new T.MeshBasicMaterial({ color: '#22d3ee' });
+      const torso = new T.Mesh(new T.BoxGeometry(0.62, 0.66, 0.42), metal);
+      torso.position.y = 1.05;
+      torso.castShadow = true;
+      g.add(torso);
+      const head = new T.Mesh(new T.BoxGeometry(0.5, 0.42, 0.44), metal);
+      head.position.y = 1.62;
+      head.castShadow = true;
+      g.add(head);
+      const visor = new T.Mesh(new T.PlaneGeometry(0.4, 0.12), glow);
+      visor.position.set(0, 1.64, 0.225);
+      g.add(visor);
+      const visorB = visor.clone();
+      visorB.position.z = -0.225;
+      visorB.rotation.y = Math.PI;
+      g.add(visorB);
+      const ant = new T.Mesh(new T.CylinderGeometry(0.02, 0.02, 0.26, 6), dark);
+      ant.position.y = 1.96;
+      g.add(ant);
+      const tip = new T.Mesh(new T.SphereGeometry(0.06, 10, 8), new T.MeshBasicMaterial({ color: '#f43f5e' }));
+      tip.position.y = 2.1;
+      g.add(tip);
+      const arms = [];
+      for (const s of [-1, 1]) {
+        const a = new T.Mesh(new T.BoxGeometry(0.14, 0.5, 0.14), dark);
+        a.position.set(s * 0.4, 1.1, -0.18);
+        a.rotation.x = -1.1;
+        g.add(a);
+        arms.push(a);
+      }
+      g.userData = { id: p.id, head, arms, torso, base: 1.05, tip };
+      return g;
+    }
     function person(p, api, standing) {
+      if (api.roleOf(p).bot) return robot(p, api);
       const g = new T.Group(),
         r = api.roleOf(p),
         L = p.look || {},
@@ -228,12 +266,18 @@
       const mc = monitorCanvas(),
         tex = new T.CanvasTexture(mc);
       tex.colorSpace = T.SRGBColorSpace;
-      const frame = new T.Mesh(new T.BoxGeometry(1.0, 0.64, 0.05), metal);
+      const frame = new T.Mesh(new T.BoxGeometry(1.0, 0.64, 0.05), (api.items && api.items().terminals) ? new T.MeshStandardMaterial({ color: '#b45309', roughness: 0.4, metalness: 0.6 }) : metal);
       frame.position.set(0, 1.42, -0.32);
       g.add(frame);
       const scr = new T.Mesh(new T.PlaneGeometry(0.92, 0.56), new T.MeshBasicMaterial({ map: tex }));
       scr.position.set(0, 1.42, -0.29);
       g.add(scr);
+      if (api.items && api.items().monitors) {
+        const f2 = frame.clone();
+        f2.position.x = 0.95;
+        f2.rotation.y = -0.45;
+        g.add(f2);
+      }
       const stand = new T.Mesh(new T.BoxGeometry(0.08, 0.36, 0.08), metal);
       stand.position.set(0, 1.12, -0.34);
       g.add(stand);
@@ -244,7 +288,7 @@
       mug.position.set(0.72, 1.06, 0.15);
       g.add(mug);
       // chair behind the desk, on the camera side
-      const seat = new T.Mesh(new T.BoxGeometry(0.62, 0.1, 0.6), new T.MeshStandardMaterial({ color: '#111827', roughness: 0.8 }));
+      const seat = new T.Mesh(new T.BoxGeometry(0.62, 0.1, 0.6), new T.MeshStandardMaterial({ color: api.items && api.items().chairs ? '#1d4ed8' : '#111827', roughness: 0.8 }));
       seat.position.set(0, 0.55, 0.85);
       g.add(seat);
       const back = new T.Mesh(new T.BoxGeometry(0.62, 0.7, 0.08), seat.material);
@@ -259,6 +303,174 @@
       return g;
     }
 
+    /* things you bought in the Office shop */
+    function decor(api, root, W, D) {
+      const own = (api.items && api.items()) || {};
+      S.anim = [];
+      const M = (c, o = {}) => new T.MeshStandardMaterial({ color: c, roughness: 0.6, ...o });
+      const box = (w, h, d, m, x, y, z, g) => {
+        const b = new T.Mesh(new T.BoxGeometry(w, h, d), m);
+        b.position.set(x, y, z);
+        b.castShadow = b.receiveShadow = true;
+        (g || root).add(b);
+        return b;
+      };
+      // spots along the side walls and the front of the room
+      const spots = [];
+      for (let i = 0; i < 4; i++) spots.push([-W / 2 + 1.1, -D / 2 + 3 + i * 2.6, Math.PI / 2], [W / 2 - 1.1, -D / 2 + 3 + i * 2.6, -Math.PI / 2]);
+      for (let i = 0; i < 5; i++) spots.push([-W / 2 + 3 + (i * (W - 6)) / 4, D / 2 - 1.1, Math.PI]);
+      let k = 0;
+      const place = fn => {
+        const sp = spots[k++ % spots.length],
+          g = new T.Group();
+        g.position.set(sp[0], 0, sp[1]);
+        g.rotation.y = sp[2];
+        fn(g);
+        root.add(g);
+        return g;
+      };
+      if (own.plants)
+        for (const [x, z] of [
+          [-W / 2 + 0.7, D / 2 - 0.7],
+          [W / 2 - 2, -D / 2 + 0.9],
+        ]) {
+          const pot = box(0.5, 0.5, 0.5, M('#b45309'), x, 0.25, z);
+          for (let i = 0; i < 4; i++) {
+            const lf = new T.Mesh(new T.SphereGeometry(0.3, 10, 8), M('#22c55e'));
+            lf.position.set(x + Math.sin(i * 1.7) * 0.15, 0.7 + i * 0.13, z + Math.cos(i * 1.7) * 0.15);
+            root.add(lf);
+          }
+          void pot;
+        }
+      if (own.coffee)
+        place(g => {
+          box(1.2, 0.9, 0.6, M('#e5e7eb'), 0, 0.45, 0, g);
+          box(0.5, 0.6, 0.4, M('#1f2937', { metalness: 0.5 }), -0.2, 1.2, 0, g);
+          const cup = new T.Mesh(new T.CylinderGeometry(0.07, 0.06, 0.14, 12), M('#fff'));
+          cup.position.set(0.3, 0.97, 0);
+          g.add(cup);
+        });
+      if (own.whiteboard)
+        place(g => {
+          box(2, 1.2, 0.06, M('#f8fafc'), 0, 1.6, 0.2, g);
+          box(0.06, 1.6, 0.06, M('#64748b'), -0.9, 0.8, 0.2, g);
+          box(0.06, 1.6, 0.06, M('#64748b'), 0.9, 0.8, 0.2, g);
+          const ln = new T.Mesh(new T.PlaneGeometry(1.4, 0.05), new T.MeshBasicMaterial({ color: '#16a34a' }));
+          ln.position.set(0, 1.6, 0.24);
+          ln.rotation.z = 0.35;
+          g.add(ln);
+        });
+      if (own.pingpong)
+        place(g => {
+          box(2.4, 0.08, 1.4, M('#15803d'), 0, 0.78, 0.4, g);
+          box(0.04, 0.16, 1.4, M('#f8fafc'), 0, 0.9, 0.4, g);
+          for (const [x, z] of [
+            [-1.1, -0.2],
+            [1.1, -0.2],
+            [-1.1, 1],
+            [1.1, 1],
+          ])
+            box(0.06, 0.78, 0.06, M('#334155'), x, 0.39, z, g);
+          const ball = new T.Mesh(new T.SphereGeometry(0.04, 8, 6), new T.MeshBasicMaterial({ color: '#fff' }));
+          g.add(ball);
+          S.anim.push(t => {
+            const u = (t * 0.9) % 2,
+              x = u < 1 ? -1 + u * 2 : 1 - (u - 1) * 2;
+            ball.position.set(x, 0.9 + Math.abs(Math.sin(t * Math.PI * 1.8)) * 0.35, 0.4);
+          });
+        });
+      if (own.arcade)
+        place(g => {
+          box(0.8, 1.9, 0.7, M('#6d28d9'), 0, 0.95, 0.1, g);
+          const scr = new T.Mesh(new T.PlaneGeometry(0.6, 0.5), new T.MeshBasicMaterial({ color: '#22d3ee' }));
+          scr.position.set(0, 1.45, 0.46);
+          g.add(scr);
+          S.anim.push(t => scr.material.color.setHSL((t * 0.15) % 1, 0.8, 0.55));
+        });
+      if (own.aquarium)
+        place(g => {
+          box(2.2, 0.7, 0.7, M('#334155'), 0, 0.35, 0.1, g);
+          const tank = new T.Mesh(new T.BoxGeometry(2.1, 1.1, 0.6), new T.MeshStandardMaterial({ color: '#38bdf8', transparent: true, opacity: 0.45, roughness: 0.05 }));
+          tank.position.set(0, 1.25, 0.1);
+          g.add(tank);
+          const fish = [];
+          for (let i = 0; i < 4; i++) {
+            const f = new T.Mesh(new T.SphereGeometry(0.08, 8, 6), new T.MeshBasicMaterial({ color: ['#f97316', '#facc15', '#f43f5e', '#a3e635'][i] }));
+            f.scale.set(1.6, 1, 0.6);
+            g.add(f);
+            fish.push(f);
+          }
+          S.anim.push(t => fish.forEach((f, i) => f.position.set(Math.sin(t * 0.5 + i * 1.7) * 0.85, 1.05 + i * 0.12, 0.1 + Math.cos(t * 0.7 + i) * 0.15)));
+        });
+      if (own.wallscreen && S.board) {
+        const m = new T.Mesh(new T.PlaneGeometry(4, 1.25), new T.MeshBasicMaterial({ map: S.board.tex }));
+        m.position.set(-W / 2 + 0.05, 2.9, -D / 2 + D * 0.45);
+        m.rotation.y = Math.PI / 2;
+        root.add(m);
+      }
+      if (own.terminals) S.terminals = true;
+      if (own.napods)
+        place(g => {
+          for (const x of [-0.7, 0.7]) {
+            const pod = new T.Mesh(new T.CapsuleGeometry(0.45, 1.1, 6, 14), M('#e2e8f0', { roughness: 0.3 }));
+            pod.rotation.z = Math.PI / 2;
+            pod.position.set(x * 0.2, 0.55 + (x > 0 ? 1 : 0), 0.3);
+            g.add(pod);
+          }
+        });
+      if (own.gym)
+        place(g => {
+          box(1.4, 0.12, 0.4, M('#111827'), 0, 0.5, 0.3, g);
+          box(0.1, 0.5, 0.1, M('#475569'), -0.5, 0.25, 0.3, g);
+          box(0.1, 0.5, 0.1, M('#475569'), 0.5, 0.25, 0.3, g);
+          const bar = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 1.6, 8), M('#94a3b8', { metalness: 0.8 }));
+          bar.rotation.z = Math.PI / 2;
+          bar.position.set(0, 1.1, 0.3);
+          g.add(bar);
+          for (const x of [-0.7, 0.7]) {
+            const plate = new T.Mesh(new T.CylinderGeometry(0.22, 0.22, 0.08, 16), M('#dc2626'));
+            plate.rotation.z = Math.PI / 2;
+            plate.position.set(x, 1.1, 0.3);
+            g.add(plate);
+          }
+        });
+      if (own.servers)
+        place(g => {
+          const leds = [];
+          for (const x of [-0.45, 0.45]) {
+            box(0.8, 2.1, 0.8, M('#0f172a', { metalness: 0.4 }), x, 1.05, 0.2, g);
+            for (let i = 0; i < 6; i++) {
+              const l = new T.Mesh(new T.PlaneGeometry(0.5, 0.04), new T.MeshBasicMaterial({ color: '#22c55e' }));
+              l.position.set(x, 0.4 + i * 0.3, 0.61);
+              g.add(l);
+              leds.push(l);
+            }
+          }
+          S.anim.push(t => leds.forEach((l, i) => (l.visible = Math.sin(t * 6 + i * 2.3) > -0.3)));
+        });
+      if (own.statue) {
+        const g = new T.Group(),
+          gold = M('#eab308', { metalness: 0.9, roughness: 0.25 });
+        g.position.set(0, 0, D / 2 - 1.6);
+        box(1.2, 0.6, 1.2, M('#57534e'), 0, 0.3, 0, g);
+        box(1.2, 0.6, 0.6, gold, 0, 1.0, 0, g);
+        box(0.5, 0.5, 0.5, gold, 0, 1.25, 0.5, g);
+        for (const s2 of [-1, 1]) {
+          const horn = new T.Mesh(new T.ConeGeometry(0.07, 0.4, 8), gold);
+          horn.position.set(s2 * 0.3, 1.55, 0.5);
+          horn.rotation.z = -s2 * 0.9;
+          g.add(horn);
+          for (const z of [-0.2, 0.2]) box(0.12, 0.35, 0.12, gold, s2 * 0.45, 0.72, z, g);
+        }
+        root.add(g);
+        S.anim.push(t => (g.rotation.y = Math.sin(t * 0.3) * 0.25));
+      }
+      if (own.helipad) {
+        const sign = new T.Mesh(new T.CircleGeometry(0.5, 24), new T.MeshBasicMaterial({ color: '#eab308' }));
+        sign.position.set(W / 2 - 1.2, 4.3, -D / 2 + 0.06);
+        root.add(sign);
+      }
+    }
     function build(api) {
       const o = api.O(),
         { desks, map, staff } = api.seated(),
@@ -347,6 +559,7 @@
       const coolB = new T.Mesh(new T.BoxGeometry(0.5, 1.1, 0.5), new T.MeshStandardMaterial({ color: '#e5e7eb' }));
       coolB.position.set(W / 2 - 0.8, 0.55, D / 2 - 1);
       root.add(coolB);
+      decor(api, root, W, D);
       // desks and people
       S.desks = [];
       S.people = {};
@@ -598,6 +811,7 @@
         w.g.rotation.y += ((((want - w.g.rotation.y + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 6);
         if (!rm) w.g.position.y = Math.abs(Math.sin(t * 9)) * 0.05;
       }
+      if (S.anim && !rm) for (const f of S.anim) f(t);
       S.renderer.render(S.scene, S.camera);
       // pin name tags over heads
       const W = S.stage.clientWidth,
@@ -645,7 +859,22 @@
     }
     function event(type, d) {
       if (!S) return;
-      if (type === 'staff' || type === 'level') return rebuild(S.api);
+      if (type === 'staff' || type === 'level' || type === 'items') return rebuild(S.api);
+      if (type === 'party' || type === 'mood') {
+        const ids = type === 'party' ? Object.keys(S.people) : [d.who];
+        for (const id of ids) {
+          const P = S.people[id];
+          if (P) P.jump = 1;
+          const b = S.ov.querySelector(`[data-b3="${id}"]`);
+          if (b) {
+            b.textContent = type === 'party' ? 'Pizza!' : 'Thank you!';
+            b.className = 'o3-bub on up';
+            clearTimeout(b._t);
+            b._t = setTimeout(() => (b.className = 'o3-bub'), 2600);
+          }
+        }
+        return;
+      }
       if (type === 'trade') {
         const P = S.people[d.who];
         const dk = P && P.desk;
