@@ -4826,15 +4826,13 @@
       const ageCell = u =>
         u.age == null
           ? '<span class="muted small">Not set</span>'
-          : `<span class="mono">${u.age}</span>${u.kid ? ' <span class="tag sm warn">Under 14</span>' : ''}${u.chat_ok && u.kid ? ' <span class="tag sm">Chat on</span>' : ''}`;
+          : `<span class="mono">${u.age}</span>${u.kid ? ' <span class="tag sm warn">Under 14</span>' : ''}`;
       const chatState = u =>
         u.age == null
-          ? { t: 'Quick chat only', s: 'They haven’t entered their age yet, so the game only lets them use quick chat.' }
+          ? { t: 'Public chat (filtered)', s: 'No age yet: they can type in public and clan rooms with personal info blocked. Private messages need an age first.' }
           : !u.kid
-            ? { t: 'Full chat', s: 'They’re 14 or older, so they can type messages.' }
-            : u.chat_ok
-              ? { t: 'Full chat (unlocked)', s: `Unlocked by ${esc(u.chat_ok_by || 'staff')} ${u.chat_ok_at ? dday(u.chat_ok_at) : ''}${u.chat_ok_note ? ' · ' + esc(u.chat_ok_note) : ''}. Private messages stay quick-chat only, and phone numbers, emails, links and addresses are blocked.` }
-              : { t: 'Quick chat only', s: 'Under 14, so they can only use quick chat and emotes unless you unlock it.' };
+            ? { t: 'Full chat', s: 'They’re 14 or older, so they can type anywhere.' }
+            : { t: 'Public chat (filtered)', s: 'Under 14: they can type in public and clan rooms, but names, ages, schools, phone numbers, emails, links, socials and addresses are blocked. Private messages with them are quick chat only.' };
 
       /* what a player owns, with pictures (from their last cloud save) */
       const petKey = id => (/^(x|m|s)_/.test(id) ? 'xpet_' + id.replace(/^x_/, '') : 'pet_' + id);
@@ -4891,7 +4889,7 @@
       ${invCard(p)}
       <div class="grid g2" style="margin-top:16px">
         <div class="card"><div class="card-h"><h3>Account activity</h3><span class="muted small">Last 14 days</span></div>${activityStrip(d.events)}${d.events.length ? `<div class="tl">${d.events.map(e => `<div class="e"><b>${esc(evLabel(e))}</b><small>${dt(e.created_at)}</small></div>`).join('')}</div>` : '<div class="empty">No activity yet.</div>'}</div>
-        <div><div class="card"><div class="card-h"><h3>Chat</h3>${u.kid ? '<span class="pill p-warn"><i></i>Under 14</span>' : ''}</div><div class="chatst"><div><b>${chatState(u).t}</b><small>${chatState(u).s}</small></div>${u.kid && can('admin') ? `<button class="btn ${u.chat_ok ? '' : 'pri'}" data-a="chat">${u.chat_ok ? 'Turn chat off' : 'Turn on chat'}</button>` : ''}</div></div>
+        <div><div class="card"><div class="card-h"><h3>Chat</h3>${u.kid ? '<span class="pill p-warn"><i></i>Under 14</span>' : ''}</div><div class="chatst"><div><b>${chatState(u).t}</b><small>${chatState(u).s}</small></div></div></div>
         <div class="card"><div class="card-h"><h3>Details</h3></div><dl class="kv"><dt>User ID</dt><dd class="mono small">${esc(u.id)}</dd><dt>Title</dt><dd>${esc(u.title || '—')}</dd><dt>Admin note</dt><dd>${esc(u.note || '—')}</dd>
           <dt>Cash</dt><dd class="mono">${p ? usd(p.cash) : '—'}</dd><dt>Holdings</dt><dd>${
             posRows.length

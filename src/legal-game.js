@@ -1,6 +1,6 @@
 /* ===================== LEGAL, SAFETY & ACCESSIBILITY =====================
    - signup: birth year + agree to Terms/Privacy
-   - under 13: quick chat only (enforced on the server too), no purchases
+   - under 14: can type in public/clan chat with personal info blocked; private messages quick chat only; no purchases
    - storage notice, legal footer, disclaimers
    - Settings: download my data, delete my account, contact
    - keyboard: skip link, focus rings, Esc closes dialogs, Enter on role=link
@@ -245,7 +245,7 @@
         const rowH = (t, d, c) => `<div class="st-row"><div class="st-t"><b>${t}</b><small>${d}</small></div><div class="st-c">${c}</div></div>`;
         const h = `<div id="lgPriv">
           ${rowH('Download my data', on ? 'A copy of your account and game save, as a file.' : 'A copy of your game save on this device, as a file.', '<button class="btn sm" id="lgDl">Download</button>')}
-          ${on ? rowH('Birth year', ag.known ? `Saved${ag.kid ? '. Under-13 safety settings are on: quick chat only and no purchases.' : '.'}` : 'Not set yet. Needed to type in chat.', ag.known ? '<span class="muted small">✓</span>' : '<button class="btn sm" id="lgAge">Set</button>') : ''}
+          ${on ? rowH('Birth year', ag.known ? `Saved${ag.kid ? '. Younger-player safety is on: personal info is blocked in chat, private messages are quick chat only, and no purchases.' : '.'}` : 'Not set yet. Needed to type in chat.', ag.known ? '<span class="muted small">✓</span>' : '<button class="btn sm" id="lgAge">Set</button>') : ''}
           ${on ? rowH('Delete my account', 'Permanently erases your online account, save, chat messages, friends and clan membership. This can’t be undone.', '<button class="btn sm danger" id="lgDel">Delete account…</button>') : ''}
           ${rowH('Questions, privacy requests or refunds', 'Send us a message. Parents can ask about their child’s account here too.', `<a class="btn sm" href="${LG}contact.html${acct && acct.user ? '?u=' + encodeURIComponent(acct.user) : ''}" target="_blank" rel="noopener">Contact</a>`)}
           <p class="lg-links">${linkRow()}</p></div>`;

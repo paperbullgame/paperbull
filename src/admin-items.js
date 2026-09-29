@@ -188,3 +188,74 @@
         `;
         document.head.appendChild(st);
       }
+
+      /* ---------- Profile pictures: every photo is checked here before other players see it ---------- */
+      NI.pics = ['#fda4af', '#e11d48', NF('<rect class="f" x="3.5" y="4.5" width="17" height="15" rx="3"/><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m4 17.5 4.5-4 3.5 3 3-2.5 5 4"/>')];
+      {
+        const gi = NAV.findIndex(n => n[0] === 'chat');
+        NAV.splice(gi + 1, 0, ['pics', 'Profile pictures', IC.users, 'moderator']);
+      }
+      VIEWS.pics = {
+        st: { s: 'pending' },
+        async render(v) {
+          const st = this.st;
+          v.innerHTML =
+            head('Profile pictures', 'Players 14 and up can upload a photo. Nobody else sees it until you approve it here. Remove anything rude, anything showing someone else, or anything with personal info.') +
+            `<div class="card"><div class="tabs" id="pcT">${[
+              ['pending', 'Waiting'],
+              ['ok', 'Approved'],
+              ['removed', 'Removed'],
+            ]
+              .map(([k, l]) => `<button data-s="${k}" class="${st.s === k ? 'on' : ''}">${l}</button>`)
+              .join('')}</div><div id="pcG" style="margin-top:14px">${skeleton(3)}</div></div>`;
+          $('#pcT').onclick = e => {
+            const b = e.target.closest('[data-s]');
+            if (!b) return;
+            st.s = b.dataset.s;
+            $$('#pcT button').forEach(x => x.classList.toggle('on', x === b));
+            this.load();
+          };
+          this.load();
+        },
+        async load() {
+          const g = $('#pcG');
+          if (!g) return;
+          let rows;
+          try {
+            rows = await A('pba_pics', { p_status: this.st.s });
+          } catch (e) {
+            g.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+            return;
+          }
+          const s = this.st.s;
+          g.innerHTML = rows.length
+            ? `<div class="pc-g">${rows
+                .map(
+                  r => `<div class="pc-c"><img src="${esc(r.src)}" alt="Picture from @${esc(r.username)}"><div class="pc-t"><a href="#/user/${esc(r.user_id)}"><b>@${esc(r.username)}</b></a><small class="muted">${ago(r.created_at)}${r.reviewed_by ? ' · ' + esc(r.reviewed_by) : ''}</small></div>
+              <div class="pc-a">${s !== 'ok' ? `<button class="btn sm pri" data-ok="${r.id}">Approve</button>` : ''}${s !== 'removed' ? `<button class="btn sm dan" data-no="${r.id}">Remove</button>` : ''}</div></div>`
+                )
+                .join('')}</div>`
+            : `<div class="empty">${s === 'pending' ? 'Nothing waiting. 🎉' : 'None yet.'}</div>`;
+          g.onclick = async e => {
+            const b = e.target.closest('[data-ok],[data-no]');
+            if (!b) return;
+            b.disabled = true;
+            try {
+              await A('pba_pic_review', { p_id: +(b.dataset.ok || b.dataset.no), p_ok: !!b.dataset.ok });
+              toast(b.dataset.ok ? 'Approved. It shows up for everyone in a minute.' : 'Removed');
+              this.load();
+            } catch (ex) {
+              b.disabled = false;
+              toast(ex.message, 'err');
+            }
+          };
+        },
+      };
+      {
+        const st = document.createElement('style');
+        st.textContent = `.pc-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+        .pc-c{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:14px;border:1px solid var(--line);background:var(--panel2)}
+        .pc-c img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#000}
+        .pc-t{display:flex;flex-direction:column;gap:2px}.pc-a{display:flex;gap:6px}.pc-a .btn{flex:1}`;
+        document.head.appendChild(st);
+      }
