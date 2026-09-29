@@ -395,6 +395,27 @@
       };
     }
 
+    /* ---------- guests: no duplicate status line, a short sign-up button ---------- */
+    function tidyGuest() {
+      try {
+        if (!(acct && acct.user)) document.querySelectorAll('#olStatus').forEach(e => e.remove());
+        const su = document.getElementById('suBtn');
+        if (su && su.textContent !== 'Create account') su.textContent = 'Create account';
+      } catch (e) {}
+    }
+    const r3 = router;
+    router = function () {
+      const o = r3.apply(this, arguments);
+      setTimeout(tidyGuest, 60);
+      return o;
+    };
+    const sm3 = Settings.mount;
+    Settings.mount = function () {
+      const o = sm3.apply(this, arguments);
+      setTimeout(tidyGuest, 30);
+      return o;
+    };
+
     window.PBV3 = { Sheet, countTo, homeExtras, paintNeeds };
   } catch (e) {
     console.error('v3', e);

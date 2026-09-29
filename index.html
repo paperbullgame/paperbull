@@ -45278,6 +45278,27 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       };
     }
 
+    /* ---------- guests: no duplicate status line, a short sign-up button ---------- */
+    function tidyGuest() {
+      try {
+        if (!(acct && acct.user)) document.querySelectorAll('#olStatus').forEach(e => e.remove());
+        const su = document.getElementById('suBtn');
+        if (su && su.textContent !== 'Create account') su.textContent = 'Create account';
+      } catch (e) {}
+    }
+    const r3 = router;
+    router = function () {
+      const o = r3.apply(this, arguments);
+      setTimeout(tidyGuest, 60);
+      return o;
+    };
+    const sm3 = Settings.mount;
+    Settings.mount = function () {
+      const o = sm3.apply(this, arguments);
+      setTimeout(tidyGuest, 30);
+      return o;
+    };
+
     window.PBV3 = { Sheet, countTo, homeExtras, paintNeeds };
   } catch (e) {
     console.error('v3', e);
@@ -59196,6 +59217,92 @@ html.v3 #toasts > * { transition: transform 260ms var(--v3-out), opacity 200ms e
 @media (prefers-reduced-motion: reduce) {
   html.v3 #modalRoot.open .modal, .v3-sheet, html.v3 #toasts > * { transition-duration: 1ms !important; }
   html.v3 .btn:active, html.v3 .v3-b:active { transform: none; }
+}
+
+</style>
+<style id="pbMobile">
+/* ===================== PHONE PASS =====================
+   Everything here is for small screens and touch. Desktop is untouched.
+   ======================================================= */
+
+/* ---------- top bar: the balance gets the room, not five icons ---------- */
+@media (max-width: 600px) {
+  html.v3 #advToggle, html.v3 #pbGear { display: none !important; } /* Pro mode + Settings live in More / Profile */
+  html.v3 #top { gap: 8px; }
+  html.v3 .top-val { min-width: 0; flex: 1; }
+  html.v3 .top-val b { font-size: 18px !important; letter-spacing: -0.02em; }
+  html.v3 .top-val small { font-size: 11.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%; }
+  html.v3 #top .top-right { gap: 6px; }
+}
+
+/* ---------- thumbs: every control at least 40px tall ---------- */
+@media (pointer: coarse) {
+  html.v3 .hub-tabs button { min-height: 42px; }
+  html.v3 .btn.sm { min-height: 38px; }
+  html.v3 .seg button { min-height: 38px; }
+  html.v3 .chart-tools button { min-width: 40px !important; min-height: 40px !important; }
+  html.v3 .chart-tools [data-z='out'], html.v3 .chart-tools [data-z='in'] { display: none !important; } /* pinch does this */
+  html.v3 .tp-step button, html.v3 .rp-bar button { min-width: 40px; min-height: 40px; }
+  html.v3 select.txt, html.v3 .st-sel, html.v3 .mk-select { min-height: 42px; }
+  html.v3 .lg-links a, html.v3 .lg-foot nav a { display: inline-block; padding: 9px 4px; }
+  html.v3 .bp-cb { min-height: 36px; }
+  html.v3 .linkish { padding-block: 6px; }
+}
+
+/* ---------- nothing smaller than 11px on a phone ---------- */
+@media (max-width: 600px) {
+  html.v3 .rpill, html.v3 .perk-mini, html.v3 .x-tag, html.v3 .np-tag, html.v3 .sfx-need, html.v3 .sfx-desc, html.v3 .ap-ot em, html.v3 .ach em, html.v3 .cc-body small, html.v3 .bp-gi small, html.v3 .bp-more, html.v3 .tp-bdg, html.v3 .col-item small, html.v3 .of2-board small, html.v3 button small { font-size: 11px !important; }
+  html.v3 .inv-tag, html.v3 .x-tag { letter-spacing: 0.04em; }
+}
+
+/* ---------- Home: one thing at a time ---------- */
+@media (max-width: 600px) {
+  /* only the first suggestion card shows; the others wait their turn */
+  html.v3 #homePromo:not(:empty) ~ #homePet, html.v3 #homePromo:not(:empty) ~ #homeLearn, html.v3 #homePet:not(:empty) ~ #homeLearn { display: none; }
+  html.v3 .guest-bar { padding: 10px 12px; font-size: 13px; }
+  html.v3 .hero { padding-bottom: 12px; }
+  html.v3 .hero .chart-hint, html.v3 #view > .hero p.muted.small:last-of-type { display: none; }
+}
+
+/* ---------- Markets: filters scroll sideways instead of getting cut off ---------- */
+@media (max-width: 699px) {
+  html.v3 .mk-head .mk-row { display: flex; flex-wrap: nowrap; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; scroll-padding-inline: 16px; mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 28px), transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 28px), transparent); }
+  html.v3 .mk-head .mk-row::-webkit-scrollbar { display: none; }
+  html.v3 .mk-head .mk-row > * { flex: none; }
+  html.v3 #mkSector { max-width: 60vw; }
+  html.v3 .rm-promo { padding: 12px 14px; }
+}
+
+/* ---------- Stock page: chart first, controls tucked in ---------- */
+@media (max-width: 600px) {
+  html.v3 .asset-top { gap: 10px; }
+  html.v3 .chart-ctrl { gap: 8px; }
+  /* row 1: chart type + tools, row 2: indicators full width. Nothing hides off-screen. */
+  html.v3 .chart-ctrl .ctrl-row { display: flex !important; flex-wrap: wrap !important; align-items: center; gap: 8px; }
+  html.v3 .chart-ctrl .ctrl-row > * { flex: none; }
+  html.v3 .chart-ctrl .ctrl-row .chart-mode { order: 1; flex: 1 1 auto; min-width: 0; max-width: 170px; }
+  html.v3 .chart-ctrl .ctrl-row .chart-tools { order: 2; margin-left: auto; }
+  html.v3 .chart-ctrl .ctrl-row .ind-seg { order: 3; flex: 1 1 100%; display: flex; }
+  html.v3 .chart-ctrl .ctrl-row .ind-seg button { flex: 1; }
+  html.v3 .chart-ctrl .range-seg { width: 100%; display: flex; }
+  html.v3 .chart-ctrl .range-seg button { flex: 1; }
+  html.v3 .chart-hint { display: none; }
+  html.v3 .vibe { font-size: 13px; }
+  html.v3 .sk-hbtns { gap: 8px; }
+  html.v3 .sk-hbtns button { min-height: 40px; }
+}
+
+/* ---------- lists: comfortable rows ---------- */
+@media (max-width: 600px) {
+  html.v3 .pos-row, html.v3 .mv-row, html.v3 .inv-row { min-height: 56px; }
+  html.v3 .card { border-radius: 18px; }
+  html.v3 .card-h h3 { font-size: 16px; }
+}
+
+/* ---------- sheets & modals respect the home indicator ---------- */
+@media (max-width: 600px) {
+  html.v3 #modalRoot .modal { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important; max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain; }
+  html.v3 #modalRoot .mact { position: sticky; bottom: calc(-16px - env(safe-area-inset-bottom, 0px)); background: inherit; padding-top: 10px; }
 }
 
 </style>
