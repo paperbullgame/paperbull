@@ -22,6 +22,14 @@
       PET[d.id] = p;
       DESIGNS[d.id] = () => X.svg(d.id);
     }
+  // "Glow" pets: same art kit, but normal rarities (hatch from normal eggs, sold in the Pet shop)
+  for (const d of X.EXTRA || [])
+    if (!PET[d.id]) {
+      const p = { id: d.id, name: d.name, ic: '', r: d.tier, perk: d.perk, base: d.base, el: d.el, desc: d.desc, glow: true };
+      PETS.push(p);
+      PET[d.id] = p;
+      DESIGNS[d.id] = () => X.svg(d.id);
+    }
   const ALLX = X.PETS.map(d => PET[d.id]);
   const EXO = ALLX.filter(p => p.r === 'x');
   const TIER = r => ALLX.filter(p => p.r === r);
