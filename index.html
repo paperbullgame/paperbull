@@ -19515,6 +19515,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if (g.bank == null) g.bank = 0;
     g.last ||= Date.now();
     g.drops ||= {};
+    g.themes ||= { meadow: 1 };
+    g.theme ||= 'meadow';
     return g;
   };
   const HR = 3.6e6;
@@ -19529,11 +19531,24 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     { id: 'crystal', name: 'Exotic Crystal', ic: '💎', cost: 25000, boost: 0.25, slots: 3, desc: 'A glowing crystal that exotic pets love. +25% coins, +3 spots.' },
     { id: 'rainbow', name: 'Rainbow Arch', ic: '🌈', cost: 50000, boost: 0.4, slots: 5, desc: 'The ultimate flex. +40% coins, +5 pet spots.' },
   ];
+  /* garden themes: bought with VIRTUAL CASH (so your trading money finally buys something) */
+  const THEMES = [
+    { id: 'meadow', name: 'Sunny Meadow', cash: 0, boost: 0, desc: 'Where every garden starts. Green grass, blue sky.' },
+    { id: 'beach', name: 'Tropical Beach', cash: 50000, boost: 0.05, desc: 'Sand, palm trees and the ocean. +5% garden coins.' },
+    { id: 'snow', name: 'Snowy Peaks', cash: 100000, boost: 0.08, desc: 'Fresh snow that never stops falling. +8% garden coins.' },
+    { id: 'desert', name: 'Desert Oasis', cash: 150000, boost: 0.1, desc: 'Red mesas, cacti and a hidden oasis. +10% garden coins.' },
+    { id: 'candy', name: 'Candy Land', cash: 300000, boost: 0.15, desc: 'Lollipop trees and candy-cane fences. +15% garden coins.' },
+    { id: 'zen', name: 'Zen Garden', cash: 500000, boost: 0.2, desc: 'Bamboo, a torii gate and cherry blossoms. +20% garden coins.' },
+    { id: 'volcano', name: 'Volcano Island', cash: 1000000, boost: 0.3, desc: 'A live volcano and rivers of lava. +30% garden coins.' },
+    { id: 'space', name: 'Moon Base', cash: 2500000, boost: 0.5, desc: 'Your pets on the moon, with Earth in the sky. +50% garden coins.' },
+  ];
+  const TH = id => THEMES.find(t => t.id === id) || THEMES[0];
+  const curTheme = () => TH(G().theme);
   const BASE_SLOTS = 6,
     CAP_H = 12;
   const own = id => !!G().deco[id];
   const slotsMax = () => BASE_SLOTS + DECO.filter(d => own(d.id)).reduce((s, d) => s + d.slots, 0);
-  const boost = () => 1 + DECO.filter(d => own(d.id)).reduce((s, d) => s + d.boost, 0);
+  const boost = () => 1 + DECO.filter(d => own(d.id)).reduce((s, d) => s + d.boost, 0) + curTheme().boost;
   const petBy = uid => acct.pets.list.find(p => p.uid === uid);
   const mutMult = p => (window.PBExotic && p.mut && PBExotic.MUT[p.mut] ? PBExotic.MUT[p.mut].mult : 1);
   const home = () => {
@@ -19583,12 +19598,13 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     dusk: ['#3b3f8f', '#ff7e6b', '#ffc98a'],
     night: ['#070b24', '#141c47', '#2a2f6b'],
   };
-  function sceneSVG(ph) {
-    const s = SKY[ph],
+  function sceneSVG(ph, thId) {
+    const TT = thId || curTheme().id;
+    let s = TT === 'space' ? ['#02030a', '#0a0d24', '#1a1d3a'] : TT === 'desert' && ph === 'day' ? ['#6fb6ff', '#ffd9a0', '#ffe9c7'] : TT === 'candy' && ph === 'day' ? ['#9fd8ff', '#ffd1f0', '#fff0fa'] : TT === 'volcano' && ph !== 'night' ? ['#4a1c1c', '#b8502e', '#ffb36b'] : SKY[ph],
       night = ph === 'night',
       dusk = ph === 'dusk' || ph === 'dawn',
-      pick3 = (d, k, n) => (night ? n : dusk ? k : d),
-      g1 = pick3('#7ad65c', '#5f9a44', '#24573f'),
+      pick3 = (d, k, n) => (night ? n : dusk ? k : d);
+    let g1 = pick3('#7ad65c', '#5f9a44', '#24573f'),
       g2 = pick3('#5fbf49', '#4a843a', '#1b4633'),
       g3 = pick3('#4aa63d', '#3a6d2f', '#143628'),
       mt1 = pick3('#9cc3e6', '#8b7fb8', '#1c2552'),
@@ -19596,7 +19612,24 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       trunk = pick3('#7a4a2a', '#5e3a22', '#3a2618'),
       leafA = pick3('#3f9a45', '#356f35', '#163a26'),
       leafB = pick3('#58b957', '#468a41', '#1d4a30'),
-      path = pick3('#e9cf97', '#c9a878', '#5c5040');
+      path0 = pick3('#e9cf97', '#c9a878', '#5c5040');
+    let path = path0;
+    // theme palettes (day colors; night/dusk get a tint overlay)
+    const TP = {
+      beach: { g: ['#f7e2a8', '#efd08c', '#e3bf73'], mt: ['#3ab7e8', '#1f98d4'], leaf: ['#2e9e4f', '#44b865'], path: '#fff3d1' },
+      snow: { g: ['#f4f9ff', '#dde9f7', '#c9daee'], mt: ['#dfe9f7', '#c3d3ea'], leaf: ['#2f6f58', '#3f8a6c'], path: '#c9d8ea' },
+      desert: { g: ['#f3c98b', '#e7b474', '#d99e5c'], mt: ['#d47a4a', '#bf5f36'], leaf: ['#4f9a4a', '#6ab35a'], path: '#fbe3b8' },
+      candy: { g: ['#ffd0ea', '#ffb8de', '#ff9ccf'], mt: ['#fff0d6', '#c8f0ff'], leaf: ['#ff6fae', '#b388ff'], path: '#fff7c2' },
+      zen: { g: ['#9fcf7a', '#86bb63', '#6ea650'], mt: ['#8fa6b8', '#7a92a6'], leaf: ['#ffb7d5', '#ff9ecf'], path: '#e6e2d6' },
+      volcano: { g: ['#4a3b36', '#3a2d29', '#2c211e'], mt: ['#5a3a30', '#3f2822'], leaf: ['#2f5a2a', '#3a6b33'], path: '#ff6a1a' },
+      space: { g: ['#b9bcc6', '#9ea2ae', '#858995'], mt: ['#6d7180', '#565a68'], leaf: ['#6a6e7c', '#7d8190'], path: '#d9dbe2' },
+    }[TT];
+    if (TP) {
+      [g1, g2, g3] = TP.g;
+      [mt1, mt2] = TP.mt;
+      [leafA, leafB] = TP.leaf;
+      path = TP.path;
+    }
     let stars = '';
     if (night || ph === 'dawn') for (let i = 0; i < 60; i++) stars += `<circle cx="${(i * 97) % 1000}" cy="${(i * 53) % 200}" r="${i % 6 ? 1 : 2}" fill="#fff" opacity="${night ? 0.9 : 0.35}" class="pg-tw" style="animation-delay:${(i % 9) * 0.35}s"/>`;
     const orb = night
@@ -19621,13 +19654,14 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const hillFar = `<path d="M0 262Q180 238 380 258T760 250 1000 256V520H0z" fill="${g3}"/>`;
     const hillMid = `<path d="M0 292Q240 262 520 290T1000 282V520H0z" fill="${g2}"/>`;
     const fence = `<g>${Array.from({ length: 26 }, (_, i) => `<path d="M${i * 40 + 6} 300v-30l5-6 5 6v30z" fill="${night ? '#6b5a44' : '#fffaf0'}" stroke="${night ? '#3d3226' : '#d9c9a8'}" stroke-width="1.5"/>`).join('')}<rect x="0" y="276" width="1000" height="5" rx="2" fill="${night ? '#5a4a38' : '#efe3c8'}"/><rect x="0" y="290" width="1000" height="5" rx="2" fill="${night ? '#5a4a38' : '#efe3c8'}"/></g>`;
-    const ground = `<defs><linearGradient id="pgG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${g1}"/><stop offset="1" stop-color="${g2}"/></linearGradient></defs><path d="M0 306Q300 288 600 312T1000 302V520H0z" fill="url(#pgG)"/>`;
+    const ground = `<defs><linearGradient id="pgG${TT}${ph}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${g1}"/><stop offset="1" stop-color="${g2}"/></linearGradient></defs><path d="M0 306Q300 288 600 312T1000 302V520H0z" fill="url(#pgG${TT}${ph})"/>`;
     const walk = `<path d="M470 520C480 470 420 440 360 420S250 380 250 350" stroke="${path}" stroke-width="46" fill="none" stroke-linecap="round" opacity="${night ? 0.6 : 0.9}"/><path d="M470 520C480 470 420 440 360 420S250 380 250 350" stroke="#fff" stroke-width="46" fill="none" stroke-linecap="round" stroke-dasharray="3 26" opacity=".12"/>`;
     // the pet house
     const win = night || dusk ? '#ffd36b' : '#bfe6ff';
+    const O_roof = { beach: '#2bb3a0', snow: '#5d7fb8', desert: '#d4583a', candy: '#ff6fae', zen: '#2b2b2b', volcano: '#3a2a24' }[TT];
     const house = `<g transform="translate(240 350)"><ellipse cx="0" cy="4" rx="78" ry="12" fill="#000" opacity=".18"/>
       <rect x="-58" y="-62" width="116" height="66" rx="6" fill="${pick3('#fff1d6', '#e8cfa8', '#6e5c48')}" stroke="${pick3('#d9b98a', '#b8956a', '#3e3226')}" stroke-width="3"/>
-      <path d="M-74-58L0-112 74-58z" fill="${pick3('#e0584f', '#b8443c', '#5a2420')}" stroke="${pick3('#b23c35', '#8a302a', '#3a1614')}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M-74-58L0-112 74-58z" fill="${O_roof || pick3('#e0584f', '#b8443c', '#5a2420')}" stroke="${pick3('#b23c35', '#8a302a', '#3a1614')}" stroke-width="3" stroke-linejoin="round"/>
       <rect x="30" y="-120" width="16" height="30" fill="${pick3('#b86a4a', '#94533a', '#4a2c20')}"/>
       <path d="M-20 4v-34a20 20 0 0 1 40 0v34z" fill="${pick3('#8a5a3c', '#6e4630', '#2e2018')}"/><circle cx="10" cy="-12" r="2.5" fill="#ffd34d"/>
       <rect x="-50" y="-44" width="22" height="20" rx="4" fill="${win}" stroke="#fff" stroke-width="2.5"/><rect x="28" y="-44" width="22" height="20" rx="4" fill="${win}" stroke="#fff" stroke-width="2.5"/>
@@ -19659,11 +19693,72 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const crystal = own('crystal') ? `<g transform="translate(120 440)" class="pg-glow"><path d="M0-80l22 40-22 60-22-60z" fill="#b18cff" stroke="#fff" stroke-width="2"/><path d="M0-80v100" stroke="#fff" stroke-opacity=".6"/><circle cy="-30" r="60" fill="#b18cff" opacity=".18"/></g>` : '';
     const rainbow = own('rainbow') ? `<g opacity="${night ? 0.3 : 0.7}" fill="none" stroke-width="12">${['#ff5b5b', '#ffa54d', '#ffe066', '#6fdc6f', '#5ab4ff', '#8a6bff'].map((c, i) => `<path d="M${200 + i * 12} 300A${300 - i * 12} ${230 - i * 12} 0 0 1 ${800 - i * 12} 300" stroke="${c}"/>`).join('')}</g>` : '';
     const lanterns = own('lanterns') ? [120, 420, 700, 980].map(x => `<g transform="translate(${x} 318)"><path d="M0 0v-34" stroke="#6b3f24" stroke-width="3"/><rect x="-9" y="-48" width="18" height="18" rx="5" fill="#ff5b3d"/>${night || dusk ? '<circle cy="-39" r="28" fill="#ffb13d" opacity=".35" class="pg-glow"/>' : ''}</g>`).join('') : '';
-    const tint = night ? '<rect width="1000" height="520" fill="#0a1238" opacity=".22"/>' : dusk ? '<rect width="1000" height="520" fill="#ff7e4d" opacity=".08"/>' : '';
+    /* ---- theme scenery ---- */
+    const O = {};
+    const palm = (x, y, k) => `<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 0C4-40 14-80 6-120" stroke="#8a5a34" stroke-width="10" fill="none" stroke-linecap="round"/>${[-150, -110, -60, -20, 20].map(r => `<path d="M6-120q40-10 64 20q-34-8-64-20z" fill="${leafA}" transform="rotate(${r} 6 -120)"/>`).join('')}<circle cx="0" cy="-114" r="6" fill="#7a4a24"/><circle cx="12" cy="-112" r="6" fill="#7a4a24"/></g>`;
+    const cactus = (x, y, k) => `<g transform="translate(${x} ${y}) scale(${k})"><rect x="-9" y="-80" width="18" height="80" rx="9" fill="${leafA}"/><path d="M-9-40h-14a8 8 0 0 1-8-8v-18" stroke="${leafA}" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M9-52h12a8 8 0 0 0 8-8v-12" stroke="${leafB}" stroke-width="12" fill="none" stroke-linecap="round"/><circle cx="0" cy="-82" r="5" fill="#ff7aa8"/></g>`;
+    const lolli = (x, y, k, c) => `<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 0v-70" stroke="#fff" stroke-width="6"/><circle cy="-92" r="26" fill="${c}"/><path d="M0-92m-18 0a18 18 0 1 0 18-18a12 12 0 1 1-12 12a6 6 0 1 0 6-6" stroke="#fff" stroke-width="5" fill="none" opacity=".85"/></g>`;
+    const pine = (x, y, h, snow) => `<g transform="translate(${x} ${y})"><path d="M0-${h}l${h * 0.4} ${h}h-${h * 0.8}z" fill="${leafA}"/>${snow ? `<path d="M0-${h}l${h * 0.16} ${h * 0.4}h-${h * 0.32}z" fill="#fff"/>` : ''}</g>`;
+    if (TT === 'beach') {
+      O.mts = `<rect y="232" width="1000" height="80" fill="${mt1}"/><path d="M0 240h1000" stroke="#fff" stroke-opacity=".5" stroke-width="3" stroke-dasharray="30 40" class="pg-shim"/><path d="M0 262h1000" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-dasharray="20 50"/><path d="M700 236q40-30 90 0z" fill="#2e9e4f"/>`;
+      O.trees = [60, 180, 820, 960].map((x, i) => palm(x, 290, 0.5 + (i % 2) * 0.15)).join('');
+      O.fence = '';
+      O.big = palm(905, 350, 1.1);
+      O.bits = Array.from({ length: 26 }, (_, i) => `<path d="M${(i * 157) % 1000} ${340 + ((i * 53) % 160)}q6-10 12 0z" fill="${['#ffb3c7', '#fff', '#ffd08a'][i % 3]}"/>`).join('');
+      O.roof = '#2bb3a0';
+    } else if (TT === 'snow') {
+      O.trees = Array.from({ length: 22 }, (_, i) => pine(i * 46 + 10, 264 + Math.sin(i) * 5, 34 + ((i * 13) % 16), true)).join('');
+      O.big = `<g transform="translate(905 340)"><circle cy="-22" r="30" fill="#fff" stroke="#c9daee" stroke-width="3"/><circle cy="-70" r="22" fill="#fff" stroke="#c9daee" stroke-width="3"/><circle cx="-7" cy="-74" r="3" fill="#222"/><circle cx="7" cy="-74" r="3" fill="#222"/><path d="M0-68l14 4-14 3z" fill="#ff8a3d"/><path d="M-20-54h40" stroke="#e0584f" stroke-width="7" stroke-linecap="round"/></g>`;
+      O.bits = Array.from({ length: 40 }, (_, i) => `<circle cx="${(i * 139) % 1000}" cy="${320 + ((i * 71) % 190)}" r="1.8" fill="#fff"/>`).join('');
+      O.flowers = '';
+      O.roof = '#5d7fb8';
+    } else if (TT === 'desert') {
+      O.mts = `<path d="M60 262v-70h40l10-14h120l10 14h30v70zM560 262v-90l14-10h150l12 10v90zM860 262v-50h90v50z" fill="${mt1}"/><path d="M60 200h210M560 190h186" stroke="${mt2}" stroke-width="8"/>`;
+      O.trees = [120, 400, 640, 880].map((x, i) => cactus(x, 290, 0.35 + (i % 2) * 0.1)).join('');
+      O.fence = '';
+      O.big = cactus(905, 350, 0.9);
+      O.bits = Array.from({ length: 30 }, (_, i) => `<ellipse cx="${(i * 149) % 1000}" cy="${330 + ((i * 61) % 180)}" rx="5" ry="3" fill="#c48a52"/>`).join('');
+      O.flowers = '';
+      O.roof = '#d4583a';
+    } else if (TT === 'candy') {
+      O.mts = `<path d="M-20 262Q60 150 160 200T360 180 560 200 760 170 1020 262z" fill="${mt1}"/><path d="M-20 262Q80 200 200 230T460 215 700 230 1020 262z" fill="${mt2}"/>${Array.from({ length: 12 }, (_, i) => `<circle cx="${i * 90 + 30}" cy="${200 + (i % 3) * 12}" r="4" fill="${['#ff6fae', '#ffd34d', '#6fd3ff'][i % 3]}"/>`).join('')}`;
+      O.trees = Array.from({ length: 12 }, (_, i) => lolli(i * 88 + 20, 270, 0.45, ['#ff6fae', '#b388ff', '#ffd34d', '#6fd3ff'][i % 4])).join('');
+      O.fence = `<g>${Array.from({ length: 26 }, (_, i) => `<path d="M${i * 40 + 10} 300v-26a8 8 0 0 1 16 0" stroke="#fff" stroke-width="6" fill="none"/><path d="M${i * 40 + 10} 300v-26a8 8 0 0 1 16 0" stroke="#ff4d6d" stroke-width="6" fill="none" stroke-dasharray="5 6"/>`).join('')}</g>`;
+      O.big = lolli(905, 350, 1.3, '#ff6fae');
+      O.bits = Array.from({ length: 60 }, (_, i) => `<rect x="${(i * 137) % 1000}" y="${320 + ((i * 67) % 190)}" width="7" height="2.6" rx="1.3" fill="${['#ff6fae', '#ffd34d', '#6fd3ff', '#b388ff', '#7ae582'][i % 5]}" transform="rotate(${(i * 47) % 180} ${(i * 137) % 1000} ${320 + ((i * 67) % 190)})"/>`).join('');
+      O.roof = '#ff6fae';
+    } else if (TT === 'zen') {
+      O.trees = Array.from({ length: 30 }, (_, i) => `<g transform="translate(${i * 34 + 5} 270)"><rect x="-3" y="-${50 + (i % 4) * 8}" width="6" height="${50 + (i % 4) * 8}" fill="#6fae4a"/><path d="M-3-20h6M-3-36h6" stroke="#4a7f30" stroke-width="2"/></g>`).join('');
+      O.fence = `<g>${Array.from({ length: 50 }, (_, i) => `<rect x="${i * 20}" y="274" width="8" height="26" rx="3" fill="#b8a36a"/>`).join('')}<rect y="280" width="1000" height="4" fill="#8a7440"/></g>`;
+      O.big = `<g transform="translate(900 350)"><rect x="-54" y="-110" width="12" height="110" fill="#d9322b"/><rect x="42" y="-110" width="12" height="110" fill="#d9322b"/><path d="M-78-118q78 16 156 0v14q-78 12-156 0z" fill="#1a1a1a"/><rect x="-64" y="-94" width="128" height="10" fill="#d9322b"/></g>`;
+      O.bits = Array.from({ length: 16 }, (_, i) => `<ellipse cx="${(i * 181) % 1000}" cy="${340 + ((i * 59) % 160)}" rx="${10 + (i % 3) * 4}" ry="6" fill="#9aa0a6"/>`).join('');
+      O.roof = '#2b2b2b';
+    } else if (TT === 'volcano') {
+      O.mts = `<path d="M300 262L470 90h60l170 172z" fill="${mt1}"/><path d="M470 90h60l-8 14q-20 10-44 0z" fill="#ff6a1a" class="pg-glow"/><path d="M500 96q-10 60 10 120q14 30 0 46" stroke="#ff6a1a" stroke-width="8" fill="none" class="pg-glow"/><circle cx="500" cy="80" r="40" fill="#ff6a1a" opacity=".25" class="pg-glow"/><g class="pg-smoke"><circle cx="500" cy="60" r="18" fill="#555" opacity=".5"/><circle cx="510" cy="40" r="24" fill="#555" opacity=".35"/><circle cx="496" cy="16" r="30" fill="#555" opacity=".2"/></g><path d="M-20 262L120 200 220 262zM780 262L900 190 1020 262z" fill="${mt2}"/>`;
+      O.trees = Array.from({ length: 10 }, (_, i) => `<path d="M${i * 100 + 30} 270v-30m0 12l-10-10m10 4l10-12" stroke="#2a1a14" stroke-width="4" fill="none" stroke-linecap="round"/>`).join('');
+      O.fence = '';
+      O.big = `<g transform="translate(905 340)"><path d="M-40 0l14-50 30-12 30 20 8 42z" fill="#2c211e" stroke="#ff6a1a" stroke-width="2"/><path d="M-10-40l10 20 12-10" stroke="#ff6a1a" stroke-width="3" fill="none" class="pg-glow"/></g>`;
+      O.bits = Array.from({ length: 14 }, (_, i) => `<path d="M${(i * 173) % 1000} ${340 + ((i * 67) % 170)}l12 4 8-6 10 5" stroke="#ff6a1a" stroke-width="2.5" fill="none" class="pg-glow"/>`).join('');
+      O.flowers = '';
+      O.roof = '#3a2a24';
+    } else if (TT === 'space') {
+      O.mts = `<circle cx="760" cy="110" r="46" fill="#2f7de0"/><path d="M730 90q20-10 30 6t26 8q-6 20-26 16t-30-10z" fill="#3fbf6a"/><circle cx="760" cy="110" r="46" fill="none" stroke="#9fd0ff" stroke-width="4" opacity=".5"/><g transform="translate(250 90)"><circle r="22" fill="#e0a86a"/><ellipse rx="40" ry="8" fill="none" stroke="#f3d3a0" stroke-width="4" transform="rotate(-18)"/></g><path d="M-20 270Q150 230 300 262T620 250 1020 266V300H-20z" fill="${mt2}"/>`;
+      O.trees = '';
+      O.fence = '';
+      O.big = `<g transform="translate(905 350)"><path d="M0-150q22 30 22 90v50h-44v-50q0-60 22-90z" fill="#e8eaf0" stroke="#9aa0ae" stroke-width="3"/><circle cy="-90" r="10" fill="#5ab4ff" stroke="#fff" stroke-width="3"/><path d="M-22-30l-18 30h18zM22-30l18 30h-18z" fill="#e0584f"/><path d="M-12 0q12 30 24 0" fill="#ffb13d" class="pg-glow"/></g>`;
+      O.bits = Array.from({ length: 22 }, (_, i) => `<ellipse cx="${(i * 163) % 1000}" cy="${330 + ((i * 71) % 170)}" rx="${10 + (i % 4) * 6}" ry="${4 + (i % 4) * 2}" fill="#80848f" stroke="#6a6e7a" stroke-width="2"/>`).join('');
+      O.flowers = '';
+      O.stars = Array.from({ length: 90 }, (_, i) => `<circle cx="${(i * 97) % 1000}" cy="${(i * 53) % 240}" r="${i % 7 ? 1 : 2}" fill="#fff" class="pg-tw" style="animation-delay:${(i % 9) * 0.35}s"/>`).join('');
+      O.clouds = '';
+      O.orb = '';
+      O.walk = '';
+      O.house = `<g transform="translate(240 350)"><ellipse cx="0" cy="4" rx="80" ry="12" fill="#000" opacity=".25"/><path d="M-70 0a70 70 0 0 1 140 0z" fill="#bfe6ff" opacity=".55" stroke="#fff" stroke-width="3"/><rect x="-16" y="-34" width="32" height="34" rx="6" fill="#e8eaf0"/><circle cx="-36" cy="-20" r="8" fill="#ffd36b"/><circle cx="36" cy="-20" r="8" fill="#ffd36b"/><text x="0" y="-48" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" font-family="sans-serif">PETS</text></g>`;
+    }
+    const tint = TT === 'space' ? '' : night ? `<rect width="1000" height="520" fill="#0a1238" opacity="${TP ? 0.5 : 0.22}"/>` : dusk ? '<rect width="1000" height="520" fill="#ff7e4d" opacity=".08"/>' : '';
     return `<svg class="pg-bg" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-      <defs><linearGradient id="pgSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s[0]}"/><stop offset=".6" stop-color="${s[1]}"/><stop offset="1" stop-color="${s[2]}"/></linearGradient></defs>
-      <rect width="1000" height="520" fill="url(#pgSky)"/>${stars}${orb}${clouds}${rainbow}${mts}${hillFar}${trees}${hillMid}${fence}${ground}${walk}${tufts}
-      ${gazebo}${house}${bigTree}${bush(60, 330, 1)}${bush(560, 318, 0.7)}${crystal}${lanterns}${fountain}${pond}${flowers}${tint}</svg>`;
+      <defs><linearGradient id="pgSky${TT}${ph}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s[0]}"/><stop offset=".6" stop-color="${s[1]}"/><stop offset="1" stop-color="${s[2]}"/></linearGradient></defs>
+      <rect width="1000" height="520" fill="url(#pgSky${TT}${ph})"/>${O.stars ?? stars}${O.orb ?? orb}${O.clouds ?? clouds}${rainbow}${O.mts ?? mts}${hillFar}${O.trees ?? trees}${hillMid}${O.fence ?? fence}${ground}${O.walk ?? walk}${O.bits ?? tufts}
+      ${gazebo}${O.house ?? house}${O.big ?? bigTree}${['space', 'volcano', 'desert'].includes(TT) ? '' : bush(60, 330, 1) + bush(560, 318, 0.7)}${crystal}${lanterns}${fountain}${pond}${O.flowers ?? flowers}${tint}</svg>`;
   }
 
   /* ---------------- pets as actors ---------------- */
@@ -20049,6 +20144,51 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         })
     );
   }
+  function paintThemes() {
+    const el = document.getElementById('pgThemes');
+    if (!el) return;
+    const g = G();
+    el.innerHTML = THEMES.map(t => {
+      const own = !!g.themes[t.id],
+        on = g.theme === t.id;
+      return `<div class="pg-th${on ? ' on' : ''}"><span class="pg-thv">${sceneSVG('day', t.id).replace('class="pg-bg"', 'class="pg-thsvg"')}</span><b>${esc(t.name)}</b><small>${esc(t.desc)}</small>${on ? '<span class="pg-owned">Active</span>' : own ? `<button class="btn sm" data-th="${t.id}">Use</button>` : `<button class="btn sm primary" data-thbuy="${t.id}">Buy · ${fmtUSD(t.cash, 0)}</button>`}</div>`;
+    }).join('');
+    el.onclick = e => {
+      const u = e.target.closest('[data-th]'),
+        b = e.target.closest('[data-thbuy]');
+      if (u) {
+        accrue();
+        g.theme = u.dataset.th;
+        saveAcct(true);
+        Garden.mount(document.getElementById('view'));
+        return;
+      }
+      if (!b) return;
+      const t = TH(b.dataset.thbuy);
+      if (availableCash() < t.cash) return toast(`You need ${fmtUSD(t.cash - availableCash(), 0)} more virtual cash. Trade to earn it!`, 'err');
+      modal({
+        title: `Buy ${esc(t.name)}?`,
+        confirm: `Pay ${fmtUSD(t.cash, 0)}`,
+        html: `<p>This costs <b>${fmtUSD(t.cash, 0)}</b> of your virtual cash. Your account value (and your spot on the leaderboard) goes down by that much, so make sure you really want it.</p><p class="muted small">${esc(t.desc)}</p>`,
+        onConfirm: () => {
+          if (availableCash() < t.cash) return toast('Not enough cash', 'err');
+          accrue();
+          acct.cash -= t.cash;
+          g.themes[t.id] = Date.now();
+          g.theme = t.id;
+          try {
+            recordHistory(true);
+            submitLeaderboard(true);
+          } catch (e) {}
+          saveAcct(true);
+          SFX.play('legend');
+          confetti();
+          toast(`${t.name} unlocked!`, 'xp');
+          Garden.mount(document.getElementById('view'));
+        },
+      });
+    };
+  }
   function paintWho() {
     const el = document.getElementById('pgWho');
     if (!el) return;
@@ -20104,6 +20244,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
           <div class="pg-card"></div></section>
         <section class="card pg-bank" id="pgBank"></section>
         <section class="card"><div class="card-h"><h3>Who lives here</h3><span class="muted small" id="pgWhoN"></span></div><div class="pg-who" id="pgWho"></div></section>
+        <section class="card"><div class="card-h"><h3>Garden themes</h3><span class="muted small">Paid with your virtual cash · you have ${fmtUSD(availableCash(), 0)}</span></div><div class="pg-themes" id="pgThemes"></div></section>
         <section class="card"><div class="card-h"><h3>Decorations</h3><span class="muted small">They show up in the garden and boost what it earns</span></div><div class="pg-decos" id="pgDeco"></div></section>
         <p class="foot-note">Pets in the garden earn coins even when you’re away (up to ${CAP_H} hours). Rarer, higher-level and mutated pets earn more. Pets away on missions don’t earn.</p>`;
       stage = document.getElementById('pgStage');
@@ -20117,6 +20258,12 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       paintBank();
       paintWho();
       paintDeco();
+      paintThemes();
+      const fx = stage.querySelector('.pg-fx'),
+        tid = curTheme().id;
+      if (fx && (tid === 'snow' || tid === 'volcano'))
+        fx.insertAdjacentHTML('afterbegin', Array.from({ length: tid === 'snow' ? 40 : 18 }, (_, i) => `<i class="${tid === 'snow' ? 'pg-flake' : 'pg-ember'}" style="left:${(i * 37) % 100}%;animation-duration:${6 + (i % 5) * 1.6}s;animation-delay:-${(i * 0.7) % 9}s;--s:${0.6 + (i % 4) * 0.3}"></i>`).join(''));
+      stage.classList.add('th-' + tid);
       lastT = 0;
       dropT = 6;
       raf = requestAnimationFrame(frame);
@@ -20144,7 +20291,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     pets = nav && nav.querySelector('a[data-go="pets"]');
   if (pets && !nav.querySelector('a[data-go="garden"]'))
     pets.insertAdjacentHTML('afterend', '<a data-go="garden" data-s="garden" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M12 21v-9"/></svg><span>Garden</span></a>');
-  window.PBGarden = { rate, collect, slotsMax, DECO, home };
+  window.PBGarden = { rate, collect, slotsMax, DECO, THEMES, home, sceneSVG };
 })();
 
 /* ===================== ADVANCED MODE · REPLAY · NEWS DESK ===================== */
@@ -38818,6 +38965,83 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   }
 })();
 
+/* ===================== ECONOMY: money matters =====================
+   · Every trade pays a small commission (0.1%, min $0.50)
+   · Market orders fill across the bid/ask spread (bigger for volatile assets)
+   · Coins from trading are harder to farm
+   · Virtual cash now buys garden themes (see pet-garden.js)
+   ===================================================================== */
+(() => {
+  try {
+    const FEE_RATE = 0.001,
+      FEE_MIN = 0.5;
+    const fee = v => Math.max(FEE_MIN, v * FEE_RATE);
+    const spreadOf = a => {
+      if (!a) return 0;
+      const base = a.type === 'crypto' ? 0.0015 : (typeof CORE !== 'undefined' && CORE.includes(a)) ? 0.0003 : 0.0008;
+      return Math.min(0.004, base + (a.vol || 0.3) * 0.0006);
+    };
+    window.PBFees = { fee, spreadOf, FEE_RATE };
+
+    const e0 = executeTrade;
+    executeTrade = function (o) {
+      if (!o || !o.sym || !SIM[o.sym] || o.noFee) return e0.apply(this, arguments);
+      const a = SIM[o.sym],
+        buyish = o.side === 'buy' || o.side === 'cover',
+        s = o.kind === 'limit' ? 0 : spreadOf(a),
+        price = o.price * (buyish ? 1 + s : 1 - s);
+      let qty = o.qty;
+      if (o.side === 'buy' || o.side === 'short') {
+        // "Max" buttons: shrink a little so the fee fits, but a truly oversized order still fails
+        const avail = availableCash(),
+          v = qty * price;
+        if (qty * o.price <= avail + 0.005 && v + fee(v) > avail) qty = floorTo(Math.max(0, (avail - FEE_MIN) / (price * (1 + FEE_RATE))), qtyDecimals(a));
+      }
+      const r = e0.call(this, Object.assign({}, o, { qty, price }));
+      if (r && r.ok && r.trade) {
+        const f = Math.round(fee(r.trade.value) * 100) / 100;
+        acct.cash = Math.round((acct.cash - f) * 1e6) / 1e6;
+        acct.realized -= f;
+        acct.feesPaid = (acct.feesPaid || 0) + f;
+        r.trade.fee = f;
+        r.trade.mid = o.price;
+        saveAcct(true);
+        if (!acct.flags.feeTip) {
+          acct.flags.feeTip = true;
+          setTimeout(() => toast(`Trades now cost a small fee (${fmtUSD(f)} on this one) plus the bid/ask spread. Trade smart, not often!`, 'info'), 900);
+        }
+      }
+      return r;
+    };
+
+    // coins from trading are harder to farm (a profitable, well-sized trade still pays)
+    const cg0 = coinGain;
+    coinGain = function (n, fromTrade) {
+      if (fromTrade) n = Math.max(1, Math.round(n * 0.5));
+      return cg0.call(this, n, fromTrade);
+    };
+
+    // show the fee + spread in the trade preview
+    if (typeof Asset !== 'undefined' && Asset.previewHTML) {
+      const p0 = Asset.previewHTML;
+      Asset.previewHTML = function (r) {
+        let h = p0.apply(this, arguments);
+        try {
+          if (r && r.qty && r.value) {
+            const a = SIM[this.sym],
+              sp = this.st && this.st.kind === 'limit' ? 0 : spreadOf(a) * r.value,
+              f = fee(r.value);
+            h += `<div class="r ec-fee"><span>Fee + spread</span><span class="neg">≈ ${fmtUSD(f + sp)}</span></div>`;
+          }
+        } catch (e) {}
+        return h;
+      };
+    }
+  } catch (e) {
+    console.error('economy', e);
+  }
+})();
+
 /* ===================== HUBS: fewer tabs, related pages grouped with sub-tabs ===================== */
 (() => {
   try {
@@ -50994,6 +51218,21 @@ body.sk-fs-on #buckFab, body.sk-fs-on .buck-fab, body.sk-fs-on #tradeBar { displ
 .pg-bg .pg-sun { animation: pgGlow 5s ease-in-out infinite; }
 @media (max-width: 600px) { .pg-stage { height: 440px; } .pg-act { padding: 7px 10px; font-size: 11.5px; } .pg-top .pg-chip:nth-child(2) { display: none; } }
 @media (prefers-reduced-motion: reduce) { .pg-body svg, .pg-bfly, .pg-bfly b, .pg-bg .pg-sway, .pg-bg .pg-smoke circle { animation: none !important; } }
+/* themes */
+.pg-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.pg-th { display: flex; flex-direction: column; gap: 5px; padding: 8px 8px 12px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg2); }
+.pg-th.on { border-color: #6fcf57; box-shadow: 0 0 0 1px #6fcf57 inset; }
+.pg-th b { font-size: 14px; padding: 2px 4px 0; }
+.pg-th small { color: var(--mut); font-size: 12px; line-height: 1.35; padding: 0 4px; flex: 1; }
+.pg-th .btn, .pg-th .pg-owned { margin: 4px 4px 0; align-self: flex-start; }
+.pg-thv { display: block; height: 110px; border-radius: 11px; overflow: hidden; position: relative; }
+.pg-thsvg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pg-thsvg * { animation: none !important; }
+.pg-flake { position: absolute; top: -10px; width: calc(6px * var(--s)); height: calc(6px * var(--s)); border-radius: 50%; background: #fff; opacity: 0.9; animation: pgFall linear infinite; box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+@keyframes pgFall { to { transform: translate(40px, 600px); } }
+.pg-ember { position: absolute; bottom: -10px; width: calc(5px * var(--s)); height: calc(5px * var(--s)); border-radius: 50%; background: #ff8a3d; box-shadow: 0 0 8px 2px #ff6a1a; animation: pgRise linear infinite; }
+@keyframes pgRise { 0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(-30px, -560px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pg-flake, .pg-ember { animation: none !important; display: none; } }
 
 </style>
 <style id="pbAbuse">
