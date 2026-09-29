@@ -1890,6 +1890,10 @@
       }
       @media (prefers-reduced-motion: reduce) { .pbg-card, .pbg-pin.shake { animation: none; } }
 
+      .chatst { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+      .chatst > div { display: flex; flex-direction: column; gap: 3px; min-width: 200px; flex: 1; }
+      .chatst small { color: var(--mut); line-height: 1.45; }
+
       /* dashboard hero */
       .hero {
         position: relative;
@@ -6845,6 +6849,7 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
         bad_max: 'Max uses must be at least 1.',
         need_reason: 'Add a reason.',
         bad_new_code: 'The new code must be 5 to 12 digits.',
+        parent_ok_needed: 'Write down how the parent said yes first.',
         same_code: 'That’s the same code as now.',
         bad_tag: 'Tags can only use letters, numbers, spaces, - and _ (max 20 characters).',
         too_many_tags: 'Max 12 tags per player.',
@@ -7698,6 +7703,8 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
         market_edit: 'Changed a stock',
         market_remove: 'Removed a stock',
         code_change: 'Changed the access code',
+        chat_unlock: 'Turned on chat',
+        chat_lock: 'Turned off chat',
         sessions_revoked: 'Signed out all admins',
         maintenance_on: 'Turned ON maintenance',
         maintenance_off: 'Turned off maintenance',
@@ -7748,7 +7755,8 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
       <div class="tools tools2">
       <select class="in" id="uJoined" aria-label="Joined"><option value="">Joined: any time</option><option value="today" ${st.joined === 'today' ? 'selected' : ''}>Joined today</option><option value="week" ${st.joined === 'week' ? 'selected' : ''}>Joined this week</option><option value="month" ${st.joined === 'month' ? 'selected' : ''}>Joined this month</option></select>
       <select class="in" id="uSeen" aria-label="Last seen"><option value="">Last seen: any</option><option value="today" ${st.seen === 'today' ? 'selected' : ''}>Active today</option><option value="week" ${st.seen === 'week' ? 'selected' : ''}>Active in the last 7 days</option><option value="inactive" ${st.seen === 'inactive' ? 'selected' : ''}>Inactive 7+ days</option><option value="gone" ${st.seen === 'gone' ? 'selected' : ''}>Gone 30+ days</option></select>
-      <input class="in" id="uTag" list="uTags" placeholder="Tag" value="${esc(st.tag)}" style="max-width:160px"><datalist id="uTags">${['VIP', 'Streamer', 'Suspicious', 'Friend', 'Tester', 'Whale'].map(t => `<option value="${t}">`).join('')}</datalist>
+      <button class="btn sm ${st.tag === 'kids' ? 'pri' : ''}" id="uKids" type="button">Under 14</button>
+      <input class="in" id="uTag" list="uTags" placeholder="Tag" value="${esc(st.tag)}" style="max-width:160px"><datalist id="uTags"><option value="kids">Under 14</option><option value="chat_on">Chat unlocked</option>${['VIP', 'Streamer', 'Suspicious', 'Friend', 'Tester', 'Whale'].map(t => `<option value="${t}">`).join('')}</datalist>
       <span class="muted small" id="uCount"></span></div><div id="ut">${skeleton(6)}</div></div>`;
           if ($('#uGiftAll'))
             $('#uGiftAll').onclick = async () => {
@@ -7774,6 +7782,11 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
           $('#uJoined').onchange = refilter;
           $('#uSeen').onchange = refilter;
           $('#uTag').oninput = debounce(refilter, 250);
+          $('#uKids').onclick = () => {
+            $('#uTag').value = st.tag === 'kids' ? '' : 'kids';
+            $('#uKids').classList.toggle('pri', $('#uTag').value === 'kids');
+            refilter();
+          };
           $('#uCsv').onclick = async () => {
             const b = $('#uCsv');
             b.disabled = true;
@@ -7832,10 +7845,10 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
           const th = (k, l, r2) =>
             `<th class="s ${st.sort === k ? st.dir : ''} ${r2 ? 'r' : ''}" data-k="${k}">${l}</th>`;
           box.innerHTML = r.rows.length
-            ? `<div class="tw"><table><thead><tr>${th('username', 'User')}${th('status', 'Status')}${th('return_pct', 'Return', 1)}${th('value', 'Value', 1)}${th('level', 'Level', 1)}${th('trades', 'Trades', 1)}${th('coins', 'Coins', 1)}${th('created_at', 'Joined')}${th('last_seen', 'Last seen')}</tr></thead>
+            ? `<div class="tw"><table><thead><tr>${th('username', 'User')}${th('status', 'Status')}${th('birth_year', 'Age')}${th('return_pct', 'Return', 1)}${th('value', 'Value', 1)}${th('level', 'Level', 1)}${th('trades', 'Trades', 1)}${th('coins', 'Coins', 1)}${th('created_at', 'Joined')}${th('last_seen', 'Last seen')}</tr></thead>
       <tbody>${r.rows
         .map(
-          u => `<tr class="click" data-id="${u.id}"><td><div class="who">${avatar(u.name)}<div><b>${esc(u.name)}${(u.tags || []).map(t => ` <span class="tag sm">${esc(t)}</span>`).join('')}${u.lb_hidden ? ' <span class="tag sm warn">hidden</span>' : ''}</b><small>@${esc(u.username)}</small></div></div></td><td>${statusPill(u.status)}</td>
+          u => `<tr class="click" data-id="${u.id}"><td><div class="who">${avatar(u.name)}<div><b>${esc(u.name)}${(u.tags || []).map(t => ` <span class="tag sm">${esc(t)}</span>`).join('')}${u.lb_hidden ? ' <span class="tag sm warn">hidden</span>' : ''}</b><small>@${esc(u.username)}</small></div></div></td><td>${statusPill(u.status)}</td><td>${ageCell(u)}</td>
         <td class="r mono ${cls(u.return_pct)}">${pct(u.return_pct)}</td><td class="r mono">${usd(u.value)}</td><td class="r mono">${u.level}</td><td class="r mono">${num(u.trades)}</td><td class="r mono">${num(u.coins)}</td><td>${dday(u.created_at)}</td><td>${ago(u.last_seen)}</td></tr>`
         )
         .join('')}</tbody></table></div>${pager(r.total, r.page, r.per)}`
@@ -7863,6 +7876,19 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
           );
         },
       };
+
+      const ageCell = u =>
+        u.age == null
+          ? '<span class="muted small">Not set</span>'
+          : `<span class="mono">${u.age}</span>${u.kid ? ' <span class="tag sm warn">Under 14</span>' : ''}${u.chat_ok && u.kid ? ' <span class="tag sm">Chat on</span>' : ''}`;
+      const chatState = u =>
+        u.age == null
+          ? { t: 'Quick chat only', s: 'They haven’t entered their age yet, so the game only lets them use quick chat.' }
+          : !u.kid
+            ? { t: 'Full chat', s: 'They’re 14 or older, so they can type messages.' }
+            : u.chat_ok
+              ? { t: 'Full chat (unlocked)', s: `Unlocked by ${esc(u.chat_ok_by || 'staff')} ${u.chat_ok_at ? dday(u.chat_ok_at) : ''}${u.chat_ok_note ? ' · ' + esc(u.chat_ok_note) : ''}. Private messages stay quick-chat only, and phone numbers, emails, links and addresses are blocked.` }
+              : { t: 'Quick chat only', s: 'Under 14, so they can only use quick chat and emotes unless you unlock it.' };
 
       VIEWS.user = {
         async render(v, [id]) {
@@ -7896,15 +7922,16 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
           ].join('');
           const posRows = p && p.positions ? Object.entries(p.positions) : [];
           v.innerHTML = `<a href="#/users" class="btn ghost sm" style="margin-bottom:12px">${IC.back}All users</a>
-      <div class="card"><div class="prof">${avatar(u.name)}<div style="flex:1;min-width:0"><h2>${esc(u.name)} ${statusPill(u.status)}${u.lb_hidden ? ' <span class="pill p-warn"><i></i>Hidden from leaderboard</span>' : ''}</h2><div class="muted">@${esc(u.username)} · joined ${dday(u.created_at)} · last seen ${ago(u.last_seen)}</div>
+      <div class="card"><div class="prof">${avatar(u.name)}<div style="flex:1;min-width:0"><h2>${esc(u.name)} ${statusPill(u.status)}${u.lb_hidden ? ' <span class="pill p-warn"><i></i>Hidden from leaderboard</span>' : ''}</h2><div class="muted">@${esc(u.username)} · ${u.age == null ? 'age not set' : `age ${u.age} (born ${u.birth_year})`} · joined ${dday(u.created_at)} · last seen ${ago(u.last_seen)}</div>
         ${(u.tags || []).length ? `<div class="tags">${u.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
         ${u.status_reason ? `<div class="small" style="margin-top:4px">Reason: ${esc(u.status_reason)}${u.suspended_until ? ` · until ${dt(u.suspended_until)}` : ''}</div>` : ''}</div></div>
         <div class="stats"><div class="stat"><small>Total return</small><b class="mono ${cls(u.return_pct)}">${pct(u.return_pct)}</b></div><div class="stat"><small>Account value</small><b class="mono">${usd(u.value)}</b></div>
-          <div class="stat"><small>Level</small><b class="mono">${u.level}</b></div><div class="stat"><small>Trades</small><b class="mono">${num(u.trades)}</b></div><div class="stat"><small>Coins</small><b class="mono">${num(u.coins)}</b></div><div class="stat"><small>Friends</small><b class="mono">${num(d.friends)}</b></div></div>
+          <div class="stat"><small>Level</small><b class="mono">${u.level}</b></div><div class="stat"><small>Trades</small><b class="mono">${num(u.trades)}</b></div><div class="stat"><small>Coins</small><b class="mono">${num(u.coins)}</b></div><div class="stat"><small>Friends</small><b class="mono">${num(d.friends)}</b></div><div class="stat"><small>Age</small><b class="mono">${u.age == null ? '—' : u.age}</b></div></div>
         <div class="actbar">${acts || '<span class="muted small">Your role can view this account but not change it.</span>'}</div></div>
       <div class="grid g2" style="margin-top:16px">
         <div class="card"><div class="card-h"><h3>Account activity</h3><span class="muted small">Last 14 days</span></div>${activityStrip(d.events)}${d.events.length ? `<div class="tl">${d.events.map(e => `<div class="e"><b>${esc(evLabel(e))}</b><small>${dt(e.created_at)}</small></div>`).join('')}</div>` : '<div class="empty">No activity yet.</div>'}</div>
-        <div><div class="card"><div class="card-h"><h3>Details</h3></div><dl class="kv"><dt>User ID</dt><dd class="mono small">${esc(u.id)}</dd><dt>Title</dt><dd>${esc(u.title || '—')}</dd><dt>Admin note</dt><dd>${esc(u.note || '—')}</dd>
+        <div><div class="card"><div class="card-h"><h3>Chat</h3>${u.kid ? '<span class="pill p-warn"><i></i>Under 14</span>' : ''}</div><div class="chatst"><div><b>${chatState(u).t}</b><small>${chatState(u).s}</small></div>${u.kid && can('admin') ? `<button class="btn ${u.chat_ok ? '' : 'pri'}" data-a="chat">${u.chat_ok ? 'Turn chat off' : 'Turn on chat'}</button>` : ''}</div></div>
+        <div class="card"><div class="card-h"><h3>Details</h3></div><dl class="kv"><dt>User ID</dt><dd class="mono small">${esc(u.id)}</dd><dt>Title</dt><dd>${esc(u.title || '—')}</dd><dt>Admin note</dt><dd>${esc(u.note || '—')}</dd>
           <dt>Cash</dt><dd class="mono">${p ? usd(p.cash) : '—'}</dd><dt>Holdings</dt><dd>${
             posRows.length
               ? posRows
@@ -7993,6 +8020,35 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
                 re();
               },
             });
+          if (a === 'chat') {
+            if (u.chat_ok)
+              return modal({
+                title: `Turn chat off for ${who}?`,
+                ok: 'Turn off',
+                body: '<p class="small muted" style="margin:0">They go back to quick chat and emotes only.</p><div class="err"></div>',
+                onOk: async () => {
+                  await A('pba_user_chat', { p_id: u.id, p_on: false });
+                  toast('Chat turned off');
+                  re();
+                },
+              });
+            return modal({
+              title: `Turn on chat for ${who}?`,
+              ok: 'Turn on chat',
+              body: `<div class="warnbox">${IC.bad}<div>${who} is about ${u.age}. US law (COPPA) says a parent or guardian has to OK a child under 13 chatting. Only do this once a parent has said yes.</div></div>
+              <p class="small muted" style="margin:0 0 12px">Even with chat on, they can’t type in private messages, and phone numbers, emails, links, social handles and addresses are blocked. You can turn it off any time.</p>
+              <label class="f"><span>How did the parent say yes?</span><input class="in" id="cN" maxlength="300" placeholder="e.g. Email from their mom on 9/29"></label>
+              <label class="chk" style="display:flex;gap:8px;align-items:flex-start;margin:4px 0 8px"><input type="checkbox" id="cOk" style="margin-top:3px"><span>A parent or guardian agreed to this.</span></label><div class="err"></div>`,
+              onOk: async ov => {
+                if (!$('#cOk', ov).checked) throw new Error('Tick the box to confirm a parent agreed.');
+                const n = $('#cN', ov).value.trim();
+                if (n.length < 8) throw new Error('Write down how the parent said yes.');
+                await A('pba_user_chat', { p_id: u.id, p_on: true, p_note: n });
+                toast('Chat turned on for ' + who);
+                re();
+              },
+            });
+          }
           if (a === 'pw')
             return modal({
               title: `Reset password for ${who}`,

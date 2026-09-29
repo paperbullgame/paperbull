@@ -51,7 +51,7 @@
       if (!u) return { kid: false, known: true, guest: true };
       const a = readAge(u);
       if (!a || a.year == null) return { kid: false, known: false };
-      return { kid: kidOf(a.year), known: true, year: a.year };
+      return { kid: kidOf(a.year), known: true, year: a.year, chat: !!a.chat };
     },
     async check(force) {
       const t = tokNow(),
@@ -65,7 +65,7 @@
           pendingYear = null;
         } else r = await CL().rpc('pb_age', { p_token: t });
         checkedFor = u;
-        if (r && r.birth_year != null) writeAge(u, { year: r.birth_year, terms: !!r.terms });
+        if (r && r.birth_year != null) writeAge(u, { year: r.birth_year, terms: !!r.terms, chat: !!r.chat_ok });
         else {
           try {
             localStorage.removeItem(AK(u));

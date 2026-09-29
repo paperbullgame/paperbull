@@ -72,6 +72,7 @@
     quick_only: 'This chat is quick-chat only. Pick a phrase or an emoji.',
     kid_blocked: 'That isn’t available for players under 13.',
     age_needed: 'Confirm your birth year first (Settings → Data & about).',
+    no_contact: 'For your safety you can’t share phone numbers, emails, links, social accounts or where you live.',
     slow_down: 'Slow down a little. Wait a moment between messages.',
     no_room: 'That chat isn’t available anymore.',
     empty: 'Type a message first.',
@@ -553,7 +554,8 @@
       return;
     }
     const ag = window.PBAge ? PBAge.state() : { kid: false, known: true };
-    if (ag.kid || !ag.known) {
+    const kidOpen = ag.kid && ag.chat && !String(S.room || '').startsWith('dm:'); // a parent OK'd chat; private messages stay quick-only
+    if ((ag.kid && !kidOpen) || !ag.known) {
       el.innerHTML = `<div class="sc-quick sc-quick-only" id="scQuick">${QUICK.map(q => `<button type="button" data-quick="${E(q)}">${E(q)}</button>`).join('')}</div>
       <div class="sc-emos sc-emos-on" id="scEmos" role="group" aria-label="Emotes">${EMOTES.map(x => `<button type="button" data-emote="${x}" aria-label="Send ${x}">${x}</button>`).join('')}</div>
       <p class="sc-rules" id="scNote">${ag.kid ? '🛡️ Quick chat only: typing is off for players under 13. Tap a phrase or an emoji to send it.' : 'Tap a phrase to chat. <button type="button" class="linkish" data-agecheck>Confirm your age</button> to type your own messages.'}</p>`;
@@ -567,7 +569,7 @@
         <label class="sc-inp"><input id="scIn" maxlength="200" placeholder="Message" enterkeyhint="send" aria-label="Message"><span class="sc-cnt" id="scCnt">200</span></label>
         <button class="sc-send" id="scSend" aria-label="Send">${IC.send}<span class="sc-slow" id="scSlow"></span></button>
       </form>
-      <p class="sc-rules" id="scNote">Be nice. No personal info. Links are removed.</p>`;
+      <p class="sc-rules" id="scNote">${kidOpen ? '🛡️ Chat is on because a parent said yes. Never share your real name, school, phone number or where you live.' : 'Be nice. No personal info. Links are removed.'}</p>`;
     const inp = $q('#scIn', el),
       cnt = $q('#scCnt', el);
     inp.addEventListener('input', () => {
@@ -700,9 +702,11 @@
   }
   function openRoom(room, first) {
     if (room !== S.room) S.emoOpen = false;
+    const was = S.room;
     S.room = room;
     paintRooms();
     paintHead();
+    if (was !== room && window.PBAge && PBAge.state().chat) paintComposer(); // DMs and public rooms have different rules
     const R = rs(room);
     stick = true;
     paintMsgs();
