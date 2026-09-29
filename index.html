@@ -19392,6 +19392,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if (hero && a && PET[a.id]) {
       const stage = hero.querySelector('.pet-stage');
       if (stage) stage.dataset.r = PET[a.id].r;
+      if (stage && !stage.querySelector('.pst')) stage.insertAdjacentHTML('beforeend', [12, 30, 48, 66, 84].map((x, i) => `<i class="pst" style="left:${x}%;bottom:${10 + (i % 3) * 8}%;animation-delay:-${i * 0.8}s"></i>`).join(''));
       const perk = hero.querySelector('.perk');
       if (perk && (PET[a.id].perk2 || a.mut)) {
         const off = a.mood < MOOD_MIN || a.mission;
@@ -19585,44 +19586,84 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   function sceneSVG(ph) {
     const s = SKY[ph],
       night = ph === 'night',
-      g1 = night ? '#1f4d3a' : ph === 'dusk' ? '#4f8a3a' : '#6fcf57',
-      g2 = night ? '#16392b' : ph === 'dusk' ? '#3f7430' : '#57b845',
-      g3 = night ? '#10291f' : ph === 'dusk' ? '#325f26' : '#46a137';
+      dusk = ph === 'dusk' || ph === 'dawn',
+      pick3 = (d, k, n) => (night ? n : dusk ? k : d),
+      g1 = pick3('#7ad65c', '#5f9a44', '#24573f'),
+      g2 = pick3('#5fbf49', '#4a843a', '#1b4633'),
+      g3 = pick3('#4aa63d', '#3a6d2f', '#143628'),
+      mt1 = pick3('#9cc3e6', '#8b7fb8', '#1c2552'),
+      mt2 = pick3('#7fa9d6', '#6d5f9c', '#151d44'),
+      trunk = pick3('#7a4a2a', '#5e3a22', '#3a2618'),
+      leafA = pick3('#3f9a45', '#356f35', '#163a26'),
+      leafB = pick3('#58b957', '#468a41', '#1d4a30'),
+      path = pick3('#e9cf97', '#c9a878', '#5c5040');
     let stars = '';
-    if (night || ph === 'dawn') for (let i = 0; i < 40; i++) stars += `<circle cx="${(i * 97) % 1000}" cy="${(i * 53) % 190}" r="${i % 5 ? 1.1 : 1.9}" fill="#fff" opacity="${night ? 0.9 : 0.4}" class="pg-tw" style="animation-delay:${(i % 7) * 0.4}s"/>`;
+    if (night || ph === 'dawn') for (let i = 0; i < 60; i++) stars += `<circle cx="${(i * 97) % 1000}" cy="${(i * 53) % 200}" r="${i % 6 ? 1 : 2}" fill="#fff" opacity="${night ? 0.9 : 0.35}" class="pg-tw" style="animation-delay:${(i % 9) * 0.35}s"/>`;
     const orb = night
-      ? `<circle cx="820" cy="70" r="30" fill="#fff6d6"/><circle cx="834" cy="62" r="26" fill="${s[0]}"/>`
-      : `<circle cx="${ph === 'day' ? 160 : 860}" cy="${ph === 'day' ? 70 : 150}" r="40" fill="#fff3b0" opacity=".95"/><circle cx="${ph === 'day' ? 160 : 860}" cy="${ph === 'day' ? 70 : 150}" r="70" fill="#fff3b0" opacity=".25"/>`;
-    const clouds = night ? '' : [[120, 110, 1], [520, 60, 0.8], [760, 120, 1.2]].map(([x, y, k], i) => `<g class="pg-cloud" style="animation-duration:${60 + i * 20}s"><g transform="translate(${x} ${y}) scale(${k})" fill="#fff" opacity=".85"><ellipse cx="0" cy="0" rx="46" ry="16"/><ellipse cx="-20" cy="-10" rx="22" ry="16"/><ellipse cx="18" cy="-14" rx="26" ry="20"/></g></g>`).join('');
+      ? `<g transform="translate(-180 20)"><circle cx="820" cy="78" r="80" fill="#cfe0ff" opacity=".08"/><circle cx="820" cy="78" r="34" fill="#fff7dc"/><circle cx="808" cy="70" r="6" fill="#e8dfc0"/><circle cx="828" cy="90" r="4" fill="#e8dfc0"/><circle cx="832" cy="66" r="3" fill="#e8dfc0"/></g>`
+      : `<g class="pg-sun"><circle cx="${ph === 'day' ? 170 : 860}" cy="${ph === 'day' ? 80 : 170}" r="110" fill="#fff3b0" opacity=".18"/><circle cx="${ph === 'day' ? 170 : 860}" cy="${ph === 'day' ? 80 : 170}" r="64" fill="#fff3b0" opacity=".3"/><circle cx="${ph === 'day' ? 170 : 860}" cy="${ph === 'day' ? 80 : 170}" r="38" fill="${ph === 'day' ? '#fff6c2' : '#ffd08a'}"/></g>`;
+    const cloud = (x, y, k, o) => `<g transform="translate(${x} ${y}) scale(${k})" fill="#fff" opacity="${o}"><ellipse cx="0" cy="0" rx="52" ry="15"/><ellipse cx="-24" cy="-8" rx="24" ry="17"/><ellipse cx="14" cy="-16" rx="28" ry="22"/><ellipse cx="38" cy="-4" rx="18" ry="12"/></g>`;
+    const clouds = [[120, 120, 1], [520, 70, 0.8], [760, 135, 1.2], [340, 160, 0.6]].map(([x, y, k], i) => `<g class="pg-cloud" style="animation-duration:${70 + i * 25}s;animation-delay:-${i * 18}s">${cloud(x, y, k, night ? 0.08 : dusk ? 0.55 : 0.9)}</g>`).join('');
+    // far mountains with snow caps
+    const mts = `<path d="M-20 262L90 150 170 215 260 120 360 230 450 160 560 250 650 140 760 230 860 150 1020 262z" fill="${mt1}"/>` +
+      (night ? '' : `<path d="M260 120l-26 30 14-4 12 10 14-12 12 6zM650 140l-24 28 12-3 12 9 12-10 12 5zM860 150l-22 26 11-3 11 8 11-9 11 4z" fill="#fff" opacity=".85"/>`) +
+      `<path d="M-20 280L60 215 150 250 240 195 340 255 430 205 540 262 640 210 740 258 850 205 1020 280z" fill="${mt2}"/>`;
+    // tree line on the far hill
+    let trees = '';
+    for (let i = 0; i < 26; i++) {
+      const x = i * 40 + ((i * 17) % 13),
+        h = 26 + ((i * 29) % 18),
+        y = 262 + Math.sin(i * 0.7) * 6;
+      trees += i % 3 === 0
+        ? `<path d="M${x} ${y}l-${h * 0.35} 0 ${h * 0.35}-${h}z M${x} ${y}l${h * 0.35} 0-${h * 0.35}-${h}z" fill="${leafA}"/>`
+        : `<circle cx="${x}" cy="${y - h * 0.45}" r="${h * 0.42}" fill="${i % 2 ? leafA : leafB}"/>`;
+    }
+    const hillFar = `<path d="M0 262Q180 238 380 258T760 250 1000 256V520H0z" fill="${g3}"/>`;
+    const hillMid = `<path d="M0 292Q240 262 520 290T1000 282V520H0z" fill="${g2}"/>`;
+    const fence = `<g>${Array.from({ length: 26 }, (_, i) => `<path d="M${i * 40 + 6} 300v-30l5-6 5 6v30z" fill="${night ? '#6b5a44' : '#fffaf0'}" stroke="${night ? '#3d3226' : '#d9c9a8'}" stroke-width="1.5"/>`).join('')}<rect x="0" y="276" width="1000" height="5" rx="2" fill="${night ? '#5a4a38' : '#efe3c8'}"/><rect x="0" y="290" width="1000" height="5" rx="2" fill="${night ? '#5a4a38' : '#efe3c8'}"/></g>`;
+    const ground = `<defs><linearGradient id="pgG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${g1}"/><stop offset="1" stop-color="${g2}"/></linearGradient></defs><path d="M0 306Q300 288 600 312T1000 302V520H0z" fill="url(#pgG)"/>`;
+    const walk = `<path d="M470 520C480 470 420 440 360 420S250 380 250 350" stroke="${path}" stroke-width="46" fill="none" stroke-linecap="round" opacity="${night ? 0.6 : 0.9}"/><path d="M470 520C480 470 420 440 360 420S250 380 250 350" stroke="#fff" stroke-width="46" fill="none" stroke-linecap="round" stroke-dasharray="3 26" opacity=".12"/>`;
+    // the pet house
+    const win = night || dusk ? '#ffd36b' : '#bfe6ff';
+    const house = `<g transform="translate(240 350)"><ellipse cx="0" cy="4" rx="78" ry="12" fill="#000" opacity=".18"/>
+      <rect x="-58" y="-62" width="116" height="66" rx="6" fill="${pick3('#fff1d6', '#e8cfa8', '#6e5c48')}" stroke="${pick3('#d9b98a', '#b8956a', '#3e3226')}" stroke-width="3"/>
+      <path d="M-74-58L0-112 74-58z" fill="${pick3('#e0584f', '#b8443c', '#5a2420')}" stroke="${pick3('#b23c35', '#8a302a', '#3a1614')}" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="30" y="-120" width="16" height="30" fill="${pick3('#b86a4a', '#94533a', '#4a2c20')}"/>
+      <path d="M-20 4v-34a20 20 0 0 1 40 0v34z" fill="${pick3('#8a5a3c', '#6e4630', '#2e2018')}"/><circle cx="10" cy="-12" r="2.5" fill="#ffd34d"/>
+      <rect x="-50" y="-44" width="22" height="20" rx="4" fill="${win}" stroke="#fff" stroke-width="2.5"/><rect x="28" y="-44" width="22" height="20" rx="4" fill="${win}" stroke="#fff" stroke-width="2.5"/>
+      ${night || dusk ? `<circle cx="-39" cy="-34" r="20" fill="#ffd36b" opacity=".12" class="pg-glow"/><circle cx="39" cy="-34" r="20" fill="#ffd36b" opacity=".12" class="pg-glow"/>` : ''}
+      <path d="M-14-86h28" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"/><text x="0" y="-74" text-anchor="middle" font-size="12" font-weight="800" fill="${pick3('#fff', '#fff', '#ffe9b0')}" font-family="sans-serif">PETS</text>
+      <g class="pg-smoke"><circle cx="38" cy="-130" r="7" fill="#fff" opacity=".5"/><circle cx="46" cy="-146" r="9" fill="#fff" opacity=".35"/><circle cx="40" cy="-166" r="11" fill="#fff" opacity=".2"/></g></g>`;
+    const bush = (x, y, k) => `<g transform="translate(${x} ${y}) scale(${k})"><ellipse cx="0" cy="6" rx="46" ry="8" fill="#000" opacity=".15"/><circle cx="-22" cy="-8" r="22" fill="${leafA}"/><circle cx="18" cy="-10" r="26" fill="${leafB}"/><circle cx="0" cy="-24" r="22" fill="${leafB}"/><circle cx="8" cy="-26" r="6" fill="#fff" opacity=".15"/>${night ? '' : '<circle cx="-14" cy="-14" r="3.5" fill="#ff7aa8"/><circle cx="20" cy="-20" r="3.5" fill="#ffd34d"/>'}</g>`;
+    let tufts = '';
+    for (let i = 0; i < 70; i++) {
+      const x = (i * 139) % 1000,
+        y = 320 + ((i * 71) % 190);
+      tufts += `<path d="M${x} ${y}l-3-9M${x} ${y}l0-11M${x} ${y}l3-9" stroke="${g3}" stroke-width="2" stroke-linecap="round" opacity=".55"/>`;
+    }
     let flowers = '';
-    if (own('flowers'))
-      for (let i = 0; i < 46; i++) {
-        const x = (i * 211) % 1000,
-          y = 330 + ((i * 37) % 140),
-          c = ['#ff6fae', '#ffd34d', '#fff', '#b388ff', '#ff8a5c'][i % 5];
-        flowers += `<g transform="translate(${x} ${y})"><path d="M0 0v8" stroke="${g3}" stroke-width="2"/><circle r="4" fill="${c}"/><circle r="1.6" fill="#ffe066"/></g>`;
-      }
-    else
-      for (let i = 0; i < 18; i++) {
-        const x = (i * 157 + 40) % 1000,
-          y = 360 + ((i * 41) % 110);
-        flowers += `<circle cx="${x}" cy="${y}" r="3" fill="${['#ffffff', '#ffe066', '#ff9ecf'][i % 3]}" opacity=".9"/>`;
-      }
-    const pond = own('pond') ? `<g><ellipse cx="780" cy="420" rx="120" ry="34" fill="${night ? '#1a3a6b' : '#4fb6ff'}" stroke="${g3}" stroke-width="4"/><ellipse cx="760" cy="412" rx="60" ry="8" fill="#fff" opacity=".35" class="pg-shim"/><path d="M740 424q10-6 20 0" stroke="#ff8a3d" stroke-width="5" stroke-linecap="round" class="pg-koi"/></g>` : '';
-    const fountain = own('fountain') ? `<g transform="translate(250 360)"><ellipse cx="0" cy="40" rx="70" ry="16" fill="#8fd3ff" stroke="#c9a227" stroke-width="5"/><rect x="-8" y="-10" width="16" height="50" rx="4" fill="#ffd34d"/><ellipse cx="0" cy="-10" rx="30" ry="8" fill="#ffd34d"/><g class="pg-spray"><path d="M0 -14q-24-30-40 10M0 -14q24-30 40 10M0-14v-26" stroke="#bfe9ff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".9"/></g></g>` : '';
-    const sakura = own('sakura') ? `<g transform="translate(90 330)"><path d="M0 0c-4-40 4-80 0-120" stroke="#6b3f24" stroke-width="16" fill="none" stroke-linecap="round"/><circle cx="-30" cy="-130" r="50" fill="#ffb7d5"/><circle cx="30" cy="-140" r="54" fill="#ff9ecf"/><circle cx="0" cy="-170" r="46" fill="#ffc8e0"/></g>` : `<g transform="translate(80 330)"><path d="M0 0v-90" stroke="#6b3f24" stroke-width="14" stroke-linecap="round"/><circle cx="0" cy="-110" r="46" fill="${g2}"/><circle cx="-24" cy="-90" r="30" fill="${g1}"/><circle cx="26" cy="-92" r="32" fill="${g1}"/></g>`;
+    const nF = own('flowers') ? 60 : 22;
+    for (let i = 0; i < nF; i++) {
+      const x = (i * 211 + 30) % 1000,
+        y = 330 + ((i * 37) % 170),
+        c = ['#ff6fae', '#ffd34d', '#ffffff', '#b388ff', '#ff8a5c'][i % 5],
+        k = own('flowers') ? 1 : 0.7;
+      flowers += `<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 0v10" stroke="${g3}" stroke-width="2"/><g class="pg-sway" style="animation-delay:-${(i % 7) * 0.4}s">${[0, 72, 144, 216, 288].map(r => `<ellipse cx="0" cy="-4" rx="2.6" ry="4" fill="${c}" transform="rotate(${r})"/>`).join('')}<circle r="2.2" fill="#ffe066"/></g></g>`;
+    }
+    const pond = own('pond') ? `<g><ellipse cx="780" cy="428" rx="126" ry="36" fill="${night ? '#16305e' : '#3aa6f0'}" stroke="${g3}" stroke-width="6"/><ellipse cx="780" cy="424" rx="112" ry="28" fill="${night ? '#1d3f78' : '#5cc3ff'}"/><ellipse cx="750" cy="416" rx="60" ry="7" fill="#fff" opacity=".35" class="pg-shim"/><path d="M740 432q10-6 20 0" stroke="#ff8a3d" stroke-width="6" stroke-linecap="round" class="pg-koi"/><ellipse cx="830" cy="430" rx="14" ry="5" fill="#4caf50"/><circle cx="834" cy="426" r="3" fill="#ff9ecf"/></g>` : '';
+    const fountain = own('fountain') ? `<g transform="translate(640 372)"><ellipse cx="0" cy="44" rx="74" ry="17" fill="#8fd3ff" stroke="#c9a227" stroke-width="6"/><rect x="-8" y="-10" width="16" height="54" rx="4" fill="#ffd34d"/><ellipse cx="0" cy="-10" rx="32" ry="8" fill="#ffd34d"/><g class="pg-spray"><path d="M0 -14q-26-32-42 10M0 -14q26-32 42 10M0-14v-28" stroke="#bfe9ff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".9"/></g></g>` : '';
+    const bigTree = own('sakura')
+      ? `<g transform="translate(900 330)"><path d="M0 0c-4-40 4-80 0-120" stroke="#6b3f24" stroke-width="16" fill="none" stroke-linecap="round"/><circle cx="-30" cy="-130" r="50" fill="#ffb7d5"/><circle cx="30" cy="-140" r="54" fill="#ff9ecf"/><circle cx="0" cy="-170" r="46" fill="#ffc8e0"/></g>`
+      : `<g transform="translate(905 330)"><ellipse cx="0" cy="4" rx="50" ry="9" fill="#000" opacity=".16"/><path d="M0 0v-90" stroke="${trunk}" stroke-width="16" stroke-linecap="round"/><circle cx="0" cy="-115" r="50" fill="${leafA}"/><circle cx="-28" cy="-92" r="32" fill="${leafB}"/><circle cx="28" cy="-96" r="34" fill="${leafB}"/><circle cx="-8" cy="-136" r="18" fill="#fff" opacity=".08"/>${night ? '' : '<circle cx="-20" cy="-100" r="5" fill="#ff5b5b"/><circle cx="18" cy="-120" r="5" fill="#ff5b5b"/><circle cx="26" cy="-90" r="5" fill="#ff5b5b"/>'}</g>`;
     const gazebo = own('gazebo') ? `<g transform="translate(560 300)"><path d="M-70 0h140l-70-50z" fill="#c2527f"/><rect x="-60" y="0" width="8" height="60" fill="#fff6e3"/><rect x="52" y="0" width="8" height="60" fill="#fff6e3"/><rect x="-66" y="56" width="132" height="8" rx="3" fill="#8a5a3c"/></g>` : '';
-    const crystal = own('crystal') ? `<g transform="translate(900 350)" class="pg-glow"><path d="M0-80l22 40-22 60-22-60z" fill="#b18cff" stroke="#fff" stroke-width="2"/><path d="M0-80v100" stroke="#fff" stroke-opacity=".6"/><circle cy="-30" r="60" fill="#b18cff" opacity=".18"/></g>` : '';
-    const rainbow = own('rainbow') ? `<g opacity="${night ? 0.35 : 0.75}" fill="none" stroke-width="12">${['#ff5b5b', '#ffa54d', '#ffe066', '#6fdc6f', '#5ab4ff', '#8a6bff'].map((c, i) => `<path d="M${200 + i * 12} 330A${300 - i * 12} ${230 - i * 12} 0 0 1 ${800 - i * 12} 330" stroke="${c}"/>`).join('')}</g>` : '';
-    const lanterns = own('lanterns') ? [180, 420, 680, 940].map(x => `<g transform="translate(${x} 300)"><path d="M0 0v-30" stroke="#6b3f24" stroke-width="3"/><rect x="-9" y="-44" width="18" height="18" rx="5" fill="#ff5b3d"/>${night || ph === 'dusk' ? '<circle cy="-35" r="26" fill="#ffb13d" opacity=".35" class="pg-glow"/>' : ''}</g>`).join('') : '';
-    const fence = `<g stroke="${night ? '#5a4632' : '#fff6e3'}" stroke-width="7" stroke-linecap="round">${Array.from({ length: 21 }, (_, i) => `<path d="M${i * 50} 300v-34"/>`).join('')}<path d="M0 282h1000M0 296h1000" stroke-width="5"/></g>`;
+    const crystal = own('crystal') ? `<g transform="translate(120 440)" class="pg-glow"><path d="M0-80l22 40-22 60-22-60z" fill="#b18cff" stroke="#fff" stroke-width="2"/><path d="M0-80v100" stroke="#fff" stroke-opacity=".6"/><circle cy="-30" r="60" fill="#b18cff" opacity=".18"/></g>` : '';
+    const rainbow = own('rainbow') ? `<g opacity="${night ? 0.3 : 0.7}" fill="none" stroke-width="12">${['#ff5b5b', '#ffa54d', '#ffe066', '#6fdc6f', '#5ab4ff', '#8a6bff'].map((c, i) => `<path d="M${200 + i * 12} 300A${300 - i * 12} ${230 - i * 12} 0 0 1 ${800 - i * 12} 300" stroke="${c}"/>`).join('')}</g>` : '';
+    const lanterns = own('lanterns') ? [120, 420, 700, 980].map(x => `<g transform="translate(${x} 318)"><path d="M0 0v-34" stroke="#6b3f24" stroke-width="3"/><rect x="-9" y="-48" width="18" height="18" rx="5" fill="#ff5b3d"/>${night || dusk ? '<circle cy="-39" r="28" fill="#ffb13d" opacity=".35" class="pg-glow"/>' : ''}</g>`).join('') : '';
+    const tint = night ? '<rect width="1000" height="520" fill="#0a1238" opacity=".22"/>' : dusk ? '<rect width="1000" height="520" fill="#ff7e4d" opacity=".08"/>' : '';
     return `<svg class="pg-bg" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
       <defs><linearGradient id="pgSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s[0]}"/><stop offset=".6" stop-color="${s[1]}"/><stop offset="1" stop-color="${s[2]}"/></linearGradient></defs>
-      <rect width="1000" height="520" fill="url(#pgSky)"/>${stars}${orb}${clouds}${rainbow}
-      <path d="M0 250Q200 180 420 235T1000 215V520H0z" fill="${g3}" opacity=".85"/>
-      <path d="M0 290Q260 240 520 285T1000 270V520H0z" fill="${g2}"/>${fence}
-      <path d="M0 305Q300 285 600 310T1000 300V520H0z" fill="${g1}"/>
-      ${sakura}${gazebo}${crystal}${lanterns}${fountain}${pond}${flowers}</svg>`;
+      <rect width="1000" height="520" fill="url(#pgSky)"/>${stars}${orb}${clouds}${rainbow}${mts}${hillFar}${trees}${hillMid}${fence}${ground}${walk}${tufts}
+      ${gazebo}${house}${bigTree}${bush(60, 330, 1)}${bush(560, 318, 0.7)}${crystal}${lanterns}${fountain}${pond}${flowers}${tint}</svg>`;
   }
 
   /* ---------------- pets as actors ---------------- */
@@ -19652,7 +19693,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         d,
         fly,
         x: 0.1 + ((i * 0.37) % 0.8),
-        y: fly ? 0.15 + ((i * 0.23) % 0.35) : 0.55 + ((i * 0.29) % 0.4),
+        y: fly ? 0.15 + ((i * 0.23) % 0.35) : 0.66 + ((i * 0.29) % 0.3),
         tx: 0,
         ty: 0,
         v: (fly ? 0.07 : 0.05) * (0.8 + Math.random() * 0.5),
@@ -19666,7 +19707,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   }
   function pickTarget(a) {
     a.tx = 0.06 + Math.random() * 0.88;
-    a.ty = a.fly ? 0.1 + Math.random() * 0.45 : 0.5 + Math.random() * 0.45;
+    a.ty = a.fly ? 0.12 + Math.random() * 0.4 : 0.66 + Math.random() * 0.3;
   }
   function renderActors() {
     const box = stage && stage.querySelector('.pg-actors');
@@ -19675,7 +19716,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       .map((a, i) => {
         const d = a.d,
           away = a.p.mission;
-        return `<button class="pg-pet${a.fly ? ' fly' : ''}${away ? ' away' : ''}${d.r === 'x' ? ' exo' : ''}${a.p.uid === acct.pets.active ? ' comp' : ''}" data-i="${i}" style="--rc:${RARITY[d.r].color}" aria-label="${esc(a.p.name)}"><span class="pg-shadow"></span><span class="pg-body">${petArt(a.p.id)}</span><span class="pg-name">${esc(a.p.name)}</span><span class="pg-say"></span></button>`;
+        return `<button class="pg-pet${a.fly ? ' fly' : ''}${away ? ' away' : ''}${d.r === 'x' ? ' exo' : ''}${a.p.uid === acct.pets.active ? ' comp' : ''}" data-i="${i}" style="--rc:${RARITY[d.r].color}" aria-label="${esc(a.p.name)}"><span class="pg-shadow"></span><span class="pg-body">${petArt(a.p.id)}</span><span class="pg-name">${esc(a.p.name)}</span><span class="pg-say"></span><span class="pg-z">z<i>z</i><i>Z</i></span></button>`;
       })
       .join('');
     actors.forEach((a, i) => (a.el = box.children[i]));
@@ -19697,8 +19738,17 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       if (!a.el || a.p.mission) continue;
       a.t -= dt;
       a.ph += dt;
+      if (a.mode === 'sleep' && a.t <= 0) {
+        a.mode = 'idle';
+        a.t = 1;
+        a.el.classList.remove('sleep');
+      }
       if (a.mode === 'idle' && a.t <= 0) {
-        if (Math.random() < 0.18 && !a.fly) {
+        if (curPh === 'night' && !a.fly && Math.random() < 0.45) {
+          a.mode = 'sleep';
+          a.t = 10 + Math.random() * 20;
+          a.el.classList.add('sleep');
+        } else if (Math.random() < 0.18 && !a.fly) {
           a.mode = 'hop';
           a.t = 0.6;
         } else {
@@ -19709,12 +19759,14 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         a.mode = 'idle';
         a.t = 1 + Math.random() * 3;
       }
-      if (a.mode === 'walk' && !reduce) {
+      if ((a.mode === 'walk' || a.mode === 'chase') && !reduce) {
         const dx = a.tx - a.x,
           dy = a.ty - a.y,
           dist = Math.hypot(dx, dy),
-          step = a.v * dt;
-        if (dist <= step) {
+          step = a.v * dt * (a.mode === 'chase' ? 3.2 : 1);
+        if (a.mode === 'chase' && dist <= Math.max(step, 0.025)) {
+          caught(a);
+        } else if (dist <= step) {
           a.x = a.tx;
           a.y = a.ty;
           a.mode = 'idle';
@@ -19727,9 +19779,9 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         }
       }
       // depth: lower on screen = closer = bigger
-      const depth = a.fly ? 0.9 + a.y * 0.3 : 0.75 + (a.y - 0.5) * 0.9,
-        size = Math.max(54, Math.min(96, W * 0.085)) * depth,
-        bob = reduce ? 0 : a.fly ? Math.sin(a.ph * 2) * 7 : a.mode === 'walk' ? Math.abs(Math.sin(a.ph * 9)) * -5 : a.mode === 'hop' ? -Math.sin(((0.6 - a.t) / 0.6) * Math.PI) * 26 : Math.sin(a.ph * 2.2) * 1.5,
+      const depth = a.fly ? 0.9 + a.y * 0.3 : 0.72 + (a.y - 0.62) * 1.2,
+        size = Math.max(62, Math.min(128, W * 0.105)) * depth,
+        bob = reduce || a.mode === 'sleep' ? 0 : a.fly ? Math.sin(a.ph * 2) * 7 : a.mode === 'walk' || a.mode === 'chase' ? Math.abs(Math.sin(a.ph * (a.mode === 'chase' ? 16 : 9))) * -6 : a.mode === 'hop' ? -Math.sin(((0.6 - a.t) / 0.6) * Math.PI) * 26 : Math.sin(a.ph * 2.2) * 1.5,
         px = a.x * W - size / 2,
         py = a.y * H - size;
       a.el.style.transform = `translate3d(${px.toFixed(1)}px,${py.toFixed(1)}px,0)`;
@@ -19766,6 +19818,66 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       }
     }
     if (Math.random() < dt / 2) paintBank();
+  }
+  let curPh = 'day',
+    ball = null;
+  function caught(a) {
+    if (!ball) return;
+    const b = ball;
+    ball = null;
+    b.el.classList.add('got');
+    setTimeout(() => b.el.remove(), 400);
+    say(a, pick(['Got it! 🎾', 'Mine!!', '*proud wiggle*', 'Again! Again!']));
+    floatAt(a.x, a.y - 0.2, '⭐');
+    for (const o of actors) {
+      if (o.mode === 'chase') {
+        o.mode = 'idle';
+        o.t = 1 + Math.random() * 2;
+      }
+      o.p.mood = Math.min(100, o.p.mood + 4);
+    }
+    petGainXP(a.p, 10);
+    saveAcct();
+    try {
+      SFX.play('coin');
+    } catch (e) {}
+  }
+  function throwBall() {
+    const box = stage && stage.querySelector('.pg-fx');
+    const runners = actors.filter(a => !a.fly && !a.p.mission);
+    if (!box || !runners.length) return toast('No pets on the ground to play fetch', 'info');
+    if (ball) ball.el.remove();
+    const x = 0.12 + Math.random() * 0.76,
+      y = 0.7 + Math.random() * 0.24,
+      el = document.createElement('i');
+    el.className = 'pg-ball';
+    el.style.left = x * 100 + '%';
+    el.style.top = y * 100 + '%';
+    box.appendChild(el);
+    ball = { x, y, el };
+    for (const a of runners) {
+      a.mode = 'chase';
+      a.el.classList.remove('sleep');
+      a.tx = x;
+      a.ty = y;
+      if (Math.random() < 0.4) say(a, pick(['BALL!', '!!!', '*zoom*', 'Mine!']));
+    }
+  }
+  function petAll() {
+    let n = 0;
+    for (const a of actors) {
+      if (a.p.mission) continue;
+      if (petPet(a.p)) {
+        n++;
+        setTimeout(() => floatAt(a.x, a.y - 0.2, '❤️'), n * 90);
+        if (a.mode === 'sleep') {
+          a.mode = 'idle';
+          a.t = 1;
+          a.el.classList.remove('sleep');
+        }
+      }
+    }
+    toast(n ? `You petted ${n} pet${n === 1 ? '' : 's'}. They love you!` : 'Everyone was petted recently. Try again soon.', n ? 'ok' : 'info');
   }
   function stop() {
     cancelAnimationFrame(raf);
@@ -19862,6 +19974,12 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const p = a.p,
       d = a.d;
     if (p.mission) return toast(`${p.name} is away on a mission`, 'info');
+    if (a.mode === 'sleep') {
+      a.mode = 'idle';
+      a.t = 2;
+      a.el.classList.remove('sleep');
+      say(a, '*yawns* ...huh?');
+    }
     say(a, pick(PET_LINES));
     floatAt(a.x, a.y - 0.18, '♥');
     const card = stage.querySelector('.pg-card'),
@@ -19978,8 +20096,10 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       stop();
       accrue();
       const ph = phase();
-      v.innerHTML = `<section class="pg-stage ph-${ph}" id="pgStage">${sceneSVG(ph)}<div class="pg-fx">${ph === 'night' ? Array.from({ length: 14 }, (_, i) => `<i class="pg-fly" style="left:${(i * 67) % 96}%;top:${40 + ((i * 29) % 50)}%;animation-delay:${(i % 5) * 0.7}s"></i>`).join('') : ''}</div><div class="pg-actors"></div>
-          <div class="pg-top"><span class="pg-chip">${PH_LBL[ph]}</span><span class="pg-chip" id="pgCount"></span></div>
+      curPh = ph;
+      ball = null;
+      v.innerHTML = `<section class="pg-stage ph-${ph}" id="pgStage">${sceneSVG(ph)}<div class="pg-fx">${ph !== 'night' ? Array.from({ length: 5 }, (_, i) => `<i class="pg-bfly" style="left:${10 + i * 18}%;top:${45 + ((i * 13) % 30)}%;--c:${['#ff9ecf', '#ffd34d', '#8fd3ff', '#b388ff', '#ffb36b'][i]};animation-delay:-${i * 2.3}s"><b></b><b></b></i>`).join('') : ''}${ph === 'night' ? Array.from({ length: 14 }, (_, i) => `<i class="pg-fly" style="left:${(i * 67) % 96}%;top:${40 + ((i * 29) % 50)}%;animation-delay:${(i % 5) * 0.7}s"></i>`).join('') : ''}</div><div class="pg-actors"></div>
+          <div class="pg-top"><span class="pg-chip">${PH_LBL[ph]}</span><span class="pg-chip" id="pgCount"></span><span class="pg-sp"></span>${acct.pets.list.length ? '<button class="pg-act" id="pgPetAll">♥ Pet all</button><button class="pg-act" id="pgBall">🎾 Throw ball</button>' : ''}</div>
           ${acct.pets.list.length ? '' : '<div class="pg-empty"><b>Your garden is empty</b><span>Hatch a pet and it will move in here.</span><button class="btn primary" data-go="pets">Go to Pets</button></div>'}
           <div class="pg-card"></div></section>
         <section class="card pg-bank" id="pgBank"></section>
@@ -19987,6 +20107,10 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         <section class="card"><div class="card-h"><h3>Decorations</h3><span class="muted small">They show up in the garden and boost what it earns</span></div><div class="pg-decos" id="pgDeco"></div></section>
         <p class="foot-note">Pets in the garden earn coins even when you’re away (up to ${CAP_H} hours). Rarer, higher-level and mutated pets earn more. Pets away on missions don’t earn.</p>`;
       stage = document.getElementById('pgStage');
+      const pa = document.getElementById('pgPetAll'),
+        pb = document.getElementById('pgBall');
+      if (pa) pa.onclick = petAll;
+      if (pb) pb.onclick = throwBall;
       makeActors();
       renderActors();
       document.getElementById('pgCount').textContent = `🐾 ${actors.length} pet${actors.length === 1 ? '' : 's'}`;
@@ -38711,6 +38835,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     for (const [h, ks] of Object.entries(HUBS)) for (const k of ks) hubOf[k] = h;
     hubOf.asset = 'markets';
     window.PBHubs = { HUBS, hubOf };
+    if (window.PBPages && !PBPages.garden) PBPages.garden = ['Pet Garden', () => 'Where your pets live, play and earn coins'];
 
     const IC = window.PBIcons || {};
     IC.inventory =
@@ -50525,6 +50650,25 @@ html:not(.dark) .ap-plate.ap-pr-l {
   animation: none !important;
 }
 
+/* ===== pets v3: bigger showcase, life everywhere ===== */
+html body .pet-hero .pet-stage[data-r]:not(#_) { width: 230px; height: 230px; flex: none; border-radius: 28px; background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--rc) 42%, transparent), transparent 62%), linear-gradient(180deg, color-mix(in srgb, var(--rc) 16%, #1a1b24), #101118 72%); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rc) 45%, transparent), 0 20px 50px -24px color-mix(in srgb, var(--rc) 80%, transparent); overflow: hidden; display: grid; place-items: end center; }
+html:not(.dark) body .pet-hero .pet-stage[data-r]:not(#_) { background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--rc) 40%, transparent), transparent 62%), linear-gradient(180deg, color-mix(in srgb, var(--rc) 14%, #ffffff), #f1f2f8 72%); }
+html body .pet-hero .pet-stage[data-r]:not(#_) .pet-big { margin: 0 0 22px; }
+html body .pet-hero .pet-stage[data-r]:not(#_) .pet-big svg { width: 176px !important; height: 176px !important; }
+html body .pet-hero .pet-stage[data-r]:not(#_) .ped { width: 150px; height: 26px; bottom: 14px; }
+html body .pet-hero .pet-stage[data-r]:not(#_)::before { inset: -40px; }
+.pet-stage .pst { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff; opacity: 0; animation: pstUp 4s linear infinite; pointer-events: none; box-shadow: 0 0 8px 2px color-mix(in srgb, var(--rc) 80%, #fff); }
+@keyframes pstUp { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 0.9; } 100% { transform: translateY(-170px); opacity: 0; } }
+.inv-art .art .pe, .pg-body .art .pe, .pg-cart .art .pe, .pg-w .art .pe { transform-box: fill-box; transform-origin: center; animation: pblink 5.2s infinite; }
+.inv-it:nth-child(2n) .art .pe, .pg-pet:nth-child(2n) .art .pe { animation-delay: -2.1s; }
+.inv-it:nth-child(3n) .art .pe, .pg-pet:nth-child(3n) .art .pe { animation-delay: -3.7s; animation-duration: 6.1s; }
+.inv-it.pet:hover .inv-art { animation: invHop 0.5s ease; }
+@keyframes invHop { 40% { transform: translateY(-10px) scale(1.04, 0.97); } 70% { transform: translateY(0) scale(0.97, 1.03); } }
+.pg-body svg.art, .inv-art svg.art { overflow: visible; filter: drop-shadow(0 0 0.7px rgba(20, 10, 40, 0.45)); }
+@media (max-width: 600px) {
+  html body .pet-hero .pet-stage[data-r]:not(#_) { width: 100%; height: 220px; }
+}
+
 </style>
 <style id="pbInv">
 /* ===================== INVENTORY ===================== */
@@ -50810,6 +50954,46 @@ body.sk-fs-on #buckFab, body.sk-fs-on .buck-fab, body.sk-fs-on #tradeBar { displ
 @media (prefers-reduced-motion: reduce) {
   .pg-bg *, .pg-fly, .pg-drop, .pg-petal { animation: none !important; }
 }
+
+/* ===== garden v2 ===== */
+.pg-stage { height: clamp(380px, 58vh, 580px); }
+.pg-top { align-items: center; }
+.pg-sp { flex: 1; }
+.pg-act { pointer-events: auto; font: 800 12.5px var(--sans); padding: 8px 13px; border-radius: 99px; border: 0; background: rgba(255, 255, 255, 0.92); color: #1c1c28; cursor: pointer; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22); transition: transform 0.12s; }
+.pg-act:hover { transform: translateY(-1px) scale(1.03); }
+.pg-act:active { transform: scale(0.96); }
+.pg-body { transition: filter 0.3s; }
+.pg-body svg { animation: pgBreathe 2.6s ease-in-out infinite; transform-origin: 50% 92%; }
+.pg-pet:nth-child(2n) .pg-body svg { animation-duration: 3.1s; animation-delay: -1s; }
+.pg-pet:nth-child(3n) .pg-body svg { animation-duration: 2.3s; animation-delay: -0.4s; }
+@keyframes pgBreathe { 50% { transform: scale(1.025, 0.975); } }
+.pg-pet.sleep .pg-body svg { animation: pgSleep 3.2s ease-in-out infinite; }
+@keyframes pgSleep { 0%, 100% { transform: scale(1.04, 0.9) rotate(-4deg); } 50% { transform: scale(1.08, 0.86) rotate(-4deg); } }
+.pg-pet.sleep .pg-body .pe, .pg-pet.sleep .pg-body [class*='xa-blink'] { transform: scaleY(0.12); transform-box: fill-box; transform-origin: center; }
+.pg-z { position: absolute; left: 70%; top: 4%; font: 900 14px var(--sans); color: #fff; opacity: 0; pointer-events: none; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
+.pg-z i { font-style: normal; margin-left: 2px; }
+.pg-pet.sleep .pg-z { animation: pgZ 2.4s ease-in-out infinite; }
+@keyframes pgZ { 0% { opacity: 0; transform: translate(0, 6px) scale(0.7); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(12px, -22px) scale(1.2); } }
+.pg-ball { position: absolute; width: 22px; height: 22px; margin: -22px 0 0 -11px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fbff9e, #c7e82a 55%, #8fb300); box-shadow: 0 6px 6px -3px rgba(0, 0, 0, 0.35); animation: pgBall 0.7s cubic-bezier(0.3, 1.5, 0.5, 1) both; z-index: 1; }
+.pg-ball::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.8); border-left-color: transparent; border-right-color: transparent; }
+.pg-ball.got { animation: pgBallGot 0.4s ease forwards; }
+@keyframes pgBall { from { transform: translateY(-140px) scale(0.6); opacity: 0; } }
+@keyframes pgBallGot { to { transform: translateY(-30px) scale(0); opacity: 0; } }
+.pg-bfly { position: absolute; width: 18px; height: 14px; animation: pgBfly 14s ease-in-out infinite; pointer-events: none; }
+.pg-bfly b { position: absolute; top: 0; width: 9px; height: 12px; border-radius: 60% 60% 40% 40%; background: var(--c); animation: pgWing 0.28s ease-in-out infinite alternate; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12) inset; }
+.pg-bfly b:first-child { left: 0; transform-origin: right center; }
+.pg-bfly b:last-child { right: 0; transform-origin: left center; animation-direction: alternate-reverse; }
+@keyframes pgWing { from { transform: scaleX(1); } to { transform: scaleX(0.25); } }
+@keyframes pgBfly { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(90px, -50px); } 50% { transform: translate(170px, 10px); } 75% { transform: translate(60px, 40px); } }
+.pg-bg .pg-sway { animation: pgSw 3s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes pgSw { 50% { transform: rotate(8deg); } }
+.pg-bg .pg-smoke circle { animation: pgSmoke 3.6s ease-out infinite; transform-box: fill-box; }
+.pg-bg .pg-smoke circle:nth-child(2) { animation-delay: 1.2s; }
+.pg-bg .pg-smoke circle:nth-child(3) { animation-delay: 2.4s; }
+@keyframes pgSmoke { 0% { transform: translate(0, 10px) scale(0.5); opacity: 0; } 30% { opacity: 0.6; } 100% { transform: translate(8px, -24px) scale(1.5); opacity: 0; } }
+.pg-bg .pg-sun { animation: pgGlow 5s ease-in-out infinite; }
+@media (max-width: 600px) { .pg-stage { height: 440px; } .pg-act { padding: 7px 10px; font-size: 11.5px; } .pg-top .pg-chip:nth-child(2) { display: none; } }
+@media (prefers-reduced-motion: reduce) { .pg-body svg, .pg-bfly, .pg-bfly b, .pg-bg .pg-sway, .pg-bg .pg-smoke circle { animation: none !important; } }
 
 </style>
 <style id="pbAbuse">
