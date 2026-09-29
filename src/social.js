@@ -739,6 +739,14 @@
     const me = meKey();
     let h = '',
       prev = null;
+    // who ends a run of messages (gets the bubble tail and the time)
+    const sameRun = (a, b) => a && b && a.kind !== 'system' && b.kind !== 'system' && (a.uname || a.username) === (b.uname || b.username) && !!a.mine === !!b.mine && (Date.parse(b.at) || 0) - (Date.parse(a.at) || 0) < 3 * 60000;
+    const hue = n => {
+      let x = 0;
+      for (const c of String(n || '')) x = (x * 31 + c.charCodeAt(0)) >>> 0;
+      return x % 360;
+    };
+    list.forEach((m, i) => (m._last = !sameRun(m, list[i + 1])));
     for (const m of list) {
       const t = Date.parse(m.at) || 0;
       if (!prev || t - (Date.parse(prev.at) || 0) > 30 * 60000) h += `<div class="sc-sep"><span>${E(when(m.at))}</span></div>`;
@@ -754,11 +762,11 @@
         m.kind === 'emote'
           ? `<div class="sc-emote">${E(m.body)}</div>`
           : `<div class="sc-bub ${m.kind === 'quick' ? 'quick' : ''} ${ment ? 'ment' : ''}">${E(m.body)}</div>`;
-      h += `<div class="sc-msg ${m.mine ? 'mine' : ''} ${grouped ? 'grp' : ''} ${fresh ? 'fresh' : ''}" data-mid="${E(m.id)}">
+      h += `<div class="sc-msg ${m.mine ? 'mine' : ''} ${grouped ? 'grp' : ''} ${m._last ? 'last' : ''} ${fresh ? 'fresh' : ''}" data-mid="${E(m.id)}" style="--nh:${hue(m.uname || m.username)}">
         ${m.mine ? '' : `<span class="sc-av">${grouped ? '' : av(m.avatar)}</span>`}
         <div class="sc-mc">${grouped || m.mine ? '' : `<div class="sc-mh"><b>${E(m.username || m.uname)}</b>${m.clan ? `<em class="sc-tag">${E(m.clan)}</em>` : ''}<time>${E(when(m.at))}</time></div>`}
         <div class="sc-mrow">${content}${m.mine ? '' : `<button class="sc-mx" data-mmenu="${E(m.id)}" aria-label="Message options">${IC.more}</button>`}</div>
-        ${m.mine && !grouped ? `<time class="sc-mt">${E(when(m.at))}</time>` : ''}</div></div>`;
+        ${m.mine && m._last ? `<time class="sc-mt">${E(when(m.at))}</time>` : ''}</div></div>`;
       prev = m;
     }
     box.innerHTML = h;
@@ -1727,6 +1735,7 @@
         }, 200 + Math.random() * 300);
         return;
       }
+      if (S.clan && S.clan.id && room === 'clan:' + S.clan.id) return clanSoon(); // loads, paints and pops up
       if (bodyFor('chat') && S.room === room && document.visibilityState === 'visible') loadRoom(room);
       else if (S.rooms[room]) S.rooms[room].stale = true;
     });
@@ -1740,6 +1749,90 @@
       }, 150 + Math.random() * 250);
     });
   }
+  /* ================= clan message pop-ups =================
+     A new message in your clan pops up on screen wherever you are in the game
+     (unless you're already looking at the clan chat), and lands in the bell. */
+  const CP = { seen: 0, primed: false, t: 0 };
+  const cpMuted = () => (store('pb2.clanPopMute', 0) || 0) > Date.now();
+  function clanSoon() {
+    clearTimeout(CP.t);
+    CP.t = setTimeout(clanCheck, 250 + Math.random() * 250);
+  }
+  async function clanCheck() {
+    if (!linked() || !feat('chat') || !feat('clans')) return;
+    if (S.clan === undefined || !S.clanAt || Date.now() - S.clanAt > 300000) await loadClan(true);
+    if (!S.clan || !S.clan.id) return;
+    const room = 'clan:' + S.clan.id,
+      R = rs(room);
+    for (let i = 0; i < 20 && R.busy; i++) await new Promise(r => setTimeout(r, 150));
+    await loadRoom(room, !R.loaded);
+    const top = R.msgs.reduce((a, m) => Math.max(a, +m.id || 0), 0);
+    if (!CP.primed) {
+      // first look after loading the game: old messages never pop up
+      CP.primed = true;
+      CP.seen = top;
+      return;
+    }
+    const fresh = R.msgs.filter(m => (+m.id || 0) > CP.seen && !m.mine);
+    CP.seen = Math.max(CP.seen, top);
+    if (!fresh.length) return;
+    const last = fresh[fresh.length - 1];
+    try {
+      window.PBNotify && PBNotify.push({ kind: 'msg', title: `[${S.clan.tag}] ${last.username}`, body: String(last.body || '').slice(0, 140), room });
+    } catch (e) {}
+    if (viewing(room) || cpMuted() || document.visibilityState !== 'visible') return;
+    clanPop(last, fresh.length, room);
+  }
+  function clanPop(m, n, room) {
+    document.getElementById('clanPop')?.remove();
+    const el = document.createElement('div');
+    el.id = 'clanPop';
+    el.setAttribute('role', 'status');
+    el.innerHTML = `<button type="button" class="cpop-main" aria-label="Open clan chat"><span class="cpop-av">${av(m.avatar)}</span>
+      <span class="cpop-t"><span class="cpop-h"><b class="cpop-clan">${E(S.clan.emoji || '🛡️')} [${E(S.clan.tag)}] ${E(S.clan.name)}</b><small>now</small></span>
+      <span class="cpop-b"><b>${E(m.username || 'Clanmate')}</b> ${m.kind === 'emote' ? `<span class="cpop-emo">${E(m.body)}</span>` : E(m.body)}</span>
+      ${n > 1 ? `<small class="cpop-more">+${n - 1} more message${n > 2 ? 's' : ''}</small>` : ''}</span></button>
+      <span class="cpop-a"><button type="button" class="cpop-mute" title="Mute clan pop-ups for 1 hour">Mute 1h</button><button type="button" class="cpop-x" aria-label="Dismiss">×</button></span>`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('in'));
+    try {
+      SFX.play('flip');
+    } catch (e) {}
+    let hide = setTimeout(close, 6500);
+    function close() {
+      clearTimeout(hide);
+      el.classList.remove('in');
+      el.classList.add('out');
+      setTimeout(() => el.remove(), 320);
+    }
+    el.onmouseenter = () => clearTimeout(hide);
+    el.onmouseleave = () => (hide = setTimeout(close, 2500));
+    el.querySelector('.cpop-main').onclick = () => {
+      close();
+      openTab('chat', room);
+    };
+    el.querySelector('.cpop-x').onclick = close;
+    el.querySelector('.cpop-mute').onclick = () => {
+      put('pb2.clanPopMute', Date.now() + 3600000);
+      close();
+      toast('Clan pop-ups muted for an hour. They still go to your bell.', 'info');
+    };
+    // swipe up to dismiss on phones
+    let y0 = null;
+    el.addEventListener('touchstart', e => (y0 = e.touches[0].clientY), { passive: true });
+    el.addEventListener('touchmove', e => {
+      if (y0 != null && e.touches[0].clientY - y0 < -24) {
+        y0 = null;
+        close();
+      }
+    }, { passive: true });
+  }
+  setTimeout(clanCheck, 6000);
+  setInterval(() => {
+    if (document.visibilityState === 'visible' && !socketUp()) clanCheck();
+  }, 40000);
+  window.PBClanPop = { check: clanCheck, pop: clanPop };
+
   // a quick check at startup (and now and then) so the nav dot knows about DMs and challenges
   const bg = () => {
     if (!linked() || document.visibilityState !== 'visible') return;

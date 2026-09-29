@@ -1842,3 +1842,77 @@ body.soc-fill .site-credit {
     transition: none !important;
   }
 }
+
+/* ===================== CHAT v2: a proper messenger look ===================== */
+.sc-panel { background: radial-gradient(900px 420px at 100% 0%, color-mix(in srgb, var(--sc-acc) 7%, transparent), transparent 60%), radial-gradient(700px 400px at 0% 100%, color-mix(in srgb, #7a5cff 7%, transparent), transparent 60%); }
+.sc-ph { backdrop-filter: blur(10px); background: color-mix(in srgb, var(--panel) 70%, transparent); }
+.sc-msgs { padding: 14px 16px 10px; background-image: radial-gradient(color-mix(in srgb, var(--tx) 5%, transparent) 1px, transparent 1.2px); background-size: 22px 22px; }
+/* separators: a thin line with the time */
+.sc-sep { align-items: center; gap: 10px; margin: 16px 0 8px; }
+.sc-sep::before, .sc-sep::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--line)); }
+.sc-sep::after { background: linear-gradient(90deg, var(--line), transparent); }
+.sc-sep span { background: none; padding: 0; letter-spacing: 0.04em; text-transform: uppercase; font-size: 10.5px; }
+/* rows */
+.sc-msg { margin-top: 12px; }
+.sc-msg.grp { margin-top: 2px; }
+.sc-msg.mine { align-self: stretch; width: 100%; }
+.sc-mc { max-width: min(78%, 540px); }
+.sc-msg > .sc-av { width: 34px; height: 34px; margin-top: 18px; border-radius: 50%; box-shadow: 0 0 0 2px hsl(var(--nh) 70% 60% / 0.55); overflow: hidden; }
+.sc-msg.grp > .sc-av { box-shadow: none; margin-top: 0; }
+.sc-msg > .sc-av img.pb-pic { width: 100%; height: 100%; }
+.sc-mh b { color: hsl(var(--nh) 80% 72%); }
+html:not(.dark) .sc-mh b { color: hsl(var(--nh) 60% 38%); }
+/* bubbles */
+.sc-bub { padding: 9px 13px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--tx) 7%, transparent); background: color-mix(in srgb, var(--tx) 6%, var(--panel)); box-shadow: 0 1px 0 color-mix(in srgb, #000 25%, transparent); font-size: 14.5px; line-height: 1.42; overflow-wrap: break-word; word-break: normal; }
+.sc-msg:not(.mine).grp .sc-bub { border-top-left-radius: 6px; }
+.sc-msg:not(.mine):not(.last) .sc-bub { border-bottom-left-radius: 6px; }
+.sc-msg.mine .sc-bub { color: #1c0c00; font-weight: 500; border: 0; background: linear-gradient(160deg, #ffc15c, #ff8a1f 60%, #ff6a1f); box-shadow: 0 6px 18px -8px rgba(255, 120, 30, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.35); border-radius: 18px; }
+.sc-msg.mine.grp .sc-bub { border-top-right-radius: 6px; }
+.sc-msg.mine:not(.last) .sc-bub { border-bottom-right-radius: 6px; }
+.sc-msg.mine .sc-bub.quick { background: linear-gradient(160deg, #ffd88f, #ffab40); }
+/* quick-chat phrases read like stickers */
+.sc-bub.quick { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; border-radius: 999px !important; padding: 7px 13px 7px 10px; }
+.sc-bub.quick::before { content: ''; width: 14px; height: 14px; flex: none; background: currentColor; opacity: 0.75; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 2 4 14h7l-1 8 9-12h-7z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 2 4 14h7l-1 8 9-12h-7z'/%3E%3C/svg%3E") center / contain no-repeat; }
+.sc-bub.ment { box-shadow: 0 0 0 1.5px var(--sc-acc), 0 6px 18px -10px var(--sc-acc); }
+.sc-emote { font-size: 48px; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35)); }
+.sc-mt { font-size: 10.5px; opacity: 0.8; }
+/* new messages pop in */
+.sc-msg.fresh { animation: scIn 320ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes scIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+/* composer: one rounded bar */
+.sc-comp { border-top: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 85%, transparent); backdrop-filter: blur(10px); }
+.sc-quick { mask-image: linear-gradient(90deg, #000 88%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); }
+.sc-quick button { border-radius: 999px; transition: transform 0.12s, background-color 0.12s, border-color 0.12s; }
+.sc-quick button:active { transform: scale(0.96); }
+.sc-form { gap: 8px; align-items: center; }
+.sc-inp { border-radius: 999px; background: color-mix(in srgb, var(--tx) 6%, transparent); border: 1px solid color-mix(in srgb, var(--tx) 10%, transparent); transition: border-color 0.15s, box-shadow 0.15s; }
+.sc-inp:focus-within { border-color: color-mix(in srgb, var(--sc-acc) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sc-acc) 18%, transparent); }
+.sc-send { border-radius: 50%; background: linear-gradient(160deg, #ffc15c, #ff7a1a); box-shadow: 0 8px 20px -8px rgba(255, 120, 30, 0.9); transition: transform 0.12s; }
+.sc-send:active { transform: scale(0.92); }
+.sc-ib { border-radius: 50%; }
+/* rooms */
+.sc-rm { border-radius: 14px; transition: background-color 0.15s; }
+.sc-rm.on { background: linear-gradient(120deg, color-mix(in srgb, var(--sc-acc) 16%, transparent), color-mix(in srgb, var(--sc-acc) 4%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sc-acc) 30%, transparent); }
+@media (prefers-reduced-motion: reduce) { .sc-msg.fresh { animation: none; } }
+
+/* ===================== clan message pop-up ===================== */
+#clanPop { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 10030; width: min(440px, calc(100vw - 20px)); display: flex; align-items: stretch; border-radius: 20px; overflow: hidden; color: var(--tx); background: color-mix(in srgb, var(--panel, #16161d) 88%, transparent); border: 1px solid color-mix(in srgb, var(--tx) 12%, transparent); box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); transform: translate(-50%, -140%); opacity: 0; transition: transform 420ms cubic-bezier(0.32, 0.72, 0, 1), opacity 240ms ease; }
+#clanPop.in { transform: translate(-50%, 0); opacity: 1; }
+#clanPop.out { transform: translate(-50%, -140%); opacity: 0; transition-duration: 300ms; }
+#clanPop::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, #ffc15c, #ff6a1f); }
+.cpop-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 8px 12px 16px; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.cpop-av { width: 42px; height: 42px; flex: none; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: color-mix(in srgb, var(--tx) 8%, transparent); }
+.cpop-av svg, .cpop-av img { width: 100%; height: 100%; }
+.cpop-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.cpop-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.cpop-clan { font-size: 11.5px; font-weight: 800; letter-spacing: 0.02em; color: #ffab40; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cpop-h small { font-size: 11px; color: var(--mut); flex: none; }
+.cpop-b { font-size: 14px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; }
+.cpop-b b { font-weight: 700; }
+.cpop-emo { font-size: 20px; line-height: 1; vertical-align: -3px; }
+.cpop-more { font-size: 11.5px; color: var(--mut); }
+.cpop-a { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 8px 10px 8px 0; }
+.cpop-a button { border: 0; background: none; color: var(--mut); cursor: pointer; font: 600 11.5px var(--sans, system-ui); padding: 5px 8px; border-radius: 8px; }
+.cpop-a button:hover { background: color-mix(in srgb, var(--tx) 8%, transparent); color: var(--tx); }
+.cpop-x { font-size: 18px !important; line-height: 1; }
+@media (prefers-reduced-motion: reduce) { #clanPop { transition: opacity 200ms ease; transform: translate(-50%, 0); } }
