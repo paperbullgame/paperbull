@@ -23742,10 +23742,187 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   }
 
   /* ---------------- the brain ---------------- */
+  /* ================= BRAIN v2: typo-tolerant, more skills ================= */
+  const lev = (a, b) => {
+    if (Math.abs(a.length - b.length) > 2) return 9;
+    const d = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      let prev = d[0];
+      d[0] = i;
+      for (let j = 1; j <= b.length; j++) {
+        const t = d[j];
+        d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+        prev = t;
+      }
+    }
+    return d[b.length];
+  };
+  const VOCAB = 'portfolio market markets buy sell news crypto stock stocks coins coin shop pets garden inventory bank alert watchlist watch compare predict forecast price target week month year today brief summary fees fee trade trades profit loss holdings balance cash ideas idea movers gainers losers risk dividend earnings explain what should best worst tech energy bank banks health pet eggs egg theme themes settings profile leaderboard ranks social chat duel pass store invest investing bitcoin ethereum'.split(' ');
+  function fixTypos(lo) {
+    return lo.replace(/[a-z]{4,}/g, w => {
+      if (VOCAB.includes(w)) return w;
+      let best = null,
+        bd = 9;
+      for (const v of VOCAB) {
+        const d = lev(w, v);
+        if (d < bd) {
+          bd = d;
+          best = v;
+        }
+      }
+      return bd <= (w.length >= 7 ? 2 : 1) ? best : w;
+    });
+  }
+  function fuzzySym(lo) {
+    for (const w of lo.match(/[a-z]{4,}/g) || []) {
+      if (VOCAB.includes(w) || STOP.has(w.toUpperCase())) continue;
+      for (const [n, sym] of index()) if (n.length >= 4 && !n.includes(' ') && lev(w, n) === 1) return sym;
+    }
+    return null;
+  }
+  const num = t => {
+    const m = String(t).replace(/,/g, '').match(/(\d+(?:\.\d+)?)\s*(k|m|thousand|million)?/i);
+    if (!m) return null;
+    const k = (m[2] || '').toLowerCase();
+    return +m[1] * (k === 'k' || k === 'thousand' ? 1e3 : k === 'm' || k === 'million' ? 1e6 : 1);
+  };
+  const PAGES = { shop: 'shop', pets: 'pets', pet: 'pets', garden: 'garden', inventory: 'inventory', news: 'news', markets: 'markets', market: 'markets', portfolio: 'portfolio', bank: 'bank', pass: 'pass', 'battle pass': 'pass', play: 'play', social: 'social', chat: 'social', profile: 'profile', settings: 'settings', store: 'store', leaderboard: 'ranks', ranks: 'ranks', home: 'home', learn: 'learn' };
+  const span = lo => (/\byear|12 ?months?\b/.test(lo) ? ['d1', 365, 'a year'] : /\bmonth|30 ?days\b/.test(lo) ? ['h1', 720, 'a month'] : /\bweek|7 ?days\b/.test(lo) ? ['h1', 168, 'a week'] : ['h1', 24, 'a day']);
+  function brain(raw, lo, syms, sym) {
+    // navigation
+    const nav = lo.match(/^(?:open|go to|take me to|show me the|show|goto)\s+(?:the\s+|my\s+)?([a-z ]+?)(?:\s+page|\s+tab)?$/);
+    if (nav && PAGES[nav[1].trim()]) {
+      const r = PAGES[nav[1].trim()];
+      setTimeout(() => go(r), 250);
+      return reply(`<p>Opening <b>${H(nav[1].trim())}</b> for you.</p>`, 'happy');
+    }
+    // daily briefing
+    if (/\b(brief me|briefing|catch me up|what did i miss|summary|recap|morning report|daily report)\b/.test(lo)) {
+      const v = valuation(),
+        ups = CORE.filter(a => !a.hidden).sort((a, b) => chg24(b) - chg24(a)),
+        held = Object.keys(acct.positions).filter(s => SIM[s]).sort((a, b) => Math.abs(chg24(SIM[b])) - Math.abs(chg24(SIM[a])));
+      const m = marketMood(),
+        next = window.PBAdv && PBAdv.nextEvent ? PBAdv.nextEvent() : null;
+      return reply(
+        `<p><b>Your briefing</b></p><ul class="bai-list">
+          <li>Account: <b class="mono">${money(v.total)}</b>, ${pctS(v.dayPct)} today.</li>
+          <li>Market mood: <b>${m.score > 60 ? 'bullish' : m.score < 40 ? 'fearful' : 'mixed'}</b> (${Math.round(m.score)}/100).</li>
+          <li>Top gainer: <b>${H(ups[0].sym)}</b> ${pctS(chg24(ups[0]))}. Worst: <b>${H(ups[ups.length - 1].sym)}</b> ${pctS(chg24(ups[ups.length - 1]))}.</li>
+          ${held.length ? `<li>Your biggest mover: <b>${H(held[0])}</b> ${pctS(chg24(SIM[held[0]]))}.</li>` : '<li>You don’t own anything yet. Want some ideas?</li>'}
+          ${acct.feesPaid ? `<li>Fees paid so far: <b class="mono">${money(acct.feesPaid)}</b>. Fewer, bigger trades save money.</li>` : ''}
+          ${next ? `<li>Next big event: <b>${H(next)}</b></li>` : ''}</ul>`,
+        m.score < 40 ? 'sad' : 'cool',
+        [chip('Give me ideas'), chip('How’s my portfolio?'), chip('Top movers')]
+      );
+    }
+    // what-if: "if I bought $1000 of NVDA a month ago"
+    if (sym && /\b(if i (had )?(bought|invested|put)|would i have|what if)\b/.test(lo)) {
+      const [k, n, lbl] = span(lo),
+        amt = num(lo.replace(new RegExp('\\b' + sym + '\\b', 'i'), '')) || 1000,
+        c = chgSince(SIM[sym], k, n);
+      if (Number.isFinite(c))
+        return reply(`<p>If you put <b class="mono">${money(amt)}</b> into <b>${H(sym)}</b> ${lbl} ago, you’d have <b class="mono ${cls(c)}">${money(amt * (1 + c))}</b> now (${pctS(c)}).</p><p class="bai-fine">Before fees. Past moves don’t promise future ones.</p>`, c >= 0 ? 'cool' : 'sad', [chip(`Buy $${Math.round(amt)} of ${sym}`), goChip('Open chart', 'asset/' + sym)]);
+    }
+    // forecast / prediction
+    if (sym && /\b(predict|prediction|forecast|price target|target|will .* (go|be|hit|rise|fall|drop|moon)|where .* (go|going|head)|go up|go down)\b/.test(lo)) {
+      const a = SIM[sym],
+        t = ta(a),
+        vol = Math.max(0.005, (a.vol || 0.3) / Math.sqrt(252)),
+        wk = vol * Math.sqrt(5),
+        bias = t.verdict[0] === 'up' ? 0.004 : t.verdict[0] === 'dn' ? -0.004 : 0,
+        lo1 = a.price * (1 + bias - wk),
+        hi1 = a.price * (1 + bias + wk),
+        pUp = Math.round(50 + (t.verdict[0] === 'up' ? 8 : t.verdict[0] === 'dn' ? -8 : 0) + (t.r < 30 ? 6 : t.r > 70 ? -6 : 0));
+      B.sym = sym;
+      return reply(
+        `<p>Nobody can predict prices, but here’s what the math says about <b>${H(sym)}</b> over the next week:</p>
+        <div class="bai-fc"><div><small>Likely range</small><b class="mono">${fmtUSD(lo1)} – ${fmtUSD(hi1)}</b></div><div><small>Chance it’s higher</small><b class="mono ${pUp >= 50 ? 'pos' : 'neg'}">${pUp}%</b></div><div><small>Trend</small><b>${t.verdict[0] === 'up' ? 'Up' : t.verdict[0] === 'dn' ? 'Down' : 'Sideways'}</b></div></div>
+        <p class="bai-fine">Based on its volatility, trend and RSI (${t.r.toFixed(0)}). It’s a game estimate, not a promise.</p>`,
+        pUp >= 55 ? 'cool' : pUp <= 45 ? 'sad' : 'happy',
+        [chip(`Analyze ${sym}`), chip(`Alert me if ${sym} drops 5%`), goChip('Open chart', 'asset/' + sym)]
+      );
+    }
+    // price alerts
+    if (sym && /\b(alert|notify|tell me|ping me|let me know)\b/.test(lo)) {
+      const a = SIM[sym];
+      let px = null;
+      const pc = lo.match(/(drops?|falls?|rises?|jumps?|goes up|goes down|up|down)\s*(\d+(?:\.\d+)?)\s*%/);
+      if (pc) px = a.price * (1 + (/(drop|fall|down)/.test(pc[1]) ? -1 : 1) * +pc[2] / 100);
+      else {
+        const m = lo.replace(new RegExp('\\b' + sym.toLowerCase() + '\\b', 'g'), '').match(/\$?\s*(\d[\d,]*(?:\.\d+)?)/);
+        if (m) px = +m[1].replace(/,/g, '');
+      }
+      if (!px) return reply(`<p>At what price? Try <i>“alert me when ${H(sym)} hits ${fmtUSD(a.price * 1.05)}”</i> or <i>“alert me if ${H(sym)} drops 5%”</i>.</p>`, 'happy');
+      if (window.PBAlerts) PBAlerts.add(sym, px);
+      return reply(`<p>Done. I’ll ping you when <b>${H(sym)}</b> goes ${px > a.price ? 'above' : 'below'} <b class="mono">${fmtUSD(px)}</b> (now ${fmtUSD(a.price)}). You’ll get it in your notifications too.</p>`, 'cool', [goChip('Open chart', 'asset/' + sym)]);
+    }
+    // watchlist
+    if (sym && /\b(watchlist|watch list|add .* to (my )?watch|watch)\b/.test(lo) && window.PBWatch) {
+      const had = PBWatch.has(sym);
+      if (!had || /\bremove|unwatch|stop watching\b/.test(lo)) PBWatch.toggle(sym);
+      return reply(`<p>${!had ? `Added <b>${H(sym)}</b> to your watchlist. It shows at the top of Markets.` : /\bremove|unwatch|stop/.test(lo) ? `Removed <b>${H(sym)}</b> from your watchlist.` : `<b>${H(sym)}</b> is already on your watchlist.`}</p>`, 'happy', [goChip('Open Markets', 'markets')]);
+    }
+    // value math: "10 shares of AAPL", "how much is 2 BTC"
+    const qm = sym && lo.match(/(\d+(?:\.\d+)?)\s*(shares?|coins?|of)?\s*(?:of\s*)?/);
+    if (sym && qm && /\b(worth|how much is|how much are|value of|cost of|shares? of|\d+\s*[a-z]*\s*(btc|eth|sol))\b/.test(lo)) {
+      const q = +qm[1];
+      return reply(`<p><b>${q} ${H(sym)}</b> is worth <b class="mono">${money(q * SIM[sym].price)}</b> right now (${fmtUSD(SIM[sym].price)} each). Buying it would cost about ${money(q * SIM[sym].price * 1.002 + 0.5)} with fees.</p>`, 'happy', [chip(`Buy ${q} ${sym}`), goChip('Open chart', 'asset/' + sym)]);
+    }
+    // best performers over a time span, optionally within a sector or crypto
+    if (!sym && /\b(best|top|worst|biggest)\b/.test(lo) && /\b(week|month|year|today|tech|bank|banks|energy|health|crypto|coin|coins|stock|stocks|retail|auto|media)\b/.test(lo)) {
+      const [k, n, lbl] = span(lo),
+        worst = /\bworst\b/.test(lo);
+      let pool = CORE.filter(a => !a.hidden);
+      if (/\bcrypto|coins?\b/.test(lo)) pool = pool.filter(a => a.type === 'crypto');
+      else if (/\bstocks?\b/.test(lo)) pool = pool.filter(a => a.type === 'stock');
+      const sec = (lo.match(/\b(tech|bank|banks|energy|health|retail|auto|media)\b/) || [])[1];
+      if (sec) {
+        const want = { tech: /tech|software|semi|chip/i, bank: /bank|financ/i, banks: /bank|financ/i, energy: /energy|oil/i, health: /health|pharma|bio|medic/i, retail: /retail|consumer/i, auto: /auto|car|vehicle/i, media: /media|entertain|communic/i }[sec];
+        const f = pool.filter(a => a.type === 'stock' && want.test(String(sectorOf(a.sym))));
+        if (f.length) pool = f;
+      }
+      const rows = pool.map(a => [a, n === 24 ? chg24(a) : chgSince(a, k, n)]).filter(x => Number.isFinite(x[1])).sort((x, y) => (worst ? x[1] - y[1] : y[1] - x[1])).slice(0, 5);
+      if (rows.length)
+        return reply(`<p>${worst ? 'Worst' : 'Best'} ${sec ? H(sec) + ' ' : ''}${/crypto|coin/.test(lo) ? 'coins' : 'picks'} over ${lbl === 'a day' ? 'the last day' : lbl}:</p><ol class="bai-list">${rows.map(([a, c]) => `<li><b>${H(a.sym)}</b> ${H(a.name)} ${pctS(c)}</li>`).join('')}</ol>`, worst ? 'sad' : 'cool', rows.slice(0, 3).map(([a]) => chip(`Analyze ${a.sym}`)));
+    }
+    // fees
+    if (/\b(fee|fees|commission|spread)\b/.test(lo) && !/^(what is|define)/.test(lo))
+      return reply(`<p>Every trade costs <b>0.1%</b> (at least $0.50), plus the bid/ask <b>spread</b> (bigger on volatile stocks and crypto). A $10,000 round trip costs roughly $25–$60. You’ve paid <b class="mono">${money(acct.feesPaid || 0)}</b> so far.</p><p>Tip: trade less often with bigger conviction, and use limit orders to skip the spread.</p>`, 'happy', [chip('How’s my portfolio?')]);
+    // last trade
+    if (/\b(my )?last trade\b|\bexplain my trade\b/.test(lo)) {
+      const t = acct.trades[0];
+      if (!t) return reply('<p>You haven’t traded yet. Want an idea to start with?</p>', 'happy', [chip('Give me ideas')]);
+      return reply(`<p>Your last trade: <b>${H(t.side)}</b> ${fmtQty(t.qty)} <b>${H(t.sym)}</b> at <b class="mono">${fmtUSD(t.price)}</b> (${money(t.value)})${t.fee ? `, fee ${money(t.fee)}` : ''}. ${t.pnl != null ? `It ${t.pnl >= 0 ? 'made' : 'lost'} <b class="mono ${cls(t.pnl)}">${money(Math.abs(t.pnl))}</b>.` : `Since then ${H(t.sym)} is ${pctS(SIM[t.sym].price / t.price - 1)}.`}</p>`, t.pnl != null && t.pnl < 0 ? 'sad' : 'cool', [chip(`Analyze ${t.sym}`)]);
+    }
+    // pets advice
+    if (/\b(which|best|what) pet\b|\bpet (advice|perk)/.test(lo)) {
+      const a = activePet();
+      return reply(`<p>${a ? `Your companion is <b>${H(a.name)}</b> (${H(RARITY[PET[a.id].r].name)}): ${H(perkNow(a))}. ` : 'You don’t have a companion yet. '}Coin pets pay off if you trade a lot, XP pets level you faster, and idle pets earn while you’re away. Rarer pets (Legendary, Mythic, Exotic, Secret) have much stronger perks, and every pet earns coins in your Pet Garden.</p>`, 'happy', [goChip('Open Pets', 'pets'), goChip('Open Garden', 'garden')]);
+    }
+    // simple calculator
+    const calc = lo.match(/^(?:what is|what's|calc|calculate)?\s*([\d.,\s+\-*/()%x]+)\??$/);
+    if (calc && /\d\s*[+\-*/x%]\s*\d|%\s*of/.test(lo)) {
+      try {
+        let ex = calc[1].replace(/,/g, '').replace(/x/g, '*').replace(/(\d+(?:\.\d+)?)\s*%/g, '($1/100)');
+        if (/^[\d.\s+\-*/()]+$/.test(ex)) {
+          const v = Function('return (' + ex + ')')();
+          if (Number.isFinite(v)) return reply(`<p><b class="mono">${H(calc[1].trim())} = ${v.toLocaleString('en-US', { maximumFractionDigits: 4 })}</b></p>`, 'happy');
+        }
+      } catch (e) {}
+    }
+    const pof = lo.match(/(\d+(?:\.\d+)?)\s*%\s*of\s*\$?([\d,]+(?:\.\d+)?)/);
+    if (pof) return reply(`<p><b class="mono">${pof[1]}% of ${pof[2]} = ${((+pof[1] / 100) * +pof[2].replace(/,/g, '')).toLocaleString('en-US', { maximumFractionDigits: 2 })}</b></p>`, 'happy');
+    return null;
+  }
+
   function think(raw) {
     B.q = raw.toLowerCase();
-    const lo = raw.toLowerCase().replace(/[’']/g, "'").trim();
+    const lo = fixTypos(raw.toLowerCase().replace(/[’']/g, "'").trim());
     const syms = findAssets(raw);
+    if (!syms.length) {
+      const fz = fuzzySym(lo);
+      if (fz) syms.push(fz);
+    }
     const it = /\b(it|that|this one|them)\b/.test(lo) && B.sym;
     const sym = syms[0] || (it ? B.sym : null);
 
@@ -23768,7 +23945,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       );
     if (/who are you|what are you|what can you do|help\b|^\?$|commands/.test(lo))
       return reply(
-        `<p>I’m <b>${H(P().name)}</b>${V() ? '. ' + fill(V().intro) : ', your market sidekick'}. I read the live charts, news and your account, and I can:</p><ul class="bai-list"><li>Break down any stock or coin: <i>“how’s NVDA?”</i></li><li>Compare two: <i>“AAPL vs MSFT”</i></li><li>Check your portfolio and risk</li><li>Find ideas and top movers</li><li>Explain terms: <i>“what is RSI?”</i></li><li>Trade for you: <i>“buy $500 of BTC”</i>, <i>“sell half TSLA”</i>, <i>“buy AAPL at 200”</i></li></ul>`,
+        `<p>I’m <b>${H(P().name)}</b>${V() ? '. ' + fill(V().intro) : ', your market sidekick'}. I read the live charts, news and your account, and I can:</p><ul class="bai-list"><li>Break down any stock or coin: <i>“how’s NVDA?”</i></li><li>Compare two: <i>“AAPL vs MSFT”</i></li><li>Check your portfolio and risk</li><li>Find ideas and top movers</li><li>Explain terms: <i>“what is RSI?”</i></li><li>Trade for you: <i>“buy $500 of BTC”</i>, <i>“sell half TSLA”</i>, <i>“buy AAPL at 200”</i></li><li>Brief you: <i>“brief me”</i> or <i>“what did I miss?”</i></li><li>Estimate a week ahead: <i>“will TSLA go up?”</i></li><li>Set alerts: <i>“alert me if BTC drops 5%”</i></li><li>What-ifs: <i>“if I bought $1000 of NVDA a month ago”</i></li><li>Rank things: <i>“best tech stock this week”</i>, <i>“worst crypto today”</i></li><li>Open pages: <i>“open the garden”</i></li></ul>`,
         'cool',
         starters()
       );
@@ -23788,6 +23965,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       );
     }
 
+    const b2 = brain(raw, lo, syms, sym);
+    if (b2) return b2;
     const askQ =
       /should i (buy|sell)|when (to|should i) (buy|sell)|what (should|to) (i )?buy|worth buying|good buy|which.*buy|what.*buy\?|is it time to/.test(
         lo
@@ -23909,14 +24088,16 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if (g) return reply(`<p><b>${H(g[1])}</b></p><p>${H(g[2])}</p>`, 'cool', [chip('Give me ideas')]);
     if (/^(yes|yeah|yep|sure|ok|okay|do it)\b/.test(lo) && B.sym) return analyze(B.sym);
     return reply(
-      `<p>${say('lost') || R(['Hmm, I didn’t catch that.', 'Not sure what you mean there.', 'That one went over my horns.'])} Try a ticker like <i>“TSLA”</i>, <i>“my portfolio”</i>, <i>“top movers”</i> or <i>“buy $500 of ETH”</i>.</p>`,
+      `<p>${say('lost') || R(['Hmm, I didn’t catch that.', 'Not sure what you mean there.', 'That one went over my horns.'])} I can do a lot: <i>“brief me”</i>, <i>“best tech stock this week”</i>, <i>“will NVDA go up?”</i>, <i>“alert me when BTC hits 90000”</i>, <i>“if I bought $1000 of TSLA a month ago”</i>. Or try a ticker like <i>“TSLA”</i>, <i>“my portfolio”</i>, <i>“top movers”</i> or <i>“buy $500 of ETH”</i>.</p>`,
       'happy',
       starters()
     );
   }
+  window.PBBuckThink = q => think(q);
   function starters() {
     const held = Object.keys(acct.positions);
     const s = [
+      chip('Brief me'),
       chip('How’s my portfolio?'),
       chip('What’s the market doing?'),
       chip('Give me ideas'),
@@ -38757,6 +38938,17 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const isW = s => watch.includes(s);
     const toggleW = s => { watch = isW(s) ? watch.filter(x => x !== s) : [s, ...watch].slice(0, 40); SV('pb2.watch', watch); };
     window.PBWatch = { list: () => watch.slice(), has: isW, toggle: toggleW };
+    window.PBAlerts = {
+      add(sym, px) {
+        const cur = SIM[sym] && SIM[sym].price;
+        if (!cur || !(px > 0)) return false;
+        alerts.push({ id: Date.now(), sym, px, dir: px > cur ? 'up' : 'dn' });
+        alerts = alerts.slice(-30);
+        SV('pb2.alerts', alerts);
+        return true;
+      },
+      list: () => alerts.slice(),
+    };
     const pc = x => `<span class="${cls(x)}">${fmtPct(x)}</span>`;
     const safe = (f, d = 0) => { try { const v = f(); return Number.isFinite(v) ? v : d; } catch (e) { return d; } };
     const STAR = on => `<svg viewBox="0 0 24 24" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>`;
@@ -42959,6 +43151,11 @@ body.edu-on .bai-panel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+.bai-fc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; }
+.bai-fc > div { padding: 8px; border-radius: 10px; background: color-mix(in srgb, var(--tx, #fff) 6%, transparent); display: flex; flex-direction: column; gap: 2px; }
+.bai-fc small { font-size: 10.5px; opacity: 0.7; }
+.bai-fc b { font-size: 13px; }
+ol.bai-list { padding-left: 18px; }
 
 </style>
 <style id="pbVisual">
