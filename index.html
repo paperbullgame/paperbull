@@ -25965,6 +25965,21 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       else acct.xp = Math.max(0, acct.xp + Math.round(amt));
       return `${sign}${Math.abs(Math.round(amt)).toLocaleString()} XP`;
     }
+    if (g.kind === 'item' && amt < 0) {
+      // a refunded or charged-back purchase: take the item back
+      const it = typeof ITEM !== 'undefined' && ITEM[g.item_id];
+      if (acct.inv && acct.inv[g.item_id] > 0) {
+        acct.inv[g.item_id] = Math.max(0, acct.inv[g.item_id] + Math.round(amt));
+        if (!acct.inv[g.item_id]) delete acct.inv[g.item_id];
+      }
+      if (it && acct.equip && acct.equip[it.type] === g.item_id && !(acct.inv && acct.inv[g.item_id] > 0)) {
+        delete acct.equip[it.type];
+        try {
+          if (typeof applyCosmetics === 'function') applyCosmetics();
+        } catch (e) {}
+      }
+      return `${it ? it.name : 'Item'} removed`;
+    }
     if (g.kind === 'item') {
       const it = typeof ITEM !== 'undefined' && ITEM[g.item_id];
       if (it) {
@@ -28810,6 +28825,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         slow_down: 'Too many checkouts — wait a few minutes.',
         not_available: 'That isn’t for sale right now.',
         kid_blocked: 'Purchases are turned off for players under 13.',
+        store_blocked: 'Purchases are turned off for this account after a payment was disputed. Use the Contact form if this is a mistake.',
       };
       toast(M[j.error] || j.detail || 'Couldn’t open checkout. Try again.', 'err');
     } catch (e) {

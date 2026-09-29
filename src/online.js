@@ -789,6 +789,21 @@
       else acct.xp = Math.max(0, acct.xp + Math.round(amt));
       return `${sign}${Math.abs(Math.round(amt)).toLocaleString()} XP`;
     }
+    if (g.kind === 'item' && amt < 0) {
+      // a refunded or charged-back purchase: take the item back
+      const it = typeof ITEM !== 'undefined' && ITEM[g.item_id];
+      if (acct.inv && acct.inv[g.item_id] > 0) {
+        acct.inv[g.item_id] = Math.max(0, acct.inv[g.item_id] + Math.round(amt));
+        if (!acct.inv[g.item_id]) delete acct.inv[g.item_id];
+      }
+      if (it && acct.equip && acct.equip[it.type] === g.item_id && !(acct.inv && acct.inv[g.item_id] > 0)) {
+        delete acct.equip[it.type];
+        try {
+          if (typeof applyCosmetics === 'function') applyCosmetics();
+        } catch (e) {}
+      }
+      return `${it ? it.name : 'Item'} removed`;
+    }
     if (g.kind === 'item') {
       const it = typeof ITEM !== 'undefined' && ITEM[g.item_id];
       if (it) {

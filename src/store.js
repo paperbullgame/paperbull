@@ -180,6 +180,7 @@
         slow_down: 'Too many checkouts — wait a few minutes.',
         not_available: 'That isn’t for sale right now.',
         kid_blocked: 'Purchases are turned off for players under 13.',
+        store_blocked: 'Purchases are turned off for this account after a payment was disputed. Use the Contact form if this is a mistake.',
       };
       toast(M[j.error] || j.detail || 'Couldn’t open checkout. Try again.', 'err');
     } catch (e) {

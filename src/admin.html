@@ -6643,7 +6643,7 @@
           <li>Create a free <b>Stripe</b> account at stripe.com (use <b>Test mode</b> first to try it without real money).</li>
           <li>Stripe → Developers → API keys → copy the <b>Secret key</b> (<span class="mono">sk_…</span>).</li>
           <li>Supabase → project <b>chartsense</b> → Edge Functions → <b>Secrets</b> → add <span class="mono">STRIPE_SECRET_KEY</span> = your secret key. <em>Never paste it anywhere else.</em></li>
-          <li>Stripe → Developers → Webhooks → <b>Add endpoint</b>: <span class="mono sto-url">${WEBHOOK}</span> <button class="btn sm" id="stoCopy">${IC.copy}Copy</button><br>Events: <span class="mono">checkout.session.completed, checkout.session.async_payment_succeeded, invoice.paid, customer.subscription.deleted, charge.refunded</span></li>
+          <li>Stripe → Developers → Webhooks → <b>Add endpoint</b>: <span class="mono sto-url">${WEBHOOK}</span> <button class="btn sm" id="stoCopy">${IC.copy}Copy</button><br>Events: <span class="mono">checkout.session.completed, checkout.session.async_payment_succeeded, invoice.paid, customer.subscription.deleted, charge.refunded, charge.dispute.created</span></li>
           <li>Copy the webhook’s <b>Signing secret</b> (<span class="mono">whsec_…</span>) into Supabase secrets as <span class="mono">STRIPE_WEBHOOK_SECRET</span>.</li>
           <li>Open the Store below. Do a test purchase with card <span class="mono">4242 4242 4242 4242</span> while Stripe is in Test mode, then switch Stripe to live keys.</li>
         </ol>
