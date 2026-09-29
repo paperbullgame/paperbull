@@ -15574,6 +15574,15 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
     { id: 'egg_jade', type: 'egg', name: 'Jade Egg', r: 'e', ic: '', price: 2200, hatch: { c: 0, r: 20, e: 60, l: 20 }, shell: ['#d1fae5', '#047857'], desc: 'Mostly Epic. One in five is Legendary.' },
     { id: 'egg_obsidian', type: 'egg', name: 'Obsidian Egg', r: 'l', ic: '', price: 4000, hatch: { c: 0, r: 0, e: 40, l: 60 }, shell: ['#52525b', '#09090b'], desc: 'Epic or Legendary, and it leans Legendary.' },
     { id: 'egg_rainbow', type: 'egg', name: 'Rainbow Egg', r: 'l', ic: '', price: 7500, hatch: { c: 0, r: 0, e: 0, l: 100 }, shell: ['#fbcfe8', '#8b5cf6'], desc: 'Guaranteed Legendary. No luck required.' },
+    // --- wave 3: more themed eggs + eggs with a real shot at MYTHIC pets
+    { id: 'egg_clover', type: 'egg', name: 'Clover Egg', r: 'r', ic: '', price: 900, hatch: { c: 50, r: 35, e: 12, l: 3 }, perk: 'packLuck', shell: ['#e2ffd6', '#2f9e44'], desc: 'Always hatches a pet that improves your pack luck.' },
+    { id: 'egg_insider', type: 'egg', name: 'Insider Egg', r: 'r', ic: '', price: 900, hatch: { c: 50, r: 35, e: 12, l: 3 }, perk: 'newsSense', shell: ['#e0e7ff', '#3730a3'], desc: 'Always hatches a pet that warns you about headlines early.' },
+    { id: 'egg_sunrise', type: 'egg', name: 'Sunrise Egg', r: 'r', ic: '', price: 900, hatch: { c: 50, r: 35, e: 12, l: 3 }, perk: 'loginPct', shell: ['#fff1c2', '#f97316'], desc: 'Always hatches a pet that boosts your daily login bonus.' },
+    { id: 'egg_clock', type: 'egg', name: 'Clockwork Egg', r: 'r', ic: '', price: 900, hatch: { c: 50, r: 35, e: 12, l: 3 }, perk: 'packTimer', shell: ['#f1e6d2', '#8a6a3a'], desc: 'Always hatches a pet that makes free packs come sooner.' },
+    { id: 'egg_candy', type: 'egg', name: 'Candy Egg', r: 'e', ic: '', price: 1400, hatch: { c: 10, r: 40, e: 40, l: 10 }, shell: ['#ffd6f0', '#ff5fa2'], desc: 'Sweet odds: mostly Rare and Epic, 10% Legendary.' },
+    { id: 'egg_golden', type: 'egg', name: 'Golden Egg', r: 'l', ic: '', price: 3000, hatch: { c: 0, r: 0, e: 50, l: 50 }, shell: ['#fff6c7', '#d4a017'], desc: 'A coin flip between Epic and Legendary.' },
+    { id: 'egg_galaxy', type: 'egg', name: 'Galaxy Egg', r: 'l', ic: '', price: 12000, hatch: { c: 0, r: 0, e: 0, l: 100 }, myth: 0.05, shell: ['#c8b8ff', '#1b0f4d'], desc: 'Guaranteed Legendary, with a 5% chance of a MYTHIC pet.' },
+    { id: 'egg_dragon', type: 'egg', name: 'Dragon Egg', r: 'l', ic: '', price: 30000, hatch: { c: 0, r: 0, e: 0, l: 100 }, myth: 0.15, shell: ['#ffb36b', '#6b0f0a'], desc: 'Guaranteed Legendary, with a 15% chance of a MYTHIC pet.' },
   ];
   for (const it of NEW_ITEMS)
     if (!ITEM[it.id]) {
@@ -16501,6 +16510,7 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
     egg_lucky: 'clover', egg_mystery: 'question', egg_coin: 'coins', egg_scholar: 'zigzag', egg_idle: 'hearts',
     egg_ember: 'flame', egg_ocean: 'waves', egg_jade: 'scales', egg_obsidian: 'crackle', egg_rainbow: 'rainbow', egg_mythic: 'band',
     egg_x_any: 'swirl', egg_x_inferno: 'flame', egg_x_abyss: 'waves', egg_x_void: 'stars', egg_x_sky: 'rays',
+    egg_clover: 'clover', egg_insider: 'zigzag', egg_sunrise: 'rays', egg_clock: 'diamonds', egg_candy: 'hearts', egg_golden: 'coins', egg_galaxy: 'stars', egg_dragon: 'scales', egg_m_any: 'flame', egg_s_any: 'question',
     egg_x_tech: 'circuit', egg_x_earth: 'crackle', egg_x_ultra: 'rainbow', egg_x_mutant: 'drips',
   };
   const PAT_LIST = ['dots', 'stripes', 'zigzag', 'stars', 'waves', 'scales', 'diamonds', 'hearts', 'speckle'];
@@ -19292,7 +19302,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const h0 = hatchEgg;
   hatchEgg = function (eggId) {
     const egg = ITEM[eggId];
-    if (egg && !egg.exotic && acct.inv[eggId] > 0 && Math.random() < 0.005) {
+    if (egg && !egg.exotic && acct.inv[eggId] > 0 && Math.random() < (egg.myth || 0.005)) {
       // 0.5%: any normal egg can crack open as a MYTHIC pet
       acct.inv[eggId]--;
       const d = pick(TIER('m')),
@@ -26006,7 +26016,10 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       if (j.event === 'phx_reply' && j.topic === 'realtime:pb' && j.payload && j.payload.status === 'ok') {
         setState('on');
         // anything that changed while we were disconnected
-        if (Date.now() - syncT > 5000) resync('site');
+        if (Date.now() - syncT > 3000) resync('site');
+        try {
+          Cloud.claimGrants();
+        } catch (e) {}
       } else if (j.event === 'broadcast' && j.payload && j.payload.event === 'change') onPing(j.payload.payload || {});
       else if (j.event === 'phx_error' || j.event === 'phx_close') {
         try {
@@ -26025,7 +26038,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   function retry() {
     if (document.visibilityState === 'hidden') return;
     setTimeout(connect, backoff + Math.random() * 500);
-    backoff = Math.min(60000, backoff * 1.8);
+    backoff = Math.min(15000, backoff * 1.8);
   }
   let pend = 0;
   const HOOKS = {};
@@ -26044,8 +26057,13 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         }
       return;
     }
+    if (k === 'grant' || k === 'user') {
+      // gifts and account changes: act right away (tiny spread so every tab doesn't hit at the same millisecond)
+      setTimeout(() => resync(k), Math.random() * 150);
+      return;
+    }
     clearTimeout(pend);
-    pend = setTimeout(() => resync(k), 250 + Math.random() * 400); // tiny spread so 1,000 tabs don't hit at once
+    pend = setTimeout(() => resync(k), 80 + Math.random() * 220); // tiny spread so 1,000 tabs don't hit at once
   }
   async function resync(k) {
     syncT = Date.now();
@@ -26074,6 +26092,13 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if (document.visibilityState === 'visible') {
       backoff = 1000;
       connect();
+      // catch up on anything the admin did while this tab was in the background
+      setTimeout(() => {
+        resync('site');
+        try {
+          Cloud.claimGrants();
+        } catch (e) {}
+      }, 100);
     } else if (ws) {
       try {
         ws.close();
@@ -26084,8 +26109,14 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   setInterval(() => {
     if (document.visibilityState !== 'visible') return;
     const idle = Date.now() - syncT;
-    if ((state !== 'on' && idle > 12000) || idle > 120000) resync('site');
-  }, 4000);
+    if ((state !== 'on' && idle > 4000) || idle > 60000) {
+      resync('site');
+      if (state !== 'on')
+        try {
+          Cloud.claimGrants();
+        } catch (e) {}
+    }
+  }, 2000);
   window.PBLive = { state: () => state, resync, applyMarket, applyItems, applyGame, setPrice, on: (k, f) => (HOOKS[k] ||= []).push(f), myTag: () => myTag.v };
 })();
 
@@ -28089,7 +28120,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     { id: 'av_goldbull', type: 'avatar', name: 'Golden Bull', r: 'l', ic: '🐂', rm: true },
     { id: 'ti_mm', type: 'title', name: 'Market Maker', r: 'l', rm: true },
     { id: 'ti_whaleclub', type: 'title', name: 'Whale Club', r: 'l', rm: true },
-    { id: 'egg_mythic', type: 'egg', name: 'Mythic Egg', r: 'l', ic: '', hatch: { c: 0, r: 0, e: 0, l: 100 }, shell: ['#fff3b0', '#b8860b'], desc: 'Always hatches a Legendary pet. Store exclusive.', rm: true },
+    { id: 'egg_mythic', type: 'egg', name: 'Royal Egg', r: 'l', ic: '', hatch: { c: 0, r: 0, e: 0, l: 100 }, shell: ['#fff3b0', '#b8860b'], desc: 'Always hatches a Legendary pet. Store exclusive.', rm: true },
   ];
   for (const it of NEW)
     if (!ITEM[it.id]) {
@@ -38169,6 +38200,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   try {
     const R = r => (RARITY[r] || RARITY.c);
     const n = id => acct.inv[id] || 0;
+    const ALLEGGS = () => {
+      const xs = window.PBExotic && PBExotic.EGGS ? PBExotic.EGGS.map(e => ITEM[e.id]).filter(Boolean) : [];
+      const seen = new Set();
+      return [...xs.filter(e => e.r === 's'), ...xs.filter(e => e.r === 'm'), ...xs.filter(e => e.r === 'x'), ...ITEMS.filter(i => i.type === 'egg')].filter(e => !seen.has(e.id) && seen.add(e.id));
+    };
     let tab = 'all';
     const TABS = [
       ['all', 'Everything'],
@@ -38198,13 +38234,13 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         .join('')}</div>`;
     }
     function eggs() {
-      const es = ITEMS.filter(i => i.type === 'egg' && n(i.id) > 0);
+      const es = ALLEGGS().filter(i => n(i.id) > 0);
       const serums = (window.PBExotic ? PBExotic.MUTS : []).filter(m => n('mut_' + m.id) > 0);
       if (!es.length && !serums.length) return empty('No eggs right now. Eggs drop from packs and the shop.', '<button class="btn sm primary" data-go="shop">Shop</button>');
       return `<div class="inv-grid">${es
         .map(e => {
           const rc = e.r && RARITY[e.r] ? RARITY[e.r].color : (e.shell || [])[1] || '#999';
-          return `<div class="inv-it egg" style="--rc:${rc}"><span class="inv-n">×${n(e.id)}</span><span class="inv-art egg-wob">${eggFace(e, true)}</span><b>${esc(e.name)}</b><button class="btn sm primary" data-ihatch="${e.id}">Hatch</button></div>`;
+          return `<div class="inv-it egg" data-r="${e.r}" style="--rc:${rc}">${e.r === "s" ? `<span class="inv-tag s-tag">SECRET</span>` : e.r === "m" ? `<span class="inv-tag m-tag">MYTHIC</span>` : e.r === "x" ? `<span class="inv-tag">EXOTIC</span>` : ""}<span class="inv-n">×${n(e.id)}</span><span class="inv-art egg-wob">${eggFace(e, true)}</span><b>${esc(e.name)}</b><button class="btn sm primary" data-ihatch="${e.id}">Hatch</button></div>`;
         })
         .join('')}${serums
         .map(m => `<div class="inv-it serum" style="--rc:${m.c || m.color || '#b36bff'}"><span class="inv-n">×${n('mut_' + m.id)}</span><span class="inv-art inv-vial"><i></i></span><b>${esc(m.name)} Serum</b><button class="btn sm" data-iserum="mut_${m.id}">Use</button></div>`)
@@ -38259,7 +38295,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         if (!v || !v.isConnected) return;
         const cnt = {
           pets: acct.pets.list.length,
-          eggs: ITEMS.filter(i => i.type === 'egg').reduce((s, i) => s + n(i.id), 0),
+          eggs: ALLEGGS().reduce((s, i) => s + n(i.id), 0),
           items: ITEMS.filter(i => i.type === 'power' || i.type === 'treat').reduce((s, i) => s + n(i.id), 0),
           look: ITEMS.filter(i => COSMETIC_TYPES.includes(i.type) && owns(i.id)).length,
         };
