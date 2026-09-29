@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contact · PAPERBULL</title><meta name="description" content="PAPERBULL Contact">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22pbLg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffb52e%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff5e1a%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22url%28%23pbLg%29%22/%3E%3Cpath%20d%3D%22M13.5%2014.5c.6%208.4%205.6%2012.5%2012.5%2012.5h12c6.9%200%2011.9-4.1%2012.5-12.5%22%20stroke%3D%22%23fff%22%20stroke-width%3D%225.2%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M21.2%2025.5h21.6l-3.6%2018.2c-1%204.9-3.8%207.8-7.2%207.8s-6.2-2.9-7.2-7.8z%22%20fill%3D%22%23fff%22/%3E%3Cpath%20d%3D%22M28.3%2030.5v13.5M35.7%2027.5v12.5%22%20stroke%3D%22%2316c784%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Crect%20x%3D%2226.5%22%20y%3D%2233%22%20width%3D%223.6%22%20height%3D%228.5%22%20rx%3D%221.3%22%20fill%3D%22%2316c784%22/%3E%3Crect%20x%3D%2233.9%22%20y%3D%2229.8%22%20width%3D%223.6%22%20height%3D%228%22%20rx%3D%221.3%22%20fill%3D%22%2316c784%22/%3E%3C/svg%3E"><link rel="stylesheet" href="legal.css"><script src="site.js"></script></head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header class="top"><div class="top-in"><a class="brand" href="../"><i aria-hidden="true"></i>PAPERBULL</a><nav class="lg-nav" aria-label="Legal pages"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="refunds.html">Refunds</a><a href="cookies.html">Cookies</a><a href="credits.html">Credits</a><a href="contact.html" aria-current="page">Contact</a></nav></div></header>
+<main id="main" tabindex="-1"><article class="doc">
+<!--title:Contact-->
+<h1>Contact us</h1>
+<p class="meta">Help, privacy requests, refunds, reports and parent requests all come here.</p>
+<p id="cfMail" hidden>You can also email <a id="cfMailA"></a>.</p>
+<form class="cf" id="cf" novalidate>
+  <label>What's it about?
+    <select id="cfTopic" required>
+      <option value="help">Help with the game</option>
+      <option value="refund">Refund or VIP cancellation</option>
+      <option value="privacy">My data (see a copy, or fix something)</option>
+      <option value="delete">Delete an account</option>
+      <option value="parent">I'm a parent or guardian</option>
+      <option value="report">Report a player or a problem</option>
+      <option value="legal">Legal or copyright</option>
+      <option value="other">Something else</option>
+    </select></label>
+  <label>PAPERBULL username <span class="muted">(if you have one)</span>
+    <input id="cfUser" maxlength="20" autocomplete="username"></label>
+  <label>Where can we reply? <span class="muted">(optional email. Under 13? Leave this empty and ask a parent to write instead.)</span>
+    <input id="cfReply" type="email" maxlength="120" autocomplete="email"></label>
+  <label>Your message
+    <textarea id="cfBody" maxlength="2000" required></textarea></label>
+  <div id="cfMsg" role="status" aria-live="polite"></div>
+  <button class="btn" id="cfGo" type="submit">Send</button>
+</form>
+<p class="muted" style="margin-top:18px">Want to delete your own account? You can do it right away in the game: <b>Settings → Data &amp; about → Delete my account</b>.</p>
+<script>
+(function () {
+  var L = window.PB_LEGAL || {};
+  if (L.email) { document.getElementById('cfMail').hidden = false; var a = document.getElementById('cfMailA'); a.href = 'mailto:' + L.email; a.textContent = L.email; }
+  var q = new URLSearchParams(location.search);
+  if (q.get('topic')) document.getElementById('cfTopic').value = q.get('topic');
+  if (q.get('u')) document.getElementById('cfUser').value = q.get('u');
+  var API = 'https://amnbnuabxoxhggidlhcn.supabase.co/rest/v1/rpc/pb_contact';
+  var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtbmJudWFieG94aGdnaWRsaGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjc5ODAsImV4cCI6MjEwNTYwMzk4MH0.WwHTYzYEwKtW2_fjoyPiltnxI331-Ve5IGolTpavISo';
+  var tok = null;
+  try { var c = JSON.parse(localStorage.getItem('pb2.cloud') || 'null'); tok = c && c.token || null; } catch (e) {}
+  document.getElementById('cf').onsubmit = async function (e) {
+    e.preventDefault();
+    var m = document.getElementById('cfMsg'), b = document.getElementById('cfGo'), body = document.getElementById('cfBody').value.trim();
+    if (body.length < 5) { m.className = 'bad'; m.textContent = 'Please write a little more so we can help.'; return; }
+    b.disabled = true; m.className = ''; m.textContent = 'Sending…';
+    try {
+      var r = await fetch(API, { method: 'POST', headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_token: tok, p_topic: document.getElementById('cfTopic').value, p_reply_to: document.getElementById('cfReply').value, p_body: body, p_username: document.getElementById('cfUser').value }) });
+      var j = await r.json().catch(function () { return {}; });
+      if (!r.ok) throw new Error(j.message === 'slow_down' ? 'Too many messages. Please try again in an hour.' : 'That didn’t send. Please try again.');
+      m.className = 'ok'; m.textContent = 'Sent! Thanks, we’ll get back to you as soon as we can (within 30 days for privacy requests).';
+      document.getElementById('cfBody').value = '';
+    } catch (err) { m.className = 'bad'; m.textContent = err.message || 'That didn’t send. Please try again.'; }
+    b.disabled = false;
+  };
+})();
+</script>
+
+</article></main>
+<footer class="lg-f">© <span id="lgYear">2026</span> PAPERBULL · <span data-l="operator"></span> · <span data-l="region"></span> · A game with virtual money. Not financial advice. · <a href="../">Back to the game</a></footer>
+</body></html>

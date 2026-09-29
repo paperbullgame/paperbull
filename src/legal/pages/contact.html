@@ -1,0 +1,54 @@
+<!--title:Contact-->
+<h1>Contact us</h1>
+<p class="meta">Help, privacy requests, refunds, reports and parent requests all come here.</p>
+<p id="cfMail" hidden>You can also email <a id="cfMailA"></a>.</p>
+<form class="cf" id="cf" novalidate>
+  <label>What's it about?
+    <select id="cfTopic" required>
+      <option value="help">Help with the game</option>
+      <option value="refund">Refund or VIP cancellation</option>
+      <option value="privacy">My data (see a copy, or fix something)</option>
+      <option value="delete">Delete an account</option>
+      <option value="parent">I'm a parent or guardian</option>
+      <option value="report">Report a player or a problem</option>
+      <option value="legal">Legal or copyright</option>
+      <option value="other">Something else</option>
+    </select></label>
+  <label>PAPERBULL username <span class="muted">(if you have one)</span>
+    <input id="cfUser" maxlength="20" autocomplete="username"></label>
+  <label>Where can we reply? <span class="muted">(optional email. Under 13? Leave this empty and ask a parent to write instead.)</span>
+    <input id="cfReply" type="email" maxlength="120" autocomplete="email"></label>
+  <label>Your message
+    <textarea id="cfBody" maxlength="2000" required></textarea></label>
+  <div id="cfMsg" role="status" aria-live="polite"></div>
+  <button class="btn" id="cfGo" type="submit">Send</button>
+</form>
+<p class="muted" style="margin-top:18px">Want to delete your own account? You can do it right away in the game: <b>Settings → Data &amp; about → Delete my account</b>.</p>
+<script>
+(function () {
+  var L = window.PB_LEGAL || {};
+  if (L.email) { document.getElementById('cfMail').hidden = false; var a = document.getElementById('cfMailA'); a.href = 'mailto:' + L.email; a.textContent = L.email; }
+  var q = new URLSearchParams(location.search);
+  if (q.get('topic')) document.getElementById('cfTopic').value = q.get('topic');
+  if (q.get('u')) document.getElementById('cfUser').value = q.get('u');
+  var API = 'https://amnbnuabxoxhggidlhcn.supabase.co/rest/v1/rpc/pb_contact';
+  var ANON = '__ANON__';
+  var tok = null;
+  try { var c = JSON.parse(localStorage.getItem('pb2.cloud') || 'null'); tok = c && c.token || null; } catch (e) {}
+  document.getElementById('cf').onsubmit = async function (e) {
+    e.preventDefault();
+    var m = document.getElementById('cfMsg'), b = document.getElementById('cfGo'), body = document.getElementById('cfBody').value.trim();
+    if (body.length < 5) { m.className = 'bad'; m.textContent = 'Please write a little more so we can help.'; return; }
+    b.disabled = true; m.className = ''; m.textContent = 'Sending…';
+    try {
+      var r = await fetch(API, { method: 'POST', headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_token: tok, p_topic: document.getElementById('cfTopic').value, p_reply_to: document.getElementById('cfReply').value, p_body: body, p_username: document.getElementById('cfUser').value }) });
+      var j = await r.json().catch(function () { return {}; });
+      if (!r.ok) throw new Error(j.message === 'slow_down' ? 'Too many messages. Please try again in an hour.' : 'That didn’t send. Please try again.');
+      m.className = 'ok'; m.textContent = 'Sent! Thanks, we’ll get back to you as soon as we can (within 30 days for privacy requests).';
+      document.getElementById('cfBody').value = '';
+    } catch (err) { m.className = 'bad'; m.textContent = err.message || 'That didn’t send. Please try again.'; }
+    b.disabled = false;
+  };
+})();
+</script>
