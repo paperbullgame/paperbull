@@ -44881,6 +44881,409 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     };
 })();
 
+/* =====================================================================
+   UI v3 — native feel + the new screens
+   · Home: a greeting, and "your office today" next to the daily reward
+   · Stock page on phones: a Buy / Sell bar that opens a one-thumb trade sheet
+   · Leaderboard: your rank pinned to the bottom, with the gap to the next spot
+   · Office: a "Needs you" panel with one-tap fixes
+   Motion and platform rules live in v3.css.
+   ===================================================================== */
+(() => {
+  try {
+    const E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const phone = () => matchMedia('(max-width: 899px)').matches;
+    const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* ---------- platform: viewport tracks the keyboard ---------- */
+    const vp = document.querySelector('meta[name=viewport]');
+    if (vp && !/interactive-widget/.test(vp.content)) vp.content = vp.content.replace(/\s+/g, '') + ',interactive-widget=resizes-content';
+    document.documentElement.classList.add('v3');
+
+    /* ---------- counting numbers: the eye follows a change ---------- */
+    function countTo(el, to, fmt) {
+      const from = +el.dataset.v || 0;
+      el.dataset.v = to;
+      if (reduced() || !isFinite(from) || Math.abs(to - from) < 0.005) return (el.textContent = fmt(to));
+      const t0 = performance.now(),
+        ms = 520;
+      (function step(t) {
+        const k = Math.min(1, (t - t0) / ms),
+          e = 1 - Math.pow(1 - k, 3);
+        el.textContent = fmt(from + (to - from) * e);
+        if (k < 1) requestAnimationFrame(step);
+      })(t0);
+    }
+
+    /* =================== HOME =================== */
+    function greeting() {
+      const h = new Date().getHours();
+      return h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    }
+    function officeToday() {
+      const O = window.PBOffice && PBOffice.O && PBOffice.O();
+      if (!O || !O.staff || !O.staff.length) return null;
+      const d0 = new Date();
+      d0.setHours(0, 0, 0, 0);
+      const today = O.log.filter(l => l.t >= +d0);
+      const pnl = today.reduce((t, l) => t + (l.pnl || 0), 0),
+        trades = today.filter(l => l.sym).length;
+      const best = today.filter(l => l.pnl > 0).sort((a, b) => b.pnl - a.pnl)[0];
+      return { pnl, trades, best, staff: O.staff };
+    }
+    function homeExtras() {
+      const v = document.getElementById('view');
+      if (!v || document.body.dataset.screen !== 'home') return;
+      // greeting row
+      if (!v.querySelector('#v3Hi')) {
+        const lv = typeof levelInfo === 'function' ? levelInfo(acct.xp || 0).level : 1;
+        const anchor = v.querySelector('.stats-wrap')?.previousElementSibling || v.firstElementChild;
+        const el = document.createElement('div');
+        el.id = 'v3Hi';
+        el.className = 'v3-hi';
+        el.innerHTML = `<b>${greeting()}, ${E((acct.name || 'trader').split(' ')[0])}</b><span>Level ${lv} · ${E(typeof myTitle === 'function' ? myTitle() : '')}</span>`;
+        if (anchor) anchor.insertAdjacentElement('beforebegin', el);
+      }
+      // your office today
+      const t = officeToday();
+      let oc = v.querySelector('#v3Office');
+      if (!t) {
+        if (oc) oc.remove();
+        return;
+      }
+      if (!oc) {
+        oc = document.createElement('section');
+        oc.id = 'v3Office';
+        oc.className = 'card v3-office';
+        oc.setAttribute('role', 'link');
+        oc.tabIndex = 0;
+        oc.dataset.go = 'office';
+        const after = v.querySelector('#cmDaily') || v.querySelector('.stats-wrap');
+        if (after) after.insertAdjacentElement('afterend', oc);
+        else return;
+      }
+      const roleColor = s => (PBOffice.roleOf ? PBOffice.roleOf(s).color : '#888');
+      const faces = t.staff
+        .slice(0, 5)
+        .map(s => `<i style="background:${roleColor(s)}"></i>`)
+        .join('');
+      const h = `<div class="v3-oh"><b>Your office today</b><span class="mono ${t.pnl >= 0 ? 'up' : 'dn'}" data-cnt>${t.pnl >= 0 ? '+' : '−'}${fmtUSD(Math.abs(t.pnl), 0)}</span></div>
+        <div class="v3-ob"><span class="v3-faces">${faces}</span><span class="muted">${t.staff.length} staff · ${t.trades} trades${t.best ? ` · best: <b>${E(t.best.by.split(' ')[0])} ${fmtSigned(t.best.pnl)} on ${E(t.best.sym)}</b>` : ''}</span></div>`;
+      if (oc._h !== h) oc.innerHTML = oc._h = h;
+    }
+    const hm0 = Home.mount;
+    Home.mount = function () {
+      const r = hm0.apply(this, arguments);
+      setTimeout(homeExtras, 80);
+      return r;
+    };
+    setInterval(() => document.visibilityState === 'visible' && homeExtras(), 4000);
+
+    /* =================== STOCK: trade sheet (phones) =================== */
+    const Sheet = {
+      el: null,
+      open(side) {
+        const sym = Asset.sym,
+          a = SIM[sym];
+        if (!a) return;
+        this.close(true);
+        this.side = side;
+        this.sym = sym;
+        this.amt = '';
+        const scrim = document.createElement('div');
+        scrim.className = 'v3-scrim';
+        const el = document.createElement('div');
+        el.className = 'v3-sheet';
+        el.setAttribute('role', 'dialog');
+        el.setAttribute('aria-modal', 'true');
+        el.setAttribute('aria-label', `${side === 'buy' ? 'Buy' : 'Sell'} ${sym}`);
+        el.innerHTML = `<div class="v3-grab" aria-hidden="true"></div>
+          <div class="seg full v3-side" role="tablist"><button data-sd="buy" role="tab">Buy</button><button data-sd="sell" role="tab">Sell</button></div>
+          <label class="v3-amt"><span class="v3-lbl">Amount</span>
+            <span class="v3-in"><em>$</em><input id="v3Amt" inputmode="decimal" enterkeyhint="done" autocomplete="off" placeholder="0" aria-label="Amount in dollars"></span>
+            <small id="v3Qty" class="muted"></small></label>
+          <div class="v3-pcts">${[10, 25, 50, 100].map(p => `<button type="button" data-pct="${p}">${p === 100 ? 'Max' : p + '%'}</button>`).join('')}</div>
+          <div class="v3-info"><div><span class="muted">Fee + spread</span><b class="mono" id="v3Fee">$0.00</b></div><div><span class="muted">Buck says</span><span id="v3Tip"></span></div></div>
+          <p class="v3-err" id="v3Err" role="alert"></p>
+          <button class="v3-go" id="v3Go" type="button"></button>`;
+        document.body.append(scrim, el);
+        this.el = el;
+        this.scrim = scrim;
+        this.lastFocus = document.activeElement;
+        scrim.onclick = () => this.close();
+        el.addEventListener('click', e => {
+          const s = e.target.closest('[data-sd]');
+          if (s) return this.setSide(s.dataset.sd);
+          const p = e.target.closest('[data-pct]');
+          if (p) return this.pct(+p.dataset.pct);
+          if (e.target.closest('#v3Go')) this.go();
+        });
+        const inp = el.querySelector('#v3Amt');
+        inp.addEventListener('input', () => {
+          inp.value = inp.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1');
+          this.amt = inp.value;
+          this.paint();
+        });
+        this.drag(el);
+        this.setSide(side);
+        document.documentElement.classList.add('v3-lock');
+        requestAnimationFrame(() => {
+          el.classList.add('on');
+          scrim.classList.add('on');
+        });
+        setTimeout(() => el.querySelector('[data-pct="25"]')?.focus({ preventScroll: true }), 260);
+      },
+      setSide(s) {
+        this.side = s;
+        this.el.querySelectorAll('[data-sd]').forEach(b => {
+          const on = b.dataset.sd === s;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-selected', on);
+          // set directly: the app's themed .seg rules are very specific
+          b.style.setProperty('background', on ? (s === 'buy' ? 'var(--up)' : 'var(--dn)') : 'transparent', 'important');
+          b.style.setProperty('color', on ? (s === 'buy' ? '#04210f' : '#fff') : 'var(--mut)', 'important');
+        });
+        this.el.dataset.side = s;
+        this.paint();
+      },
+      max() {
+        const a = SIM[this.sym];
+        if (this.side === 'buy') return Math.max(0, availableCash() * 0.995 - 1);
+        return (availableQty(this.sym) || 0) * a.price;
+      },
+      pct(p) {
+        const raw = this.max() * (p / 100),
+          v = raw >= 100 && p < 100 ? Math.floor(raw) : Math.floor(raw * 100) / 100;
+        this.amt = v > 0 ? String(v) : '';
+        this.el.querySelector('#v3Amt').value = this.amt;
+        this.el.querySelectorAll('[data-pct]').forEach(b => b.classList.toggle('on', +b.dataset.pct === p));
+        this.paint();
+      },
+      paint() {
+        const el = this.el,
+          a = SIM[this.sym];
+        if (!el || !a) return;
+        const inp = el.querySelector('#v3Amt');
+        inp.style.width = Math.max(1, inp.value.length || 1) + 0.4 + 'ch'; // the number stays centered as it grows
+        const usd = parseFloat(this.amt) || 0,
+          qty = usd / a.price,
+          fee = window.PBFees ? PBFees.fee(usd) + usd * PBFees.spreadOf(a) : 0,
+          over = usd > this.max() + 0.01;
+        el.querySelector('#v3Qty').textContent = usd ? `≈ ${fmtQty(qty)} ${this.sym === 'BTC' || a.type === 'crypto' ? this.sym : 'shares'} at ${fmtUSD(a.price)}` : this.side === 'buy' ? `${fmtUSD(availableCash(), 0)} available` : `You own ${fmtQty(availableQty(this.sym) || 0)} ${this.sym}`;
+        el.querySelector('#v3Fee').textContent = fmtUSD(fee);
+        const c = chg24(a);
+        el.querySelector('#v3Tip').textContent =
+          this.side === 'sell' ? (c > 0.03 ? 'Up big today. Locking in some is fine.' : 'Selling on a red day? Make sure it’s the plan.') : c > 0.05 ? 'Up a lot today. Size small.' : c < -0.05 ? 'Down hard today. Dips can keep dipping.' : a.vol > 0.8 ? 'This one swings. Don’t bet the farm.' : 'Looks calm. A steady pick.';
+        el.querySelector('#v3Err').textContent = over ? (this.side === 'buy' ? 'That’s more than your available cash.' : 'That’s more than you own.') : '';
+        const go = el.querySelector('#v3Go');
+        go.disabled = !usd || over;
+        go.textContent = usd ? `${this.side === 'buy' ? 'Buy' : 'Sell'} ${fmtUSD(usd, usd >= 1000 ? 0 : 2)} of ${this.sym}` : `Enter an amount`;
+      },
+      go() {
+        const a = SIM[this.sym],
+          usd = parseFloat(this.amt) || 0;
+        if (!a || !usd) return;
+        const r = executeTrade({ sym: this.sym, side: this.side, qty: usd / a.price, price: a.price });
+        if (!r.ok) {
+          this.el.querySelector('#v3Err').textContent = r.msg;
+          return;
+        }
+        toast(`${this.side === 'buy' ? 'Bought' : 'Sold'} ${fmtQty(r.trade.qty)} ${this.sym} @ ${fmtUSD(r.trade.price)} — ${tradeQuip(r.trade)}`, 'ok');
+        this.close();
+        if (current === Asset) Asset.update(true);
+      },
+      // drag down to dismiss: distance OR a quick flick
+      drag(el) {
+        let y0 = 0,
+          t0 = 0,
+          dy = 0,
+          on = false;
+        const grab = el.querySelector('.v3-grab');
+        const start = e => {
+          if (e.target.closest('input,button:not(.v3-grab)') && e.currentTarget !== grab) return;
+          on = true;
+          y0 = e.clientY;
+          t0 = performance.now();
+          dy = 0;
+          el.style.transition = 'none';
+          el.setPointerCapture?.(e.pointerId);
+        };
+        const move = e => {
+          if (!on) return;
+          dy = e.clientY - y0;
+          const d = dy < 0 ? dy / 6 : dy; // resist pulling up
+          el.style.transform = `translateY(${d}px)`;
+        };
+        const end = () => {
+          if (!on) return;
+          on = false;
+          el.style.transition = '';
+          const v = dy / Math.max(1, performance.now() - t0);
+          if (dy > el.offsetHeight * 0.3 || v > 0.11) this.close();
+          else el.style.transform = '';
+        };
+        for (const t of [grab, el.querySelector('.v3-lbl')]) if (t) t.addEventListener('pointerdown', start);
+        el.addEventListener('pointermove', move);
+        el.addEventListener('pointerup', end);
+        el.addEventListener('pointercancel', end);
+      },
+      close(now) {
+        const el = this.el,
+          sc = this.scrim;
+        if (!el) return;
+        this.el = this.scrim = null;
+        document.documentElement.classList.remove('v3-lock');
+        if (now) return el.remove(), sc.remove();
+        el.style.transform = '';
+        el.classList.remove('on');
+        sc.classList.remove('on');
+        setTimeout(() => (el.remove(), sc.remove()), 260);
+        try {
+          this.lastFocus && this.lastFocus.focus({ preventScroll: true });
+        } catch (e) {}
+      },
+    };
+    document.addEventListener('keydown', e => e.key === 'Escape' && Sheet.el && Sheet.close());
+    // the stock page already has a Buy / Sell bar on phones: its buttons now open the sheet
+    document.addEventListener(
+      'click',
+      e => {
+        const b = e.target.closest && e.target.closest('#tradeBar [data-qt="buy"], #tradeBar [data-qt="sell"]');
+        if (!b || !phone() || current !== Asset) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        Sheet.open(b.dataset.qt);
+      },
+      true
+    );
+    const au0 = Asset.unmount;
+    Asset.unmount = function () {
+      Sheet.close(true);
+      return au0 ? au0.apply(this, arguments) : undefined;
+    };
+    setInterval(() => Sheet.el && Sheet.paint(), 1500);
+
+    /* =================== LEADERBOARD: you, pinned =================== */
+    const rr0 = Ranks.render;
+    Ranks.render = async function () {
+      const r = await rr0.apply(this, arguments);
+      try {
+        const v = document.getElementById('view'),
+          rows = [...document.querySelectorAll('#rkList .rk')],
+          i = rows.findIndex(x => x.classList.contains('me'));
+        v.querySelector('#v3Me')?.remove();
+        if (i >= 0) {
+          const me = rows[i],
+            ret = me.querySelector('.ret > span')?.textContent || '',
+            up = rows[i - 1],
+            pct = s => parseFloat(String(s).replace(/[^\d.-]/g, '')) || 0,
+            gap = up ? pct(up.querySelector('.ret > span')?.textContent) - pct(ret) : 0;
+          const el = document.createElement('div');
+          el.id = 'v3Me';
+          el.className = 'v3-me';
+          el.innerHTML = `<b class="mono">#${i + 1}</b><span class="v3-me-av">${me.querySelector('.rk-av')?.innerHTML || ''}</span><span class="v3-me-t"><b>You</b><small>${i === 0 ? 'You’re number one. Hold it.' : `${gap.toFixed(1)} points behind #${i}`}</small></span><b class="mono">${E(ret)}</b>`;
+          el.onclick = () => me.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' });
+          v.appendChild(el);
+          // no need to pin you while your own row is already on screen
+          try {
+            new IntersectionObserver(([en]) => el.classList.toggle('hide', en.isIntersecting), { threshold: 0.6 }).observe(me);
+          } catch (e) {}
+        }
+      } catch (e) {}
+      return r;
+    };
+
+    /* =================== OFFICE: needs you =================== */
+    function needs() {
+      const P = window.PBOffice;
+      if (!P) return [];
+      const o = P.O(),
+        out = [];
+      if (!o.staff.length) return out;
+      if ((o.unpaid || 0) > 5) out.push({ k: 'bad', t: 'You can’t cover salaries', d: 'Staff quit when they aren’t paid. Sell something or let someone go.', a: [] });
+      const sad = o.staff.filter(s => !P.roleOf(s).bot && s.mood < 40).sort((a, b) => a.mood - b.mood)[0];
+      if (sad)
+        out.push({
+          k: 'bad',
+          t: `${sad.name.split(' ')[0]} is unhappy`,
+          d: `Mood ${Math.round(sad.mood)}: their skill is slipping. A bonus or a pizza party fixes it.`,
+          a: [
+            ['bonus', sad.id, 'Give a bonus'],
+            ['pizza', '', 'Pizza party'],
+          ],
+        });
+      const promo = o.staff
+        .map(s => {
+          const btn = document.querySelector(`[data-promote="${s.id}"]`);
+          return btn ? { s, cost: parseFloat(btn.textContent.replace(/[^\d.]/g, '')) || 0 } : null;
+        })
+        .filter(x => x && x.cost <= acct.cash * 0.5 && x.s.st.pnl > 0)
+        .sort((a, b) => b.s.st.pnl - a.s.st.pnl)[0];
+      if (promo) out.push({ k: '', t: `${promo.s.name.split(' ')[0]} has earned a promotion`, d: `${fmtSigned(promo.s.st.pnl)} for you so far. Promoted staff trade bigger and smarter.`, a: [['promote', promo.s.id, 'Promote']] });
+      const free = P.level().desks - o.staff.length;
+      if (free > 0 && o.staff.length) out.push({ k: '', t: `${free} empty desk${free === 1 ? '' : 's'}`, d: 'More staff means more trades. Support staff boost everyone.', a: [['hire', '', 'Hire someone']] });
+      const nxShop = (P.ITEMS || []).filter(it => !o.items[it.id] && o.lvl >= it.lvl && acct.cash >= it.cost * 4).sort((a, b) => a.cost - b.cost)[0];
+      if (nxShop) out.push({ k: '', t: `Treat the office: ${nxShop.name}`, d: `${nxShop.desc}. You can easily afford it.`, a: [['buyitem', nxShop.id, `Buy · ${fmtUSD(nxShop.cost, 0)}`]] });
+      return out.slice(0, 3);
+    }
+    function paintNeeds() {
+      const v = document.getElementById('view');
+      if (!v || document.body.dataset.screen !== 'office') return;
+      let box = v.querySelector('#v3Needs');
+      const list = needs();
+      if (!list.length) {
+        if (box) box.remove();
+        return;
+      }
+      if (!box) {
+        box = document.createElement('section');
+        box.id = 'v3Needs';
+        box.className = 'card v3-needs';
+        const k = v.querySelector('#ofKpis');
+        if (!k) return;
+        k.insertAdjacentElement('afterend', box);
+        box.addEventListener('click', e => {
+          const b = e.target.closest('[data-na]');
+          if (!b) return;
+          const P = PBOffice,
+            id = b.dataset.id;
+          ({ bonus: () => P.bonus(id), pizza: () => P.pizza(), promote: () => P.promote(id), buyitem: () => P.buyItem(id), hire: () => document.getElementById('ofHireCard')?.scrollIntoView({ behavior: 'smooth' }) })[b.dataset.na]?.();
+          SCREENS.office.all && SCREENS.office.all();
+          setTimeout(paintNeeds, 50);
+        });
+      }
+      const h = `<div class="card-h"><h3>Needs you</h3></div><div class="v3-nl">${list
+        .map(
+          n => `<div class="v3-n ${n.k}"><div><b>${E(n.t)}</b><small>${E(n.d)}</small></div>${n.a.length ? `<div class="v3-na">${n.a.map(([k, id, l], i) => `<button class="btn sm ${i === 0 ? 'primary' : ''}" data-na="${k}" data-id="${E(id)}">${E(l)}</button>`).join('')}</div>` : ''}</div>`
+        )
+        .join('')}</div>`;
+      if (box._h !== h) box.innerHTML = box._h = h;
+    }
+    if (SCREENS.office) {
+      const om = SCREENS.office.mount,
+        ou = SCREENS.office.update;
+      SCREENS.office.mount = function () {
+        const r = om.apply(this, arguments);
+        setTimeout(paintNeeds, 60);
+        return r;
+      };
+      let nt = 0;
+      SCREENS.office.update = function () {
+        const r = ou.apply(this, arguments);
+        if (Date.now() - nt > 3000) {
+          nt = Date.now();
+          paintNeeds();
+        }
+        return r;
+      };
+    }
+
+    window.PBV3 = { Sheet, countTo, homeExtras, paintNeeds };
+  } catch (e) {
+    console.error('v3', e);
+  }
+})();
+
 /* SHOP-PLUS:END */
 init();
 </script>
@@ -58667,6 +59070,132 @@ html.classic.dark:not(#_) .ed-btn.pri {
 html.classic.dark:not(#_) .ed-lvb i,
 html.classic.dark:not(#_) .ed-prog i {
   background: var(--vg) !important;
+}
+
+</style>
+<style id="pbV3">
+/* ===================== UI v3 ===================== */
+:root {
+  --v3-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --v3-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ---------- platform: stop feeling like a web page on a phone ---------- */
+html.v3 {
+  -webkit-tap-highlight-color: transparent; /* no grey flash on tap: every control has its own :active instead */
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none; /* no pull-to-refresh rubber band over the app */
+}
+html.v3 body { overscroll-behavior: none; }
+html.v3 button, html.v3 a, html.v3 [role='button'], html.v3 [role='link'], html.v3 [role='tab'], html.v3 .chip, html.v3 .seg button {
+  touch-action: manipulation; /* no 300ms double-tap delay */
+  -webkit-user-select: none;
+  user-select: none; /* long-press shouldn't select button text */
+  -webkit-touch-callout: none;
+}
+@media (pointer: coarse) {
+  /* iOS zooms into anything under 16px and never zooms back */
+  html.v3 input:not([type='checkbox']):not([type='radio']):not([type='range']), html.v3 select, html.v3 textarea { font-size: max(16px, 1em) !important; }
+}
+html.v3 #app { min-height: 100vh; min-height: 100dvh; }
+@media (min-width: 900px) { html.v3 #nav { height: 100vh; height: 100dvh; } }
+html.v3.v3-lock, html.v3.v3-lock body { overflow: hidden; }
+
+/* ---------- press feedback: respond on the press, not the release ---------- */
+html.v3 .btn, html.v3 .chip, html.v3 .seg button, html.v3 .hub-tabs button, html.v3 #nav a, html.v3 .st-buy, html.v3 .coin-chip, html.v3 .inv-it, html.v3 .of-item .btn, html.v3 .v3-b, html.v3 .v3-go, html.v3 .v3-pcts button {
+  transition-property: transform, background-color, color, border-color, box-shadow, opacity;
+  transition-duration: 140ms;
+  transition-timing-function: var(--v3-out);
+}
+html.v3 .btn:active:not(:disabled), html.v3 .chip:active, html.v3 .seg button:active, html.v3 .hub-tabs button:active, html.v3 .st-buy:active, html.v3 .coin-chip:active, html.v3 button.inv-it:active, html.v3 .v3-b:active, html.v3 .v3-go:active:not(:disabled), html.v3 .v3-pcts button:active, html.v3 .v3-office:active {
+  transform: scale(0.97);
+}
+@media (max-width: 899px) { html.v3 #nav a:active { transform: scale(0.94); } }
+
+/* ---------- pop-ups: grow in from 96%, never from nothing ---------- */
+html.v3 #modalRoot.open .mbg { transition: opacity 200ms ease; }
+html.v3 #modalRoot.open .modal { transition: transform 240ms var(--v3-out), opacity 200ms ease; transform-origin: 50% 60%; }
+html.v3 #toasts > * { transition: transform 260ms var(--v3-out), opacity 200ms ease; }
+@starting-style {
+  html.v3 #modalRoot.open .mbg { opacity: 0; }
+  html.v3 #modalRoot.open .modal { opacity: 0; transform: scale(0.96) translateY(6px); }
+  html.v3 #toasts > * { opacity: 0; transform: translateY(-10px) scale(0.98); }
+}
+@media (max-width: 600px) {
+  /* on phones the dialog is a sheet: slide up with the iOS drawer curve */
+  html.v3 #modalRoot.open .modal { transition: transform 380ms var(--v3-drawer); }
+  @starting-style { html.v3 #modalRoot.open .modal { transform: translateY(100%); opacity: 1; } }
+}
+
+/* ---------- HOME ---------- */
+.v3-hi { display: flex; flex-direction: column; gap: 1px; padding: 2px 4px 2px; }
+.v3-hi b { font: 800 19px/1.2 var(--sans); letter-spacing: -0.01em; }
+.v3-hi span { font: 600 12.5px var(--sans); color: var(--mut); }
+.v3-office { cursor: pointer; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.v3-oh { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.v3-oh b { font-size: 15px; }
+.v3-oh .mono { font: 800 16px var(--sans); font-variant-numeric: tabular-nums; }
+.v3-oh .up { color: var(--up); }
+.v3-oh .dn { color: var(--dn); }
+.v3-ob { display: flex; align-items: center; gap: 12px; font-size: 13px; min-width: 0; }
+.v3-ob > span:last-child { min-width: 0; }
+.v3-ob b { color: var(--tx); }
+.v3-faces { display: flex; flex: none; }
+.v3-faces i { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--bg2); margin-left: -8px; }
+.v3-faces i:first-child { margin-left: 0; }
+@media (hover: hover) and (pointer: fine) { .v3-office:hover { border-color: color-mix(in srgb, var(--amber) 40%, var(--line)); } }
+
+/* ---------- STOCK: trade sheet (phones) ---------- */
+.v3-scrim { position: fixed; inset: 0; z-index: 9800; background: rgba(3, 5, 10, 0.55); opacity: 0; transition: opacity 240ms ease; }
+.v3-scrim.on { opacity: 1; }
+.v3-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9801; max-width: 560px; margin: 0 auto; padding: 8px 20px calc(18px + env(safe-area-inset-bottom, 0px)); border-radius: 26px 26px 0 0; background: var(--bg2); border: 1px solid var(--line); border-bottom: 0; box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.45); transform: translateY(100%); transition: transform 380ms var(--v3-drawer); overscroll-behavior: contain; }
+.v3-sheet.on { transform: translateY(0); }
+.v3-grab { width: 100%; height: 26px; display: grid; place-items: center; touch-action: none; cursor: grab; }
+.v3-grab::before { content: ''; width: 40px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--tx) 22%, transparent); }
+.v3-side { display: grid !important; grid-template-columns: 1fr 1fr; }
+.v3-sheet[data-side='buy'] .v3-side [data-sd='buy'].on { background: var(--up) !important; color: #04210f !important; }
+.v3-sheet[data-side='sell'] .v3-side [data-sd='sell'].on { background: var(--dn) !important; color: #fff !important; }
+.v3-amt { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 18px 0 10px; touch-action: none; }
+.v3-lbl { font: 700 11px var(--sans); letter-spacing: 0.09em; text-transform: uppercase; color: var(--mut); }
+.v3-in { display: flex; align-items: baseline; justify-content: center; gap: 2px; max-width: 100%; }
+.v3-in em { font: 800 34px var(--sans); font-style: normal; color: var(--mut); }
+.v3-in input, html.v3 #v3Amt { font-size: 52px !important; }
+.v3-in input { width: 1.4ch; max-width: 82vw; min-width: 0; border: 0; background: none; color: var(--tx); font: 800 52px/1.1 var(--sans) !important; letter-spacing: -0.04em; text-align: left; font-variant-numeric: tabular-nums; outline: none; padding: 0; caret-color: var(--amber); }
+.v3-in input::placeholder { color: color-mix(in srgb, var(--tx) 25%, transparent); }
+.v3-pcts { display: flex; justify-content: center; gap: 8px; margin: 8px 0 14px; }
+.v3-pcts button { min-width: 62px; height: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg3, color-mix(in srgb, var(--tx) 6%, transparent)); color: var(--tx); font: 700 14px var(--sans); cursor: pointer; }
+.v3-pcts button.on { background: var(--tx); color: var(--bg); border-color: var(--tx); }
+.v3-info { display: grid; gap: 7px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--tx) 5%, transparent); font-size: 13.5px; }
+.v3-info > div { display: flex; justify-content: space-between; gap: 12px; }
+.v3-info > div > :last-child { text-align: right; }
+.v3-err { min-height: 1.2em; margin: 8px 2px 0; color: var(--dn); font: 700 13px var(--sans); text-align: center; }
+.v3-go { width: 100%; height: 56px; margin-top: 6px; border: 0; border-radius: 16px; font: 800 17px var(--sans); cursor: pointer; color: #04210f; background: linear-gradient(180deg, #34d399, #16a34a); box-shadow: 0 12px 28px -12px #22c55e; }
+.v3-sheet[data-side='sell'] .v3-go { color: #fff; background: linear-gradient(180deg, #f87171, #dc2626); box-shadow: 0 12px 28px -12px #ef4444; }
+.v3-go:disabled { opacity: 0.45; box-shadow: none; cursor: default; }
+
+/* ---------- LEADERBOARD ---------- */
+.v3-me { position: sticky; bottom: calc(var(--navh, 0px) + 12px + env(safe-area-inset-bottom, 0px)); z-index: 25; display: flex; align-items: center; gap: 12px; margin: 12px 0 4px; padding: 12px 16px; border-radius: 20px; background: linear-gradient(100deg, #ff8a1f, #f97316); color: #1c0a00; box-shadow: 0 14px 30px -14px #ff8a1f; cursor: pointer; }
+@media (min-width: 900px) { .v3-me { bottom: 16px; } }
+.v3-me > b { font-size: 17px; font-variant-numeric: tabular-nums; }
+.v3-me { transition: transform 220ms var(--v3-out), opacity 180ms ease; }
+.v3-me.hide { opacity: 0; transform: translateY(12px); pointer-events: none; }
+.v3-me-av { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: rgba(0, 0, 0, 0.15); flex: none; }
+.v3-me-av svg, .v3-me-av img { width: 100%; height: 100%; }
+.v3-me-t { flex: 1; display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.v3-me-t small { font: 600 12px var(--sans); opacity: 0.8; }
+.pd1 .pd-av { filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.55)); }
+
+/* ---------- OFFICE: needs you ---------- */
+.v3-nl { display: flex; flex-direction: column; gap: 8px; }
+.v3-n { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg2); }
+.v3-n > div:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 200px; flex: 1; }
+.v3-n small { color: var(--mut); font-size: 12.5px; }
+.v3-n.bad { border-color: color-mix(in srgb, var(--dn) 40%, var(--line)); background: color-mix(in srgb, var(--dn) 7%, var(--bg2)); }
+.v3-na { display: flex; gap: 8px; flex-wrap: wrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.v3 #modalRoot.open .modal, .v3-sheet, html.v3 #toasts > * { transition-duration: 1ms !important; }
+  html.v3 .btn:active, html.v3 .v3-b:active { transform: none; }
 }
 
 </style>
