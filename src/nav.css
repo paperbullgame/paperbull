@@ -1,0 +1,203 @@
+/* =====================================================================
+   SIDEBAR v3 — compact, fits any screen, colorful icon tiles, clear active
+   state, Settings pinned to the bottom. $N = strong selector that beats
+   every older nav rule (pro.css uses 4 ids of specificity).
+   ===================================================================== */
+@media (min-width: 900px) {
+  $N {
+    position: sticky !important;
+    top: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    width: 232px !important;
+    min-width: 232px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 14px 12px 14px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--mut) 30%, transparent) transparent;
+    background: color-mix(in srgb, var(--bg) 92%, transparent) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-right: 1px solid var(--line) !important;
+    box-shadow: none !important;
+  }
+  $N::-webkit-scrollbar { width: 6px; }
+  $N::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--mut) 30%, transparent); border-radius: 9px; }
+
+  /* brand */
+  $N a.nav-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 8px !important;
+    margin: 0 0 10px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 12px !important;
+  }
+  $N a.nav-brand .logo { width: 32px !important; height: 32px !important; flex: none !important; }
+  $N a.nav-brand .brand-name { font: 800 16px/1 var(--sans) !important; letter-spacing: 0.01em !important; color: var(--tx) !important; }
+
+  /* section labels */
+  $N .nav-sec {
+    margin: 12px 0 4px !important;
+    padding: 0 10px !important;
+    font: 700 10.5px/1 var(--sans) !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: color-mix(in srgb, var(--mut) 75%, transparent) !important;
+  }
+
+  /* rows */
+  $N a[data-go]:not(.nav-brand),
+  $N a.nav-more {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 11px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 10px 0 6px !important;
+    margin: 0 !important;
+    border-radius: 11px !important;
+    font: 600 13.5px/1 var(--sans) !important;
+    color: var(--mut) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    transition: background-color 0.15s, color 0.15s !important;
+  }
+  $N a[data-go]:not(.nav-brand) > span:not(.nt) { flex: 1 !important; min-width: 0 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  $N a[data-go]:not(.nav-brand):hover { background: color-mix(in srgb, var(--tx) 6%, transparent) !important; color: var(--tx) !important; }
+  $N a[data-go]:not(.nav-brand):focus-visible { outline: 2px solid var(--n1, var(--brand)) !important; outline-offset: 1px !important; }
+  $N a.nav-more { display: none !important; }
+
+  /* icon tiles: always in color */
+  $N a .nt {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 9px !important;
+    color: var(--n1) !important;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--n1) 22%, transparent), color-mix(in srgb, var(--n2) 16%, transparent)) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--n1) 22%, transparent) !important;
+    transform: none !important;
+    transition: transform 0.15s, background 0.15s !important;
+  }
+  $N a .nt svg { width: 17px !important; height: 17px !important; stroke: currentColor !important; }
+  $N a:hover .nt { transform: scale(1.06) !important; }
+
+  /* active */
+  $N a[data-go].on:not(.nav-brand) {
+    color: var(--tx) !important;
+    font-weight: 700 !important;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 16%, transparent), color-mix(in srgb, var(--brand) 4%, transparent)) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 22%, transparent) !important;
+  }
+  $N a[data-go].on:not(.nav-brand)::before {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    left: -12px !important;
+    top: 9px !important;
+    bottom: 9px !important;
+    width: 4px !important;
+    height: auto !important;
+    border-radius: 0 4px 4px 0 !important;
+    background: var(--brand) !important;
+    box-shadow: 0 0 12px var(--brand) !important;
+  }
+  $N a[data-go].on:not(.nav-brand)::after { display: none !important; }
+  $N a.on .nt {
+    color: #fff !important;
+    background: linear-gradient(145deg, var(--n1), var(--n2)) !important;
+    box-shadow: 0 4px 12px -4px var(--n2), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+  }
+
+  /* dots */
+  $N .nav-dot {
+    position: static !important;
+    flex: none !important;
+    width: 7px !important;
+    height: 7px !important;
+    margin: 0 0 0 auto !important;
+    border-radius: 50% !important;
+    background: #ff4d6d !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, #ff4d6d 22%, transparent) !important;
+  }
+  $N .nav-dot[hidden] { display: none !important; }
+
+  /* footer: settings + log in, pinned to the bottom */
+  $N #settingsBtn { margin-top: auto !important; }
+  $N .nav-auth {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 12px !important;
+    margin: 6px 0 0 !important;
+    border-radius: 11px !important;
+    font: 650 13px/1 var(--sans) !important;
+    color: var(--tx) !important;
+    background: color-mix(in srgb, var(--tx) 5%, transparent) !important;
+    border: 1px solid var(--line) !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    flex: none !important;
+  }
+  $N .nav-auth:hover { background: color-mix(in srgb, var(--tx) 9%, transparent) !important; }
+  $N .nav-auth svg { width: 16px !important; height: 16px !important; }
+  $N #authBtn { background: var(--brand) !important; border-color: transparent !important; color: #1a1206 !important; }
+  $N #authBtn:hover { filter: brightness(1.08); }
+  $N .nav-foot { display: none !important; }
+}
+
+/* short screens (laptops, tablets): tighter so everything still fits */
+@media (min-width: 900px) and (max-height: 820px) {
+  $N { padding-top: 10px !important; padding-bottom: 10px !important; }
+  $N a.nav-brand { height: 38px !important; min-height: 38px !important; margin-bottom: 4px !important; }
+  $N a[data-go]:not(.nav-brand) { height: 33px !important; min-height: 33px !important; font-size: 13px !important; }
+  $N a .nt { width: 25px !important; height: 25px !important; min-width: 25px !important; border-radius: 8px !important; }
+  $N a .nt svg { width: 15px !important; height: 15px !important; }
+  $N .nav-sec { margin: 8px 0 3px !important; }
+  $N .nav-auth { height: 34px !important; min-height: 34px !important; margin-top: 4px !important; }
+  $N a[data-go].on:not(.nav-brand)::before { top: 7px !important; bottom: 7px !important; }
+}
+@media (min-width: 900px) and (max-height: 700px) {
+  $N .nav-sec { display: none !important; }
+  $N a[data-go]:not(.nav-brand) { height: 31px !important; min-height: 31px !important; }
+}
+
+/* phone bottom bar: colored icon for the page you're on */
+@media (max-width: 899px) {
+  $N a.on .nt {
+    color: #fff !important;
+    background: linear-gradient(145deg, var(--n1), var(--n2)) !important;
+    box-shadow: 0 4px 12px -4px var(--n2) !important;
+  }
+  $N a.on { color: var(--tx) !important; }
+  $N a.on .nt svg { stroke: currentColor !important; }
+}
+/* light theme: stronger icon color so the tiles don't wash out */
+@media (min-width: 900px) {
+  html:not(.dark) #nav:not(#_):not(#_):not(#_):not(#_) a .nt {
+    color: var(--n2) !important;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--n1) 30%, #fff), color-mix(in srgb, var(--n2) 14%, #fff)) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--n2) 22%, transparent) !important;
+  }
+  html:not(.dark) #nav:not(#_):not(#_):not(#_):not(#_) a.on .nt { color: #fff !important; background: linear-gradient(145deg, var(--n1), var(--n2)) !important; }
+  html:not(.dark) #nav:not(#_):not(#_):not(#_):not(#_) a[data-go]:not(.nav-brand) { color: color-mix(in srgb, var(--tx) 72%, transparent) !important; }
+  html:not(.dark) #nav:not(#_):not(#_):not(#_):not(#_) a[data-go].on:not(.nav-brand) { color: var(--tx) !important; }
+}

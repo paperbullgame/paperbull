@@ -1,0 +1,225 @@
+/* ===== Shop polish (src/shop-fx.js) ===== */
+.packs {
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)) !important;
+}
+.pack-card.sfx-pack {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  cursor: pointer;
+}
+.pack-card.sfx-pack::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  width: 120px;
+  height: 120px;
+  margin-left: -60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--acc) 55%, transparent), transparent 68%);
+  opacity: 0.28;
+  z-index: -1;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+.pack-card.sfx-pack[data-g='e']::before {
+  opacity: 0.4;
+}
+.pack-card.sfx-pack[data-g='l']::before {
+  opacity: 0.55;
+}
+.pack-card.sfx-pack .pc-art {
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1.3);
+}
+@media (hover: hover) {
+  .pack-card.sfx-pack:hover::before {
+    opacity: 0.7;
+    transform: scale(1.15);
+  }
+  .pack-card.sfx-pack:hover .pc-art {
+    transform: translateY(-4px) rotate(-3deg) scale(1.05);
+  }
+}
+.pack-card.sfx-pack:active .pc-art {
+  transform: scale(0.96);
+}
+.pack-card.sfx-pack .pc-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px 11px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent);
+  font-weight: 700;
+}
+.pack-card.sfx-pack .pc-price.short {
+  background: transparent;
+  border-color: var(--line2);
+  opacity: 0.7;
+}
+.sfx-need {
+  font-size: 10.5px;
+  color: var(--mut);
+  margin-top: 2px;
+}
+.sfx-sale {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(135deg, #ff4d6d, #ff7a1a);
+  box-shadow: 0 2px 8px rgba(255, 77, 109, 0.35);
+}
+.sfx-sale.in {
+  position: static;
+  display: inline-block;
+  vertical-align: 1px;
+}
+.sfx-rib {
+  position: absolute;
+  top: 10px;
+  right: -26px;
+  z-index: 2;
+  width: 92px;
+  padding: 3px 0;
+  text-align: center;
+  transform: rotate(40deg);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #1a1000;
+  background: linear-gradient(90deg, #ffd166, #ffb224);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.deal.sfx-card,
+.col-item.sfx-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+@media (hover: hover) {
+  .deal.sfx-card:hover,
+  .col-item.sfx-card:not(.locked):hover {
+    transform: translateY(-2px);
+  }
+}
+.col-item.sfx-card {
+  border: 1px solid color-mix(in srgb, var(--rc) 22%, var(--line)) !important;
+}
+.col-item.sfx-card[data-r='l'] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rc) 35%, transparent), 0 0 18px color-mix(in srgb, var(--rc) 12%, transparent);
+}
+.col-item.sfx-card.on {
+  border-color: var(--up) !important;
+  box-shadow: inset 0 0 0 1px var(--up);
+}
+.col-item.sfx-card.locked .face {
+  filter: grayscale(0.6) opacity(0.65);
+}
+.col-item.sfx-card.locked:hover .face {
+  filter: none;
+}
+.sfx-desc {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: var(--mut);
+  opacity: 0.85;
+  margin: 1px 0 4px;
+  text-align: center;
+}
+.sfx-own {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--up);
+  background: color-mix(in srgb, var(--up) 14%, transparent);
+}
+.btn.short {
+  opacity: 0.55;
+  filter: saturate(0.4);
+}
+.pb-gi.got {
+  opacity: 0.75;
+}
+.pb-gi-got {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--up);
+  white-space: nowrap;
+}
+#shopCoins.sfx-bump {
+  animation: sfxBump 0.45s cubic-bezier(0.3, 0.7, 0.3, 1.4);
+}
+@keyframes sfxBump {
+  40% {
+    transform: scale(1.12);
+    color: var(--amber);
+  }
+}
+.coin.sfx-fly {
+  position: fixed;
+  z-index: 200;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+@media (max-width: 520px) {
+  .packs {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .sfx-rib {
+    right: -30px;
+    top: 8px;
+  }
+}
+
+/* ---------- minted gold coin (replaces the flat dot) ---------- */
+.coin {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='r' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fff4c2'/%3E%3Cstop offset='.45' stop-color='%23f6b72b'/%3E%3Cstop offset='1' stop-color='%23a8620a'/%3E%3C/linearGradient%3E%3CradialGradient id='f' cx='.38' cy='.32' r='.8'%3E%3Cstop offset='0' stop-color='%23ffefb0'/%3E%3Cstop offset='.55' stop-color='%23fbc238'/%3E%3Cstop offset='1' stop-color='%23d98a0b'/%3E%3C/radialGradient%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23b86f08'/%3E%3Cstop offset='1' stop-color='%238a4f04'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='31' fill='url%28%23r%29'/%3E%3Ccircle cx='32' cy='32' r='25.5' fill='url%28%23f%29' stroke='%239a5806' stroke-opacity='.7' stroke-width='2.4'/%3E%3Cg transform='translate%280 1.2%29' fill='%23fff6cf' opacity='.7'%3E%3Cpath d='M14 21c3 8 9 10 13 8h10c4 2 10 0 13-8-1 9-6 13-11 13v4c0 6-3 10-7 10s-7-4-7-10v-4c-5 0-10-4-11-13z'/%3E%3C/g%3E%3Cpath d='M14 21c3 8 9 10 13 8h10c4 2 10 0 13-8-1 9-6 13-11 13v4c0 6-3 10-7 10s-7-4-7-10v-4c-5 0-10-4-11-13z' fill='url%28%23b%29'/%3E%3Cellipse cx='29' cy='42' rx='1.5' ry='1.9' fill='%23f8c24a'/%3E%3Cellipse cx='35' cy='42' rx='1.5' ry='1.9' fill='%23f8c24a'/%3E%3Cpath d='M11 22A23 23 0 0 1 36 9.5' stroke='%23fff' stroke-opacity='.75' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat !important;
+  box-shadow: none !important;
+  border-radius: 50%;
+  filter: drop-shadow(0 1px 1.2px rgba(80, 45, 0, 0.45));
+  position: relative;
+}
+.coin.xl,
+.coin-big .coin,
+.bp-coin .coin,
+.st-coins .coin,
+.coin.sfx-fly,
+#top .coin-chip .coin {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='r' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fff4c2'/%3E%3Cstop offset='.45' stop-color='%23f6b72b'/%3E%3Cstop offset='1' stop-color='%23a8620a'/%3E%3C/linearGradient%3E%3CradialGradient id='f' cx='.38' cy='.32' r='.8'%3E%3Cstop offset='0' stop-color='%23ffefb0'/%3E%3Cstop offset='.55' stop-color='%23fbc238'/%3E%3Cstop offset='1' stop-color='%23d98a0b'/%3E%3C/radialGradient%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23b86f08'/%3E%3Cstop offset='1' stop-color='%238a4f04'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='31' fill='url%28%23r%29'/%3E%3Ccircle cx='32' cy='32' r='28.2' fill='none' stroke='%239c5a05' stroke-opacity='.55' stroke-width='3' stroke-dasharray='1.4 1.6'/%3E%3Ccircle cx='32' cy='32' r='24.5' fill='url%28%23f%29' stroke='%239a5806' stroke-opacity='.7' stroke-width='1.6'/%3E%3Cg transform='translate%280 1.2%29' fill='%23fff6cf' opacity='.7'%3E%3Cpath d='M14 21c3 8 9 10 13 8h10c4 2 10 0 13-8-1 9-6 13-11 13v4c0 6-3 10-7 10s-7-4-7-10v-4c-5 0-10-4-11-13z'/%3E%3C/g%3E%3Cpath d='M14 21c3 8 9 10 13 8h10c4 2 10 0 13-8-1 9-6 13-11 13v4c0 6-3 10-7 10s-7-4-7-10v-4c-5 0-10-4-11-13z' fill='url%28%23b%29'/%3E%3Cellipse cx='29' cy='42' rx='1.5' ry='1.9' fill='%23f8c24a'/%3E%3Cellipse cx='35' cy='42' rx='1.5' ry='1.9' fill='%23f8c24a'/%3E%3Cpath d='M11 22A23 23 0 0 1 36 9.5' stroke='%23fff' stroke-opacity='.75' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='21' cy='17' rx='7' ry='3.2' fill='%23fff' opacity='.35' transform='rotate%28-35 21 17%29'/%3E%3C/svg%3E") !important;
+}
+.coin.xl { filter: drop-shadow(0 3px 6px rgba(80, 45, 0, 0.5)) drop-shadow(0 0 18px rgba(255, 197, 61, 0.35)); }
+.coin-big .coin,
+.bp-coin .coin { filter: drop-shadow(0 2px 3px rgba(80, 45, 0, 0.5)); }
+#top .coin-chip .coin { overflow: hidden; }
+#top .coin-chip .coin::after {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.85) 50%, transparent 62%);
+  transform: translateX(-120%);
+  animation: coinShine 6s ease-in-out 1.5s infinite;
+  pointer-events: none;
+}
+@keyframes coinShine {
+  0%, 82% { transform: translateX(-120%); }
+  92%, 100% { transform: translateX(120%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #top .coin-chip .coin::after { animation: none; display: none; }
+}

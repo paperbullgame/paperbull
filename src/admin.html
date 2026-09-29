@@ -1890,6 +1890,13 @@
       }
       @media (prefers-reduced-motion: reduce) { .pbg-card, .pbg-pin.shake { animation: none; } }
 
+.inv-h { font-size: 12px; font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: 0.06em; margin: 4px 0 8px; }
+      .inv-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; margin-bottom: 12px; }
+      .inv-t { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; border-radius: 12px; border: 1px solid transparent; background: color-mix(in srgb, var(--tx) 3.5%, transparent); color: var(--tx); cursor: pointer; min-width: 0; }
+      .inv-t:hover { background: color-mix(in srgb, var(--tx) 7%, transparent); }
+      .inv-t.on { border-color: var(--brand); }
+      .inv-t b { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .inv-t small { font-size: 11px; color: var(--mut); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .chatst { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
       .chatst > div { display: flex; flex-direction: column; gap: 3px; min-width: 200px; flex: 1; }
       .chatst small { color: var(--mut); line-height: 1.45; }
@@ -4829,6 +4836,20 @@
               ? { t: 'Full chat (unlocked)', s: `Unlocked by ${esc(u.chat_ok_by || 'staff')} ${u.chat_ok_at ? dday(u.chat_ok_at) : ''}${u.chat_ok_note ? ' · ' + esc(u.chat_ok_note) : ''}. Private messages stay quick-chat only, and phone numbers, emails, links and addresses are blocked.` }
               : { t: 'Quick chat only', s: 'Under 14, so they can only use quick chat and emotes unless you unlock it.' };
 
+      /* what a player owns, with pictures (from their last cloud save) */
+      const petKey = id => (/^(x|m|s)_/.test(id) ? 'xpet_' + id.replace(/^x_/, '') : 'pet_' + id);
+      function invCard(p) {
+        if (!p) return '<div class="card" style="margin-top:16px"><div class="card-h"><h3>Pets and items</h3></div><div class="empty small">No cloud save yet, so we can’t see what they own.</div></div>';
+        const pets = p.pets || [],
+          inv = Object.entries(p.inv || {}).filter(([, n]) => +n > 0),
+          eq = Object.values(p.equip || {});
+        const tile = (key, name, sub, on) => `<button type="button" class="inv-t${on ? ' on' : ''}" data-inv="${esc(key)}" title="${esc(name)}">${itemArt(key, 48)}<b>${esc(name)}</b><small>${sub}</small></button>`;
+        return `<div class="card" style="margin-top:16px"><div class="card-h"><h3>Pets and items</h3><span class="muted small">${num(pets.length)} pets · ${num(inv.length)} items · from their last save</span></div>
+          ${pets.length ? `<div class="inv-h">Pets</div><div class="inv-g">${pets.map(x => tile(petKey(x.id) + (x.mut ? '_m_' + x.mut : ''), x.name || x.id, `Lv ${num(x.lvl || 1)}${x.mut && window.ExoticArt && ExoticArt.MUT[x.mut] ? ' · ' + esc(ExoticArt.MUT[x.mut].name) : ''}`, x.uid === p.active_pet)).join('')}</div>` : ''}
+          ${inv.length ? `<div class="inv-h">Items</div><div class="inv-g">${inv.sort((a, b) => itemInfo(a[0]).type.localeCompare(itemInfo(b[0]).type)).map(([id, n]) => tile(id, itemInfo(id).name, `${esc(itemInfo(id).type)}${+n > 1 ? ' ×' + num(n) : ''}`, eq.includes(id))).join('')}</div>` : ''}
+          ${!pets.length && !inv.length ? '<div class="empty small">They don’t own anything yet.</div>' : ''}</div>`;
+      }
+
       VIEWS.user = {
         async render(v, [id]) {
           v.innerHTML = `<a href="#/users" class="btn ghost sm" style="margin-bottom:12px">${IC.back}All users</a><div class="card">${skeleton(5)}</div>`;
@@ -4867,6 +4888,7 @@
         <div class="stats"><div class="stat"><small>Total return</small><b class="mono ${cls(u.return_pct)}">${pct(u.return_pct)}</b></div><div class="stat"><small>Account value</small><b class="mono">${usd(u.value)}</b></div>
           <div class="stat"><small>Level</small><b class="mono">${u.level}</b></div><div class="stat"><small>Trades</small><b class="mono">${num(u.trades)}</b></div><div class="stat"><small>Coins</small><b class="mono">${num(u.coins)}</b></div><div class="stat"><small>Friends</small><b class="mono">${num(d.friends)}</b></div><div class="stat"><small>Age</small><b class="mono">${u.age == null ? '—' : u.age}</b></div></div>
         <div class="actbar">${acts || '<span class="muted small">Your role can view this account but not change it.</span>'}</div></div>
+      ${invCard(p)}
       <div class="grid g2" style="margin-top:16px">
         <div class="card"><div class="card-h"><h3>Account activity</h3><span class="muted small">Last 14 days</span></div>${activityStrip(d.events)}${d.events.length ? `<div class="tl">${d.events.map(e => `<div class="e"><b>${esc(evLabel(e))}</b><small>${dt(e.created_at)}</small></div>`).join('')}</div>` : '<div class="empty">No activity yet.</div>'}</div>
         <div><div class="card"><div class="card-h"><h3>Chat</h3>${u.kid ? '<span class="pill p-warn"><i></i>Under 14</span>' : ''}</div><div class="chatst"><div><b>${chatState(u).t}</b><small>${chatState(u).s}</small></div>${u.kid && can('admin') ? `<button class="btn ${u.chat_ok ? '' : 'pri'}" data-a="chat">${u.chat_ok ? 'Turn chat off' : 'Turn on chat'}</button>` : ''}</div></div>
@@ -4908,6 +4930,16 @@
         }</div></div>
         ${d.audit.length ? `<div class="card"><div class="card-h"><h3>Admin actions on this account</h3></div><div class="list">${d.audit.map(a => `<div class="li"><div class="t"><b>${esc(actLabel(a.action))}</b><small>${esc(a.by)} · ${dt(a.at)}${a.details && a.details.reason ? ' · ' + esc(a.details.reason) : ''}</small></div></div>`).join('')}</div></div>` : ''}</div></div>`;
           $$('[data-a]', v).forEach(b => (b.onclick = () => this.action(b.dataset.a, u)));
+          $$('[data-inv]', v).forEach(
+            b =>
+              (b.onclick = () =>
+                modal({
+                  title: 'Item',
+                  ok: can('admin') ? 'Gift another' : 'Close',
+                  body: itemPreview(b.dataset.inv, `<small class="mono muted">${esc(b.dataset.inv)}</small>`),
+                  onOk: can('admin') ? () => void setTimeout(() => giveItem(b.dataset.inv, [{ id: u.id, username: u.username }]), 60) : null,
+                }))
+          );
         },
         async action(a, u) {
           const re = () => route(),
@@ -5125,7 +5157,7 @@
           : '');
 
       /* ---------- give gifts ---------- */
-      async function giveDialog(preset, done) {
+      async function giveDialog(preset, done, opt = {}) {
         let cat = [];
         try {
           cat = (await A('pba_catalog')).filter(c => !c.deleted);
@@ -5148,12 +5180,18 @@
         <button type="button" class="btn sm" id="gAll">Select all shown</button></div>
         <div class="chips upk-c" id="gC"></div>
         <div class="upk-l" id="gD"><div class="empty small">Loading players…</div></div></div></div>
-    <label class="f"><span>What to give</span><select class="in" id="gW"><option value="">Custom gift…</option>${cat.map(c => `<option value="${c.id}">${esc(c.name)} · ${esc(kindLabel(c))}</option>`).join('')}</select></label>
-    <div id="gCustom" class="grid g2" style="gap:0 12px"><label class="f"><span>Gift name</span><input class="in" id="gN" maxlength="60" placeholder="e.g. Welcome bonus"></label>
-      <label class="f"><span>Type</span><select class="in" id="gK">${kinds.map(k => `<option value="${k[0]}">${k[1]}</option>`).join('')}</select></label>
-      <label class="f" id="gAw"><span>Amount</span><input class="in" id="gA" type="number" min="1" step="any" value="500"></label>
-      <label class="f" id="gIw" hidden><span>Item</span><select class="in" id="gI">${itemOptions()}</select></label>
-      <label class="f" id="gMw" hidden><span>Mutation (exotic pets)</span><select class="in" id="gMut"><option value="">No mutation</option>${window.ExoticArt ? ExoticArt.MUTS.map(m => `<option value="${m.id}">${esc(m.name)} (perk ×${m.mult})</option>`).join('') : ''}</select></label></div>
+    <div class="f"><span>What to give</span></div>
+    <div class="gw-tabs" id="gTabs">${[['item', 'Game item'], ['coins', 'Coins'], ['cash', 'Cash'], ['xp', 'XP'], ...(cat.length ? [['saved', 'Saved gift']] : [])].map(([k, l]) => `<button type="button" data-gk="${k}">${l}</button>`).join('')}</div>
+    <label class="f" id="gWw" hidden><span>Saved gift</span><select class="in" id="gW"><option value="">Pick a saved gift…</option>${cat.map(c => `<option value="${c.id}">${esc(c.name)} · ${esc(kindLabel(c))}</option>`).join('')}</select></label>
+    <select id="gK" hidden>${kinds.map(k => `<option value="${k[0]}">${k[1]}</option>`).join('')}</select>
+    <select id="gI" hidden>${itemOptions()}</select>
+    <div id="gIp"></div>
+    <div id="gCustom" class="grid g2" style="gap:0 12px;margin-top:10px">
+      <label class="f" id="gAw"><span>Amount</span><input class="in mono" id="gA" type="number" min="1" step="any" value="500"></label>
+      <label class="f" id="gMw" hidden><span>Mutation (exotic pets)</span><select class="in" id="gMut"><option value="">No mutation</option>${window.ExoticArt ? ExoticArt.MUTS.map(m => `<option value="${m.id}">${esc(m.name)} (perk ×${m.mult})</option>`).join('') : ''}</select></label>
+      <label class="f"><span>Gift name (optional)</span><input class="in" id="gN" maxlength="60" placeholder="Optional"></label></div>
+    <div class="chips" id="gAc" style="margin:-4px 0 10px"></div>
+    <div id="gPv" style="margin-bottom:12px"></div>
     <label class="f"><span>Message (optional, shown in the game)</span><input class="in" id="gM" maxlength="200" placeholder="Thanks for playing!"></label><div class="err"></div>`,
           onMount: ov => {
             const chips = () => {
@@ -5248,22 +5286,63 @@
                 $('#gPick', ov).hidden = e.target.checked;
                 $('#gN0', ov).textContent = e.target.checked ? 'Everyone' : picked.length + ' selected';
               };
+            let tab = opt.item ? 'item' : opt.kind || 'item';
+            const P = itemPicker($('#gIp', ov), {
+              value: splitMut(opt.item || '')[0],
+              tab: opt.item && /pet/.test((GAME_ITEMS.find(i => i[0] === opt.item) || [])[1] || '') ? 'pets' : 'all',
+              onPick: id => {
+                $('#gI', ov).value = id;
+                sync();
+              },
+            });
+            const [oBase, oMut] = splitMut(opt.item || '');
+            $('#gI', ov).value = oBase;
+            if (oMut) $('#gMut', ov).value = oMut;
+            const QA = { coins: [500, 1000, 5000, 25000], cash: [10000, 50000, 100000, 1000000], xp: [250, 1000, 5000, 20000] };
             const sync = () => {
-              const custom = !$('#gW', ov).value;
-              $('#gCustom', ov).hidden = !custom;
-              const it = $('#gK', ov).value === 'item';
-              $('#gIw', ov).hidden = !it;
-              $('#gAw', ov).hidden = it;
-              $('#gMw', ov).hidden = !(custom && it && /^xpet_/.test($('#gI', ov).value));
+              $$('#gTabs button', ov).forEach(b => b.classList.toggle('on', b.dataset.gk === tab));
+              const saved = tab === 'saved',
+                item = tab === 'item';
+              $('#gWw', ov).hidden = !saved;
+              if (!saved) $('#gW', ov).value = '';
+              $('#gK', ov).value = saved ? 'item' : tab;
+              $('#gIp', ov).hidden = !item;
+              $('#gCustom', ov).hidden = saved;
+              $('#gAw', ov).hidden = item;
+              const id = $('#gI', ov).value,
+                xp = item && /^xpet_/.test(id);
+              $('#gMw', ov).hidden = !xp;
+              $('#gAc', ov).innerHTML = !item && !saved ? QA[tab].map(v => `<button type="button" class="btn sm" data-qa="${v}">${tab === 'cash' ? usd(v) : num(v)}</button>`).join('') : '';
+              const pv = $('#gPv', ov);
+              if (saved) {
+                const c = cat.find(x => String(x.id) === $('#gW', ov).value);
+                pv.innerHTML = !c ? '' : c.kind === 'item' ? itemPreview(c.item_id) : amountPreview(c.kind, c.amount);
+              } else if (item) pv.innerHTML = id ? itemPreview(id + (xp && $('#gMut', ov).value ? '_m_' + $('#gMut', ov).value : '')) : '<div class="empty small">Pick an item above.</div>';
+              else pv.innerHTML = amountPreview(tab, $('#gA', ov).value);
             };
+            $('#gTabs', ov).onclick = e => {
+              const b = e.target.closest('[data-gk]');
+              if (!b) return;
+              tab = b.dataset.gk;
+              if (tab !== 'item' && !$('#gA', ov).value) $('#gA', ov).value = QA[tab] ? QA[tab][0] : 500;
+              sync();
+            };
+            $('#gAc', ov).onclick = e => {
+              const b = e.target.closest('[data-qa]');
+              if (!b) return;
+              $('#gA', ov).value = b.dataset.qa;
+              sync();
+            };
+            $('#gA', ov).oninput = sync;
             $('#gW', ov).onchange = sync;
-            $('#gK', ov).onchange = sync;
-            $('#gI', ov).onchange = sync;
+            $('#gMut', ov).onchange = sync;
             sync();
           },
           onOk: async ov => {
             const every = $('#gEvery', ov) && $('#gEvery', ov).checked;
             if (!every && !picked.length) throw new Error('Add at least one recipient.');
+            if ($('#gK', ov).value === 'item' && !$('#gW', ov).value && !$('#gI', ov).value) throw new Error('Pick an item to give.');
+            if ($('#gWw', ov) && !$('#gWw', ov).hidden && !$('#gW', ov).value) throw new Error('Pick a saved gift.');
             const cid = $('#gW', ov).value || null,
               k = $('#gK', ov).value;
             const mutOf = () => (k === 'item' && /^xpet_/.test($('#gI', ov).value) && $('#gMut', ov) ? $('#gMut', ov).value : '');
@@ -5272,12 +5351,12 @@
               p_catalog_id: cid ? +cid : null,
               p_kind: cid ? null : k,
               p_amount: cid || k === 'item' ? null : +$('#gA', ov).value,
-              p_item_id: cid ? null : k === 'item' ? $('#gI', ov).value + (mutOf() ? '_m_' + mutOf() : '') : null,
+              p_item_id: cid ? null : k === 'item' ? $('#gI', ov).value.replace(/^pack:/, 'pack_') + (mutOf() ? '_m_' + mutOf() : '') : null,
               p_name: cid
                 ? null
                 : $('#gN', ov).value.trim() ||
                   (k === 'item'
-                    ? ((GAME_ITEMS.find(i => i[0] === $('#gI', ov).value) || [])[2] || '').replace(/ \(.*\)$/, '') + (mutOf() ? ` (${ExoticArt.MUT[mutOf()].name})` : '')
+                    ? itemInfo($('#gI', ov).value).name + (mutOf() ? ` (${ExoticArt.MUT[mutOf()].name})` : '')
                     : kindLabel({ kind: k, amount: +$('#gA', ov).value })),
               p_message: $('#gM', ov).value,
             });
@@ -7474,6 +7553,7 @@
 
       /* ---------- global search ---------- */
 /*__ADMIN_ABUSE__*/
+/*__ADMIN_ITEMS__*/
       VIEWS.search = {
         async render(v, [q]) {
           q = q || '';

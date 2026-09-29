@@ -1,0 +1,83 @@
+/* ===== Store (src/store.js) ===== */
+#stoBody { display: grid; gap: 14px; }
+.st-note { padding: 10px 14px; border-radius: 12px; font-size: 13px; background: color-mix(in srgb, var(--amber) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent); }
+.st-note.acc { background: var(--panel); border-color: var(--line); }
+.st-badge { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #1a1000; background: linear-gradient(135deg, #ffe08a, #ffb224); }
+.st-vip { position: relative; overflow: hidden; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; padding: 22px; border-radius: 20px;
+  background: radial-gradient(120% 140% at 100% 0%, rgba(255, 204, 51, .22), transparent 55%), linear-gradient(160deg, #1e1a10, #0d0c09 70%); border: 1px solid rgba(255, 204, 51, .35); color: #fff4d6; }
+.st-vip::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255, 235, 160, .10) 50%, transparent 65%); background-size: 250% 100%; animation: stSheen 5s ease-in-out infinite; pointer-events: none; }
+@keyframes stSheen { 0%, 100% { background-position: 120% 0 } 50% { background-position: -20% 0 } }
+.st-vip h2 { margin: 8px 0 10px; font-size: 26px; letter-spacing: -.02em; color: #ffd76a; }
+.st-vip ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 6px 16px; font-size: 14px; }
+.st-vip li::before { content: '✦'; color: #ffcc33; margin-right: 8px; }
+.st-vip-buy { display: flex; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+.st-vip-buy b { font-size: 26px; color: #fff; }
+.st-vip-buy small { font-size: 13px; opacity: .7; font-weight: 500; }
+.st-vip-until { margin: 14px 0 0; font-size: 13px; opacity: .8; }
+.st-vip-art { width: 120px; height: 120px; display: grid; place-items: center; filter: drop-shadow(0 10px 30px rgba(255, 190, 40, .45)); animation: bob 3s ease-in-out infinite; }
+.st-vip-art .art, .st-vip-art svg { width: 110px; height: 110px; }
+.gold-bull { filter: sepia(.35) saturate(1.6) hue-rotate(-8deg) brightness(1.08) drop-shadow(0 0 6px rgba(255, 204, 51, .8)); }
+.st-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.st-card { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); transition: transform .18s, border-color .18s; }
+@media (hover: hover) { .st-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); } }
+.st-card h3 { margin: 2px 0 0; font-size: 17px; }
+.st-card p { margin: 0; font-size: 12.5px; color: var(--mut); line-height: 1.4; flex: 1; }
+.st-card .st-badge { position: absolute; top: 12px; right: 12px; }
+.st-start .st-badge, .st-pro .st-badge { position: static; align-self: flex-start; }
+.st-start { background: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, #22c55e 16%, transparent), transparent 60%), var(--panel); }
+.st-pro { background: radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, #6366f1 20%, transparent), transparent 60%), var(--panel); }
+.st-items { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin: 6px 0; }
+.st-item { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10.5px; color: var(--mut); }
+.st-item .face { height: 44px; }
+.st-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.st-foot b { font-size: 18px; }
+.st-coinpack { align-items: center; text-align: center; padding-top: 22px; }
+.st-coinpack h3 { font-size: 22px; }
+.st-coinpack .st-buy { width: 100%; margin-top: 8px; }
+.st-coins { position: relative; display: block; height: 46px; width: 70px; }
+.st-coins .coin { position: absolute; width: 30px; height: 30px; left: calc(50% - 15px + (var(--i) - 2) * 7px); bottom: calc(var(--i) * 4px); filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .4)); }
+.st-ex { align-items: center; text-align: center; }
+.st-exf .face { height: 70px; }
+.st-ex .st-foot { width: 100%; }
+.st-buy { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: 12px; border: 0; cursor: pointer; font: inherit; font-weight: 800;
+  color: #1a1000; background: linear-gradient(135deg, #ffd76a, #ff9f1a); box-shadow: 0 6px 18px rgba(255, 159, 26, .28); transition: transform .12s, filter .12s; }
+.st-buy:hover { filter: brightness(1.06); }
+.st-buy:active { transform: scale(.97); }
+.st-buy.soon { background: var(--panel2); color: var(--mut); box-shadow: none; }
+.st-buy:disabled { opacity: .7; cursor: wait; }
+.st-owned { font-weight: 800; font-size: 13px; color: var(--up); }
+.st-spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: stSpin .7s linear infinite; }
+@keyframes stSpin { to { transform: rotate(360deg) } }
+.st-legal { font-size: 11.5px; line-height: 1.5; color: var(--mut); margin: 4px 2px 20px; }
+.st-door { display: flex; align-items: center; gap: 14px; width: 100%; margin: 0 0 12px; padding: 14px 16px; border-radius: 16px; cursor: pointer; font: inherit; text-align: left; color: #fff4d6;
+  background: linear-gradient(135deg, #2a2110, #12100a); border: 1px solid rgba(255, 204, 51, .35); }
+.st-door b { display: block; color: #ffd76a; font-size: 15px; }
+.st-door small { display: block; opacity: .75; font-size: 12.5px; }
+.st-door > span:nth-child(2) { flex: 1; }
+.st-door-ic, .st-pay-ic { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 12px; color: #1a1000; background: linear-gradient(135deg, #ffe08a, #ff9f1a); }
+.st-door-ic svg, .st-pay-ic svg { width: 22px; height: 22px; }
+.st-door-go { font-weight: 800; color: #ffd76a; }
+.st-pay { display: grid; gap: 10px; }
+.st-pay ul { margin: 0; padding-left: 18px; }
+.vip-chip { display: inline-grid; place-items: center; height: 30px; padding: 0 11px; border-radius: 99px; font-size: 11.5px; font-weight: 900; letter-spacing: .08em; cursor: pointer; text-decoration: none;
+  color: #1a1000; background: linear-gradient(135deg, #ffe08a, #ffb224); box-shadow: 0 0 14px rgba(255, 190, 40, .35); }
+.store-btn { color: #1a1000 !important; background: linear-gradient(135deg, #ffe08a, #ffb224) !important; border: 0 !important; }
+@media (max-width: 700px) {
+  .st-row2 { grid-template-columns: 1fr; }
+  .st-vip { grid-template-columns: 1fr; padding: 18px; }
+  .st-vip-art { position: absolute; right: -6px; top: 6px; width: 90px; height: 90px; opacity: .9; }
+  .st-vip-art .art, .st-vip-art svg { width: 84px; height: 84px; }
+  .st-vip h2 { font-size: 22px; padding-right: 80px; }
+  .st-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .st-card { padding: 14px 12px; }
+  .st-card .st-badge { top: 8px; right: 8px; font-size: 9.5px; padding: 2px 7px; }
+  .st-foot { flex-direction: column; align-items: stretch; }
+  .st-foot b { text-align: center; }
+  .vip-chip { height: 26px; padding: 0 8px; font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .st-vip::after, .st-vip-art { animation: none; } }
+.st-exf { display: grid; place-items: center; width: 84px; height: 84px; overflow: hidden; }
+.st-exf .face { height: 76px !important; width: 76px; display: grid; place-items: center; }
+.st-exf .art, .st-exf .art svg, .st-exf svg { max-width: 72px; max-height: 72px; }
+.st-exf .title-chip { font-size: 13px; padding: 6px 10px; }

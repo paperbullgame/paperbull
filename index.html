@@ -13409,7 +13409,7 @@ const Gate = {
       <h1>Trade the market with money that isn’t real.</h1>
       <p>Start with $100,000, buy real companies and coins, and see how you’d really do. No risk, no bank account.</p>
       <div class="ag-chart"><div class="ag-chart-h"><span>S&amp;P 500 ETF</span><b class="mono">${SIM.SPY ? fmtUSD(SIM.SPY.price) : ''}</b></div><svg viewBox="0 0 280 84" preserveAspectRatio="none"><defs><linearGradient id="agG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5eead4" stop-opacity=".35"/><stop offset="1" stop-color="#5eead4" stop-opacity="0"/></linearGradient></defs><polygon points="0,84 ${pts} 280,84" fill="url(#agG)"/><polyline points="${pts}" fill="none" stroke="#5eead4" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg><div class="ag-tks">${tk}</div></div>
-      <ul class="ag-feats"><li><b>2,000+</b> stocks and coins</li><li><b>66</b> pets to collect</li><li><b>20</b> trading courses</li></ul>
+      <ul class="ag-feats"><li><b>2,000+</b> stocks and coins</li><li><b>${PETS.length}</b> pets to collect</li><li><b>20</b> trading courses</li></ul>
     </aside><div class="ag-card">
       <div class="ag-brand">${buckSVG(su ? 'cool' : 'happy')}<div><b>${su ? 'Create your account' : 'Welcome back'}</b><small>${su ? 'It takes 10 seconds. Everything stays on this device.' : 'Log in to pick up where you left off.'}</small></div></div>
       <div class="seg ag-tabs"><button data-m="login" class="${su ? '' : 'on'}">Log in</button><button data-m="signup" class="${su ? 'on' : ''}">Sign up</button></div>
@@ -19149,6 +19149,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     reg({ id: 'xpet_' + short(d.id), type: 'xpet', name: d.name, r: d.tier || 'x', pet: d.id, desc: d.desc });
     for (const m of X.MUTS) reg({ id: `xpet_${short(d.id)}_m_${m.id}`, type: 'xpet', name: `${d.name} (${m.name})`, r: d.tier || 'x', pet: d.id, mut: m.id, desc: d.desc });
   }
+  // every normal pet can be gifted straight from the admin (item id pet_<id>)
+  for (const p of PETS) if (!p.exotic) reg({ id: 'pet_' + p.id, type: 'petgift', name: p.name, r: p.r, pet: p.id, desc: 'A ' + ((RARITY[p.r] || {}).name || 'special') + ' pet.' });
   const EGGS = [
     { id: 'egg_x_any', name: 'Exotic Egg', shell: ['#ffd1f7', '#b0228f'], el: null, mut: 0.15, desc: 'Hatches any Exotic pet. 15% chance it comes out mutated.' },
     { id: 'egg_x_inferno', name: 'Inferno Egg', shell: ['#ffd27a', '#c2260a'], el: 'fire', mut: 0.2, desc: 'A fire Exotic: Phoenix, Kitsune, Ruby Dragon or Magma Golem.' },
@@ -19290,6 +19292,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const g0 = grant;
   grant = function (it) {
     if (it && it.type === 'xpet') return giveExotic(it.pet, it.mut);
+    if (it && it.type === 'petgift') return giveExotic(it.pet, null, { c: 'egg_speckled', r: 'egg_lucky', e: 'egg_mystery', l: 'egg_mythic' }[it.r] || 'egg_speckled');
     if (it && it.type === 'serum') {
       acct.inv[it.id] = (acct.inv[it.id] || 0) + 1;
       return `Mutation serum · you have ${acct.inv[it.id]}`;
@@ -20321,6 +20324,99 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   if (pets && !nav.querySelector('a[data-go="garden"]'))
     pets.insertAdjacentHTML('afterend', '<a data-go="garden" data-s="garden" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M12 21v-9"/></svg><span>Garden</span></a>');
   window.PBGarden = { rate, collect, slotsMax, DECO, THEMES, home, sceneSVG, G, own, curTheme, phase, petRate, boost, accrue, paintBank, paintWho, stop2D: stop, lootOK, lootTake, LINES, Garden, PH_LBL };
+})();
+
+/* =====================================================================
+   PET SHOP — buy the exact pet you want with coins (Pets screen).
+   Common → Legendary pets only; Mythic, Secret and Exotic pets still
+   come from eggs, events and admin gifts. One pet a day is 30% off.
+   ===================================================================== */
+(() => {
+  if (typeof Pets === 'undefined' || typeof PETS === 'undefined') return;
+  const PRICE = { c: 600, r: 1800, e: 5000, l: 15000 };
+  const ORDER = ['c', 'r', 'e', 'l'];
+  const st = { r: 'all', hideOwned: false };
+  const forSale = () => PETS.filter(p => !p.exotic && PRICE[p.r] && ITEM['pet_' + p.id]);
+  const owned = id => acct.pets.list.some(p => p.id === id);
+  // today's deal: the same pet for everyone, changes at midnight
+  const deal = () => {
+    const l = forSale().filter(p => p.r !== 'c');
+    if (!l.length) return null;
+    const d = new Date(),
+      n = d.getFullYear() * 400 + d.getMonth() * 32 + d.getDate();
+    return l[(n * 2654435761) % l.length].id;
+  };
+  const priceOf = p => Math.round((PRICE[p.r] * (p.id === deal() ? 0.7 : 1)) / 10) * 10;
+  const perk = p => (PERK_TEXT[p.perk] ? PERK_TEXT[p.perk](p.base) : '') + (p.perk2 && PERK_TEXT[p.perk2] ? ' · ' + PERK_TEXT[p.perk2](p.base2) : '');
+  const cn = n => Math.round(n).toLocaleString();
+
+  function card(p) {
+    const own = owned(p.id),
+      pr = priceOf(p),
+      off = p.id === deal(),
+      can = acct.coins >= pr;
+    return `<div class="ps-it${own ? ' own' : ''}${off ? ' deal' : ''}" style="--rc:${RARITY[p.r].color}">
+      ${off ? '<span class="ps-deal">30% off today</span>' : ''}
+      <span class="ps-art">${petArt(p.id)}</span>
+      <b>${esc(p.name)}</b>
+      <small class="ps-r">${RARITY[p.r].name}</small>
+      <small class="ps-perk">${esc(perk(p))}</small>
+      ${own ? '<span class="ps-owned">Owned</span>' : `<button class="btn sm ${can ? 'primary' : ''}" data-buypet="${p.id}"${can ? '' : ' aria-disabled="true"'}><i class="coin"></i>${cn(pr)}${off ? ` <s>${cn(PRICE[p.r])}</s>` : ''}</button>`}
+    </div>`;
+  }
+  function paint() {
+    const box = document.getElementById('petShop');
+    if (!box) return;
+    const all = forSale().sort((a, b) => ORDER.indexOf(a.r) - ORDER.indexOf(b.r) || a.name.localeCompare(b.name));
+    const d = deal();
+    let list = all.filter(p => (st.r === 'all' || p.r === st.r) && !(st.hideOwned && owned(p.id)));
+    if (d && st.r === 'all') list = [...list.filter(p => p.id === d), ...list.filter(p => p.id !== d)];
+    const have = all.filter(p => owned(p.id)).length;
+    box.innerHTML = `<div class="card-h"><h3>Pet shop</h3><span class="muted small">${have}/${all.length} collected</span></div>
+      <p class="muted small ps-lead">Skip the egg luck and buy the exact pet you want. Mythic, Secret and Exotic pets only come from eggs and events.</p>
+      <div class="ps-bar"><div class="seg ps-seg">${['all', ...ORDER].map(r => `<button data-psr="${r}" class="${st.r === r ? 'on' : ''}">${r === 'all' ? 'All' : RARITY[r].name}</button>`).join('')}</div>
+        <label class="ps-hide"><input type="checkbox" id="psHide" ${st.hideOwned ? 'checked' : ''}> Hide owned</label></div>
+      <div class="ps-grid">${list.map(card).join('') || '<p class="muted small">You own every pet here. Nice!</p>'}</div>`;
+    box.querySelectorAll('[data-psr]').forEach(b => (b.onclick = () => ((st.r = b.dataset.psr), paint())));
+    box.querySelector('#psHide').onchange = e => ((st.hideOwned = e.target.checked), paint());
+    box.querySelectorAll('[data-buypet]').forEach(b => (b.onclick = () => buy(PET[b.dataset.buypet])));
+  }
+  function buy(p) {
+    if (!p || owned(p.id)) return;
+    const pr = priceOf(p);
+    if (acct.coins < pr) {
+      SFX.play('err');
+      return toast(`You need ${cn(pr - acct.coins)} more coins for ${p.name}.`, 'err');
+    }
+    modal({
+      title: `Buy ${esc(p.name)}?`,
+      confirm: `Buy for ${cn(pr)} coins`,
+      html: `<div class="ps-conf" style="--rc:${RARITY[p.r].color}"><span class="ps-art">${petArt(p.id)}</span><div><b>${esc(p.name)}</b><small class="ps-r">${RARITY[p.r].name} pet</small><small>${esc(perk(p))}</small><small class="muted">You’ll have ${cn(acct.coins - pr)} coins left.</small></div></div>`,
+      onConfirm: () => {
+        if (acct.coins < pr || owned(p.id)) return;
+        acct.coins -= pr;
+        bumpCoins();
+        grant(ITEM['pet_' + p.id]); // same path as an admin gift: adds the pet and plays the reveal
+        saveAcct(true);
+        SFX.play('coin');
+        setTimeout(() => {
+          if (document.getElementById('petHero')) Pets.render();
+          paint();
+        }, 60);
+      },
+    });
+  }
+  const m0 = Pets.mount;
+  Pets.mount = function (v) {
+    m0.apply(this, arguments);
+    const eggs = document.getElementById('eggs');
+    const sec = eggs && eggs.closest('section');
+    if (sec && !document.getElementById('petShop')) {
+      sec.insertAdjacentHTML('afterend', '<section class="card" id="petShop"></section>');
+      paint();
+    }
+  };
+  window.PBPetShop = { paint, PRICE };
 })();
 
 /* ===================== ADVANCED MODE · REPLAY · NEWS DESK ===================== */
@@ -25979,6 +26075,15 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         } catch (e) {}
       }
       return `${it ? it.name : 'Item'} removed`;
+    }
+    if (g.kind === 'item' && /^pack_/.test(g.item_id || '') && typeof PACK !== 'undefined' && PACK[g.item_id.slice(5)]) {
+      // a gifted pack opens right away, for free
+      const p = PACK[g.item_id.slice(5)];
+      const cards = rollPack(p, 0).map(it => ({ it, note: grant(it) }));
+      acct.packsOpened = (acct.packsOpened || 0) + 1;
+      bumpCoins();
+      setTimeout(() => PackOpen.show(p, cards), 900);
+      return p.name;
     }
     if (g.kind === 'item') {
       const it = typeof ITEM !== 'undefined' && ITEM[g.item_id];
@@ -38371,6 +38476,19 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     setTimeout(() => FX.flash(t.c1), 60);
   }
 
+  /* ---------- admin shouts: a big message across the screen ---------- */
+  function shout(text, by) {
+    document.getElementById('abShout')?.remove();
+    const s = document.createElement('div');
+    s.id = 'abShout';
+    s.setAttribute('role', 'alert');
+    s.innerHTML = `<div class="ab-sh">${A ? `<span class="ab-sh-ic">${BADGE(A.type, 34)}</span>` : ''}<span><small>${by ? E(by) + ' says' : 'Admin says'}</small><b>${E(text)}</b></span></div>`;
+    document.body.appendChild(s);
+    SFX.play('xp');
+    setTimeout(() => s.classList.add('out'), 4200);
+    setTimeout(() => s.remove(), 4700);
+  }
+
   /* ---------- start / stop ---------- */
   function begin(a, fresh) {
     A = a;
@@ -38414,7 +38532,22 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         if (A) end(true);
         begin(a, !seen.includes(a.id));
       } else {
+        const was = A.type,
+          wasC = +A.coin_mult,
+          wasX = +A.xp_mult,
+          wasEnd = A.ends_at;
         A = Object.assign(A, a);
+        if (a.type && a.type !== was) {
+          // the admin switched the effect mid-event
+          FX.stop();
+          FX.start(A.type, { intensity: +A.intensity || 1 });
+          FX.flash(FX.TYPE[A.type].c1);
+          SFX.play('legend');
+          tt(`The admin switched it up: ${FX.TYPE[A.type].label}!`, 'xp');
+          clearInterval(mktT);
+          startMarket();
+        } else if (+A.coin_mult > wasC || +A.xp_mult > wasX) tt(`Boost! Now ${+A.coin_mult}× coins and ${+A.xp_mult}× XP.`, 'xp');
+        else if (wasEnd && new Date(A.ends_at) > new Date(wasEnd)) tt(`Extended! ${mmss(left())} left.`, 'ok');
         bar();
       }
     } else if (A) end();
@@ -38446,6 +38579,12 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       if (p.ev === 'start' && p.a) apply(p.a);
       else if (p.ev === 'stop') {
         if (A) end();
+      } else if (p.ev === 'shout' && A && p.id === A.id) {
+        shout(p.text, p.by);
+      } else if (p.ev === 'rain' && A && p.id === A.id) {
+        shout(`COIN RAIN! ${(+p.coins).toLocaleString()} coins for everyone playing!`, p.by);
+        FX.flash('#ffd23d');
+        if (window.PBCloud && PBCloud.claimGrants) setTimeout(() => PBCloud.claimGrants(), 600 + Math.random() * 1400);
       } else if (p.ev === 'win' && A && p.id === A.id) {
         A.winners_now = (+A.winners_now || 0) + 1;
         const me = acct && (acct.user || acct.name);
@@ -44476,6 +44615,9 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     } catch (e) {
       return;
     }
+    // new players read this inside the welcome; never stack it on top of the sign-in screen or a pop-up
+    const busy = document.querySelector('#modalRoot.open, #tutRoot, #packRoot.open, #authGate:not([hidden])') || document.body.classList.contains('gated') || (typeof settings !== 'undefined' && !settings.welcomed);
+    if (busy) return void setTimeout(notice, 4000);
     if (document.getElementById('lgCookie')) return;
     const d = document.createElement('div');
     d.id = 'lgCookie';
@@ -44783,13 +44925,61 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
 ================================================================================== */
 (() => {
   window.PBCalm = true;
+
+  /* ---------- first run: ONE welcome (with the storage note), and the tour only if they ask ---------- */
+  try {
+    welcome = function () {
+      if (settings.welcomed) return false;
+      const fin = tour => {
+        settings.welcomed = true;
+        if (!tour) settings.tutDone = true; // tour is still in Settings any time
+        saveSettings();
+        try {
+          localStorage.setItem('pb2.cookieOk', '1');
+        } catch (e) {}
+        document.getElementById('lgCookie')?.remove();
+        if (tour && window.PBTutorial) setTimeout(() => PBTutorial.start(), 250);
+      };
+      const LG = 'legal/';
+      modal({
+        title: `Welcome to ${APP_NAME}`,
+        confirm: 'Let’s trade',
+        cancel: 'Show me around',
+        html: `<div class="cm-wel"><div class="buck-intro">${buckSVG('cool')}<p>“Hey, I’m <b>Buck</b>. Here’s the deal:”</p></div>
+          <ul class="cm-wl"><li><b>${fmtUSD(CONFIG.STARTING_CASH, 0)} of pretend money.</b> Trade real stocks and coins with zero risk.</li>
+          <li><b>News moves prices.</b> Get in early, get out before the hype fades.</li>
+          <li><b>Trades earn coins</b> for packs, pets and themes. Your first pack is free.</li></ul>
+          <p class="cm-wf">Simulated market, virtual money. Your game is saved in this browser: no ads, no tracking. <a href="${LG}cookies.html" target="_blank" rel="noopener">Cookies</a> · <a href="${LG}privacy.html" target="_blank" rel="noopener">Privacy</a></p></div>`,
+        onConfirm: () => fin(false),
+        onMount: r => {
+          const x = r.querySelector('[data-x]');
+          if (x)
+            x.onclick = () => {
+              r.classList.remove('open');
+              r.innerHTML = '';
+              fin(true);
+            };
+        },
+      });
+      return true;
+    };
+  } catch (e) {}
   const T0 = Date.now();
   const EMO = /^(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}☀-➿️‍]|\s)+/u;
   const deEmoji = s => (typeof s === 'string' ? s.replace(EMO, '') : s);
 
   /* ---------- toasts: one voice at a time ---------- */
   const t0 = toast;
+  const popupOpen = () => !!document.querySelector('#modalRoot.open, #tutRoot, #packRoot.open, #abSplash') || document.body.classList.contains('gated');
   toast = function (msg, kind, icon) {
+    const m = String(msg || '');
+    if (/^Playing as guest/.test(m)) return; // Home already shows the guest bar
+    if (/^Daily bonus/.test(m) && popupOpen()) {
+      // wait until the welcome / sign-in is out of the way, then say it once
+      let n = 0;
+      const again = () => (popupOpen() && n++ < 40 ? setTimeout(again, 1500) : t0.call(this, deEmoji(msg), kind, icon));
+      return void setTimeout(again, 1500);
+    }
     if (kind === 'news' && Date.now() - T0 < 9000) {
       // quiet start: headlines still land in the bell, just not on screen
       try {
@@ -57608,6 +57798,17 @@ html.cm-on .stat-value { letter-spacing: -0.01em; }
 html.cm-on .prof-meta { display: flex !important; flex-wrap: wrap; gap: 2px 14px; }
 html.cm-on .prof-meta > span::before, html.cm-on .prof-meta > span::after { content: none !important; display: none !important; }
 
+/* first-run welcome */
+.cm-wel .buck-intro { margin-bottom: 10px; }
+.cm-wl { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.cm-wl li { position: relative; padding-left: 22px; line-height: 1.45; }
+.cm-wl li::before { content: ''; position: absolute; left: 4px; top: 0.55em; width: 8px; height: 8px; border-radius: 50%; background: var(--amber, #ff9f1c); }
+.cm-wf { margin: 14px 0 0; font-size: 12.5px; color: var(--mut); line-height: 1.45; }
+.cm-wf a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* Buck already has a button in the top bar: no second floating one covering the page */
+html.v3 body:has(#baiTop) #baiFab { display: none !important; }
+
 </style>
 <style id="pbLegal">
 /* ===================== LEGAL, SAFETY & A11Y ===================== */
@@ -57839,6 +58040,32 @@ footer.site-credit.lg-foot { display: flex; flex-direction: column; align-items:
 @keyframes pgRise { 0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(-30px, -560px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .pg-flake, .pg-ember { animation: none !important; display: none; } }
 
+/* ---------- pet shop ---------- */
+.ps-lead { margin: -4px 0 12px; }
+.ps-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.ps-seg { overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+.ps-seg::-webkit-scrollbar { display: none; }
+.ps-hide { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--mut); cursor: pointer; }
+.ps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.ps-it { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; padding: 14px 10px 12px; border-radius: 16px; border: 1px solid var(--line); background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 10%, transparent), transparent 70%); }
+.ps-it.deal { border-color: color-mix(in srgb, #22c55e 55%, var(--line)); }
+.ps-it.own { opacity: 0.62; }
+.ps-art { width: 76px; height: 76px; display: block; }
+.ps-art svg { width: 100%; height: 100%; }
+.ps-it b { font-size: 14px; margin-top: 2px; }
+.ps-r { color: var(--rc); font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; }
+.ps-perk { color: var(--mut); font-size: 12px; line-height: 1.35; min-height: 2.7em; }
+.ps-it .btn { margin-top: 6px; display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.ps-it .btn[aria-disabled='true'] { opacity: 0.55; }
+.ps-it .btn s { opacity: 0.6; font-weight: 500; font-size: 0.85em; }
+.ps-owned { margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--mut); }
+.ps-deal { position: absolute; top: 8px; left: 8px; font-size: 10.5px; font-weight: 800; padding: 3px 7px; border-radius: 99px; background: #22c55e; color: #03210f; }
+.ps-conf { display: flex; align-items: center; gap: 14px; }
+.ps-conf .ps-art { width: 88px; height: 88px; flex: none; }
+.ps-conf > div { display: flex; flex-direction: column; gap: 3px; }
+.ps-conf b { font-size: 17px; }
+@media (max-width: 420px) { .ps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ps-art { width: 64px; height: 64px; } }
+
 </style>
 <style id="pbAbuse">
 /* ===================== ADMIN ABUSE ===================== */
@@ -58010,6 +58237,18 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
   #abSplash .ab-sp, #abSplash h1 { animation-duration: .01s !important; }
   #abBar .ab-ic, #abBar .ab-go { animation: none; }
 }
+
+/* admin shout */
+#abShout { position: fixed; left: 50%; top: calc(64px + env(safe-area-inset-top, 0px)); z-index: 10020; transform: translateX(-50%); width: min(560px, calc(100vw - 24px)); pointer-events: none; animation: abShIn 420ms cubic-bezier(0.23, 1, 0.32, 1) both; transition: opacity 400ms ease, transform 400ms ease; }
+#abShout.out { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+.ab-sh { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 18px; color: #fff; background: linear-gradient(120deg, rgba(20, 12, 40, 0.94), rgba(60, 10, 40, 0.94)); border: 1px solid rgba(255, 255, 255, 0.16); box-shadow: 0 20px 60px -20px #000, 0 0 40px -10px #ff3df0; backdrop-filter: blur(10px); }
+.ab-sh-ic { width: 34px; height: 34px; flex: none; line-height: 0; }
+.ab-sh-ic svg { width: 100%; height: 100%; }
+.ab-sh > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ab-sh small { font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.75; }
+.ab-sh b { font-size: 17px; line-height: 1.3; }
+@keyframes abShIn { from { opacity: 0; transform: translateX(-50%) translateY(-16px) scale(0.97); } }
+@media (prefers-reduced-motion: reduce) { #abShout { animation: none; } }
 
 </style>
 <style id="pbReveal">

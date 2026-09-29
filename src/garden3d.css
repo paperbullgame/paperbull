@@ -1,0 +1,38 @@
+/* ===================== 3D PET GARDEN ===================== */
+.pg-stage.g3d { height: clamp(440px, 66vh, 720px); background: #0b1230; cursor: grab; }
+.pg-stage.g3d:active { cursor: grabbing; }
+.pg-stage.g3d .pg-bg, .pg-stage.g3d .pg-actors, .pg-stage.g3d .pg-fx { display: none !important; }
+.g3-canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; z-index: 1; touch-action: pan-y; outline: none; }
+.g3-ui { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+.g3-lbl, .g3-say, .g3-z { position: absolute; left: 0; top: 0; will-change: transform; white-space: nowrap; }
+.g3-lbl { font: 800 11.5px var(--sans); color: #fff; background: rgba(10, 14, 30, 0.6); padding: 3px 8px; border-radius: 99px; transition: opacity 0.2s; }
+.g3-lbl.comp { background: linear-gradient(90deg, #ff9a1f, #ff5e1a); }
+.g3-say { background: #fff; color: #1c1c28; font: 700 12px var(--sans); padding: 6px 10px; border-radius: 12px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25); margin-top: -8px; animation: g3Pop 0.25s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.g3-say::after { content: ''; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #fff; }
+@keyframes g3Pop { from { transform: translate(var(--tx, 0), var(--ty, 0)) scale(0.6); } }
+.g3-z { font: 900 15px var(--sans); color: #fff; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); animation: pgZ 2.4s ease-in-out infinite; }
+.g3-z i { font-style: normal; margin-left: 2px; }
+.g3-float { position: absolute; font-size: 22px; transform: translate(-50%, 0); animation: pgFloat 1.4s ease-out forwards; pointer-events: none; }
+.g3-load { position: absolute; inset: 0; z-index: 7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #fff; text-align: center; background: radial-gradient(120% 100% at 50% 100%, #1d4a33, #0b1230 60%); }
+.g3-load b { font: 800 17px var(--sans); }
+.g3-load small { color: rgba(255, 255, 255, 0.7); font-size: 12.5px; }
+.g3-spin { width: 38px; height: 38px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.2); border-top-color: #ffb52e; animation: g3Spin 0.9s linear infinite; margin-bottom: 6px; }
+@keyframes g3Spin { to { transform: rotate(360deg); } }
+.g3-fade { position: absolute; inset: 0; z-index: 6; background: #000; opacity: 1; transition: opacity 1.4s ease; pointer-events: none; }
+.g3-fade.off { opacity: 0; }
+.g3-flash { position: absolute; inset: 0; z-index: 9; background: #fff; animation: g3Flash 0.45s ease-out forwards; pointer-events: none; }
+@keyframes g3Flash { from { opacity: 0.9; } to { opacity: 0; } }
+.g3-hint { position: absolute; left: 50%; bottom: 16px; z-index: 5; transform: translateX(-50%); font: 700 12px var(--sans); color: #fff; background: rgba(10, 14, 30, 0.55); backdrop-filter: blur(6px); padding: 7px 13px; border-radius: 99px; pointer-events: none; transition: opacity 1s; white-space: nowrap; }
+.g3-hint.off { opacity: 0; }
+.pg-stage.g3d .pg-top { flex-wrap: wrap; row-gap: 6px; }
+.pg-act.g3-tog { background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; }
+.pg-act.g3-tog.on { background: linear-gradient(135deg, #ff9a1f, #ff5e1a); }
+.pg-stage.g3d:fullscreen, .pg-stage.g3d:-webkit-full-screen { height: 100vh !important; width: 100vw !important; border-radius: 0 !important; margin: 0; background: #000; }
+.pg-stage.g3d:fullscreen .g3-canvas { touch-action: none; }
+@media (max-width: 600px) {
+  .pg-stage.g3d { height: 470px; }
+  .g3-b span { display: none; }
+  .pg-stage.g3d .pg-act { padding: 7px 9px; }
+  .pg-stage.g3d .pg-top .pg-chip:nth-child(2) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .g3-say, .g3-float { animation: none; } }

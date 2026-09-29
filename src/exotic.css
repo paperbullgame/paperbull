@@ -1,0 +1,134 @@
+/* ===================== EXOTIC PETS + MUTATIONS ===================== */
+/* exotic animations (inside the pet SVG) */
+svg.xart { overflow: visible; }
+svg.xart .xa-spin, svg.xart .xa-spin2, svg.art .xa-spin2 { transform-box: view-box; transform-origin: 32px 35px; animation: xaSpin 14s linear infinite; }
+svg .xa-spin2 { animation-duration: 9s !important; animation-direction: reverse; }
+svg .xa-pulse { transform-box: fill-box; transform-origin: center; animation: xaPulse 2.4s ease-in-out infinite; }
+svg .xa-pulse2 { transform-box: fill-box; transform-origin: center; animation: xaPulse2 3s ease-in-out infinite; }
+svg .xa-flap { transform-box: view-box; transform-origin: 32px 34px; animation: xaFlap 1.6s ease-in-out infinite; }
+svg .xa-flick { transform-box: fill-box; transform-origin: 50% 100%; animation: xaFlick .7s ease-in-out infinite alternate; }
+svg .xa-sway { transform-box: view-box; transform-origin: 32px 40px; animation: xaSway 2.8s ease-in-out infinite; }
+svg .xa-bob { animation: xaBob 2.2s ease-in-out infinite; }
+svg .xa-blink { animation: xaBlink 1.8s steps(2, jump-none) infinite; }
+svg .xa-glow { animation: xaGlow 1.6s ease-in-out infinite; }
+svg .xa-scan { animation: xaScan 1.4s ease-in-out infinite; }
+@keyframes xaSpin { to { transform: rotate(360deg); } }
+svg .xa-spin3 { transform-box: view-box; transform-origin: 32px 36px; animation: xaSpin 22s linear infinite; }
+svg .xa-spin4 { transform-box: fill-box; animation: xaSpin 1.6s linear infinite; }
+svg.xultra { filter: drop-shadow(0 0 5px color-mix(in srgb, #ffe27a 55%, transparent)); }
+svg.xprism { animation: mxRainbow 5s linear infinite; }
+.x-ultra-tag { background: linear-gradient(90deg, #ffe27a, #ff3df0, #3de7ff) !important; color: #1a0a24 !important; }
+@keyframes xaPulse { 0%, 100% { opacity: .35; transform: scale(.94); } 50% { opacity: .75; transform: scale(1.05); } }
+@keyframes xaPulse2 { 0%, 100% { transform: scale(.97) rotate(0deg); } 50% { transform: scale(1.03) rotate(4deg); } }
+@keyframes xaFlap { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.08) translateY(-1px); } }
+@keyframes xaFlick { from { transform: scaleY(.92) skewX(-2deg); } to { transform: scaleY(1.06) skewX(2deg); } }
+@keyframes xaSway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes xaBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes xaBlink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@keyframes xaGlow { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
+@keyframes xaScan { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+
+/* Exotic rarity chrome */
+.col-item[data-r='x'], .pet-stage[data-r='x'] { --rc: #ff3df0; }
+.col-item[data-r='x'] { background: linear-gradient(160deg, color-mix(in srgb, #ff3df0 14%, var(--bg2)), color-mix(in srgb, #3de7ff 10%, var(--bg2))); border-color: color-mix(in srgb, #ff3df0 45%, transparent) !important; position: relative; overflow: hidden; }
+.col-item[data-r='x']::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .16) 50%, transparent 65%); transform: translateX(-100%); animation: xShine 4.5s ease-in-out infinite; pointer-events: none; }
+.x-rar { background: linear-gradient(90deg, #ff3df0, #8a5cff, #3de7ff, #ff3df0); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent !important; font-weight: 800; animation: xHue 3s linear infinite; }
+.col-item[data-r='x'].locked .face { filter: brightness(0) drop-shadow(0 0 6px #ff3df0) !important; opacity: .55; }
+.col-item .x-tag { position: absolute; top: 8px; right: 8px; font: 800 9.5px var(--sans); letter-spacing: .08em; padding: 3px 6px; border-radius: 99px; background: linear-gradient(90deg, #ff3df0, #8a5cff); color: #fff; z-index: 2; }
+.pet-stage[data-r='x']::after { content: ''; position: absolute; inset: 4%; border-radius: 50%; background: conic-gradient(from 0deg, #ff3df088, #8a5cff00, #3de7ff88, #8a5cff00, #ff3df088); animation: xaSpin 6s linear infinite; filter: blur(14px); pointer-events: none; z-index: 0; }
+.pet-stage[data-r='x'] .pet-big { position: relative; z-index: 1; }
+@keyframes xShine { 0%, 70% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes xHue { to { background-position: 300% 0; } }
+
+html .col-item[data-r='x'] .rpill { color: #ff6af5 !important; background: rgba(255, 61, 240, .16) !important; border: 1px solid rgba(255, 61, 240, .45) !important; font-weight: 800; letter-spacing: .03em; }
+.col-item .mut-pill ~ .x-tag { display: none; }
+.x-egg small.muted { color: var(--mut) !important; }
+/* Exotic eggs */
+.x-egg .face { filter: drop-shadow(0 0 8px var(--rc)); animation: xEgg 2.2s ease-in-out infinite; }
+@keyframes xEgg { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg) translateY(-2px); } }
+.x-eggs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.x-empty { color: var(--mut); font-size: 13px; line-height: 1.45; margin: 0; }
+
+/* ---------- mutations (any pet, drawn anywhere) ----------
+   The recolor + every effect layer lives inside the pet SVG (see ExoticArt.mutate).
+   Only transform / opacity animations on small groups: cheap enough for a garden full of mutants. */
+svg.art[data-mut] { overflow: visible; }
+svg[data-mut] .mx-back, svg[data-mut] .mx-front { pointer-events: none; }
+svg[data-mut] .mx-tw { animation: mxTw 1.6s ease-in-out infinite; }
+svg[data-mut] .mx-blink { animation: mxTw 1s steps(2, jump-none) infinite; }
+svg[data-mut] .mx-sweep { animation: mxSweep 4.6s cubic-bezier(.5, 0, .5, 1) infinite; }
+svg[data-mut] .mx-pop { transform-box: fill-box; transform-origin: center; animation: mxPop 2.6s ease-in-out infinite; }
+svg[data-mut] .mx-fall { transform-box: fill-box; transform-origin: center; animation: mxFall 4.2s linear infinite; }
+svg[data-mut] .mx-petal { transform-box: fill-box; transform-origin: center; animation: mxPetal 5s linear infinite; }
+svg[data-mut] .mx-rise { animation: mxRise 2.4s ease-in infinite; }
+svg[data-mut] .mx-puff { transform-box: fill-box; transform-origin: center; animation: mxPuff 3.4s ease-out infinite; }
+svg[data-mut] .mx-bub { transform-box: fill-box; transform-origin: center; animation: mxBub 3s ease-in infinite; }
+svg[data-mut] .mx-flame { transform-box: view-box; transform-origin: 32px 40px; animation: mxFlame .9s steps(3, jump-none) infinite alternate; }
+svg[data-mut] .mx-ember { animation: mxPulse 2.4s steps(5, jump-none) infinite; }
+svg[data-mut] .mx-drop { animation: mxDrop 2.4s ease-in infinite; }
+svg[data-mut] .mx-zap { animation: mxZap 2.3s steps(1, end) infinite; }
+svg[data-mut] .mx-spin, svg[data-mut] .mx-spinf, svg[data-mut] .mx-spinr, svg[data-mut] .mx-orb, svg[data-mut] .mx-fly { transform-box: view-box; transform-origin: var(--o, 32px 36px); animation: xaSpin 24s linear infinite; }
+svg[data-mut] .mx-spinf { animation-duration: 7s; }
+svg[data-mut] .mx-spinr { animation-duration: 9s; animation-direction: reverse; }
+svg[data-mut] .mx-orb { animation-duration: 6s; }
+svg[data-mut] .mx-fly { animation-duration: 1.3s; }
+svg[data-mut] .mx-flap { transform-box: view-box; transform-origin: 32px 36px; animation: mxFlap 2s ease-in-out infinite; }
+svg[data-mut] .mx-sway { transform-box: view-box; transform-origin: 32px 60px; animation: mxSway 3.2s ease-in-out infinite; }
+svg[data-mut] .mx-bob { animation: mxBob 2.4s ease-in-out infinite; }
+svg[data-mut] .mx-suck { transform-box: view-box; transform-origin: 32px 36px; animation: mxSuck 2.6s ease-in infinite; }
+svg[data-mut] .mx-flare { transform-box: fill-box; transform-origin: 50% 100%; animation: mxFlare 2.6s ease-in-out infinite; }
+svg[data-mut] .mx-ghost { animation: mxGhost 3.4s ease-in-out infinite; }
+svg[data-mut] .mx-slice { animation: mxSlice 1.3s steps(1, end) infinite; }
+svg.art[data-mut='glitch'] { animation: mxGlitch 2.6s steps(1) infinite; }
+@keyframes mxPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes mxTw { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@keyframes mxSweep { 0% { transform: translateX(-14px); } 26%, 100% { transform: translateX(82px); } }
+@keyframes mxPop { 0%, 100% { transform: scale(.15) rotate(0deg); opacity: 0; } 40% { transform: scale(1) rotate(45deg); opacity: 1; } 70% { transform: scale(.35) rotate(90deg); opacity: 0; } }
+@keyframes mxFall { 0% { transform: translate(0, -6px) rotate(0deg); opacity: 0; } 15%, 80% { opacity: 1; } 100% { transform: translate(5px, 22px) rotate(200deg); opacity: 0; } }
+@keyframes mxPetal { 0% { transform: translate(-3px, -8px) rotate(0deg); opacity: 0; } 12%, 80% { opacity: 1; } 100% { transform: translate(9px, 24px) rotate(300deg); opacity: 0; } }
+@keyframes mxRise { from { transform: translateY(4px); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(-16px); opacity: 0; } }
+@keyframes mxPuff { from { transform: translateY(2px) scale(.5); opacity: 0; } 30% { opacity: .85; } to { transform: translateY(-16px) scale(1.6); opacity: 0; } }
+@keyframes mxBub { 0% { transform: translateY(4px) scale(.5); opacity: 0; } 20% { opacity: 1; } 85% { transform: translateY(-16px) scale(1); opacity: 1; } 100% { transform: translateY(-18px) scale(1.5); opacity: 0; } }
+@keyframes mxFlame { from { transform: scale(.97); opacity: .85; } to { transform: scale(1.05); opacity: 1; } }
+@keyframes mxDrop { 0%, 30% { transform: translateY(0); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(14px); opacity: 0; } }
+@keyframes mxZap { 0% { opacity: 0; } 4% { opacity: 1; } 8% { opacity: .2; } 12% { opacity: 1; } 34% { opacity: .6; } 38% { opacity: 1; } 44% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes mxFlap { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.1) translateY(-1px); } }
+@keyframes mxSway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes mxBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes mxSuck { 0% { transform: scale(1) rotate(0deg); opacity: 0; } 25% { opacity: 1; } 100% { transform: scale(.1) rotate(160deg); opacity: 0; } }
+@keyframes mxFlare { 0%, 100% { transform: scale(.7); opacity: .3; } 50% { transform: scale(1.1); opacity: 1; } }
+@keyframes mxGhost { 0%, 100% { opacity: .82; } 50% { opacity: .5; } }
+@keyframes mxSlice { 0% { transform: translate(0, 0); opacity: 1; } 25% { transform: translate(5px, -6px); opacity: .4; } 50% { transform: translate(-4px, 9px); opacity: 1; } 75% { transform: translate(2px, -12px); opacity: .7; } }
+@keyframes mxGlitch { 0%, 88%, 100% { transform: none; } 90% { transform: translate(2px, -1px) skewX(6deg); } 94% { transform: translate(-2px, 1px); } }
+@keyframes mxRainbow { from { filter: hue-rotate(0deg) saturate(1.8) drop-shadow(0 0 4px #ff7ae6); } to { filter: hue-rotate(360deg) saturate(1.8) drop-shadow(0 0 4px #ff7ae6); } }
+
+/* mutation pill: each mutation's own gradient + a light sweep */
+.mut-pill { position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 4px; font: 800 10.5px/1.25 var(--sans); letter-spacing: .06em; text-transform: uppercase; padding: 3px 9px; border-radius: 99px; vertical-align: middle; white-space: nowrap; color: var(--mi, #120a1e); background: var(--mg, var(--mc, #ffc53d)); border: 1px solid color-mix(in srgb, var(--mc, #ffc53d) 70%, #fff); box-shadow: 0 0 10px color-mix(in srgb, var(--mc, #ffc53d) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -1px 0 rgba(0, 0, 0, .18); text-shadow: 0 1px 0 color-mix(in srgb, var(--mi, #120a1e) 18%, transparent); }
+.mut-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; opacity: .85; flex: none; }
+.mut-pill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, .55) 48%, transparent 62%); transform: translateX(-110%); animation: mxPill 3.6s ease-in-out infinite; pointer-events: none; }
+.mut-pill[data-m='rainbow'], .mut-pill[data-m='holo'], .mut-pill[data-m='aurora'] { background-size: 200% 100%; animation: mxPillBg 4s linear infinite; }
+.mut-pill[data-m='pixel'] { border-radius: 3px; font-family: var(--mono, monospace); letter-spacing: .02em; box-shadow: 2px 2px 0 #0a0a1a, 0 0 10px rgba(57, 255, 136, .4); }
+.mut-pill[data-m='glitch'] { text-shadow: -1px 0 #ff2d6e, 1px 0 #2df0ff; border-color: #39ff88; }
+.mut-pill[data-m='void'], .mut-pill[data-m='cosmic'], .mut-pill[data-m='shadow'], .mut-pill[data-m='demonic'] { border-color: color-mix(in srgb, var(--mc) 80%, #000); }
+.mut-pill.rb:not([data-m]) { background: linear-gradient(90deg, #ff7ae6, #ffd34d, #7dff3d, #3de7ff, #8a5cff); }
+@keyframes mxPill { 0%, 55% { transform: translateX(-110%); } 100% { transform: translateX(110%); } }
+@keyframes mxPillBg { to { background-position: 200% 0; } }
+.col-item .mut-pill { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; padding: 2px 6px; }
+.x-serums { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.x-serum { display: inline-flex; align-items: center; gap: 6px; }
+.x-serum i { width: 12px; height: 12px; border-radius: 50%; background: var(--mg, var(--mc)); box-shadow: 0 0 8px var(--mc); }
+
+@media (prefers-reduced-motion: reduce) {
+  svg.xart *, svg.art[data-mut], svg.art[data-mut] *, .col-item[data-r='x']::after, .pet-stage[data-r='x']::after, .x-egg .face, .mut-pill, .mut-pill::after { animation: none !important; }
+}
+html.reduce-motion svg.xart *, html.reduce-motion svg.art[data-mut], html.reduce-motion svg.art[data-mut] *, html.reduce-motion .mut-pill, html.reduce-motion .mut-pill::after { animation: none !important; }
+/* Mythic + Secret rarities */
+.m-rar { background: linear-gradient(90deg, #ff4d2e, #ffb13d, #ff4d2e); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent !important; font-weight: 800; animation: xHue 2.4s linear infinite; }
+.s-rar { background: linear-gradient(90deg, #fff, #9aa0b8, #fff, #39ff88, #fff); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent !important; font-weight: 900; letter-spacing: .06em; animation: xHue 1.6s linear infinite; text-shadow: 0 0 12px rgba(255, 255, 255, .25); }
+.col-item .x-tag.m-tag, .inv-tag.m-tag { background: linear-gradient(90deg, #ff4d2e, #ffb13d); }
+.col-item .x-tag.s-tag, .inv-tag.s-tag { background: linear-gradient(90deg, #111, #444, #111); border: 1px solid #fff; box-shadow: 0 0 10px rgba(255, 255, 255, .5); animation: sGlitch 2.2s steps(1) infinite; }
+@keyframes sGlitch { 0%, 90%, 100% { transform: none; filter: none; } 92% { transform: translate(1px, -1px); filter: hue-rotate(90deg); } 95% { transform: translate(-1px, 1px); filter: hue-rotate(-90deg); } }
+.col-item[data-r='m'], .inv-it[data-r='m'] { box-shadow: 0 0 0 1px rgba(255, 77, 46, .6), 0 10px 30px -12px rgba(255, 77, 46, .6); }
+.col-item[data-r='s'], .inv-it[data-r='s'] { background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, .12), transparent 60%), #07070c !important; box-shadow: 0 0 0 1px #fff, 0 0 26px -6px rgba(255, 255, 255, .7); }
+.pet-stage[data-r='m'] { --rc: #ff4d2e; }
+.pet-stage[data-r='s'] { --rc: #ffffff; }

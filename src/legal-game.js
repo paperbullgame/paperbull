@@ -199,6 +199,9 @@
     } catch (e) {
       return;
     }
+    // new players read this inside the welcome; never stack it on top of the sign-in screen or a pop-up
+    const busy = document.querySelector('#modalRoot.open, #tutRoot, #packRoot.open, #authGate:not([hidden])') || document.body.classList.contains('gated') || (typeof settings !== 'undefined' && !settings.welcomed);
+    if (busy) return void setTimeout(notice, 4000);
     if (document.getElementById('lgCookie')) return;
     const d = document.createElement('div');
     d.id = 'lgCookie';

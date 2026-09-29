@@ -1,0 +1,892 @@
+/* =====================================================================
+   PAPERBULL — "Trading desk after hours"
+   One design language for the default look. Loaded last.
+   $P = default dark look, $L = default light look (replaced at build).
+   Rules: one accent (orange) for action + selection, green/red only for
+   money moving, flat surfaces separated by lightness + hairlines, one
+   type family (tabular figures for every number), no glows.
+   ===================================================================== */
+
+/* ---------- tokens ---------- */
+$P {
+  --bg: #0a0b0e !important;
+  --bg2: #0e1014 !important;
+  --panel: #131519 !important;
+  --panel2: #1a1d22 !important;
+  --panel3: #22262c;
+  --line: #22252b !important;
+  --line2: #2e3239 !important;
+  --tx: #eceef2 !important;
+  --mut: #9ba1ac !important;
+  --dim: #6c727d !important;
+  --amber: #ff8a1c !important;
+  --up: #22c47e !important;
+  --dn: #f0525a !important;
+  --brand: #ff8a1c;
+  --brand-hi: #ff9d40;
+  --brand-ink: #1a0f02;
+  --brand-soft: rgba(255, 138, 28, 0.12);
+  --up-soft: rgba(34, 196, 126, 0.12);
+  --dn-soft: rgba(240, 82, 90, 0.12);
+  --vg: #ff8a1c;
+  --vglow: none;
+  --mono: var(--sans) !important;
+  --r-card: 14px;
+  --r-ctl: 10px;
+  --r-sm: 8px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  color-scheme: dark;
+  background: var(--bg) !important;
+}
+$L {
+  --bg: #f6f6f4 !important;
+  --bg2: #efefec !important;
+  --panel: #ffffff !important;
+  --panel2: #f3f3f0 !important;
+  --panel3: #eaeae6;
+  --line: #e6e5e0 !important;
+  --line2: #d9d8d2 !important;
+  --tx: #16171a !important;
+  --mut: #5d626b !important;
+  --dim: #8a8f98 !important;
+  --amber: #e8700a !important;
+  --up: #0f9d5e !important;
+  --dn: #d93a43 !important;
+  --brand: #e8700a;
+  --brand-hi: #f07d17;
+  --brand-ink: #ffffff;
+  --brand-soft: rgba(232, 112, 10, 0.1);
+  --up-soft: rgba(15, 157, 94, 0.1);
+  --dn-soft: rgba(217, 58, 67, 0.1);
+  --vg: #e8700a;
+  --vglow: none;
+  --mono: var(--sans) !important;
+  --r-card: 14px;
+  --r-ctl: 10px;
+  --r-sm: 8px;
+  background: var(--bg) !important;
+}
+
+/* ---------- ground: no starfield, no nebula ---------- */
+$P body,
+$L body {
+  background: var(--bg) !important;
+  background-image: none !important;
+}
+$P body::before,
+$P body::after,
+$L body::before,
+$L body::after {
+  display: none !important;
+}
+
+/* ---------- type: one family, tabular figures, sentence case ---------- */
+$P,
+$L {
+  font-feature-settings: 'tnum' 1, 'cv11' 1;
+}
+$P .mono,
+$P [class*='mono'],
+$P #topVal,
+$P #topChg,
+$P #coinBal,
+$P .lvchip,
+$P .chips button,
+$P .seg button,
+$L .mono,
+$L [class*='mono'],
+$L #topVal,
+$L #topChg,
+$L #coinBal,
+$L .lvchip,
+$L .chips button,
+$L .seg button {
+  font-family: var(--sans) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+}
+$P h1,
+$P h2,
+$P h3,
+$L h1,
+$L h2,
+$L h3 {
+  text-shadow: none !important;
+  letter-spacing: -0.02em;
+}
+$P .card-h h3,
+$L .card-h h3 {
+  font-size: 15px !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.01em !important;
+  text-transform: none !important;
+}
+$P .stat-label,
+$P .tile small,
+$P .card.hero .muted.small,
+$L .stat-label,
+$L .tile small,
+$L .card.hero .muted.small {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: var(--mut) !important;
+  opacity: 1 !important;
+}
+
+/* ---------- surfaces: flat, hairline, one radius ---------- */
+$P .card,
+$P .tile,
+$P .stock-card,
+$P .pack-card,
+$P .bk-card,
+$P .stat-card,
+$L .card,
+$L .tile,
+$L .stock-card,
+$L .pack-card,
+$L .bk-card,
+$L .stat-card {
+  background: var(--panel) !important;
+  background-image: none !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-card) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+$L .card,
+$L .tile,
+$L .stock-card,
+$L .pack-card,
+$L .stat-card {
+  box-shadow: 0 1px 2px rgba(22, 23, 26, 0.04) !important;
+}
+$P .card::before,
+$P .card::after,
+$P .tile::before,
+$P .tile::after,
+$L .tile::before,
+$L .tile::after {
+  display: none !important;
+}
+
+/* ---------- buttons: solid, no gradient, no glow ---------- */
+$P .btn,
+$L .btn {
+  border-radius: var(--r-ctl) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.005em !important;
+  transition:
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    transform 100ms var(--ease) !important;
+}
+$P .btn:not(.primary):not(.buy):not(.sell):not(.danger),
+$L .btn:not(.primary):not(.buy):not(.sell):not(.danger) {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line2) !important;
+  color: var(--tx) !important;
+}
+$P .btn.primary,
+$P #authGate .ag-go,
+$L .btn.primary,
+$L #authGate .ag-go {
+  background: var(--brand) !important;
+  background-image: none !important;
+  border: 1px solid transparent !important;
+  color: var(--brand-ink) !important;
+}
+@media (hover: hover) {
+  $P .btn.primary:hover,
+  $L .btn.primary:hover {
+    background: var(--brand-hi) !important;
+  }
+  $P .btn:not(.primary):not(.buy):not(.sell):hover,
+  $L .btn:not(.primary):not(.buy):not(.sell):hover {
+    border-color: var(--dim) !important;
+  }
+}
+$P .btn:active,
+$L .btn:active {
+  transform: scale(0.97);
+}
+/* buy is green, sell is red — money semantics, not brand */
+$P .btn.buy,
+$P .btn.big.buy,
+$L .btn.buy,
+$L .btn.big.buy {
+  background: var(--up) !important;
+  background-image: none !important;
+  color: #04160d !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+$P .btn.sell,
+$P .btn.big.sell,
+$L .btn.sell,
+$L .btn.big.sell {
+  background: var(--dn) !important;
+  background-image: none !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+$P .btn.buy:disabled,
+$P .btn.sell:disabled,
+$L .btn.buy:disabled,
+$L .btn.sell:disabled {
+  opacity: 0.4 !important;
+}
+
+/* ---------- segmented controls & chips: raised selection, no orange fill ---------- */
+$P .seg,
+$L .seg {
+  background: var(--bg2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-ctl) !important;
+  padding: 3px !important;
+  box-shadow: none !important;
+}
+$P .seg button,
+$L .seg button {
+  border-radius: 7px !important;
+  color: var(--mut) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  text-shadow: none !important;
+}
+$P .seg button.on,
+$P .tabs button.on,
+$P button.on:not(.th-card),
+$L .seg button.on,
+$L .tabs button.on {
+  background: var(--panel3) !important;
+  background-image: none !important;
+  color: var(--tx) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset !important;
+}
+$L .seg button.on,
+$L .tabs button.on {
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(22, 23, 26, 0.08) !important;
+}
+$P .seg.side button[data-side='buy'].on {
+  background: var(--up-soft) !important;
+  color: var(--up) !important;
+}
+$P .seg.side button[data-side='sell'].on {
+  background: var(--dn-soft) !important;
+  color: var(--dn) !important;
+}
+$L .seg.side button[data-side='buy'].on {
+  color: var(--up) !important;
+}
+$L .seg.side button[data-side='sell'].on {
+  color: var(--dn) !important;
+}
+$P .chips button,
+$L .chips button {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-sm) !important;
+  color: var(--mut) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- inputs ---------- */
+$P .inp,
+$P .search,
+$P input.txt,
+$P #agForm .txt,
+$L .inp,
+$L .search,
+$L input.txt {
+  background: var(--bg2) !important;
+  background-image: none !important;
+  border: 1px solid var(--line2) !important;
+  border-radius: var(--r-ctl) !important;
+  box-shadow: none !important;
+}
+$P .inp:focus-within,
+$P .search:focus-within,
+$L .inp:focus-within,
+$L .search:focus-within {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px var(--brand-soft) !important;
+}
+
+/* ---------- top bar ---------- */
+$P #topWrap {
+  background: rgba(10, 11, 14, 0.9) !important;
+  border-bottom: 1px solid var(--line) !important;
+  box-shadow: none !important;
+}
+$L #topWrap {
+  background: rgba(246, 246, 244, 0.92) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+$P #top .top-val,
+$L #top .top-val {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 4px !important;
+}
+$P #topVal,
+$L #topVal {
+  color: var(--tx) !important;
+  font-weight: 700 !important;
+  font-size: 17px !important;
+  text-shadow: none !important;
+}
+$P #top .mkt-chip,
+$P #top .coin-chip,
+$P #top .adv-toggle,
+$P #top .mode-btn,
+$P #top .pb-gear,
+$P #top .me-chip,
+$P #baiTop,
+$L #top .mkt-chip,
+$L #top .coin-chip,
+$L #top .adv-toggle,
+$L #top .mode-btn,
+$L #top .pb-gear,
+$L #top .me-chip,
+$L #baiTop {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  border-radius: var(--r-ctl) !important;
+}
+$P #top .coin-chip,
+$L #top .coin-chip {
+  color: var(--tx) !important;
+}
+$P #top .mkt-chip,
+$L #top .mkt-chip {
+  color: var(--mut) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+$P #tape,
+$L #tape {
+  background: var(--bg) !important;
+  border-color: var(--line) !important;
+}
+$P #tape *,
+$L #tape * {
+  font-family: var(--sans) !important;
+}
+
+/* ---------- side nav (desktop) + bottom nav (phone) ---------- */
+$P #nav,
+$L #nav {
+  box-shadow: none !important;
+}
+$P #nav {
+  background: var(--bg) !important;
+  border-right: 1px solid var(--line) !important;
+}
+$L #nav {
+  background: var(--bg) !important;
+  border-right: 1px solid var(--line) !important;
+}
+$P #nav a,
+$L #nav a {
+  border: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  color: var(--mut) !important;
+  font-weight: 550 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  transition:
+    background-color 150ms var(--ease),
+    color 150ms var(--ease) !important;
+}
+$P #nav a.on,
+$L #nav a.on {
+  color: var(--tx) !important;
+  background: var(--panel2) !important;
+}
+$P #nav a.on::after,
+$L #nav a.on::after {
+  display: none !important;
+}
+/* tab icons: quiet until selected, then the brand */
+$P #nav .nt,
+$L #nav .nt,
+$P .ms-t .nt,
+$L .ms-t .nt {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--dim) !important;
+  transform: none !important;
+}
+$P #nav a:hover .nt,
+$L #nav a:hover .nt {
+  color: var(--mut) !important;
+  background: transparent !important;
+}
+$P #nav a.on .nt,
+$L #nav a.on .nt,
+$P .ms-t.on .nt,
+$L .ms-t.on .nt {
+  background: var(--brand-soft) !important;
+  color: var(--brand) !important;
+  box-shadow: none !important;
+}
+$P #nav a.on .nt svg,
+$L #nav a.on .nt svg,
+$P .ms-t.on .nt svg,
+$L .ms-t.on .nt svg {
+  stroke: currentColor !important;
+}
+$P .nt .pbi .du,
+$L .nt .pbi .du {
+  fill-opacity: 0.16 !important;
+}
+$P #nav .nav-auth,
+$L #nav .nav-auth {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  color: var(--tx) !important;
+  border-radius: var(--r-ctl) !important;
+}
+@media (min-width: 900px) {
+  $P #nav a,
+  $L #nav a {
+    border-radius: var(--r-ctl) !important;
+    padding-block: 7px !important;
+  }
+  $P #nav a.on,
+  $L #nav a.on {
+    box-shadow: inset 2px 0 0 var(--brand) !important;
+  }
+}
+@media (max-width: 899px) {
+  $P #nav {
+    background: var(--bg) !important;
+    border-top: 1px solid var(--line) !important;
+    border-right: 0 !important;
+  }
+  $L #nav {
+    background: #fff !important;
+    border-top: 1px solid var(--line) !important;
+  }
+  $P #nav a.on,
+  $L #nav a.on {
+    background: transparent !important;
+  }
+  $P #nav a.on::before,
+  $L #nav a.on::before {
+    display: none !important;
+  }
+  $P #nav a .nt,
+  $L #nav a .nt {
+    width: 44px !important;
+    height: 26px !important;
+    border-radius: 999px !important;
+  }
+}
+$P .more-sheet .ms-panel,
+$L .more-sheet .ms-panel {
+  background: var(--panel) !important;
+  border-top: 1px solid var(--line) !important;
+}
+$P .ms-t,
+$L .ms-t {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--tx) !important;
+}
+
+/* ---------- page headers ---------- */
+$P .pg-h .pg-ic,
+$L .pg-h .pg-ic,
+$P .pg-h .pg-ic.tinted,
+$L .pg-h .pg-ic.tinted {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  color: var(--tx) !important;
+  border-radius: 12px !important;
+}
+$P .pg-h h1,
+$L .pg-h h1 {
+  font-weight: 700 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* ---------- home: the hero is the account value ---------- */
+$P .guest-bar,
+$L .guest-bar {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-left: 1px solid var(--line) !important;
+  border-radius: var(--r-card) !important;
+  box-shadow: none !important;
+}
+$P .card.hero,
+$L .card.hero {
+  padding: 22px 22px 16px !important;
+}
+$P .card.hero [data-b='total'],
+$L .card.hero [data-b='total'] {
+  color: var(--tx) !important;
+  -webkit-text-fill-color: currentColor !important;
+  background: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  font-family: var(--sans) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.035em !important;
+  font-size: clamp(40px, 6.2vw, 64px) !important;
+  line-height: 1 !important;
+  margin: 6px 0 12px !important;
+}
+$P .hero-sub > span,
+$L .hero-sub > span {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+$P .lvchip,
+$L .lvchip {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--mut) !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+$P .card.hero .seg,
+$L .card.hero .seg {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* stat row: one family, no rainbow stripes, icon quiet */
+$P .stats-wrap,
+$L .stats-wrap {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+$P .stat-card,
+$L .stat-card {
+  --g1: var(--dim) !important;
+  box-shadow: none !important;
+  min-height: 84px !important;
+  color: var(--tx) !important;
+}
+$L .stat-card {
+  box-shadow: 0 1px 2px rgba(22, 23, 26, 0.04) !important;
+}
+$P .stat-card::before,
+$L .stat-card::before {
+  color: var(--dim) !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+$P .stat-card::after,
+$L .stat-card::after {
+  display: none !important;
+}
+$P .stat-value,
+$L .stat-value {
+  font-weight: 650 !important;
+  font-size: clamp(18px, 1.9vw, 22px) !important;
+  letter-spacing: -0.02em !important;
+}
+@media (hover: hover) {
+  $P .stat-card[data-go]:hover,
+  $L .stat-card[data-go]:hover {
+    transform: none !important;
+    border-color: var(--line2) !important;
+  }
+}
+
+/* tournament + promo + buck rows on home */
+$P .tn-home,
+$L .tn-home {
+  background: var(--panel) !important;
+  background-image: none !important;
+}
+$P .tn-home svg,
+$L .tn-home svg {
+  color: var(--brand) !important;
+}
+$P .promo,
+$L .promo {
+  background: var(--panel) !important;
+  background-image: none !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-card) !important;
+  box-shadow: none !important;
+  color: var(--tx) !important;
+}
+$P .promo-go,
+$L .promo-go {
+  background: var(--panel2) !important;
+  background-image: none !important;
+  border: 1px solid var(--line2) !important;
+  color: var(--tx) !important;
+  box-shadow: none !important;
+}
+$P .buck-card,
+$L .buck-card {
+  background: var(--panel) !important;
+}
+
+/* ---------- markets ---------- */
+$P .stock-card,
+$L .stock-card {
+  transition: border-color 150ms var(--ease) !important;
+}
+@media (hover: hover) {
+  $P .stock-card:hover,
+  $L .stock-card:hover {
+    border-color: var(--line2) !important;
+    transform: none !important;
+  }
+}
+$P .tk-badge,
+$L .tk-badge {
+  text-shadow: none !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  letter-spacing: -0.02em !important;
+  font-family: var(--sans) !important;
+}
+$P .spark.v2 .ln,
+$L .spark.v2 .ln {
+  filter: none !important;
+}
+$P .sc-chg,
+$L .sc-chg {
+  font-weight: 600 !important;
+}
+
+/* ---------- asset page ---------- */
+$P #aPx,
+$L #aPx {
+  font-family: var(--sans) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.035em !important;
+  text-shadow: none !important;
+}
+$P .chgpill,
+$L .chgpill {
+  box-shadow: none !important;
+  border: 0 !important;
+}
+$P .card.trade .preview,
+$L .card.trade .preview {
+  background: var(--bg2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-ctl) !important;
+}
+
+/* ---------- portfolio ---------- */
+$P .tile,
+$L .tile {
+  padding: 14px 16px !important;
+}
+$P .tile b,
+$L .tile b {
+  font-family: var(--sans) !important;
+  font-weight: 650 !important;
+  font-size: 20px !important;
+  letter-spacing: -0.02em !important;
+}
+$P .tile em,
+$L .tile em {
+  font-family: var(--sans) !important;
+  font-style: normal !important;
+  font-size: 12.5px !important;
+}
+
+/* ---------- shop ---------- */
+$P .shop-top,
+$L .shop-top {
+  background: var(--panel) !important;
+  background-image: none !important;
+}
+$P .pack-card,
+$L .pack-card {
+  transition: border-color 150ms var(--ease), transform 150ms var(--ease) !important;
+}
+@media (hover: hover) {
+  $P .pack-card:hover,
+  $L .pack-card:hover {
+    border-color: var(--line2) !important;
+    transform: translateY(-2px) !important;
+  }
+}
+$P .pb-rd,
+$L .pb-rd {
+  background: var(--panel) !important;
+  background-image: none !important;
+  border: 1px dashed var(--line2) !important;
+}
+$P .pb-rd-ic,
+$L .pb-rd-ic {
+  background: var(--brand-soft) !important;
+  color: var(--brand) !important;
+  box-shadow: none !important;
+}
+$P .pb-rd-f input,
+$L .pb-rd-f input {
+  font-family: var(--sans) !important;
+  background: var(--bg2) !important;
+  border-color: var(--line2) !important;
+}
+$P .pb-rd-f input:focus,
+$L .pb-rd-f input:focus {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px var(--brand-soft) !important;
+}
+
+/* ---------- colored hero blocks on other pages: calm them ---------- */
+$P .pet-hero,
+$P .nd-hero,
+$P .gd-head,
+$P .bk-hero,
+$P .ol-card,
+$P .tn-join,
+$P .about,
+$P #saveCard,
+$P #chalCard,
+$P .lg-set {
+  background: var(--panel) !important;
+  background-image: none !important;
+}
+$P .bk-logo,
+$P .pd-step,
+$P .pd-av,
+$P .col-item.on {
+  box-shadow: none !important;
+}
+
+/* ---------- floating Buck button ---------- */
+$P .bai-fab,
+$L .bai-fab {
+  background: var(--panel) !important;
+  border: 1px solid var(--line2) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  color: var(--tx) !important;
+}
+$L .bai-fab {
+  box-shadow: 0 6px 20px rgba(22, 23, 26, 0.12) !important;
+}
+
+/* ---------- modals & sheets ---------- */
+$P #modalRoot .modal,
+$P .modal,
+$L .modal {
+  background: var(--panel) !important;
+  background-image: none !important;
+  border: 1px solid var(--line2) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* ---------- confetti etc. stays, text glows go ---------- */
+$P .big,
+$P .fl-up,
+$P .fl-dn,
+$L .big {
+  text-shadow: none !important;
+}
+
+/* ---------- focus: visible, on brand ---------- */
+$P :focus-visible,
+$L :focus-visible {
+  outline: 2px solid var(--brand) !important;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  $P *,
+  $L * {
+    transition-duration: 0ms !important;
+  }
+}
+
+/* ---------- quick-trade buttons on market cards: tinted, not shouting ---------- */
+$P .sc-trade .btn.buy,
+$L .sc-trade .btn.buy {
+  background: var(--up-soft) !important;
+  color: var(--up) !important;
+}
+$P .sc-trade .btn.sell,
+$L .sc-trade .btn.sell {
+  background: var(--dn-soft) !important;
+  color: var(--dn) !important;
+}
+@media (hover: hover) {
+  $P .sc-trade .btn.buy:hover,
+  $L .sc-trade .btn.buy:hover {
+    background: var(--up) !important;
+    color: #04160d !important;
+  }
+  $P .sc-trade .btn.sell:hover,
+  $L .sc-trade .btn.sell:hover {
+    background: var(--dn) !important;
+    color: #fff !important;
+  }
+}
+$P .sc-trade input,
+$L .sc-trade input {
+  background: var(--bg2) !important;
+  border: 1px solid var(--line2) !important;
+  border-radius: var(--r-sm) !important;
+  font-family: var(--sans) !important;
+}
+
+/* ---------- leaderboards: "you" row in brand, not purple ---------- */
+$P .rk.me,
+$L .rk.me {
+  background: var(--brand-soft) !important;
+  background-image: none !important;
+  box-shadow: inset 2px 0 0 var(--brand) !important;
+  border-color: transparent !important;
+}
+$P .rk .n,
+$L .rk .n {
+  font-family: var(--sans) !important;
+  font-variant-numeric: tabular-nums;
+}
+$P #olBody .block-msg,
+$L #olBody .block-msg {
+  background: var(--panel2) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--mut) !important;
+}
+
+/* ---------- links: brand, never a stray blue ---------- */
+$P button.link,
+$P .linkish,
+$L button.link,
+$L .linkish {
+  color: var(--brand) !important;
+}
+
+/* ---------- short / cover tabs ---------- */
+$P .seg.side button[data-side='short'].on,
+$L .seg.side button[data-side='short'].on {
+  background: var(--dn-soft) !important;
+  color: var(--dn) !important;
+}
+$P .seg.side button[data-side='cover'].on,
+$L .seg.side button[data-side='cover'].on {
+  background: var(--up-soft) !important;
+  color: var(--up) !important;
+}

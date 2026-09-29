@@ -6,13 +6,61 @@
 ================================================================================== */
 (() => {
   window.PBCalm = true;
+
+  /* ---------- first run: ONE welcome (with the storage note), and the tour only if they ask ---------- */
+  try {
+    welcome = function () {
+      if (settings.welcomed) return false;
+      const fin = tour => {
+        settings.welcomed = true;
+        if (!tour) settings.tutDone = true; // tour is still in Settings any time
+        saveSettings();
+        try {
+          localStorage.setItem('pb2.cookieOk', '1');
+        } catch (e) {}
+        document.getElementById('lgCookie')?.remove();
+        if (tour && window.PBTutorial) setTimeout(() => PBTutorial.start(), 250);
+      };
+      const LG = 'legal/';
+      modal({
+        title: `Welcome to ${APP_NAME}`,
+        confirm: 'Let’s trade',
+        cancel: 'Show me around',
+        html: `<div class="cm-wel"><div class="buck-intro">${buckSVG('cool')}<p>“Hey, I’m <b>Buck</b>. Here’s the deal:”</p></div>
+          <ul class="cm-wl"><li><b>${fmtUSD(CONFIG.STARTING_CASH, 0)} of pretend money.</b> Trade real stocks and coins with zero risk.</li>
+          <li><b>News moves prices.</b> Get in early, get out before the hype fades.</li>
+          <li><b>Trades earn coins</b> for packs, pets and themes. Your first pack is free.</li></ul>
+          <p class="cm-wf">Simulated market, virtual money. Your game is saved in this browser: no ads, no tracking. <a href="${LG}cookies.html" target="_blank" rel="noopener">Cookies</a> · <a href="${LG}privacy.html" target="_blank" rel="noopener">Privacy</a></p></div>`,
+        onConfirm: () => fin(false),
+        onMount: r => {
+          const x = r.querySelector('[data-x]');
+          if (x)
+            x.onclick = () => {
+              r.classList.remove('open');
+              r.innerHTML = '';
+              fin(true);
+            };
+        },
+      });
+      return true;
+    };
+  } catch (e) {}
   const T0 = Date.now();
   const EMO = /^(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}☀-➿️‍]|\s)+/u;
   const deEmoji = s => (typeof s === 'string' ? s.replace(EMO, '') : s);
 
   /* ---------- toasts: one voice at a time ---------- */
   const t0 = toast;
+  const popupOpen = () => !!document.querySelector('#modalRoot.open, #tutRoot, #packRoot.open, #abSplash') || document.body.classList.contains('gated');
   toast = function (msg, kind, icon) {
+    const m = String(msg || '');
+    if (/^Playing as guest/.test(m)) return; // Home already shows the guest bar
+    if (/^Daily bonus/.test(m) && popupOpen()) {
+      // wait until the welcome / sign-in is out of the way, then say it once
+      let n = 0;
+      const again = () => (popupOpen() && n++ < 40 ? setTimeout(again, 1500) : t0.call(this, deEmoji(msg), kind, icon));
+      return void setTimeout(again, 1500);
+    }
     if (kind === 'news' && Date.now() - T0 < 9000) {
       // quiet start: headlines still land in the bell, just not on screen
       try {

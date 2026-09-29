@@ -1,0 +1,918 @@
+/* =====================================================================
+   TRADING PLUS — leverage, options, market events, copy trading.
+   Uses theme tokens only (--panel/--panel2/--bg2/--line/--line2/--tx/
+   --mut/--dim/--amber/--up/--dn) so every site theme + dark/light works.
+   Leverage + options lean "careful": amber for risk, red for liquidation.
+   ===================================================================== */
+
+.tp-regime[hidden],
+.tp-card[hidden],
+.tp-evb:empty {
+  display: none !important;
+}
+
+/* ---------- crash / bull-run banner (sits above #view) ---------- */
+.tp-regime {
+  --tp-c: var(--dn);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(1128px, calc(100% - 24px));
+  box-sizing: border-box;
+  margin: 10px auto 0;
+  padding: 9px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tp-c) 9%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--tp-c) 32%, var(--line));
+  color: var(--tx);
+  font-size: 13px;
+  line-height: 1.3;
+}
+.tp-regime.bull {
+  --tp-c: var(--up);
+}
+@media (min-width: 900px) {
+  .tp-regime {
+    width: min(1128px, calc(100% - 52px));
+  }
+}
+@media (min-width: 1600px) {
+  .tp-regime {
+    width: min(1268px, calc(100% - 52px));
+  }
+}
+.tp-rg-ic {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  font-size: 16px;
+  background: color-mix(in srgb, var(--tp-c) 16%, transparent);
+}
+.tp-rg-t {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.tp-rg-t b {
+  color: var(--tp-c);
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.tp-rg-t small {
+  color: var(--mut);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-rg-bar {
+  flex: none;
+  width: clamp(60px, 18vw, 160px);
+  height: 5px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--tp-c) 16%, var(--bg2));
+  overflow: hidden;
+}
+.tp-rg-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tp-c);
+  transition: width 1s linear;
+}
+
+/* ---------- event badges (asset header, markets rows) ---------- */
+.tp-evb {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-left: 4px;
+  vertical-align: 3px;
+}
+.tp-bdg {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: none;
+  vertical-align: middle;
+  color: var(--mut);
+  background: var(--panel2);
+  border: 1px solid var(--line);
+}
+.tp-bdg + .tp-bdg {
+  margin-left: 0;
+}
+[data-f='badge'] .tp-bdg,
+.tp-hrow .tp-bdg {
+  height: 17px;
+  padding: 0 5px;
+  font-size: 9.5px;
+  margin-left: 4px;
+}
+.tp-bdg.new {
+  color: var(--brand-ink, #1a0f02);
+  background: var(--amber);
+  border-color: transparent;
+  letter-spacing: 0.06em;
+}
+.tp-bdg.earn {
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+  border-color: color-mix(in srgb, var(--amber) 35%, transparent);
+}
+.tp-bdg.earn::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 5px;
+}
+.tp-bdg.div {
+  color: var(--up);
+  background: color-mix(in srgb, var(--up) 12%, transparent);
+  border-color: color-mix(in srgb, var(--up) 32%, transparent);
+}
+.tp-bdg.liq {
+  color: var(--dn);
+  background: color-mix(in srgb, var(--dn) 13%, transparent);
+  border-color: color-mix(in srgb, var(--dn) 35%, transparent);
+  letter-spacing: 0.06em;
+}
+
+/* ---------- leverage picker inside the trade card ---------- */
+.tp-lev {
+  margin: 12px 0 4px;
+}
+.tp-lev-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.tp-lev-h span {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--mut);
+}
+.tp-lev-h small {
+  font-size: 11.5px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-lev:has(.tp-risk) .tp-lev-h small {
+  color: var(--amber);
+  font-weight: 600;
+}
+.seg.tp-levseg {
+  gap: 2px;
+}
+.seg.tp-levseg button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 7px 0 !important;
+  font-size: 12.5px !important;
+  font-variant-numeric: tabular-nums;
+}
+html:not(#_):not(#_):not(#_):not(#_) .tp-levseg button.on:not([data-lev='1']) {
+  color: var(--amber) !important;
+  background: color-mix(in srgb, var(--amber) 15%, var(--panel)) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 38%, transparent) !important;
+}
+.tp-risk {
+  margin-top: 8px;
+  padding: 9px 11px 9px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--mut);
+  background: color-mix(in srgb, var(--dn) 7%, var(--panel2));
+  border: 1px solid color-mix(in srgb, var(--dn) 24%, var(--line));
+  border-left: 3px solid var(--dn);
+}
+.tp-risk b {
+  color: var(--dn);
+  font-weight: 700;
+}
+.tp-risk i {
+  font-style: italic;
+  color: var(--tx);
+}
+
+/* ---------- shared card bits ---------- */
+.tp-card .card-h .mono.small {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tp-card .card-h .muted.small {
+  text-align: right;
+}
+.tp-sub {
+  margin: 16px 0 2px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--mut);
+  letter-spacing: 0;
+}
+.tp-card .fine {
+  margin: 12px 0 0;
+  line-height: 1.5;
+}
+
+/* previews: the core `.preview .r span:first-child` (muted) also hits the
+   nested value spans, so liquidation/P&L numbers lost their colour */
+.preview .r > span:last-child > .neg,
+.preview .r > span:last-child > b.neg {
+  color: var(--dn);
+}
+.preview .r > span:last-child > .pos {
+  color: var(--up);
+}
+.preview .r > span:last-child > b {
+  color: var(--tx);
+}
+.preview .r > span:last-child > small.muted {
+  color: var(--mut);
+}
+
+/* ---------- options ticket ---------- */
+.tp-ol {
+  margin: 12px 0 6px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--mut);
+}
+.seg.tp-oty button {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.seg.tp-oty button small {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+html:not(#_):not(#_):not(#_):not(#_) .tp-oty button.on[data-oty='call'] {
+  color: var(--up) !important;
+  background: color-mix(in srgb, var(--up) 14%, var(--panel)) !important;
+}
+html:not(#_):not(#_):not(#_):not(#_) .tp-oty button.on[data-oty='put'] {
+  color: var(--dn) !important;
+  background: color-mix(in srgb, var(--dn) 14%, var(--panel)) !important;
+}
+.seg.tp-ostk button {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 2px !important;
+  line-height: 1.2;
+}
+.seg.tp-ostk button b {
+  font-size: 12.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seg.tp-ostk button small {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--dim);
+}
+.seg.tp-ostk button.on small {
+  color: var(--amber);
+}
+.tp-orow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+.seg.tp-oexp button {
+  min-width: 0;
+  padding: 8px 0 !important;
+}
+.tp-step {
+  display: flex;
+  align-items: stretch;
+  height: 40px;
+  box-sizing: border-box;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl, 10px);
+  padding: 3px;
+}
+.tp-step button {
+  width: 32px;
+  border-radius: 7px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--mut);
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+.tp-step button:hover {
+  color: var(--tx);
+  background: var(--panel2);
+}
+.tp-step input {
+  width: 46px;
+  min-width: 0;
+  border: 0 !important;
+  outline: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  text-align: center;
+  color: var(--tx);
+  font: 650 14px var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+.tp-step:focus-within {
+  border-color: color-mix(in srgb, var(--amber) 60%, var(--line));
+}
+.preview.tp-oprev {
+  margin: 12px 0;
+}
+.tp-card .preview small.muted {
+  margin-left: 3px;
+  font-size: 11px;
+}
+.btn.tp-obuy {
+  margin: 0;
+}
+.fine.tp-ofine {
+  margin: 8px 0 0;
+  line-height: 1.5;
+  text-align: left;
+}
+
+/* ---------- open positions (leveraged + options) ---------- */
+.tp-pos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'l r'
+    'liq btn';
+  gap: 8px 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.card-h + .tp-pos,
+.tp-sub + .tp-pos {
+  border-top: 0;
+  padding-top: 6px;
+}
+.tp-pos-l {
+  grid-area: l;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+.tp-pos-l > small {
+  flex-basis: 100%;
+  font-size: 11.5px;
+  color: var(--mut);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.tp-sym {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--tx);
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.tp-sym b {
+  font-size: 14px;
+  font-weight: 700;
+}
+.tp-sym:hover b {
+  color: var(--amber);
+}
+.tp-sym:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+.tp-pos .side-tag {
+  font-weight: 700;
+}
+.tp-pos-r {
+  grid-area: r;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  text-align: right;
+  white-space: nowrap;
+}
+.tp-pos-r b {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+.tp-pos-r small {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.tp-liq {
+  grid-area: liq;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11.5px;
+  color: var(--mut);
+}
+.tp-liq > span:first-child {
+  flex: none;
+  white-space: nowrap;
+}
+.tp-liq b {
+  color: var(--tx);
+  font-weight: 650;
+}
+.tp-meter {
+  flex: 1;
+  min-width: 36px;
+  max-width: 220px;
+  height: 5px;
+  border-radius: 99px;
+  background: var(--bg2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+.tp-meter i {
+  display: block;
+  height: 100%;
+  min-width: 3px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--amber), var(--dn));
+  transition: width 0.4s ease;
+}
+.tp-meter.time i {
+  background: color-mix(in srgb, var(--mut) 70%, transparent);
+}
+.tp-pos > .btn.sm {
+  grid-area: btn;
+  justify-self: end;
+  min-width: 64px;
+}
+/* close to liquidation: red rail + red liq text */
+.tp-pos.hot {
+  margin: 0 -10px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: 12px;
+  border-top-color: transparent;
+  background: color-mix(in srgb, var(--dn) 7%, transparent);
+  box-shadow: inset 3px 0 0 var(--dn);
+}
+.tp-pos.hot + .tp-pos {
+  border-top-color: transparent;
+}
+.tp-pos.hot .tp-liq,
+.tp-pos.hot .tp-liq b {
+  color: var(--dn);
+}
+.tp-pos.hot .tp-meter i {
+  background: var(--dn);
+  animation: tpPulse 1.2s ease-in-out infinite;
+}
+@keyframes tpPulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ---------- history (details) ---------- */
+.tp-hist {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 4px;
+}
+.tp-hist > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--mut);
+  user-select: none;
+}
+.tp-hist > summary::-webkit-details-marker {
+  display: none;
+}
+.tp-hist > summary::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  margin: 0 3px 0 1px;
+  transition: transform 0.15s;
+}
+.tp-hist[open] > summary::before {
+  transform: rotate(45deg);
+}
+.tp-hist > summary:hover {
+  color: var(--tx);
+}
+.tp-hrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px dashed var(--line);
+  font-size: 12.5px;
+  color: var(--tx);
+}
+.tp-hrow > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tp-hrow > span:last-child {
+  flex: none;
+  font-weight: 650;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tp-hrow .side-tag {
+  margin-right: 4px;
+}
+.tp-hrow small {
+  font-size: 11px;
+}
+
+/* ---------- copy trading ---------- */
+.tp-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--amber) 8%, var(--panel2));
+  border: 1px solid color-mix(in srgb, var(--amber) 26%, var(--line));
+}
+.tp-cta > span {
+  flex: none;
+  font-size: 18px;
+}
+.tp-cta > div {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.tp-cta b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.tp-cta small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--mut);
+}
+.tp-cta .btn {
+  flex: none;
+  margin-left: auto;
+}
+.tp-fol {
+  display: grid;
+  gap: 8px;
+}
+.tp-frow,
+.tp-lrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.tp-frow {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+}
+.tp-frow .btn {
+  flex: none;
+}
+.tp-frow .btn + .btn {
+  margin-left: -4px;
+}
+.tp-lrow {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.tp-lead .tp-lrow:first-child {
+  border-top: 0;
+}
+.tp-frow .rk-av,
+.tp-lrow .rk-av {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 20px;
+}
+.tp-frow .rk-av svg,
+.tp-lrow .rk-av svg,
+.tp-frow .rk-av img,
+.tp-lrow .rk-av img {
+  width: 30px !important;
+  height: 30px !important;
+  max-width: 100%;
+}
+.tp-fw {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.tp-fw b,
+.tp-fw small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tp-fw b {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--tx);
+}
+.tp-fw small {
+  font-size: 11.5px;
+  color: var(--mut);
+}
+.tp-ret {
+  flex: none;
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 56px;
+  text-align: right;
+}
+.tp-lrow .btn.sm,
+.tp-following {
+  flex: none;
+  min-width: 78px;
+}
+.tp-following {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--up);
+  background: color-mix(in srgb, var(--up) 11%, transparent);
+}
+.tp-following::before {
+  content: '';
+  width: 7px;
+  height: 4px;
+  border-left: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg) translateY(-1px);
+}
+.tp-copy .pb-skel i {
+  height: 48px;
+}
+.tp-copy .block-msg .link {
+  margin-left: 4px;
+  font-weight: 700;
+}
+.tp-copy .empty {
+  padding: 16px 0;
+}
+
+/* on/off switch */
+.tp-sw-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+.tp-sw-row > span:first-child {
+  min-width: 0;
+}
+.tp-sw-row b {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+}
+.tp-sw-row small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--mut);
+}
+.tp-sw {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 24px;
+}
+.tp-sw input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.tp-sw i {
+  position: absolute;
+  inset: 0;
+  border-radius: 99px;
+  background: var(--line2);
+  transition: background 0.18s;
+  pointer-events: none;
+}
+.tp-sw i::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.18s var(--ease, ease);
+}
+.tp-sw input:checked + i {
+  background: var(--amber);
+}
+.tp-sw input:checked + i::after {
+  transform: translateX(16px);
+}
+.tp-sw input:focus-visible + i {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+.tp-sw input:disabled + i {
+  opacity: 0.5;
+}
+
+/* copy size dialog */
+.tp-alloc {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+}
+.tp-alloc-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--mut);
+}
+.tp-alloc-h b {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--amber);
+}
+.tp-alloc input[type='range'] {
+  display: block;
+  width: 100%;
+  margin: 4px 0 10px;
+  accent-color: var(--amber);
+}
+.tp-alloc small {
+  display: block;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* PBCopy.open() highlight */
+.tp-flash {
+  animation: tpFlash 1.6s ease-out;
+}
+@keyframes tpFlash {
+  0%,
+  30% {
+    box-shadow: 0 0 0 2px var(--amber);
+  }
+  100% {
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+
+/* ---------- small phones ---------- */
+@media (max-width: 420px) {
+  .tp-regime {
+    gap: 10px;
+    padding: 8px 10px;
+  }
+  .tp-rg-ic {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+  }
+  .tp-rg-bar {
+    width: 48px;
+  }
+  .seg.tp-oty button small {
+    display: none;
+  }
+  .seg.tp-ostk button b {
+    font-size: 11.5px;
+  }
+  .tp-step button {
+    width: 28px;
+  }
+  .tp-step input {
+    width: 38px;
+  }
+  .tp-pos.hot {
+    margin: 0 -8px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .tp-ret {
+    min-width: 0;
+  }
+  .tp-lrow .btn.sm,
+  .tp-following {
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tp-rg-bar i,
+  .tp-meter i,
+  .tp-sw i,
+  .tp-sw i::after,
+  .tp-hist > summary::before {
+    transition: none;
+  }
+  .tp-pos.hot .tp-meter i,
+  .tp-flash {
+    animation: none;
+  }
+}

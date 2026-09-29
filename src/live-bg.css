@@ -1,0 +1,53 @@
+/* ===== LIVE BG — one fixed canvas behind the app (market / snow / aurora / bokeh / stars) =====
+   Sits above the page background (body / body::before sky) and below #app (z-index 1).
+   Never takes pointer events, never affects layout. Hidden on the Space theme (it has its own sky),
+   except the Snow scene, which falls over it. */
+#liveBg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  contain: strict;
+}
+/* market: static faint grid, painted by CSS (color set by the script from the theme's --tx) */
+#liveBg[data-scene='market'] {
+  background-image:
+    linear-gradient(var(--lbg-grid, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, var(--lbg-grid, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+#liveBg[hidden],
+html[data-theme='space'] #liveBg:not([data-scene='snow']) {
+  display: none;
+}
+/* #app must be its own layer above the canvas (classic and site themes already do this; this covers the rest) */
+body > #app {
+  position: relative;
+  z-index: 1;
+}
+
+/* let the live background show faintly through the main surfaces (text stays on a near-solid panel) */
+html.lbg-on:not(#_):not(#_):not(#_):not(#_) .card,
+html.lbg-on:not(#_):not(#_):not(#_):not(#_) .stock-card,
+html.lbg-on:not(#_):not(#_):not(#_):not(#_) .stat-card,
+html.lbg-on:not(#_):not(#_):not(#_):not(#_) .pack-card,
+html.lbg-on:not(#_):not(#_):not(#_):not(#_) .tile,
+html.lbg-on:not(#_):not(#_):not(#_):not(#_) .st-card,
+html.lbg-on:not(#_):not(#_):not(#_):not(#_) .st-nav {
+  background-color: color-mix(in srgb, var(--panel) 84%, transparent) !important;
+}
+html.lbg-on:not(#_):not(#_):not(#_):not(#_) #nav,
+html.lbg-on:not(#_):not(#_):not(#_):not(#_) .side {
+  background-color: color-mix(in srgb, var(--bg, var(--panel)) 90%, transparent) !important;
+}
+@media (max-width: 600px) {
+  html.lbg-on:not(#_):not(#_):not(#_):not(#_) .card,
+  html.lbg-on:not(#_):not(#_):not(#_):not(#_) .stock-card,
+  html.lbg-on:not(#_):not(#_):not(#_):not(#_) .stat-card {
+    background-color: color-mix(in srgb, var(--panel) 88%, transparent) !important;
+  }
+}

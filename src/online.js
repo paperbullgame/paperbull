@@ -804,6 +804,15 @@
       }
       return `${it ? it.name : 'Item'} removed`;
     }
+    if (g.kind === 'item' && /^pack_/.test(g.item_id || '') && typeof PACK !== 'undefined' && PACK[g.item_id.slice(5)]) {
+      // a gifted pack opens right away, for free
+      const p = PACK[g.item_id.slice(5)];
+      const cards = rollPack(p, 0).map(it => ({ it, note: grant(it) }));
+      acct.packsOpened = (acct.packsOpened || 0) + 1;
+      bumpCoins();
+      setTimeout(() => PackOpen.show(p, cards), 900);
+      return p.name;
+    }
     if (g.kind === 'item') {
       const it = typeof ITEM !== 'undefined' && ITEM[g.item_id];
       if (it) {

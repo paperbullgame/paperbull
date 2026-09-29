@@ -1,0 +1,678 @@
+/* ===== REVEAL FX — pack opening + egg hatching choreography (scoped to #packRoot) =====
+   Transform/opacity only. One-shot particles are DOM spans removed after they finish. */
+#packRoot.open {
+  overflow-x: hidden;
+}
+#packRoot .rfx-stage {
+  position: relative;
+}
+/* rays/pulses extend past a card; clip them at the cards box (+margin) so the overlay never gains scroll range */
+#packRoot .rfx-stage .pk-cards {
+  position: relative;
+  padding: 48px 0;
+  margin: -48px 0;
+  overflow: clip;
+  overflow-clip-margin: 16px;
+  pointer-events: none; /* the padded box overlaps the hint/actions; only the cards themselves take taps */
+}
+#packRoot .rfx-stage .pk-card {
+  pointer-events: auto;
+}
+#packRoot .rfx-under {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+#packRoot .rfx-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+#packRoot .rfx-fx,
+#packRoot .rfx-p {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ---------- pack: escalating shake, rising glow, light seam, burst ---------- */
+#packRoot .rfx-pack {
+  will-change: transform;
+}
+#packRoot .rfx-pack .rfx-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 170%;
+  height: 130%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #fff 0%,
+    var(--a) 16%,
+    color-mix(in srgb, var(--a) 55%, transparent) 40%,
+    transparent 68%
+  );
+  transform: translate(-50%, -50%) scale(0.5);
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+#packRoot .rfx-pack .rfx-seam {
+  position: absolute;
+  left: 50%;
+  top: 9%;
+  bottom: 15%;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, transparent, #fff 22%, #fff 78%, transparent);
+  box-shadow:
+    0 0 10px 2px rgba(255, 255, 255, 0.85),
+    0 0 28px 9px color-mix(in srgb, var(--a) 65%, #fff);
+  transform: scaleY(0);
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+#packRoot .rfx-pack .rfx-fill {
+  position: absolute;
+  inset: -12% -8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgba(255, 255, 255, 0.75) 32%, transparent 70%);
+  opacity: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+#packRoot .pk-pack.rfx-pack.opening {
+  animation:
+    rfxShake 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) both,
+    rfxPackOut 0.2s 0.46s ease-in forwards;
+}
+#packRoot .rfx-pack.opening .rfx-glow {
+  animation: rfxGlow 0.5s ease-in forwards;
+}
+#packRoot .rfx-pack.opening .rfx-seam {
+  animation: rfxSeam 0.4s 0.08s ease-in forwards;
+}
+#packRoot .rfx-pack.opening .rfx-fill {
+  animation: rfxFill 0.22s 0.36s ease-out forwards;
+}
+#packRoot .rfx-pack.opening ~ .pk-hint {
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+@keyframes rfxShake {
+  0% {
+    transform: rotate(0) scale(1);
+  }
+  12% {
+    transform: rotate(-3deg) scale(1.01);
+  }
+  24% {
+    transform: rotate(3deg) scale(1.02);
+  }
+  36% {
+    transform: rotate(-5deg) scale(1.04);
+  }
+  48% {
+    transform: rotate(6deg) scale(1.05);
+  }
+  60% {
+    transform: rotate(-8deg) scale(1.07);
+  }
+  72% {
+    transform: rotate(9deg) scale(1.09);
+  }
+  84% {
+    transform: rotate(-10deg) scale(1.11);
+  }
+  100% {
+    transform: rotate(0) scale(1.14);
+  }
+}
+@keyframes rfxPackOut {
+  from {
+    transform: scale(1.14);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+@keyframes rfxGlow {
+  to {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.9;
+  }
+}
+@keyframes rfxSeam {
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+@keyframes rfxFill {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- one-shot burst pieces (live in .rfx-layer) ---------- */
+#packRoot .rfx-ring {
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow:
+    0 0 18px 4px var(--c),
+    inset 0 0 12px 2px var(--c);
+  animation: rfxRing 0.62s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+@keyframes rfxRing {
+  from {
+    transform: scale(0.15);
+    opacity: 1;
+  }
+  to {
+    transform: scale(3.6);
+    opacity: 0;
+  }
+}
+#packRoot .rfx-burst {
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, transparent 0deg, var(--c) 6deg, transparent 12deg);
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 8%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 8%, transparent 100%);
+  animation: rfxBurstRays 0.75s cubic-bezier(0.1, 0.7, 0.3, 1) forwards;
+}
+@keyframes rfxBurstRays {
+  0% {
+    transform: scale(0.2) rotate(0deg);
+    opacity: 0;
+  }
+  22% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.55) rotate(28deg);
+    opacity: 0;
+  }
+}
+#packRoot .rfx-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 45%,
+    color-mix(in srgb, var(--c) 40%, #fff) 0%,
+    color-mix(in srgb, var(--c) 40%, transparent) 38%,
+    transparent 78%
+  );
+  opacity: 0;
+  animation: rfxFlash 0.6s ease-out forwards;
+}
+@keyframes rfxFlash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.62;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+#packRoot .rfx-p {
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 6px var(--c);
+  transform: translate(0, 0) scale(0.3);
+  animation: rfxSpark var(--d, 700ms) cubic-bezier(0.1, 0.75, 0.25, 1) forwards;
+}
+#packRoot .rfx-p.star {
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+@keyframes rfxSpark {
+  0% {
+    transform: translate(0, 0) scale(0.3) rotate(0deg);
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), calc(var(--dy) + 34px)) scale(var(--s)) rotate(var(--r));
+    opacity: 0;
+  }
+}
+
+/* ---------- cards: staggered spring deal with a slight fan ---------- */
+#packRoot .pk-card {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+  animation: rfxDeal 0.58s cubic-bezier(0.2, 1.25, 0.35, 1) both;
+  will-change: transform;
+}
+@keyframes rfxDeal {
+  from {
+    transform: translateY(90px) rotate(var(--fan, 0deg)) scale(0.35);
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+#packRoot .pk-inner {
+  transition: transform 0.5s cubic-bezier(0.35, 1.15, 0.45, 1);
+  z-index: 1;
+}
+/* holographic sheen + shimmer sweep live inside the front face */
+#packRoot .rfx-holo,
+#packRoot .rfx-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+#packRoot .rfx-holo {
+  opacity: 0.35;
+}
+#packRoot .r-r .rfx-holo {
+  opacity: 0.55;
+}
+#packRoot .r-e .rfx-holo {
+  opacity: 0.7;
+}
+#packRoot .r-l .rfx-holo {
+  opacity: 0.9;
+}
+#packRoot .rfx-holo::before {
+  content: '';
+  position: absolute;
+  inset: -30% -60%;
+  background: linear-gradient(
+    112deg,
+    transparent 34%,
+    rgba(255, 255, 255, 0.13) 42%,
+    rgba(120, 230, 255, 0.2) 47%,
+    rgba(255, 150, 240, 0.17) 52%,
+    rgba(255, 235, 150, 0.15) 57%,
+    transparent 66%
+  );
+  animation: rfxHolo 4.6s ease-in-out infinite alternate;
+}
+@keyframes rfxHolo {
+  from {
+    transform: translateX(-22%);
+  }
+  to {
+    transform: translateX(22%);
+  }
+}
+#packRoot .rfx-sweep::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: -70%;
+  width: 55%;
+  background: linear-gradient(100deg, transparent 0%, color-mix(in srgb, var(--rc) 55%, #fff) 50%, transparent 100%);
+  opacity: 0;
+  transform: skewX(-14deg) translateX(0);
+}
+#packRoot .pk-card.flipped:not(.r-c) .rfx-sweep::before {
+  animation: rfxSweep 0.8s 0.26s cubic-bezier(0.3, 0.6, 0.3, 1) both;
+}
+#packRoot .pk-card.flipped.r-l .rfx-sweep::before {
+  animation-duration: 0.7s;
+  animation-iteration-count: 2;
+}
+@keyframes rfxSweep {
+  0% {
+    transform: skewX(-14deg) translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: skewX(-14deg) translateX(400%);
+    opacity: 0;
+  }
+}
+/* epic pulse ring (behind the card) */
+#packRoot .rfx-pulse {
+  position: absolute;
+  inset: -3px;
+  border-radius: 17px;
+  box-shadow:
+    0 0 0 2px var(--rc),
+    0 0 26px 8px color-mix(in srgb, var(--rc) 60%, transparent);
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+#packRoot .pk-card.flipped .rfx-pulse {
+  animation: rfxPulse 1s 0.25s ease-out 2;
+}
+@keyframes rfxPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  25% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+/* rarity rays (legendary card, hatched pet) */
+#packRoot .rfx-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 250%;
+  height: 180%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+  --ro: 0.75;
+}
+#packRoot .rfx-rays > i {
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--rc) 80%, #fff) 9deg,
+    transparent 18deg
+  );
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 100%);
+  animation: rfxSpin 16s linear infinite;
+}
+#packRoot .rfx-under .rfx-rays {
+  animation: rfxRaysIn 0.8s 0.15s ease-out forwards;
+}
+@keyframes rfxRaysIn {
+  to {
+    opacity: var(--ro, 0.75);
+  }
+}
+@keyframes rfxSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* best card of the pack */
+#packRoot .pk-card.rfx-best::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 19px;
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--rc) 45%, transparent),
+    0 0 30px 6px color-mix(in srgb, var(--rc) 55%, transparent);
+  opacity: 0;
+  animation: rfxIn 0.6s ease-out forwards;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes rfxIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- egg: wobble harder per tap, crack lines, split shell ---------- */
+#packRoot .rfx-egg {
+  position: relative;
+  padding: 8px 28px;
+}
+#packRoot .rfx-egg.crack {
+  animation: float 2.4s ease-in-out infinite;
+}
+#packRoot .rfx-eggglow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 210px;
+  height: 210px;
+  margin: -105px 0 0 -105px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #ffd27a 22%, color-mix(in srgb, #ffd27a 50%, transparent) 42%, transparent 66%);
+  opacity: 0;
+  transition: opacity 0.35s;
+  z-index: -1;
+  pointer-events: none;
+}
+#packRoot .rfx-egg.k1 .rfx-eggglow {
+  opacity: 0.2;
+}
+#packRoot .rfx-egg.k2 .rfx-eggglow {
+  opacity: 0.42;
+}
+#packRoot .rfx-egg.k3 .rfx-eggglow {
+  opacity: 0.8;
+}
+#packRoot .rfx-eggbox {
+  position: relative;
+  display: block;
+  width: 70px;
+  height: 96px;
+  transform-origin: 50% 85%;
+}
+#packRoot .rfx-half {
+  position: absolute;
+  inset: 0;
+  display: block;
+  will-change: transform;
+}
+#packRoot .rfx-half .face {
+  width: 70px;
+}
+#packRoot .rfx-top {
+  clip-path: polygon(0 0, 100% 0, 100% 48.2%, 85% 53.7%, 72.5% 44.5%, 60% 53.7%, 47.5% 44.5%, 32.5% 55.5%, 20% 46.3%, 0 51.8%);
+}
+#packRoot .rfx-bot {
+  clip-path: polygon(0 51.8%, 20% 46.3%, 32.5% 55.5%, 47.5% 44.5%, 60% 53.7%, 72.5% 44.5%, 85% 53.7%, 100% 48.2%, 100% 100%, 0 100%);
+}
+#packRoot .rfx-cracks {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 70px;
+  height: 88px;
+  overflow: visible;
+  pointer-events: none;
+}
+#packRoot .rfx-cracks path {
+  fill: none;
+  stroke: rgba(50, 28, 8, 0.8);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+#packRoot .rfx-egg.k1 .rfx-cracks .k1,
+#packRoot .rfx-egg.k2 .rfx-cracks .k2,
+#packRoot .rfx-egg.k3 .rfx-cracks .k3 {
+  animation: rfxCrack 0.28s ease-out forwards;
+}
+@keyframes rfxCrack {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+#packRoot .rfx-eggbox.w1 {
+  animation: rfxWob1 0.4s ease-out;
+}
+#packRoot .rfx-eggbox.w2 {
+  animation: rfxWob2 0.4s ease-out;
+}
+#packRoot .rfx-eggbox.w3 {
+  animation: rfxWob3 0.32s ease-out;
+}
+@keyframes rfxWob1 {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  55% {
+    transform: rotate(5deg);
+  }
+  80% {
+    transform: rotate(-2deg);
+  }
+}
+@keyframes rfxWob2 {
+  0%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  20% {
+    transform: rotate(-11deg) scale(1.04);
+  }
+  45% {
+    transform: rotate(10deg) scale(1.05);
+  }
+  70% {
+    transform: rotate(-6deg) scale(1.03);
+  }
+}
+@keyframes rfxWob3 {
+  0% {
+    transform: rotate(0) scale(1);
+  }
+  20% {
+    transform: rotate(-16deg) scale(1.07);
+  }
+  45% {
+    transform: rotate(15deg) scale(1.1);
+  }
+  70% {
+    transform: rotate(-8deg) scale(1.12);
+  }
+  100% {
+    transform: rotate(0) scale(1.14);
+  }
+}
+#packRoot .rfx-egg.rfx-split .rfx-eggbox {
+  transform: scale(1.14);
+}
+#packRoot .rfx-egg.rfx-split .rfx-top {
+  animation: rfxTop 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+#packRoot .rfx-egg.rfx-split .rfx-bot {
+  animation: rfxBot 0.48s ease-in forwards;
+}
+#packRoot .rfx-egg.rfx-split .rfx-cracks {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+@keyframes rfxTop {
+  to {
+    transform: translate(-10px, -92px) rotate(-28deg);
+    opacity: 0;
+  }
+}
+@keyframes rfxBot {
+  to {
+    transform: translateY(36px) scale(1.02, 0.9);
+    opacity: 0;
+  }
+}
+
+/* ---------- hatched card: spring in with rarity rays behind the pet ---------- */
+#packRoot .rfx-hatched {
+  position: relative;
+  overflow: hidden;
+  animation: rfxHatchIn 0.55s cubic-bezier(0.2, 1.25, 0.35, 1) both;
+}
+@keyframes rfxHatchIn {
+  from {
+    transform: translateY(26px) scale(0.72);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+#packRoot .rfx-petwrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+#packRoot .rfx-petwrap .rfx-rays {
+  width: 280px;
+  height: 280px;
+  --ro: 0.45;
+  animation: rfxRaysIn 0.9s 0.25s ease-out forwards;
+}
+#packRoot .rfx-petwrap .rfx-rays > i {
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 0%, rgba(0, 0, 0, 0.5) 40%, transparent 82%);
+  mask-image: radial-gradient(circle closest-side, #000 0%, rgba(0, 0, 0, 0.5) 40%, transparent 82%);
+}
+#packRoot .rfx-hatched.r-c .rfx-petwrap .rfx-rays {
+  --ro: 0.2;
+}
+#packRoot .rfx-hatched.r-e .rfx-petwrap .rfx-rays {
+  --ro: 0.55;
+}
+#packRoot .rfx-hatched.r-l .rfx-petwrap .rfx-rays {
+  --ro: 0.7;
+}
+#packRoot .rfx-petwrap .pet-big {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- reduced motion: no particles/rays/sheens, keep simple fades ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #packRoot .rfx-layer,
+  #packRoot .rfx-rays,
+  #packRoot .rfx-holo,
+  #packRoot .rfx-sweep,
+  #packRoot .rfx-pulse,
+  #packRoot .rfx-glow,
+  #packRoot .rfx-seam,
+  #packRoot .rfx-fill,
+  #packRoot .rfx-eggglow {
+    display: none !important;
+  }
+  #packRoot .pk-card.rfx-best::after {
+    animation: none;
+    opacity: 1;
+  }
+}
