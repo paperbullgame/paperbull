@@ -7267,7 +7267,7 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
         const GR = navGroups();
         $('#root').innerHTML = `<div class="app" id="app">
     <aside class="side" id="side"><div class="logo"><span class="mark">${LOGO}</span>PAPERBULL <small>Admin</small></div>
-      <nav class="nav" id="nav">${GR.map(g => `<a data-g="${g.id}" data-r="${g.pages[0][0]}" href="#/${g.pages[0][0]}">${navIco(g.ico || g.pages[0][0]) || g.pages[0][2]}<span>${esc(g.label)}</span>${g.pages.some(p => p[0] === 'site') ? '<span class="cnt" id="mntBadge" hidden>ON</span>' : ''}${g.pages.some(p => p[0] === 'chat') ? '<span class="cnt" id="chatBadge" hidden></span>' : ''}</a>`).join('')}</nav>
+      <nav class="nav nav2" id="nav">${GR.map(g => `<div class="nav-h">${esc(g.label)}</div>` + g.pages.map(p => `<a data-g="${g.id}" data-r="${p[0]}" href="#/${p[0]}">${navIco(p[0]) || p[2] || ''}<span>${esc(p[1])}</span>${p[0] === 'site' ? '<span class="cnt" id="mntBadge" hidden>ON</span>' : ''}${p[0] === 'chat' ? '<span class="cnt" id="chatBadge" hidden></span>' : ''}</a>`).join('')).join('')}</nav>
       <div class="live" id="liveBox" data-s="off"><i></i><div><b>Live link</b><small id="liveTxt">Connecting…</small></div></div>
       <div class="me">${avatar(S.me.username)}<div style="flex:1;min-width:0"><b>${esc(S.me.username)}</b><span class="role muted">${esc(S.me.role)}</span></div>
         <button class="btn ghost sm icon" id="outBtn" title="Sign out" aria-label="Sign out">${IC.out}</button></div></aside>
@@ -7383,7 +7383,7 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
         }
         const cur = ALIAS[name] || (VIEWS[name] ? name : 'dashboard'),
           g = groupOf(cur);
-        $$('#nav a').forEach(a => a.classList.toggle('on', !!g && a.dataset.g === g.id));
+        $$('#nav a').forEach(a => a.classList.toggle('on', a.dataset.r === cur));
         const sn = $('#subnav');
         if (sn) {
           sn.hidden = !g || g.pages.length < 2;
@@ -7517,6 +7517,8 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
           if (store && !store.live) att.push(['info', 'The Store is closed', 'Real-money purchases show “Coming soon”.', '#/store']);
           const qa = [
             ['#/gifts', IC.gift, 'Send a gift'],
+            ['#/abuse', IC.site, 'Admin Abuse'],
+            ['#/exotics', IC.gift, 'Give a pet'],
             ['#/promos', IC.ticket, 'Promo code'],
             ['#/content', IC.content, 'Post news'],
             can('admin') ? ['price', IC.chart, 'Set a price'] : null,
@@ -7531,12 +7533,12 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
         ${k('', 'New players today', num(a.new_today), `${num(a.new_7d)} in the last 7 days`, '#/users?joined=today')}
         ${k('', 'Total players', num(a.users), `${num(a.active_30d)} active in 30 days`, '#/users')}
         ${rev}</div>
+      <div class="qa-top">${qa.map(([h, ic, l], i) => (h.startsWith('#') ? `<a class="qt qt${i}" href="${h}"><span class="qt-ic">${navIco(h.replace('#/', '')) || ic}</span><span>${l}</span></a>` : `<button class="qt qt${i}" data-qa="${h}"><span class="qt-ic">${navIco(h === 'price' ? 'market' : h) || ic}</span><span>${l}</span></button>`)).join('')}</div>
       <div class="dgrid">
         <div class="card dchart"><div class="card-h"><h3>Players per day</h3><div class="seg" id="dSeg">${[['dau', 'Active'], ['new', 'New']].map(([m, l]) => `<button data-m="${m}" class="${this.metric === m ? 'on' : ''}">${l}</button>`).join('')}</div></div>
           <div class="chart" id="c1"></div><p class="small muted chart-note" id="cNote"></p></div>
         <div class="dside">
           <div class="card"><div class="card-h"><h3>Needs attention</h3></div>${att.length ? `<div class="att">${att.map(([c, t, d, h]) => `<a class="att-i ${c}" href="${h}"><i></i><span><b>${t}</b><small>${d}</small></span><em>›</em></a>`).join('')}</div>` : `<div class="empty small ok-empty">${IC.ok}<span>All clear — nothing needs you right now.</span></div>`}</div>
-          <div class="card"><div class="card-h"><h3>Quick actions</h3></div><div class="qa2">${qa.map(([h, ic, l]) => (h.startsWith('#') ? `<a class="btn" href="${h}">${ic}<span>${l}</span></a>` : `<button class="btn" data-qa="${h}">${ic}<span>${l}</span></button>`)).join('')}</div></div>
         </div>
       </div>
       <div class="card" style="margin-top:16px"><div class="card-h"><h3>Who’s online</h3><span class="small muted" id="onlNote">Refreshes every 30 seconds</span></div><div id="onl"></div></div>`;
@@ -10783,6 +10785,30 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
         .ab-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
       }
       #mNav { display: none; }
+      .nav2 { gap: 1px !important; overflow-y: auto; padding-bottom: 10px; }
+      .nav2 .nav-h { font: 800 10.5px/1 var(--sans, system-ui); letter-spacing: .09em; text-transform: uppercase; color: var(--mut); padding: 14px 12px 6px; opacity: .8; }
+      .nav2 .nav-h:first-child { padding-top: 4px; }
+      .nav2 a { padding: 7px 10px !important; min-height: 38px; font-size: 13.5px !important; }
+      .nav2 a .ni { width: 26px !important; height: 26px !important; border-radius: 8px !important; }
+      .nav2 a .ni svg { width: 16px !important; height: 16px !important; }
+      @media (min-width: 901px) { #subnav { display: none !important; } }
+      .side .nav2 { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; margin-right: -6px; padding-right: 6px; }
+      .side .live { margin-top: 8px; padding: 6px 10px; }
+      .side .live small { display: none; }
+      .nav2 .ni, .qt .ni, #mNav .ni, :root:not([data-theme='dark']) .nav2 .ni { color: #fff !important; background: linear-gradient(145deg, var(--n1), var(--n2)) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.3) !important; }
+      .nav2 .ni svg .f, .qt .ni svg .f, #mNav .ni svg .f { opacity: .35; }
+      .nav2 .ni svg .k, .qt .ni svg .k, #mNav .ni svg .k { fill: var(--n2); }
+      .nav2 a.on { background: color-mix(in srgb, var(--n2, #ff9a1f) 14%, var(--panel2)) !important; font-weight: 700; }
+      #mNav a .ni { width: 26px !important; height: 26px !important; border-radius: 8px !important; }
+      #mNav a .ni svg { width: 16px !important; height: 16px !important; }
+      #mNav a:not(.on) .ni { filter: saturate(.55) opacity(.8); }
+      .qa-top { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 16px 0; }
+      .qt { display: flex; align-items: center; gap: 10px; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); color: var(--tx, inherit); font: 700 14px var(--sans, system-ui); text-decoration: none; cursor: pointer; transition: transform .12s, border-color .12s, box-shadow .12s; text-align: left; }
+      .qt:hover { transform: translateY(-2px); border-color: var(--acc, #ff9a1f); box-shadow: 0 10px 24px -14px rgba(0,0,0,.5); }
+      .qt .qt-ic { flex: none; display: grid; place-items: center; }
+      .qt .qt-ic .ni { width: 38px !important; height: 38px !important; border-radius: 12px !important; }
+      .qt .qt-ic .ni svg, .qt .qt-ic > svg { width: 22px !important; height: 22px !important; }
+      @media (max-width: 560px) { .qa-top { grid-template-columns: 1fr 1fr; gap: 8px; } .qt { padding: 11px; font-size: 13px; } .qt .qt-ic .ni { width: 32px !important; height: 32px !important; } }
       @media (max-width: 900px) {
         #mNav { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; gap: 2px; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; box-shadow: 0 -8px 24px rgba(0,0,0,.18); }
         #mNav::-webkit-scrollbar { display: none; }
@@ -10817,16 +10843,31 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
         label();
       })();
       (function () {
+        var KEYS = [['dashboard', 'Home'], ['users', 'Players'], ['gifts', 'Gifts'], ['abuse', 'Abuse']];
         function build() {
           var nav = document.getElementById('nav');
           if (!nav) return;
           var m = document.getElementById('mNav');
-          if (!m) { m = document.createElement('nav'); m.id = 'mNav'; m.setAttribute('aria-label', 'Sections'); document.body.appendChild(m); }
-          var h = nav.innerHTML;
-          if (m._h !== h) { m._h = h; m.innerHTML = h; [].forEach.call(m.querySelectorAll('[id]'), function (e) { e.removeAttribute('id'); }); var SH = { overview: 'Home', players: 'Players', rewards: 'Gifts', live: 'Events', community: 'Chat', economy: 'Market', settings: 'Settings' }; [].forEach.call(m.querySelectorAll('a[data-g]'), function (a) { var sp = [].filter.call(a.querySelectorAll('span:not(.cnt)'), function (x) { return !x.querySelector('svg') && !x.children.length; }).pop(); if (sp && SH[a.dataset.g]) sp.textContent = SH[a.dataset.g]; }); }
+          if (!m) {
+            m = document.createElement('nav');
+            m.id = 'mNav';
+            m.setAttribute('aria-label', 'Sections');
+            document.body.appendChild(m);
+            m.onclick = function (e) {
+              if (e.target.closest('[data-menu]')) { e.preventDefault(); var b = document.getElementById('burger'); if (b) b.click(); }
+            };
+          }
+          var cur = (location.hash.replace(/^#\//, '').split(/[/?]/)[0]) || 'dashboard';
+          if (cur === 'user') cur = 'users';
+          var h = KEYS.map(function (k) {
+            var a = nav.querySelector('a[data-r="' + k[0] + '"]');
+            var ic = a ? (a.querySelector('.ni, svg') || {}).outerHTML || '' : '';
+            return a ? '<a href="#/' + k[0] + '" class="' + (cur === k[0] ? 'on' : '') + '">' + ic + '<span>' + k[1] + '</span></a>' : '';
+          }).join('') + '<a href="#" data-menu class="' + (KEYS.some(function (k) { return k[0] === cur; }) ? '' : 'on') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg><span>All pages</span></a>';
+          if (m._h !== h) { m._h = h; m.innerHTML = h; }
         }
-        setInterval(build, 700);
-        addEventListener('hashchange', function () { setTimeout(build, 50); });
+        setInterval(build, 800);
+        addEventListener('hashchange', function () { setTimeout(build, 30); });
       })();
     </script>
   </body>
