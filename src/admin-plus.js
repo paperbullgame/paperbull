@@ -939,3 +939,133 @@
           document.head.appendChild(st);
         }
       }
+
+      /* ================= HELPERS: a weaker gift panel (helper.html) for trusted people =================
+         Helpers sign in there with their own 6-digit code. The server caps what they can give. */
+      {
+        const HELPER_ITEMS = __HELPER_ITEMS__;
+        NI.helpers = ['#8ef0b0', '#16a34a', NF('<circle class="f" cx="12" cy="8" r="4"/><circle cx="12" cy="8" r="4"/><path class="f" d="M4.5 20c.7-3.8 3.7-6 7.5-6s6.8 2.2 7.5 6z"/><path d="M4.5 20c.7-3.8 3.7-6 7.5-6s6.8 2.2 7.5 6z"/><path d="M16.5 3.5 18 2m1.5 4.5L21 6"/>')];
+        {
+          const gi = NAV.findIndex(n => n[0] === 'site');
+          NAV.splice(gi + 1, 0, ['helpers', 'Helpers', IC.users, 'admin']);
+        }
+        const DEF = { coin_max: 500, xp_max: 500, gifts_day: 10, coins_day: 2500, one_per_player: true, items: HELPER_ITEMS.slice() };
+        const helperURL = () => location.href.replace(/admin\.html.*$/, 'helper.html').replace(/#.*$/, '');
+        const opt = (list, cur, f = v => num(v)) => (list.includes(+cur) ? list : list.concat(+cur).sort((a, b) => a - b)).map(v => `<option value="${v}" ${+cur === v ? 'selected' : ''}>${f(v)}</option>`).join('');
+        function showCode(name, code) {
+          modal({
+            title: `${name}’s helper code`,
+            ok: 'Done',
+            cancel: '',
+            body: `<p style="margin:0 0 12px">Give ${esc(name)} this code and the link below. <b>You won’t see the code again</b>, so copy it now (you can always make a new one).</p>
+              <div class="hp-code mono">${esc(code)}</div>
+              <div class="hp-link"><input class="in mono" readonly value="${esc(helperURL())}"><button class="btn sm" type="button" id="hpCopy">Copy link + code</button></div>`,
+            onMount: ov =>
+              ($('#hpCopy', ov).onclick = async () => {
+                try {
+                  await navigator.clipboard.writeText(`PAPERBULL helper panel: ${helperURL()}\nYour code: ${code}`);
+                  toast('Copied');
+                } catch (e) {
+                  toast('Copy didn’t work. Select it by hand.', 'err');
+                }
+              }),
+          });
+        }
+        VIEWS.helpers = {
+          role: 'admin',
+          async render(v) {
+            v.innerHTML =
+              head('Helpers', 'A much weaker gift panel for people you trust. Helpers can give small amounts of coins and XP and a few basic items, with daily limits. They can’t give cash, rare pets or eggs, ban anyone, or see this admin site.', `<a class="btn" href="helper.html" target="_blank" rel="noopener">Open helper panel</a><button class="btn pri" id="hpAdd">${IC.plus || ''}Add a helper</button>`) +
+              `<div class="card">${skeleton(4)}</div>`;
+            let d;
+            try {
+              d = await A('pba_helpers');
+            } catch (e) {
+              const off = /Could not find|not_ready|PGRST202|404/.test(e.message + (e.code || ''));
+              v.innerHTML =
+                head('Helpers', 'A much weaker gift panel for people you trust.') +
+                `<div class="card empty">${off ? '<b>The helper panel isn’t switched on in the database yet.</b><p class="small muted">It goes live as soon as the server update is installed.</p>' : esc(e.message)}</div>`;
+              return;
+            }
+            const c = Object.assign({}, DEF, d.cfg || {}),
+              L = d.helpers || [],
+              G = d.log || [];
+            const set = new Set(c.items || []);
+            v.innerHTML =
+              head('Helpers', 'A much weaker gift panel for people you trust. Helpers can give small amounts of coins and XP and a few basic items, with daily limits. They can’t give cash, rare pets or eggs, ban anyone, or see this admin site.', `<a class="btn" href="helper.html" target="_blank" rel="noopener">Open helper panel</a><button class="btn pri" id="hpAdd">${IC.plus || ''}Add a helper</button>`) +
+              `<div class="card"><div class="card-h"><h3>Your helpers</h3><span class="small muted">${num(L.length)} helper${L.length === 1 ? '' : 's'}</span></div>
+                ${L.length ? `<div class="tw"><table><thead><tr><th>Helper</th><th>Status</th><th class="r">Gifts today</th><th class="r">All time</th><th>Last used</th><th></th></tr></thead><tbody>${L.map(h => `<tr><td><div class="who">${avatar(h.name)}<div><b>${esc(h.name)}</b><small>added ${dday(h.created_at)}</small></div></div></td><td data-l="Status">${h.disabled ? '<span class="pill p-mut"><i></i>Off</span>' : '<span class="pill p-ok"><i></i>On</span>'}</td><td class="r mono" data-l="Gifts today">${num(h.gifts_today)}/${num(c.gifts_day)}</td><td class="r mono" data-l="All time">${num(h.gifts_total)}</td><td data-l="Last used">${ago(h.last_seen)}</td>
+                  <td class="r"><div class="row-act"><button class="btn sm" data-code="${h.id}">New code</button><button class="btn sm" data-tog="${h.id}">${h.disabled ? 'Turn on' : 'Turn off'}</button><button class="btn sm dan" data-del="${h.id}">Remove</button></div></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No helpers yet. Tap <b>Add a helper</b>, then send them the link and their code.</div>'}</div>
+              <div class="card"><div class="card-h"><h3>Limits</h3><span class="small muted">The server enforces these. Helpers can’t get around them.</span></div>
+                <div class="grid g2" style="gap:0 12px">
+                  <label class="f"><span>Most coins in one gift</span><select class="in" id="hcC">${opt([50, 100, 250, 500, 1000, 2500], c.coin_max)}</select></label>
+                  <label class="f"><span>Most XP in one gift</span><select class="in" id="hcX">${opt([100, 250, 500, 1000, 2500], c.xp_max)}</select></label>
+                  <label class="f"><span>Gifts per helper per day</span><select class="in" id="hcG">${opt([3, 5, 10, 20, 50], c.gifts_day)}</select></label>
+                  <label class="f"><span>Coins per helper per day</span><select class="in" id="hcD">${opt([500, 1000, 2500, 5000, 10000], c.coins_day)}</select></label></div>
+                <label class="gall"><input type="checkbox" id="hcP" ${c.one_per_player ? 'checked' : ''}><span class="sw"></span><span><b>One helper gift per player per day</b><small>Stops helpers from pouring gifts into one account (like their own)</small></span></label>
+                <div class="f" style="margin-top:14px"><span>Items helpers can give <button type="button" class="btn sm ghost" id="hcAll">All</button><button type="button" class="btn sm ghost" id="hcNone">None</button></span></div>
+                <div class="hp-items" id="hcI">${HELPER_ITEMS.map(k => `<label class="hp-it${set.has(k) ? ' on' : ''}"><input type="checkbox" value="${k}" ${set.has(k) ? 'checked' : ''}>${itemArt(k, 40)}<small>${esc(itemInfo(k).name)}</small></label>`).join('')}</div>
+                <p class="small muted" style="margin:10px 0 12px">Only cheap, common things are on this list. Cash, rare eggs, pets, exotics and serums can never be given from the helper panel.</p>
+                <button class="btn pri" id="hcSave">Save limits</button></div>
+              <div class="card"><div class="card-h"><h3>Recent helper gifts</h3><span class="small muted">Last 100</span></div>
+                ${G.length ? `<div class="tw"><table><thead><tr><th>When</th><th>Helper</th><th>Player</th><th>Gift</th></tr></thead><tbody>${G.map(x => `<tr><td class="small" data-l="When">${dt(x.at)}</td><td data-l="Helper"><b>${esc(x.helper)}</b></td><td data-l="Player"><a href="#/user/${esc(x.user_id)}">@${esc(x.username)}</a></td><td data-l="Gift">${esc(x.what)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty small">No helper gifts yet.</div>'}</div>`;
+            $('#hpAdd').onclick = () =>
+              modal({
+                title: 'Add a helper',
+                ok: 'Add helper',
+                body: `<label class="f"><span>Their name</span><input class="in" id="hpN" maxlength="24" placeholder="Venn"></label><p class="small muted" style="margin:0">You’ll get a 6-digit code to give them. Their name shows up next to every gift they give.</p><div class="err"></div>`,
+                onOk: async ov => {
+                  const n = $('#hpN', ov).value.trim();
+                  if (n.length < 2) throw new Error('Type a name (2+ letters).');
+                  const r = await A('pba_helper_save', { p_id: null, p_name: n, p_disabled: false, p_new_code: true });
+                  setTimeout(() => showCode(n, r.code), 50);
+                  this.render(v);
+                },
+              });
+            v.onclick = async e => {
+              const b = e.target.closest('[data-code],[data-tog],[data-del]');
+              if (!b) return;
+              const h = L.find(x => String(x.id) === (b.dataset.code || b.dataset.tog || b.dataset.del));
+              if (!h) return;
+              try {
+                if (b.dataset.code) {
+                  const ok = await confirmBox({ title: `New code for ${esc(h.name)}?`, text: 'Their old code stops working right away and they get signed out.', ok: 'Make a new code', danger: false });
+                  if (!ok) return;
+                  const r = await A('pba_helper_save', { p_id: h.id, p_name: h.name, p_disabled: h.disabled, p_new_code: true });
+                  showCode(h.name, r.code);
+                } else if (b.dataset.tog) {
+                  await act(A('pba_helper_save', { p_id: h.id, p_name: h.name, p_disabled: !h.disabled, p_new_code: false }), h.disabled ? `${h.name} is back on` : `${h.name} is turned off`);
+                } else {
+                  const ok = await confirmBox({ title: `Remove ${esc(h.name)}?`, text: 'Their code stops working. Gifts they already gave stay in the log.', ok: 'Remove helper' });
+                  if (!ok) return;
+                  await act(A('pba_helper_delete', { p_id: h.id }), `${h.name} removed`);
+                }
+                this.render(v);
+              } catch (err) {
+                toast(err.message, 'err');
+              }
+            };
+            const sync = () => $$('#hcI label').forEach(l => l.classList.toggle('on', l.querySelector('input').checked));
+            $('#hcI').onchange = sync;
+            $('#hcAll').onclick = () => ($$('#hcI input').forEach(i => (i.checked = true)), sync());
+            $('#hcNone').onclick = () => ($$('#hcI input').forEach(i => (i.checked = false)), sync());
+            $('#hcSave').onclick = async () => {
+              const p = { coin_max: +$('#hcC').value, xp_max: +$('#hcX').value, gifts_day: +$('#hcG').value, coins_day: +$('#hcD').value, one_per_player: $('#hcP').checked, items: $$('#hcI input:checked').map(i => i.value) };
+              try {
+                await act(A('pba_helper_cfg_set', { p_cfg: p }), 'Helper limits saved');
+              } catch (e) {}
+            };
+          },
+        };
+        const st = document.createElement('style');
+        st.textContent = `
+          .hp-code{font-size:40px;letter-spacing:.3em;text-align:center;padding:14px;border-radius:14px;background:var(--panel2);border:1px dashed var(--line);margin-bottom:12px}
+          .hp-link{display:flex;gap:8px}.hp-link .in{flex:1;min-width:0;font-size:12.5px}
+          .hp-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+          .hp-it{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:12px;border:1px solid var(--line);cursor:pointer;text-align:center;opacity:.55;transition:opacity .15s,border-color .15s}
+          .hp-it.on{opacity:1;border-color:var(--brand);background:color-mix(in srgb,var(--brand) 8%,transparent)}
+          .hp-it input{position:absolute;opacity:0;pointer-events:none}.hp-it small{font-size:11.5px;line-height:1.2}
+          .f>span .btn{margin-left:6px;height:24px;padding:0 8px;font-size:11.5px}
+        `;
+        document.head.appendChild(st);
+      }

@@ -54,8 +54,24 @@ for _i,_n,_pr in re.findall(r"id: '([a-z]+)',\s*name: '([^']+)',\s*price: (\d+),
     if 'pack:'+_i not in [x[0] for x in _items]: _items.append(['pack:'+_i,'pack',_n,int(_pr),None])
 _assets=re.findall(r"^  \['([A-Z0-9.]+)', '([^']+)', '(stock|crypto)', ", s, flags=re.M)
 _a=open('src/admin.html',encoding='utf-8').read().replace('/*__ADMIN_ABUSE__*/',open('src/admin-abuse.js',encoding='utf-8').read()).replace('/*__ADMIN_ITEMS__*/','/*__ADMIN_ITEMS__*/\n/*__ADMIN_PLUS__*/').replace('/*__ADMIN_ITEMS__*/',open('src/admin-items.js',encoding='utf-8').read().replace('__SPRITES__',open('src/brand/admin-items.json',encoding='utf-8').read()).replace('__SPRITE_URL__','data:image/webp;base64,'+base64.b64encode(open('src/brand/admin-items.webp','rb').read()).decode())).replace('__EXOTIC_CSS__',open('src/exotic.css',encoding='utf-8').read()+'\n'+open('src/abuse.css',encoding='utf-8').read()).replace('__EXOTIC_JS__',open('src/exotic-art.js',encoding='utf-8').read()+'\n'+open('src/abuse-fx.js',encoding='utf-8').read()+'\n'+open('src/abuse-icons.js',encoding='utf-8').read()).replace('__ITEMS__',_j.dumps(_items)).replace('__ASSETS__',_j.dumps(_assets)).replace('__SANS__',f64('sans.woff2')).replace('__MONO5__',f64('mono-500.woff2')).replace('__FAVICON__',_fav).replace('<!--__CSP__-->','<meta http-equiv="Content-Security-Policy" content="%s" />'%ADMIN_CSP).replace('__LOGO__',_j.dumps(_logo.replace('xmlns="http://www.w3.org/2000/svg" ','').replace('pbLg','pbLgA')))
-_a=_a.replace('/*__ADMIN_PLUS__*/',open('src/admin-plus.js',encoding='utf-8').read())
+_a=_a.replace('/*__ADMIN_PLUS__*/',open('src/admin-plus.js',encoding='utf-8').read().replace('__HELPER_ITEMS__',open('src/helper-items.json').read()))
 open('admin.html','w',encoding='utf-8').write(_a); print('admin ok', len(_a))
+
+# ---- helper panel: a much weaker gift page for trusted helpers ----
+HELPER_ITEMS=['pu_xp','pu_cash','pu_refresh','pu_streak','egg_speckled','egg_c','tr_snack','tr_toy','tr_apple','tr_bone','av_bull','av_bear','av_fox','av_frog','av_cowboy','av_panda','av_koala','av_chef','av_pirate','th_amber','th_mint','th_lime','th_coral','th_sky','th_peach','sk_classic','sk_retro','sk_sunset','sk_forest','sk_berry']
+from PIL import Image as _Im
+import io as _io
+_spr=_j.load(open('src/brand/admin-items.json',encoding='utf-8')); _cells={c['k']:c for c in _spr['cells']}
+_src=_Im.open('src/brand/admin-items.webp'); _S=_spr['S']; _HC=6; _Z=96
+_rows=(len(HELPER_ITEMS)+_HC-1)//_HC
+_sheet=_Im.new('RGBA',(_HC*_Z,_rows*_Z),(0,0,0,0)); _hitems=[]
+for _n,_k in enumerate(HELPER_ITEMS):
+    _c=_cells[_k]; _x=(_c['i']%_spr['C'])*_S; _y=(_c['i']//_spr['C'])*_S
+    _sheet.paste(_src.crop((_x,_y,_x+_S,_y+_S)).resize((_Z,_Z),_Im.LANCZOS),((_n%_HC)*_Z,(_n//_HC)*_Z))
+    _hitems.append({'k':_k,'n':_c['n'],'t':_c['t'],'d':_c.get('d',''),'i':_n})
+_bio=_io.BytesIO(); _sheet.save(_bio,'WEBP',quality=88)
+_h=open('src/helper.html',encoding='utf-8').read().replace('__HITEMS__',_j.dumps(_hitems)).replace('__HSPRITE__','data:image/webp;base64,'+base64.b64encode(_bio.getvalue()).decode()).replace('__HC__',str(_HC)).replace('__SANS__',f64('sans.woff2')).replace('__MONO5__',f64('mono-500.woff2')).replace('__FAVICON__',_fav).replace('<!--__CSP__-->','<meta http-equiv="Content-Security-Policy" content="%s" />'%ADMIN_CSP).replace('__LOGO__',_j.dumps(_logo.replace('xmlns="http://www.w3.org/2000/svg" ','').replace('pbLg','pbLgH')))
+open('helper.html','w',encoding='utf-8').write(_h); open('src/helper-items.json','w').write(_j.dumps(HELPER_ITEMS)); print('helper ok', len(_h))
 # ---- legal pages ----
 import glob as _g
 os.makedirs('legal', exist_ok=True)
