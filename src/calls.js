@@ -17,6 +17,7 @@
     kid_blocked: 'Calls are for players 14 and up.',
     cant_call: 'You can’t call this player.',
     not_friends: 'You can only call friends.',
+    dm_closed: 'They only take calls from friends. Send a friend request.',
     in_call: 'You’re already in a call.',
     busy: 'They’re on another call. Try again soon.',
     slow_down: 'Too many calls. Wait a few minutes.',
@@ -242,7 +243,7 @@
 
   /* ---------- actions ---------- */
   async function start(username) {
-    if (!linked()) return toast('Sign up to call friends.', 'err');
+    if (!linked()) return toast('Sign up to make calls.', 'err');
     if (C) return toast(ERR.in_call, 'err');
     let stream;
     try {

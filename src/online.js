@@ -458,7 +458,7 @@
         const sugRow = r => {
           const sent = r.sent || pending.has(String(r.username).toLowerCase());
           return `<div class="fs-r"><span class="rk-av">${avatarArt(r.avatar || 'av_bull')}</span><span class="fs-t"><b>${E(r.name || r.username)}</b><small>@${E(r.username)} · Lv ${r.level || 1}</small></span><em class="fs-why ${r.why === 'Playing now' ? 'on' : ''}">${E(r.why || '')}</em>
-            <button class="btn sm ${sent ? '' : 'primary'} fs-add" data-add="${E(r.username)}" ${sent ? 'disabled' : ''}>${sent ? 'Requested' : 'Add'}</button></div>`;
+            <button class="btn sm fs-msg" data-msgto="${E(r.username)}" aria-label="Message @${E(r.username)}" title="Message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button>${window.PBCalls && on('calls') ? `<button class="btn sm fs-msg" data-callto="${E(r.username)}" aria-label="Call @${E(r.username)}" title="Call"><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor;stroke:none"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg></button>` : ''}<button class="btn sm ${sent ? '' : 'primary'} fs-add" data-add="${E(r.username)}" ${sent ? 'disabled' : ''}>${sent ? 'Requested' : 'Add'}</button></div>`;
         };
         const loadSug = async () => {
           const my = ++seq,
@@ -486,6 +486,10 @@
           loadSug();
         };
         box.onclick = async e => {
+          const ct = e.target.closest('[data-callto]');
+          if (ct && window.PBCalls) return PBCalls.start(ct.dataset.callto);
+          const mt = e.target.closest('[data-msgto]');
+          if (mt && window.PBSocial && PBSocial.dm) return PBSocial.dm(mt.dataset.msgto);
           const b = e.target.closest('[data-add]');
           if (!b || b.disabled) return;
           const n = b.dataset.add;

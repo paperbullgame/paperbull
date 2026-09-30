@@ -75,6 +75,9 @@
     no_contact: 'For your safety you can’t share your name, age, school, phone, socials, links or where you live.',
     slow_down: 'Slow down a little. Wait a moment between messages.',
     no_room: 'That chat isn’t available anymore.',
+    dm_closed: 'They only take messages from friends. Send a friend request instead.',
+    friends_only: 'Younger players can only message friends.',
+    no_user: 'That player isn’t around anymore.',
     empty: 'Type a message first.',
     feature_off: 'That’s turned off right now.',
     in_clan: 'You’re already in a clan. Leave it first.',
@@ -399,7 +402,7 @@
     },
   };
   SCREENS.social = Social;
-  window.PBSocial = { open: (tab, room) => openTab(tab, room), state: S, repaintComposer: () => paintComposer() };
+  window.PBSocial = { open: (tab, room) => openTab(tab, room), state: S, repaintComposer: () => paintComposer(), dm: u => dmWith(u) };
 
   function openTab(tab, room) {
     if (room) S.room = room;
@@ -782,6 +785,52 @@
   function msgById(id) {
     return rs(S.room).msgs.find(m => String(m.id) === String(id));
   }
+  // tap ⋯ on someone's message: message them, add them, or report
+  function msgMenu(id) {
+    const m = msgById(id);
+    if (!m || m.mine || m.kind === 'system') return;
+    if (!linked()) return Gate.show('signup');
+    const u = m.uname || m.username,
+      isDm = String(S.room || '').startsWith('dm:');
+    const close = modal({
+      title: E(m.username || u),
+      confirm: '',
+      cancel: 'Close',
+      html: `<div class="sc-mm"><div class="sc-rq"><span class="sc-av">${av(m.avatar)}</span><div><b>${E(m.username || u)}</b><small class="muted">@${E(u)}</small></div></div>
+        ${isDm ? '' : `<button class="sc-mmb" data-mma="dm">${IC.send || ''}<span>Message @${E(u)}</span></button>`}
+        ${feat('calls') && window.PBCalls ? `<button class="sc-mmb" data-mma="call"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg><span>Call @${E(u)}</span></button>` : ''}
+        <button class="sc-mmb" data-mma="add"><span>Add friend</span></button>
+        <button class="sc-mmb red" data-mma="report"><span>Report this message</span></button></div>`,
+      onMount: root =>
+        root.querySelector('.sc-mm').addEventListener('click', async e => {
+          const b = e.target.closest('[data-mma]');
+          if (!b) return;
+          const a = b.dataset.mma;
+          if (a === 'dm') {
+            close();
+            return dmWith(u);
+          }
+          if (a === 'call') {
+            close();
+            return PBCalls.start(u);
+          }
+          if (a === 'report') {
+            close();
+            return setTimeout(() => reportDialog(id), 60);
+          }
+          if (a === 'add') {
+            b.disabled = true;
+            try {
+              const r = await Cloud.rpc('pb_friend_add', { p_token: tok(), p_username: u });
+              b.querySelector('span').textContent = r.status === 'accepted' ? 'You’re friends now!' : 'Friend request sent';
+            } catch (ex) {
+              b.disabled = false;
+              toast(errText(ex), 'err');
+            }
+          }
+        }),
+    });
+  }
   function reportDialog(id) {
     const m = msgById(id);
     if (!m || m.mine || m.kind === 'system') return;
@@ -821,17 +870,59 @@
       title: 'New message',
       confirm: '',
       cancel: 'Close',
-      html: `<div id="scPick">${skel(3)}</div>`,
+      html: `<div class="nd"><div class="fs-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="txt" id="ndQ" maxlength="20" placeholder="Search anyone" autocomplete="off" autocapitalize="off"></div>
+        <div id="scPick">${skel(3)}</div><div class="ag-err" id="scPkErr"></div><div id="ndOpen"></div></div>`,
     });
-    const f = await loadFriends();
+    await loadFriends();
     const box = document.getElementById('scPick');
     if (!box) return;
-    const list = friends();
-    if (!list.length) {
-      box.innerHTML = `<div class="sc-empty sm"><b>No friends yet</b><p>You can message players once you’re friends. Tap below to find people to add.</p><button class="btn primary sm" data-scfriends>Add friends</button></div>`;
-      return;
-    }
-    box.innerHTML = `<p class="muted small" style="margin:0 0 8px">Pick a friend to chat with.</p><div class="sc-pick">${list.map(fr => `<button class="sc-pk" data-dmto="${E(fr.username)}"><span class="sc-av">${av(fr.avatar)}</span><span><b>${E(fr.name || fr.username)}</b><small>@${E(fr.username)}${fr.level ? ' · LV ' + fr.level : ''}</small></span></button>`).join('')}</div><div class="ag-err" id="scPkErr"></div>`;
+    const ag = window.PBAge ? PBAge.state() : { kid: false, known: true };
+    const young = ag.kid || !ag.known;
+    const fr = friends();
+    const row = p => `<button class="sc-pk" data-dmto="${E(p.username)}"><span class="sc-av">${av(p.avatar)}</span><span><b>${E(p.name || p.username)}</b><small>@${E(p.username)}${p.level ? ' · Lv ' + p.level : ''}${p.why ? ' · ' + E(p.why) : ''}</small></span></button>`;
+    let seq = 0;
+    const paint = async () => {
+      const q = (document.getElementById('ndQ') || {}).value || '';
+      const ql = q.trim().toLowerCase();
+      const myF = fr.filter(p => !ql || String(p.username).toLowerCase().startsWith(ql) || String(p.name || '').toLowerCase().startsWith(ql));
+      let others = [];
+      if (!young) {
+        const my = ++seq;
+        try {
+          others = await Cloud.rpc('pb_players_suggest', { p_token: tok(), p_q: ql || null });
+        } catch (e) {}
+        if (my !== seq) return;
+      }
+      const fset = new Set(fr.map(p => String(p.username).toLowerCase()));
+      others = (Array.isArray(others) ? others : []).filter(p => !fset.has(String(p.username).toLowerCase()));
+      if (!document.getElementById('scPick')) return;
+      box.innerHTML =
+        (myF.length ? `<small class="nd-h">Friends</small><div class="sc-pick">${myF.map(row).join('')}</div>` : '') +
+        (young
+          ? `<p class="muted small" style="margin:8px 0 0">Younger players can message friends only.${fr.length ? '' : ' <button class="linkish" data-scfriends>Add friends</button>'}</p>`
+          : others.length
+            ? `<small class="nd-h">Anyone</small><div class="sc-pick">${others.map(row).join('')}</div>`
+            : ql
+              ? `<p class="muted small" style="margin:8px 0 0">No one found for “${E(q)}”.</p>`
+              : '') ||
+        '<p class="muted small">No one to message yet.</p>';
+    };
+    paint();
+    let tq = 0;
+    document.getElementById('ndQ').oninput = () => {
+      clearTimeout(tq);
+      tq = setTimeout(paint, 250);
+    };
+    // inbox setting: who can message me
+    if (!young)
+      Cloud.rpc('pb_dm_open_get', { p_token: tok() })
+        .then(r => {
+          const el = document.getElementById('ndOpen');
+          if (!el || !r || !r.can) return;
+          el.innerHTML = `<label class="nd-open"><input type="checkbox" id="ndOpenC" ${r.dm_open ? 'checked' : ''}><span><b>Let anyone message or call me</b><small>Turn off to only hear from friends.</small></span></label>`;
+          document.getElementById('ndOpenC').onchange = e => Cloud.rpc('pb_dm_open_set', { p_token: tok(), p_open: e.target.checked }).then(() => toast(e.target.checked ? 'Anyone can message or call you now' : 'Only friends can message or call you now', 'ok'));
+        })
+        .catch(() => {});
     box.onclick = async e => {
       const b = e.target.closest('[data-dmto]');
       if (!b || b.disabled) return;
@@ -851,7 +942,6 @@
         if (er) er.textContent = errText(ex);
       }
     };
-    void f;
   }
   async function dmWith(u) {
     if (!linked()) return Gate.show('signup');
@@ -963,7 +1053,7 @@
       return send(em.dataset.emote, 'emote');
     }
     const mm = t.closest('[data-mmenu]');
-    if (mm) return reportDialog(mm.dataset.mmenu);
+    if (mm) return msgMenu(mm.dataset.mmenu);
     if (t.closest('#scNew')) {
       const b = document.getElementById('scMsgs');
       if (b) b.scrollTo({ top: b.scrollHeight, behavior: reduced() ? 'auto' : 'smooth' });
