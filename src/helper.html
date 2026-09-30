@@ -126,6 +126,7 @@
           self_gift: 'You can’t gift your own game account.',
           network: 'Can’t reach the server. Check your internet.',
           not_ready: 'The helper panel isn’t switched on yet. Ask the owner.',
+          too_long: 'That message is too long.',
         };
         async function rpc(fn, args = {}) {
           let r;
@@ -145,6 +146,7 @@
             if (code === 'helper_auth') setTimeout(() => signOut(true), 0);
             throw Object.assign(new Error(ERR[code] || 'Something went wrong (' + code + ')'), { code, left: j && j.details && /^\d+$/.test(j.details) ? +j.details : null });
           }
+          if (j && j.error) throw Object.assign(new Error(ERR[j.error] || j.error), { code: j.error, left: j.left });
           return j;
         }
         const S = { token: null, me: null, kind: 'coins', amount: 0, item: null, user: null };

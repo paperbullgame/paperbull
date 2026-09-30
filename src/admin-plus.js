@@ -944,6 +944,7 @@
          Helpers sign in there with their own 6-digit code. The server caps what they can give. */
       {
         const HELPER_ITEMS = __HELPER_ITEMS__;
+        Object.assign(ERR, { bad_name: 'The name must be 2 to 24 characters.', too_many: 'You can have up to 30 helpers.' });
         NI.helpers = ['#8ef0b0', '#16a34a', NF('<circle class="f" cx="12" cy="8" r="4"/><circle cx="12" cy="8" r="4"/><path class="f" d="M4.5 20c.7-3.8 3.7-6 7.5-6s6.8 2.2 7.5 6z"/><path d="M4.5 20c.7-3.8 3.7-6 7.5-6s6.8 2.2 7.5 6z"/><path d="M16.5 3.5 18 2m1.5 4.5L21 6"/>')];
         {
           const gi = NAV.findIndex(n => n[0] === 'site');

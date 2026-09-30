@@ -58,7 +58,7 @@ _a=_a.replace('/*__ADMIN_PLUS__*/',open('src/admin-plus.js',encoding='utf-8').re
 open('admin.html','w',encoding='utf-8').write(_a); print('admin ok', len(_a))
 
 # ---- helper panel: a much weaker gift page for trusted helpers ----
-HELPER_ITEMS=['pu_xp','pu_cash','pu_refresh','pu_streak','egg_speckled','egg_c','tr_snack','tr_toy','tr_apple','tr_bone','av_bull','av_bear','av_fox','av_frog','av_cowboy','av_panda','av_koala','av_chef','av_pirate','th_amber','th_mint','th_lime','th_coral','th_sky','th_peach','sk_classic','sk_retro','sk_sunset','sk_forest','sk_berry']
+HELPER_ITEMS=['pu_xp','pu_refresh','pu_streak','egg_speckled','egg_c','tr_snack','tr_toy','tr_apple','tr_bone','av_bull','av_bear','av_fox','av_frog','av_cowboy','av_panda','av_koala','av_chef','av_pirate','th_amber','th_mint','th_lime','th_coral','th_sky','th_peach','sk_classic','sk_retro','sk_sunset','sk_forest','sk_berry']
 from PIL import Image as _Im
 import io as _io
 _spr=_j.load(open('src/brand/admin-items.json',encoding='utf-8')); _cells={c['k']:c for c in _spr['cells']}

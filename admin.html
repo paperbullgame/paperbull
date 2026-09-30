@@ -12481,7 +12481,8 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
       /* ================= HELPERS: a weaker gift panel (helper.html) for trusted people =================
          Helpers sign in there with their own 6-digit code. The server caps what they can give. */
       {
-        const HELPER_ITEMS = ["pu_xp", "pu_cash", "pu_refresh", "pu_streak", "egg_speckled", "egg_c", "tr_snack", "tr_toy", "tr_apple", "tr_bone", "av_bull", "av_bear", "av_fox", "av_frog", "av_cowboy", "av_panda", "av_koala", "av_chef", "av_pirate", "th_amber", "th_mint", "th_lime", "th_coral", "th_sky", "th_peach", "sk_classic", "sk_retro", "sk_sunset", "sk_forest", "sk_berry"];
+        const HELPER_ITEMS = ["pu_xp", "pu_refresh", "pu_streak", "egg_speckled", "egg_c", "tr_snack", "tr_toy", "tr_apple", "tr_bone", "av_bull", "av_bear", "av_fox", "av_frog", "av_cowboy", "av_panda", "av_koala", "av_chef", "av_pirate", "th_amber", "th_mint", "th_lime", "th_coral", "th_sky", "th_peach", "sk_classic", "sk_retro", "sk_sunset", "sk_forest", "sk_berry"];
+        Object.assign(ERR, { bad_name: 'The name must be 2 to 24 characters.', too_many: 'You can have up to 30 helpers.' });
         NI.helpers = ['#8ef0b0', '#16a34a', NF('<circle class="f" cx="12" cy="8" r="4"/><circle cx="12" cy="8" r="4"/><path class="f" d="M4.5 20c.7-3.8 3.7-6 7.5-6s6.8 2.2 7.5 6z"/><path d="M4.5 20c.7-3.8 3.7-6 7.5-6s6.8 2.2 7.5 6z"/><path d="M16.5 3.5 18 2m1.5 4.5L21 6"/>')];
         {
           const gi = NAV.findIndex(n => n[0] === 'site');
