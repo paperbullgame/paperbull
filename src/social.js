@@ -828,7 +828,7 @@
     if (!box) return;
     const list = friends();
     if (!list.length) {
-      box.innerHTML = `<div class="sc-empty sm"><b>No friends yet</b><p>You can message players once you’re friends. Add them from the leaderboard.</p><button class="btn primary sm" data-scfriends>Add friends</button></div>`;
+      box.innerHTML = `<div class="sc-empty sm"><b>No friends yet</b><p>You can message players once you’re friends. Tap below to find people to add.</p><button class="btn primary sm" data-scfriends>Add friends</button></div>`;
       return;
     }
     box.innerHTML = `<p class="muted small" style="margin:0 0 8px">Pick a friend to chat with.</p><div class="sc-pick">${list.map(fr => `<button class="sc-pk" data-dmto="${E(fr.username)}"><span class="sc-av">${av(fr.avatar)}</span><span><b>${E(fr.name || fr.username)}</b><small>@${E(fr.username)}${fr.level ? ' · LV ' + fr.level : ''}</small></span></button>`).join('')}</div><div class="ag-err" id="scPkErr"></div>`;

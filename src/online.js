@@ -443,30 +443,71 @@
         const list = [...(f.friends || []), mine]
           .sort((a, b) => b.return_pct - a.return_pct)
           .map((r, i) => ({ ...r, rank: i + 1 }));
-        body.innerHTML = `<form class="ol-add" id="olAdd"><input class="txt" id="olName" maxlength="20" placeholder="Add a friend by username" autocomplete="off" autocapitalize="off"><button class="btn primary sm">Add</button></form><div class="ag-err" id="olAddErr"></div>
+        body.innerHTML = `<div class="fs-wrap"><div class="fs-head"><b>Find friends</b><small>Tap Add on anyone below. They’ll get a friend request.</small></div>
+          <form class="fs-search" id="olAdd" autocomplete="off"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="txt" id="olName" maxlength="20" placeholder="Search players" autocomplete="off" autocapitalize="off" enterkeyhint="search"></form>
+          <div class="ag-err" id="olAddErr"></div><div class="fs-list" id="olSug"><div class="fs-load"></div><div class="fs-load"></div><div class="fs-load"></div></div></div>
           ${(f.incoming || []).length ? `<small class="ol-h">Friend requests</small>${f.incoming.map(r => `<div class="ol-req"><span class="rk-av">${avatarArt(r.avatar || 'av_bull')}</span><b>${E(r.name)}</b><small>@${E(r.username)}</small><button class="btn primary sm" data-acc="${E(r.username)}">Accept</button><button class="btn sm" data-dec="${E(r.username)}">Decline</button></div>`).join('')}` : ''}
           <small class="ol-h">Friends · you can gift ${left} more coins today</small>
-          ${list.length > 1 ? list.map((r, i) => row(r, i).replace('</span></div>', `</span>${r.me || !on('gifts') ? '' : `<button class="btn sm ol-gift" data-gift="${E(r.username)}" ${left ? '' : 'disabled'}>Gift</button>`}</div>`)).join('') : '<div class="empty">No friends yet. Add someone by their username. They’ll see your request next time they play.</div>'}
+          ${list.length > 1 ? list.map((r, i) => row(r, i).replace('</span></div>', `</span>${r.me || !on('gifts') ? '' : `<button class="btn sm ol-gift" data-gift="${E(r.username)}" ${left ? '' : 'disabled'}>Gift</button>`}</div>`)).join('') : '<div class="empty">No friends yet. Pick someone from Find friends above.</div>'}
           ${(f.outgoing || []).length ? `<small class="ol-h">Waiting for them to accept</small><p class="muted small">${f.outgoing.map(r => '@' + E(r.username)).join(', ')}</p>` : ''}`;
-        const form = document.getElementById('olAdd');
-        form.onsubmit = async e => {
+        const form = document.getElementById('olAdd'),
+          box = document.getElementById('olSug'),
+          er = $('#olAddErr');
+        let seq = 0;
+        const pending = new Set((f.outgoing || []).map(r => String(r.username).toLowerCase()));
+        const sugRow = r => {
+          const sent = r.sent || pending.has(String(r.username).toLowerCase());
+          return `<div class="fs-r"><span class="rk-av">${avatarArt(r.avatar || 'av_bull')}</span><span class="fs-t"><b>${E(r.name || r.username)}</b><small>@${E(r.username)} · Lv ${r.level || 1}</small></span><em class="fs-why ${r.why === 'Playing now' ? 'on' : ''}">${E(r.why || '')}</em>
+            <button class="btn sm ${sent ? '' : 'primary'} fs-add" data-add="${E(r.username)}" ${sent ? 'disabled' : ''}>${sent ? 'Requested' : 'Add'}</button></div>`;
+        };
+        const loadSug = async () => {
+          const my = ++seq,
+            q = $('#olName') ? $('#olName').value.trim() : '';
+          try {
+            const l = await rpc('pb_players_suggest', { p_token: C.s.token, p_q: q || null });
+            if (my !== seq || !document.getElementById('olSug')) return;
+            const rows = Array.isArray(l) ? l : [];
+            box.innerHTML = rows.length
+              ? rows.map(sugRow).join('')
+              : q
+                ? `<div class="fs-none">No one found for “${E(q)}”.${/^[a-z0-9_.-]{3,20}$/i.test(q) ? ` <button class="btn sm" data-add="${E(q)}">Send a request to @${E(q)}</button>` : ''}</div>`
+                : '<div class="fs-none">No one to suggest right now. Check back when more people are playing.</div>';
+          } catch (ex) {
+            if (my === seq) box.innerHTML = '<div class="fs-none">Couldn’t load players. Try again in a moment.</div>';
+          }
+        };
+        let st = 0;
+        $('#olName').oninput = () => {
+          clearTimeout(st);
+          st = setTimeout(loadSug, 250);
+        };
+        form.onsubmit = e => {
           e.preventDefault();
-          const n = $('#olName').value.trim(),
-            er = $('#olAddErr');
+          loadSug();
+        };
+        box.onclick = async e => {
+          const b = e.target.closest('[data-add]');
+          if (!b || b.disabled) return;
+          const n = b.dataset.add;
           er.textContent = '';
-          if (!n) return;
+          b.disabled = true;
+          b.textContent = '…';
           try {
             const r = await rpc('pb_friend_add', { p_token: C.s.token, p_username: n });
-            toast(
-              r.status === 'accepted' ? `You and @${n} are now friends` : `Friend request sent to @${n}`,
-              'ok'
-            );
-            paint(true);
+            SFX.play('coin');
+            b.classList.remove('primary');
+            b.textContent = r.status === 'accepted' ? 'Friends!' : 'Requested';
+            pending.add(n.toLowerCase());
+            toast(r.status === 'accepted' ? `You and @${n} are now friends` : `Friend request sent to @${n}`, 'ok');
+            if (r.status === 'accepted') setTimeout(() => paint(true), 900);
           } catch (ex) {
+            b.disabled = false;
+            b.textContent = 'Add';
             er.textContent = ex.message;
             authFail(ex);
           }
         };
+        loadSug();
       }
     } catch (e) {
       body.innerHTML = `${joinCTA()}<div class="block-msg">Couldn’t reach the leaderboard right now. Check your connection and try again in a minute.</div>`;

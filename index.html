@@ -25825,30 +25825,71 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         const list = [...(f.friends || []), mine]
           .sort((a, b) => b.return_pct - a.return_pct)
           .map((r, i) => ({ ...r, rank: i + 1 }));
-        body.innerHTML = `<form class="ol-add" id="olAdd"><input class="txt" id="olName" maxlength="20" placeholder="Add a friend by username" autocomplete="off" autocapitalize="off"><button class="btn primary sm">Add</button></form><div class="ag-err" id="olAddErr"></div>
+        body.innerHTML = `<div class="fs-wrap"><div class="fs-head"><b>Find friends</b><small>Tap Add on anyone below. They’ll get a friend request.</small></div>
+          <form class="fs-search" id="olAdd" autocomplete="off"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="txt" id="olName" maxlength="20" placeholder="Search players" autocomplete="off" autocapitalize="off" enterkeyhint="search"></form>
+          <div class="ag-err" id="olAddErr"></div><div class="fs-list" id="olSug"><div class="fs-load"></div><div class="fs-load"></div><div class="fs-load"></div></div></div>
           ${(f.incoming || []).length ? `<small class="ol-h">Friend requests</small>${f.incoming.map(r => `<div class="ol-req"><span class="rk-av">${avatarArt(r.avatar || 'av_bull')}</span><b>${E(r.name)}</b><small>@${E(r.username)}</small><button class="btn primary sm" data-acc="${E(r.username)}">Accept</button><button class="btn sm" data-dec="${E(r.username)}">Decline</button></div>`).join('')}` : ''}
           <small class="ol-h">Friends · you can gift ${left} more coins today</small>
-          ${list.length > 1 ? list.map((r, i) => row(r, i).replace('</span></div>', `</span>${r.me || !on('gifts') ? '' : `<button class="btn sm ol-gift" data-gift="${E(r.username)}" ${left ? '' : 'disabled'}>Gift</button>`}</div>`)).join('') : '<div class="empty">No friends yet. Add someone by their username. They’ll see your request next time they play.</div>'}
+          ${list.length > 1 ? list.map((r, i) => row(r, i).replace('</span></div>', `</span>${r.me || !on('gifts') ? '' : `<button class="btn sm ol-gift" data-gift="${E(r.username)}" ${left ? '' : 'disabled'}>Gift</button>`}</div>`)).join('') : '<div class="empty">No friends yet. Pick someone from Find friends above.</div>'}
           ${(f.outgoing || []).length ? `<small class="ol-h">Waiting for them to accept</small><p class="muted small">${f.outgoing.map(r => '@' + E(r.username)).join(', ')}</p>` : ''}`;
-        const form = document.getElementById('olAdd');
-        form.onsubmit = async e => {
+        const form = document.getElementById('olAdd'),
+          box = document.getElementById('olSug'),
+          er = $('#olAddErr');
+        let seq = 0;
+        const pending = new Set((f.outgoing || []).map(r => String(r.username).toLowerCase()));
+        const sugRow = r => {
+          const sent = r.sent || pending.has(String(r.username).toLowerCase());
+          return `<div class="fs-r"><span class="rk-av">${avatarArt(r.avatar || 'av_bull')}</span><span class="fs-t"><b>${E(r.name || r.username)}</b><small>@${E(r.username)} · Lv ${r.level || 1}</small></span><em class="fs-why ${r.why === 'Playing now' ? 'on' : ''}">${E(r.why || '')}</em>
+            <button class="btn sm ${sent ? '' : 'primary'} fs-add" data-add="${E(r.username)}" ${sent ? 'disabled' : ''}>${sent ? 'Requested' : 'Add'}</button></div>`;
+        };
+        const loadSug = async () => {
+          const my = ++seq,
+            q = $('#olName') ? $('#olName').value.trim() : '';
+          try {
+            const l = await rpc('pb_players_suggest', { p_token: C.s.token, p_q: q || null });
+            if (my !== seq || !document.getElementById('olSug')) return;
+            const rows = Array.isArray(l) ? l : [];
+            box.innerHTML = rows.length
+              ? rows.map(sugRow).join('')
+              : q
+                ? `<div class="fs-none">No one found for “${E(q)}”.${/^[a-z0-9_.-]{3,20}$/i.test(q) ? ` <button class="btn sm" data-add="${E(q)}">Send a request to @${E(q)}</button>` : ''}</div>`
+                : '<div class="fs-none">No one to suggest right now. Check back when more people are playing.</div>';
+          } catch (ex) {
+            if (my === seq) box.innerHTML = '<div class="fs-none">Couldn’t load players. Try again in a moment.</div>';
+          }
+        };
+        let st = 0;
+        $('#olName').oninput = () => {
+          clearTimeout(st);
+          st = setTimeout(loadSug, 250);
+        };
+        form.onsubmit = e => {
           e.preventDefault();
-          const n = $('#olName').value.trim(),
-            er = $('#olAddErr');
+          loadSug();
+        };
+        box.onclick = async e => {
+          const b = e.target.closest('[data-add]');
+          if (!b || b.disabled) return;
+          const n = b.dataset.add;
           er.textContent = '';
-          if (!n) return;
+          b.disabled = true;
+          b.textContent = '…';
           try {
             const r = await rpc('pb_friend_add', { p_token: C.s.token, p_username: n });
-            toast(
-              r.status === 'accepted' ? `You and @${n} are now friends` : `Friend request sent to @${n}`,
-              'ok'
-            );
-            paint(true);
+            SFX.play('coin');
+            b.classList.remove('primary');
+            b.textContent = r.status === 'accepted' ? 'Friends!' : 'Requested';
+            pending.add(n.toLowerCase());
+            toast(r.status === 'accepted' ? `You and @${n} are now friends` : `Friend request sent to @${n}`, 'ok');
+            if (r.status === 'accepted') setTimeout(() => paint(true), 900);
           } catch (ex) {
+            b.disabled = false;
+            b.textContent = 'Add';
             er.textContent = ex.message;
             authFail(ex);
           }
         };
+        loadSug();
       }
     } catch (e) {
       body.innerHTML = `${joinCTA()}<div class="block-msg">Couldn’t reach the leaderboard right now. Check your connection and try again in a minute.</div>`;
@@ -35014,7 +35055,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if (!box) return;
     const list = friends();
     if (!list.length) {
-      box.innerHTML = `<div class="sc-empty sm"><b>No friends yet</b><p>You can message players once you’re friends. Add them from the leaderboard.</p><button class="btn primary sm" data-scfriends>Add friends</button></div>`;
+      box.innerHTML = `<div class="sc-empty sm"><b>No friends yet</b><p>You can message players once you’re friends. Tap below to find people to add.</p><button class="btn primary sm" data-scfriends>Add friends</button></div>`;
       return;
     }
     box.innerHTML = `<p class="muted small" style="margin:0 0 8px">Pick a friend to chat with.</p><div class="sc-pick">${list.map(fr => `<button class="sc-pk" data-dmto="${E(fr.username)}"><span class="sc-av">${av(fr.avatar)}</span><span><b>${E(fr.name || fr.username)}</b><small>@${E(fr.username)}${fr.level ? ' · LV ' + fr.level : ''}</small></span></button>`).join('')}</div><div class="ag-err" id="scPkErr"></div>`;
@@ -56594,6 +56635,40 @@ html:not(.dark) .sc-mh b { color: hsl(var(--nh) 60% 38%); }
 .pc-b.sm svg { width: 18px; height: 18px; }
 .pc-b.sm.on { background: #fff; color: #15803d; }
 @media (prefers-reduced-motion: reduce) { .pc-av.ringing i, .pc-b.green, .pc-card, #pbCall { animation: none !important; } }
+
+/* ===================== find friends (a list, no typing names) ===================== */
+.fs-wrap { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: linear-gradient(160deg, color-mix(in srgb, var(--sc-acc, #ff9f1c) 8%, transparent), transparent 60%); }
+.fs-head { display: flex; flex-direction: column; gap: 2px; }
+.fs-head b { font-size: 16px; }
+.fs-head small { color: var(--mut); font-size: 12.5px; }
+.fs-search { position: relative; display: flex; }
+.fs-search svg { position: absolute; left: 13px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); fill: none; stroke: var(--mut); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
+.fs-search .txt { width: 100%; padding-left: 40px; border-radius: 999px; min-height: 42px; }
+.fs-list { display: flex; flex-direction: column; gap: 2px; max-height: 360px; overflow-y: auto; overscroll-behavior: contain; margin: 0 -6px; padding: 0 6px; }
+.fs-r { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: 12px; transition: background-color 0.12s; }
+.fs-r:hover { background: color-mix(in srgb, var(--tx) 5%, transparent); }
+.fs-r .rk-av { width: 40px; height: 40px; flex: none; border-radius: 50%; overflow: hidden; }
+.fs-r .rk-av svg, .fs-r .rk-av img { width: 100%; height: 100%; }
+.fs-t { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.fs-t b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fs-t small { font-size: 12px; color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fs-why { font-style: normal; font-size: 11px; font-weight: 700; color: var(--mut); padding: 3px 8px; border-radius: 999px; background: color-mix(in srgb, var(--tx) 6%, transparent); white-space: nowrap; flex: none; }
+.fs-why.on { color: #22c55e; background: color-mix(in srgb, #22c55e 14%, transparent); }
+.fs-why.on::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #22c55e; margin-right: 5px; vertical-align: 1px; }
+.fs-add { min-width: 86px; flex: none; }
+.fs-none { padding: 14px 6px; color: var(--mut); font-size: 13px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.fs-load { height: 52px; border-radius: 12px; background: linear-gradient(90deg, color-mix(in srgb, var(--tx) 4%, transparent), color-mix(in srgb, var(--tx) 8%, transparent), color-mix(in srgb, var(--tx) 4%, transparent)); background-size: 200% 100%; animation: fsSk 1.2s linear infinite; margin: 3px 0; }
+@keyframes fsSk { to { background-position: -200% 0; } }
+@media (max-width: 420px) { .fs-why { display: none; } }
+.fs-wrap .ag-err:empty { display: none; }
+/* friend requests: picture, name + @username, then the two buttons */
+.ol-req { display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-rows: auto auto; column-gap: 10px; row-gap: 0; align-items: center; padding: 8px 4px; }
+.ol-req > .rk-av { grid-row: 1 / 3; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
+.ol-req > .rk-av svg, .ol-req > .rk-av img { width: 100%; height: 100%; }
+.ol-req > b { grid-column: 2; grid-row: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 !important; }
+.ol-req > small { grid-column: 2; grid-row: 2; color: var(--mut); font-size: 12px; margin: 0 !important; }
+.ol-req > [data-acc] { grid-column: 3; grid-row: 1 / 3; width: auto !important; flex: none; }
+.ol-req > [data-dec] { grid-column: 4; grid-row: 1 / 3; width: auto !important; flex: none; }
 
 </style>
 <style id="pbReal">
