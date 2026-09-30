@@ -17,7 +17,7 @@
   const tok = () => (linked() ? Cloud().C.s.token : null);
   const featOn = () => !(window.PBSite && window.PBSite.features && window.PBSite.features.modes === false);
   const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const CAP = { speed: 3, updown: 500, replay: 20, crash: 1000 };
+  const CAP = { speed: 3, updown: 500, replay: 20, crash: 1000, chicken: 1000 };
   const vip = () => {
     try {
       return !!(window.PBVipOn && window.PBVipOn());
@@ -94,7 +94,7 @@
   }
   async function submit(mode, score) {
     const m = st();
-    if (!linked() || !(score > -Infinity)) return;
+    if (!linked() || !(score > -Infinity) || mode === 'chicken') return;
     const s = clamp(score, -1, CAP[mode]);
     if (m.sub[mode] != null && s <= m.sub[mode]) return;
     try {
@@ -108,7 +108,7 @@
     }
   }
   const fmtScore = (mode, v) =>
-    v == null ? '—' : mode === 'updown' ? `${Math.round(v)} in a row` : mode === 'crash' ? `${(+v).toFixed(2)}×` : fmtPct(+v, 1);
+    v == null ? '—' : mode === 'updown' ? `${Math.round(v)} in a row` : mode === 'crash' || mode === 'chicken' ? `${(+v).toFixed(2)}×` : fmtPct(+v, 1);
   function reward({ coins = 0, xp = 0 }) {
     let c = 0;
     if (coins > 0) {
@@ -134,12 +134,14 @@
     speed: `<svg viewBox="0 0 120 96" aria-hidden="true"><circle cx="60" cy="54" r="32" fill="var(--ac-soft)" stroke="currentColor" stroke-opacity=".18" stroke-width="6"/><path d="M60 22a32 32 0 0 1 30.4 41.9" fill="none" stroke="var(--ac)" stroke-width="6" stroke-linecap="round"/><rect x="53" y="8" width="14" height="8" rx="3" fill="var(--ac)"/><path d="M84 22l6-6" stroke="var(--ac)" stroke-width="5" stroke-linecap="round"/><path d="M64 33 49 57h11l-4 19 17-27H61z" fill="var(--ac)"/></svg>`,
     updown: `<svg viewBox="0 0 120 96" aria-hidden="true"><path d="M10 70 30 58l14 8 18-22 14 10 16-16 18-10" fill="none" stroke="currentColor" stroke-opacity=".28" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="24" y="14" width="34" height="34" rx="10" fill="var(--up)"/><path d="M41 24v16M33 31l8-8 8 8" stroke="#04150d" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="62" y="48" width="34" height="34" rx="10" fill="var(--dn)"/><path d="M79 56v16M71 65l8 8 8-8" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     crash: `<svg viewBox="0 0 120 96" aria-hidden="true"><path d="M8 86c30 0 58-6 80-40" fill="none" stroke="var(--ac)" stroke-width="4" stroke-linecap="round" stroke-dasharray="1 8"/><path d="M8 86c30 0 58-6 80-40" fill="none" stroke="var(--ac)" stroke-opacity=".3" stroke-width="10" stroke-linecap="round"/><g transform="translate(92 36) rotate(40)"><path d="M0-22c8 6 11 16 9 30H-9C-11-6-8-16 0-22z" fill="#f4f1ff"/><circle cy="-4" r="4" fill="var(--ac)"/><path d="M-9 4-15 14-8 12zM9 4l6 10-7-2z" fill="var(--ac)"/><path d="M-5 9 0 24 5 9z" fill="#ffb224"/></g><circle cx="20" cy="18" r="2" fill="currentColor" opacity=".35"/><circle cx="46" cy="10" r="1.5" fill="currentColor" opacity=".3"/><circle cx="66" cy="22" r="1.5" fill="currentColor" opacity=".3"/></svg>`,
+    chicken: `<svg viewBox="0 0 120 96" aria-hidden="true"><rect x="4" y="10" width="112" height="76" rx="10" fill="currentColor" opacity=".08"/><path d="M40 10v76M70 10v76M100 10v76" stroke="currentColor" stroke-opacity=".3" stroke-width="2.5" stroke-dasharray="7 7"/><g transform="translate(78 18)"><rect width="16" height="28" rx="5" fill="var(--ac)"/><rect x="3" y="17" width="10" height="6" rx="2" fill="#0f172a" opacity=".7"/></g><g transform="translate(8 38) scale(.62)"><ellipse cx="32" cy="58" rx="15" ry="3.5" fill="#000" opacity=".25"/><path d="M27 48v8M37 48v8" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/><path d="M14 34c0-12 8-20 18-20s18 8 18 20c0 9-8 16-18 16s-18-7-18-16z" fill="#fff"/><path d="M27 14c-1-5 2-8 5-6 1-4 6-4 6 0 3-2 6 1 4 5-4 3-10 3-15 1z" fill="#ef4444"/><circle cx="26" cy="28" r="3.2" fill="#1f2937"/><path d="M13 30l-7 3 7 3z" fill="#f59e0b"/></g><g font-family="system-ui" font-weight="800" font-size="11" fill="var(--ac)"><text x="44" y="80">1.2×</text><text x="74" y="80" opacity=".6">1.5×</text></g></svg>`,
     replay: `<svg viewBox="0 0 120 96" aria-hidden="true"><g stroke-linecap="round"><path d="M22 30v40M42 22v34M62 40v44M82 30v26M100 16v30" stroke="currentColor" stroke-opacity=".35" stroke-width="2.5"/></g><rect x="16" y="38" width="12" height="24" rx="2.5" fill="var(--up)"/><rect x="36" y="28" width="12" height="18" rx="2.5" fill="var(--up)"/><rect x="56" y="46" width="12" height="30" rx="2.5" fill="var(--dn)"/><rect x="76" y="34" width="12" height="16" rx="2.5" fill="var(--up)"/><rect x="94" y="22" width="12" height="18" rx="2.5" fill="var(--up)"/><circle cx="92" cy="72" r="18" fill="var(--ac)"/><path d="M84 72a8 8 0 1 0 3-6.2M84 62v6h6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   };
   const MODES = [
     { k: 'speed', name: 'Speed Round', tag: '5 minutes. $10,000. Six wild stocks.', ac: '#ff8a1c' },
     { k: 'updown', name: 'Up or Down', tag: 'Call the next 30 seconds. Build a streak.', ac: '#22c47e' },
     { k: 'crash', name: 'Crash', tag: 'Ride the rocket. Cash out before it blows.', ac: '#9b7bff' },
+    { k: 'chicken', name: 'Chicken Cross', tag: 'Hop lane by lane. Cash out before you get hit.', ac: '#f5a524' },
     { k: 'replay', name: 'Replay', tag: 'Trade famous market moments.', ac: '#4c8dff' },
   ];
   const MBY = Object.fromEntries(MODES.map(m => [m.k, m]));
@@ -148,6 +150,7 @@
   /* ---------------- boards ---------------- */
   const BD = {};
   async function loadBoard(mode, force) {
+    if (mode === 'chicken') return; // local stats only
     const b = BD[mode];
     if (!force && b && (b.loading || Date.now() - b.at < 30000)) return;
     BD[mode] = Object.assign(b || {}, { loading: true });
@@ -162,6 +165,11 @@
   function paintBoard() {
     const box = UI.v && UI.v.querySelector('#mdBoard');
     if (!box) return;
+    if (UI.mode === 'chicken') {
+      const h = window.PBChicken ? PBChicken.side() : '';
+      if (box._h !== h) box.innerHTML = box._h = h;
+      return;
+    }
     const mode = UI.mode,
       b = BD[mode],
       m = st();
@@ -1087,7 +1095,7 @@
     const m = st(),
       best = m.best[mm.k];
     const extra =
-      mm.k === 'crash'
+      mm.k === 'crash' || mm.k === 'chicken'
         ? `<span class="md-chip">${I_TOK}${m.tokens} tokens</span>`
         : mm.k === 'updown' && m.udStreak
           ? `<span class="md-chip">🔥 ${m.udStreak} streak</span>`
@@ -1100,7 +1108,7 @@
   }
   function panelHTML() {
     const mm = MBY[UI.mode];
-    const body = UI.mode === 'speed' ? speedPanel() : UI.mode === 'updown' ? udPanel() : UI.mode === 'crash' ? crPanel() : replayPanel();
+    const body = UI.mode === 'speed' ? speedPanel() : UI.mode === 'updown' ? udPanel() : UI.mode === 'crash' ? crPanel() : UI.mode === 'chicken' ? (window.PBChicken ? PBChicken.panel() : '') : replayPanel();
     return `<div class="md-ph" style="--ac:${mm.ac}"><span class="md-pi">${ART[mm.k]}</span><div><h2>${mm.name}</h2><p>${mm.tag}</p></div></div>${body}`;
   }
   function repaint() {
@@ -1108,7 +1116,7 @@
     const cards = UI.v.querySelector('#mdCards');
     if (cards) cards.innerHTML = MODES.map(cardHTML).join('');
     const p = UI.v.querySelector('#mdPanel');
-    if (p && !(UI.mode === 'crash' && CR.phase === 'run')) {
+    if (p && !(UI.mode === 'crash' && CR.phase === 'run') && !(UI.mode === 'chicken' && window.PBChicken && PBChicken.running())) {
       p.innerHTML = panelHTML();
       p.style.setProperty('--ac', MBY[UI.mode].ac);
       afterPanel();
@@ -1125,6 +1133,7 @@
       crDraw(performance.now());
       crLoop();
     }
+    if (UI.mode === 'chicken' && window.PBChicken) PBChicken.mount(UI.v.querySelector('#mdPanel'));
   }
   function setMode(k) {
     if (!MBY[k] || k === UI.mode) return;
@@ -1250,6 +1259,7 @@
     },
     unmount() {
       cancelAnimationFrame(CR.raf);
+      if (window.PBChicken) PBChicken.unmount();
       UI.v = null;
     },
   };
@@ -1267,6 +1277,14 @@
     replayPath: id => SBY[id] && scnPath(SBY[id]),
     crashFrom,
     sha256,
+    randHex,
+    st,
+    record,
+    emit,
+    tokIcon: I_TOK,
+    repaintSide: () => paintBoard(),
+    _forceHit: 0,
+    _forceSafe: 0,
   };
   window.PBModes = A;
 })();
