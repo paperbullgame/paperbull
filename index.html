@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#06080c">
 <title>PAPERBULL</title>
 <!-- BRAND:START -->
-<script>window.PB_BUILD="20260929213030";</script>
+<script>window.PB_BUILD="20260930070707";</script>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://assets.parqet.com https://financialmodelingprep.com https://coin-images.coingecko.com https://cdn.jsdelivr.net https://amnbnuabxoxhggidlhcn.supabase.co; font-src 'self' data:; connect-src 'self' https://amnbnuabxoxhggidlhcn.supabase.co wss://amnbnuabxoxhggidlhcn.supabase.co https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; media-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22pbLg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffb52e%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff5e1a%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22url%28%23pbLg%29%22/%3E%3Cpath%20d%3D%22M13.5%2014.5c.6%208.4%205.6%2012.5%2012.5%2012.5h12c6.9%200%2011.9-4.1%2012.5-12.5%22%20stroke%3D%22%23fff%22%20stroke-width%3D%225.2%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M21.2%2025.5h21.6l-3.6%2018.2c-1%204.9-3.8%207.8-7.2%207.8s-6.2-2.9-7.2-7.8z%22%20fill%3D%22%23fff%22/%3E%3Cpath%20d%3D%22M28.3%2030.5v13.5M35.7%2027.5v12.5%22%20stroke%3D%22%2316c784%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Crect%20x%3D%2226.5%22%20y%3D%2233%22%20width%3D%223.6%22%20height%3D%228.5%22%20rx%3D%221.3%22%20fill%3D%22%2316c784%22/%3E%3Crect%20x%3D%2233.9%22%20y%3D%2229.8%22%20width%3D%223.6%22%20height%3D%228%22%20rx%3D%221.3%22%20fill%3D%22%2316c784%22/%3E%3C/svg%3E">
@@ -39238,6 +39238,12 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   }
   function give(rw) {
     if (!rw) return '';
+    try {
+      const t = Object.assign({ coins: 0, xp: 0, cash: 0, items: [] }, mine().tally);
+      if (rw.kind === 'coins' || rw.kind === 'xp' || rw.kind === 'cash') t[rw.kind] += +rw.amount || 0;
+      else if (rw.name) t.items = t.items.concat(rw.name).slice(-6);
+      setMine({ tally: t });
+    } catch (e) {}
     const what = window.PBApplyGrant ? PBApplyGrant({ kind: rw.kind, amount: rw.amount, item_id: rw.item_id, name: rw.name }) : rw.name;
     saveAcct(true);
     needRender = true;
@@ -39247,8 +39253,25 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     SFX.play('legend');
     confetti();
     FX.flash(A ? FX.TYPE[A.type].c1 : '#fff');
+    FX.shake && FX.shake(420);
+    document.getElementById('abWon')?.remove();
+    const w = document.createElement('div');
+    w.id = 'abWon';
+    w.setAttribute('role', 'alert');
+    let pic = '';
+    try {
+      pic = rw.kind === 'item' && typeof DESIGNS !== 'undefined' && DESIGNS[rw.item_id] ? art(rw.item_id) : '';
+    } catch (e) {}
+    if (!pic) pic = LOOT(rw.kind === 'cash' ? 'cash' : rw.kind === 'xp' ? 'star' : rw.kind === 'coins' ? 'bag' : 'gem', 96);
+    w.innerHTML = `<div class="ab-won"${A ? ` style="--ab1:${FX.TYPE[A.type].c1}"` : ''}><div class="ab-won-rays"></div><small>YOU WON</small><div class="ab-won-art">${pic}</div><b>${E(rw.name)}</b>${how ? `<span>${E(how)}</span>` : ''}</div>`;
+    document.body.appendChild(w);
+    w.onclick = () => w.remove();
+    setTimeout(() => w.classList.add('out'), 3000);
+    setTimeout(() => w.remove(), 3500);
     tt(`You won ${rw.name}${how ? ' ' + how : ''}!`, 'xp');
   };
+  /* winners everyone hears about (from the live pings), newest first */
+  let WIN = [];
 
   /* ---------- coin / XP multipliers ---------- */
   const mult = k => (A && live(A) ? Math.max(1, +A[k] || 1) : 1);
@@ -39274,8 +39297,9 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       requestAnimationFrame(() => b.classList.add('ab-in'));
     }
     const mults = [+A.coin_mult > 1 ? `${+A.coin_mult}× coins` : '', +A.xp_mult > 1 ? `${+A.xp_mult}× XP` : ''].filter(Boolean);
-    const h = `<span class="ab-ic">${BADGE(A.type, 30)}</span><span class="ab-t"><b>${E(A.label || t.label)}</b><small>Admin Abuse${A.by ? ' by ' + E(A.by) : ''}</small></span>${mults.map(m => `<span class="ab-mult">${m}</span>`).join('')}<span class="ab-time" data-abt>${mmss(left())}</span><button class="ab-go" data-abgo>${hasActions() ? 'Play' : 'Info'}</button>`;
-    const key = [A.type, A.label, A.by, mults.join(), hasActions()].join('|');
+    const pl = A.prize && A.game !== 'none' ? Math.max(0, (+A.winners || 0) - (+A.winners_now || 0)) : -1;
+    const h = `<span class="ab-ic">${BADGE(A.type, 30)}</span><span class="ab-t"><b>${E(A.label || t.label)}</b><small>Admin Abuse${A.by ? ' by ' + E(A.by) : ''}</small></span>${mults.map(m => `<span class="ab-mult">${m}</span>`).join('')}${pl >= 0 ? `<span class="ab-mult ab-pl${pl ? '' : ' gone'}">${pl ? pl + ' prize' + (pl === 1 ? '' : 's') + ' left' : 'Prizes gone'}</span>` : ''}<span class="ab-time" data-abt>${mmss(left())}</span><button class="ab-go" data-abgo>${hasActions() ? 'Play' : 'Info'}</button><i class="ab-prog" data-abp></i>`;
+    const key = [A.type, A.label, A.by, mults.join(), hasActions(), pl].join('|');
     if (b._h !== key) {
       b.innerHTML = h;
       b._h = key;
@@ -39346,6 +39370,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       r.innerHTML = '';
     }
     if (!silent) tt(`${was.label || 'Admin Abuse'} is over. GG!`, 'ok');
+    if (!silent) recap(was);
     if ((was.type === 'bull' || was.type === 'bear') && window.PBLive) setTimeout(() => PBLive.resync('site'), 800 + Math.random() * 800); // exact stop time from the server
   }
   function apply(a) {
@@ -39381,6 +39406,54 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const t = document.querySelector('#abBar [data-abt]'),
       v = mmss(left());
     if (t && t.firstChild && t.firstChild.nodeValue !== v) t.firstChild.nodeValue = v; // text node only: no layout thrash
+    const ms = left(),
+      tot = Math.max(1, new Date(A.ends_at) - new Date(A.started_at)),
+      p = document.querySelector('#abBar [data-abp]'),
+      b = document.getElementById('abBar');
+    if (p) p.style.transform = `scaleX(${Math.max(0, Math.min(1, ms / tot)).toFixed(4)})`;
+    if (b) b.classList.toggle('ab-late', ms <= 60000);
+    const sec = Math.ceil(ms / 1000);
+    if (sec === 60 && tot > 90000 && !A._m1) {
+      A._m1 = 1;
+      tt('1 minute left in the Admin Abuse!', 'xp');
+    }
+    if (sec <= 10 && sec >= 1 && !document.hidden) finalCount(sec);
+  }
+  /* the last 10 seconds: a big countdown in the middle of the screen */
+  function finalCount(n) {
+    let c = document.getElementById('abCount');
+    if (!c) {
+      c = document.createElement('div');
+      c.id = 'abCount';
+      c.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(c);
+    }
+    if (c.dataset.n === String(n)) return;
+    c.dataset.n = n;
+    c.innerHTML = `<b style="--ab1:${FX.TYPE[A.type].c1}">${n}</b>`;
+    try {
+      SFX.init();
+      if (SFX.ctx && SFX.on) SFX.tone(n <= 3 ? 1046 : 784, 0, 0.09, 'square', 0.035);
+    } catch (e) {}
+    if (n === 1) setTimeout(() => c.remove(), 1100);
+  }
+  /* when it ends: what you got out of it */
+  function recap(was) {
+    const m = Store.get(K(was.id), {}) || {},
+      t = m.tally;
+    document.getElementById('abCount')?.remove();
+    if (!t || !(t.coins || t.xp || t.cash || (t.items && t.items.length))) return;
+    const rows = [t.coins ? [LOOT('coin', 28), (+t.coins).toLocaleString() + ' coins'] : null, t.cash ? [LOOT('cash', 28), '$' + (+t.cash).toLocaleString() + ' cash'] : null, t.xp ? [LOOT('star', 28), (+t.xp).toLocaleString() + ' XP'] : null, ...(t.items || []).map(n => [LOOT('gem', 28), n])].filter(Boolean);
+    setTimeout(() => {
+      if (document.querySelector('#modalRoot.open')) return tt(`${was.label || 'Admin Abuse'} is over. You got ${rows.map(r => r[1]).join(', ')}!`, 'xp');
+      modal({
+        title: `<span class="ab-mt">${LOGO(was.type, 26)}<span>Event recap</span></span>`,
+        confirm: '',
+        cancel: 'Nice!',
+        html: `<div class="ab-recap"><b>${E(was.label || FX.TYPE[was.type].label)} is over</b><p>Here’s everything you won${m.caught ? ` · ${m.caught} loot caught` : ''}${m.best > 2 ? ` · best combo ×${m.best}` : ''}</p><div class="ab-rc">${rows.map(r => `<span>${r[0]}<b>${E(r[1])}</b></span>`).join('')}</div></div>`,
+      });
+      SFX.play('win');
+    }, 900);
   }
 
   /* ---------- live updates: site sync + realtime pings ---------- */
@@ -39410,6 +39483,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         if (window.PBCloud && PBCloud.claimGrants) setTimeout(() => PBCloud.claimGrants(), 600 + Math.random() * 1400);
       } else if (p.ev === 'win' && A && p.id === A.id) {
         A.winners_now = (+A.winners_now || 0) + 1;
+        WIN = [{ who: p.who, prize: p.prize, at: Date.now() }, ...WIN].slice(0, 6);
+        bar();
         const me = acct && (acct.user || acct.name);
         if (p.who && p.who !== me) tt(`${p.who} won ${p.prize}!${p.left === 0 ? ' All prizes are taken.' : ''}`, 'xp');
         if (document.querySelector('#modalRoot .ab-panel')) panel();
@@ -39488,6 +39563,12 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       const what = give(res.reward);
       setMine({ caught: res.n });
       plus(r.left + r.width / 2, r.top, res.won ? `${res.reward.name}!` : '+' + what.replace(/ coins?$/, ''), LOOT(res.won ? 'star' : 'coin', 20));
+      // combo: catches close together build a streak (just for show, the server decides rewards)
+      const now = Date.now();
+      combo = now - lastCatch < 3200 ? combo + 1 : 1;
+      lastCatch = now;
+      if (combo > (mine().best || 0)) setMine({ best: combo });
+      if (combo >= 2) comboPop(r.left + r.width / 2, r.top + 30, combo);
       if (res.won) bigWin(res.reward, 'from the loot rain');
       else SFX.play('coin');
       if (res.left <= 0) {
@@ -39499,6 +39580,24 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       if (e.code !== 'slow_down') toast(ERR[e.code] || e.message, 'err');
     } finally {
       setTimeout(() => (busy = false), 260);
+    }
+  }
+  let combo = 0,
+    lastCatch = 0;
+  function comboPop(x, y, n) {
+    document.querySelector('.ab-cmb')?.remove();
+    const c = document.createElement('div');
+    c.className = 'ab-cmb' + (n >= 10 ? ' mega' : n >= 5 ? ' big' : '');
+    c.textContent = `COMBO ×${n}`;
+    c.style.left = Math.max(70, Math.min(innerWidth - 70, x)) + 'px';
+    c.style.top = y + 'px';
+    if (A) c.style.setProperty('--ab1', FX.TYPE[A.type].c1);
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 900);
+    if (n === 5 || n === 10 || n === 20) {
+      FX.flash(A ? FX.TYPE[A.type].c1 : '#fff');
+      SFX.play('rare');
+      tt(n >= 10 ? `MEGA COMBO ×${n}!` : `Combo ×${n}! Keep going!`, 'xp');
     }
   }
   function plus(x, y, txt, ic) {
@@ -39539,6 +39638,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       cancel: 'Close',
       html: `<div class="ab-panel"><div class="ab-hero">${AI ? `<span class="ab-hl">${LOGO(A.type, 54)}</span>` : ''}<div class="ab-hb"><b>${E(A.label || t.label)}</b><p>${E(A.message || t.desc)}</p><div class="ab-meta">${meta.map(x => `<span>${x}</span>`).join('')}</div></div></div>
         ${acts.length ? `<div class="ab-acts">${acts.join('')}</div>` : '<p class="ab-note">No game this time, just chaos. Everything you earn is multiplied while it lasts!</p>'}
+        ${m.tally && (m.tally.coins || m.tally.xp || m.tally.cash || (m.tally.items || []).length) ? `<div class="ab-haul"><small>Your haul so far</small><span>${[m.tally.coins ? (+m.tally.coins).toLocaleString() + ' coins' : '', m.tally.cash ? '$' + (+m.tally.cash).toLocaleString() + ' cash' : '', m.tally.xp ? (+m.tally.xp).toLocaleString() + ' XP' : '', ...(m.tally.items || [])].filter(Boolean).map(x => `<b>${E(x)}</b>`).join('')}</span></div>` : ''}
+        ${WIN.length ? `<div class="ab-wins"><small>Recent winners</small>${WIN.map(w => `<span><b>@${E(w.who)}</b> won ${E(w.prize)}</span>`).join('')}</div>` : ''}
         ${!cloud() && acts.length ? '<p class="ab-note">Sign up or log in (Profile) to play for prizes.</p>' : ''}</div>`,
       onMount: r =>
         r.querySelectorAll('[data-a]').forEach(
@@ -59882,6 +59983,49 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
 .ab-sh b { font-size: 17px; line-height: 1.3; }
 @keyframes abShIn { from { opacity: 0; transform: translateX(-50%) translateY(-16px) scale(0.97); } }
 @media (prefers-reduced-motion: reduce) { #abShout { animation: none; } }
+
+/* ---------- v2: progress, final countdown, big win, combos, recap ---------- */
+#abBar { overflow: hidden; }
+#abBar .ab-prog { position: absolute; left: 14px; right: 14px; bottom: 2px; height: 2px; border-radius: 2px; background: var(--ab1); box-shadow: 0 0 8px var(--ab1); transform-origin: left center; transition: transform 1s linear; opacity: .85; pointer-events: none; }
+#abBar.ab-late { animation: abLate 1s ease-in-out infinite; }
+#abBar.ab-late .ab-time { background: #ef4444; color: #fff; }
+@keyframes abLate { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, #ef4444 35%, transparent), 0 14px 40px -8px #ef4444; } }
+#abBar .ab-pl { background: rgba(255, 255, 255, .16); }
+#abBar .ab-pl.gone { opacity: .6; }
+@media (max-width: 600px) { #abBar .ab-pl { display: none; } }
+#abCount { position: fixed; inset: 0; z-index: 63; display: grid; place-items: center; pointer-events: none; }
+#abCount b { font: 900 clamp(120px, 34vw, 260px)/1 var(--sans); color: #fff; text-shadow: 0 0 30px var(--ab1), 0 0 80px var(--ab1), 0 6px 0 rgba(0, 0, 0, .35); animation: abCnt 1s cubic-bezier(.2, 1.3, .4, 1) forwards; }
+@keyframes abCnt { 0% { transform: scale(1.8); opacity: 0; } 25% { transform: scale(1); opacity: .95; } 80% { opacity: .8; } 100% { transform: scale(.85); opacity: 0; } }
+#abWon { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--ab1, #ffc53d) 30%, transparent), rgba(0, 0, 0, .6) 70%); backdrop-filter: blur(2px); animation: abWonBg .3s ease-out; cursor: pointer; }
+#abWon.out { opacity: 0; transition: opacity .45s; }
+@keyframes abWonBg { from { opacity: 0; } }
+.ab-won { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 20px; color: #fff; animation: abWonIn .7s cubic-bezier(.2, 1.5, .4, 1) both; }
+@keyframes abWonIn { from { transform: scale(.3) rotate(-8deg); opacity: 0; } }
+.ab-won-rays { position: absolute; left: 50%; top: 50%; width: 520px; height: 520px; margin: -300px 0 0 -260px; border-radius: 50%; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--ab1, #ffc53d) 45%, transparent) 0 10deg, transparent 10deg 20deg); mask: radial-gradient(circle, #000 20%, transparent 68%); -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%); animation: abRays 6s linear infinite; z-index: -1; opacity: .8; }
+@keyframes abRays { to { transform: rotate(360deg); } }
+.ab-won small { font: 900 14px var(--sans); letter-spacing: .45em; text-shadow: 0 0 14px var(--ab1, #ffc53d); }
+.ab-won-art { width: 128px; height: 128px; filter: drop-shadow(0 10px 30px color-mix(in srgb, var(--ab1, #ffc53d) 70%, transparent)); animation: abFloat 2s ease-in-out infinite; }
+.ab-won-art svg, .ab-won-art img { width: 100%; height: 100%; display: block; }
+@keyframes abFloat { 50% { transform: translateY(-8px); } }
+.ab-won b { font: 900 clamp(28px, 7vw, 54px)/1 var(--sans); text-transform: uppercase; letter-spacing: -.01em; text-shadow: 0 0 24px var(--ab1, #ffc53d), 0 4px 0 rgba(0, 0, 0, .3); max-width: 90vw; }
+.ab-won span { font: 600 15px var(--sans); opacity: .9; }
+.ab-cmb { position: fixed; z-index: 66; transform: translate(-50%, 0); pointer-events: none; font: 900 16px var(--sans); letter-spacing: .04em; color: #fff; padding: 4px 10px; border-radius: 99px; background: color-mix(in srgb, var(--ab1, #ffc53d) 80%, #000); box-shadow: 0 0 18px var(--ab1, #ffc53d); animation: abCmb .9s cubic-bezier(.2, 1.4, .4, 1) forwards; white-space: nowrap; }
+.ab-cmb.big { font-size: 20px; }
+.ab-cmb.mega { font-size: 24px; background: linear-gradient(90deg, #ff3df0, #ffc53d, #3ddc84, #3d8bff); }
+@keyframes abCmb { 0% { transform: translate(-50%, 8px) scale(.5); opacity: 0; } 25% { transform: translate(-50%, 0) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -34px) scale(1); opacity: 0; } }
+.ab-haul, .ab-wins { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--bg2, rgba(255, 255, 255, .05)); display: flex; flex-direction: column; gap: 6px; }
+.ab-haul small, .ab-wins small { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.ab-haul span { display: flex; flex-wrap: wrap; gap: 6px; }
+.ab-haul b { font-size: 13px; padding: 3px 9px; border-radius: 99px; background: color-mix(in srgb, #3ddc84 20%, transparent); }
+.ab-wins span { font-size: 13px; }
+.ab-recap { text-align: center; }
+.ab-recap > b { font-size: 20px; }
+.ab-recap p { margin: 6px 0 14px; opacity: .75; font-size: 14px; }
+.ab-rc { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ab-rc span { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: var(--bg2, rgba(255, 255, 255, .06)); }
+.ab-rc svg { width: 28px; height: 28px; flex: none; }
+.ab-rc b { font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .ab-won-rays, .ab-won-art, #abBar.ab-late { animation: none; } #abCount b { animation-duration: .01s; } }
 
 </style>
 <style id="pbReveal">

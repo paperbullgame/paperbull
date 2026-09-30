@@ -4023,6 +4023,7 @@
           series.forEach(s => {
             const pts = s.data.map((v, i) => [x(i), y(+v || 0)]),
               d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('');
+            if (!pts.length) return;
             const id = 'g' + Math.random().toString(36).slice(2, 8);
             body +=
               `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.color}" stop-opacity=".22"/><stop offset="1" stop-color="${s.color}" stop-opacity="0"/></linearGradient></defs>` +

@@ -53,6 +53,12 @@
   }
   function give(rw) {
     if (!rw) return '';
+    try {
+      const t = Object.assign({ coins: 0, xp: 0, cash: 0, items: [] }, mine().tally);
+      if (rw.kind === 'coins' || rw.kind === 'xp' || rw.kind === 'cash') t[rw.kind] += +rw.amount || 0;
+      else if (rw.name) t.items = t.items.concat(rw.name).slice(-6);
+      setMine({ tally: t });
+    } catch (e) {}
     const what = window.PBApplyGrant ? PBApplyGrant({ kind: rw.kind, amount: rw.amount, item_id: rw.item_id, name: rw.name }) : rw.name;
     saveAcct(true);
     needRender = true;
@@ -62,8 +68,25 @@
     SFX.play('legend');
     confetti();
     FX.flash(A ? FX.TYPE[A.type].c1 : '#fff');
+    FX.shake && FX.shake(420);
+    document.getElementById('abWon')?.remove();
+    const w = document.createElement('div');
+    w.id = 'abWon';
+    w.setAttribute('role', 'alert');
+    let pic = '';
+    try {
+      pic = rw.kind === 'item' && typeof DESIGNS !== 'undefined' && DESIGNS[rw.item_id] ? art(rw.item_id) : '';
+    } catch (e) {}
+    if (!pic) pic = LOOT(rw.kind === 'cash' ? 'cash' : rw.kind === 'xp' ? 'star' : rw.kind === 'coins' ? 'bag' : 'gem', 96);
+    w.innerHTML = `<div class="ab-won"${A ? ` style="--ab1:${FX.TYPE[A.type].c1}"` : ''}><div class="ab-won-rays"></div><small>YOU WON</small><div class="ab-won-art">${pic}</div><b>${E(rw.name)}</b>${how ? `<span>${E(how)}</span>` : ''}</div>`;
+    document.body.appendChild(w);
+    w.onclick = () => w.remove();
+    setTimeout(() => w.classList.add('out'), 3000);
+    setTimeout(() => w.remove(), 3500);
     tt(`You won ${rw.name}${how ? ' ' + how : ''}!`, 'xp');
   };
+  /* winners everyone hears about (from the live pings), newest first */
+  let WIN = [];
 
   /* ---------- coin / XP multipliers ---------- */
   const mult = k => (A && live(A) ? Math.max(1, +A[k] || 1) : 1);
@@ -89,8 +112,9 @@
       requestAnimationFrame(() => b.classList.add('ab-in'));
     }
     const mults = [+A.coin_mult > 1 ? `${+A.coin_mult}× coins` : '', +A.xp_mult > 1 ? `${+A.xp_mult}× XP` : ''].filter(Boolean);
-    const h = `<span class="ab-ic">${BADGE(A.type, 30)}</span><span class="ab-t"><b>${E(A.label || t.label)}</b><small>Admin Abuse${A.by ? ' by ' + E(A.by) : ''}</small></span>${mults.map(m => `<span class="ab-mult">${m}</span>`).join('')}<span class="ab-time" data-abt>${mmss(left())}</span><button class="ab-go" data-abgo>${hasActions() ? 'Play' : 'Info'}</button>`;
-    const key = [A.type, A.label, A.by, mults.join(), hasActions()].join('|');
+    const pl = A.prize && A.game !== 'none' ? Math.max(0, (+A.winners || 0) - (+A.winners_now || 0)) : -1;
+    const h = `<span class="ab-ic">${BADGE(A.type, 30)}</span><span class="ab-t"><b>${E(A.label || t.label)}</b><small>Admin Abuse${A.by ? ' by ' + E(A.by) : ''}</small></span>${mults.map(m => `<span class="ab-mult">${m}</span>`).join('')}${pl >= 0 ? `<span class="ab-mult ab-pl${pl ? '' : ' gone'}">${pl ? pl + ' prize' + (pl === 1 ? '' : 's') + ' left' : 'Prizes gone'}</span>` : ''}<span class="ab-time" data-abt>${mmss(left())}</span><button class="ab-go" data-abgo>${hasActions() ? 'Play' : 'Info'}</button><i class="ab-prog" data-abp></i>`;
+    const key = [A.type, A.label, A.by, mults.join(), hasActions(), pl].join('|');
     if (b._h !== key) {
       b.innerHTML = h;
       b._h = key;
@@ -161,6 +185,7 @@
       r.innerHTML = '';
     }
     if (!silent) tt(`${was.label || 'Admin Abuse'} is over. GG!`, 'ok');
+    if (!silent) recap(was);
     if ((was.type === 'bull' || was.type === 'bear') && window.PBLive) setTimeout(() => PBLive.resync('site'), 800 + Math.random() * 800); // exact stop time from the server
   }
   function apply(a) {
@@ -196,6 +221,54 @@
     const t = document.querySelector('#abBar [data-abt]'),
       v = mmss(left());
     if (t && t.firstChild && t.firstChild.nodeValue !== v) t.firstChild.nodeValue = v; // text node only: no layout thrash
+    const ms = left(),
+      tot = Math.max(1, new Date(A.ends_at) - new Date(A.started_at)),
+      p = document.querySelector('#abBar [data-abp]'),
+      b = document.getElementById('abBar');
+    if (p) p.style.transform = `scaleX(${Math.max(0, Math.min(1, ms / tot)).toFixed(4)})`;
+    if (b) b.classList.toggle('ab-late', ms <= 60000);
+    const sec = Math.ceil(ms / 1000);
+    if (sec === 60 && tot > 90000 && !A._m1) {
+      A._m1 = 1;
+      tt('1 minute left in the Admin Abuse!', 'xp');
+    }
+    if (sec <= 10 && sec >= 1 && !document.hidden) finalCount(sec);
+  }
+  /* the last 10 seconds: a big countdown in the middle of the screen */
+  function finalCount(n) {
+    let c = document.getElementById('abCount');
+    if (!c) {
+      c = document.createElement('div');
+      c.id = 'abCount';
+      c.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(c);
+    }
+    if (c.dataset.n === String(n)) return;
+    c.dataset.n = n;
+    c.innerHTML = `<b style="--ab1:${FX.TYPE[A.type].c1}">${n}</b>`;
+    try {
+      SFX.init();
+      if (SFX.ctx && SFX.on) SFX.tone(n <= 3 ? 1046 : 784, 0, 0.09, 'square', 0.035);
+    } catch (e) {}
+    if (n === 1) setTimeout(() => c.remove(), 1100);
+  }
+  /* when it ends: what you got out of it */
+  function recap(was) {
+    const m = Store.get(K(was.id), {}) || {},
+      t = m.tally;
+    document.getElementById('abCount')?.remove();
+    if (!t || !(t.coins || t.xp || t.cash || (t.items && t.items.length))) return;
+    const rows = [t.coins ? [LOOT('coin', 28), (+t.coins).toLocaleString() + ' coins'] : null, t.cash ? [LOOT('cash', 28), '$' + (+t.cash).toLocaleString() + ' cash'] : null, t.xp ? [LOOT('star', 28), (+t.xp).toLocaleString() + ' XP'] : null, ...(t.items || []).map(n => [LOOT('gem', 28), n])].filter(Boolean);
+    setTimeout(() => {
+      if (document.querySelector('#modalRoot.open')) return tt(`${was.label || 'Admin Abuse'} is over. You got ${rows.map(r => r[1]).join(', ')}!`, 'xp');
+      modal({
+        title: `<span class="ab-mt">${LOGO(was.type, 26)}<span>Event recap</span></span>`,
+        confirm: '',
+        cancel: 'Nice!',
+        html: `<div class="ab-recap"><b>${E(was.label || FX.TYPE[was.type].label)} is over</b><p>Here’s everything you won${m.caught ? ` · ${m.caught} loot caught` : ''}${m.best > 2 ? ` · best combo ×${m.best}` : ''}</p><div class="ab-rc">${rows.map(r => `<span>${r[0]}<b>${E(r[1])}</b></span>`).join('')}</div></div>`,
+      });
+      SFX.play('win');
+    }, 900);
   }
 
   /* ---------- live updates: site sync + realtime pings ---------- */
@@ -225,6 +298,8 @@
         if (window.PBCloud && PBCloud.claimGrants) setTimeout(() => PBCloud.claimGrants(), 600 + Math.random() * 1400);
       } else if (p.ev === 'win' && A && p.id === A.id) {
         A.winners_now = (+A.winners_now || 0) + 1;
+        WIN = [{ who: p.who, prize: p.prize, at: Date.now() }, ...WIN].slice(0, 6);
+        bar();
         const me = acct && (acct.user || acct.name);
         if (p.who && p.who !== me) tt(`${p.who} won ${p.prize}!${p.left === 0 ? ' All prizes are taken.' : ''}`, 'xp');
         if (document.querySelector('#modalRoot .ab-panel')) panel();
@@ -303,6 +378,12 @@
       const what = give(res.reward);
       setMine({ caught: res.n });
       plus(r.left + r.width / 2, r.top, res.won ? `${res.reward.name}!` : '+' + what.replace(/ coins?$/, ''), LOOT(res.won ? 'star' : 'coin', 20));
+      // combo: catches close together build a streak (just for show, the server decides rewards)
+      const now = Date.now();
+      combo = now - lastCatch < 3200 ? combo + 1 : 1;
+      lastCatch = now;
+      if (combo > (mine().best || 0)) setMine({ best: combo });
+      if (combo >= 2) comboPop(r.left + r.width / 2, r.top + 30, combo);
       if (res.won) bigWin(res.reward, 'from the loot rain');
       else SFX.play('coin');
       if (res.left <= 0) {
@@ -314,6 +395,24 @@
       if (e.code !== 'slow_down') toast(ERR[e.code] || e.message, 'err');
     } finally {
       setTimeout(() => (busy = false), 260);
+    }
+  }
+  let combo = 0,
+    lastCatch = 0;
+  function comboPop(x, y, n) {
+    document.querySelector('.ab-cmb')?.remove();
+    const c = document.createElement('div');
+    c.className = 'ab-cmb' + (n >= 10 ? ' mega' : n >= 5 ? ' big' : '');
+    c.textContent = `COMBO ×${n}`;
+    c.style.left = Math.max(70, Math.min(innerWidth - 70, x)) + 'px';
+    c.style.top = y + 'px';
+    if (A) c.style.setProperty('--ab1', FX.TYPE[A.type].c1);
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 900);
+    if (n === 5 || n === 10 || n === 20) {
+      FX.flash(A ? FX.TYPE[A.type].c1 : '#fff');
+      SFX.play('rare');
+      tt(n >= 10 ? `MEGA COMBO ×${n}!` : `Combo ×${n}! Keep going!`, 'xp');
     }
   }
   function plus(x, y, txt, ic) {
@@ -354,6 +453,8 @@
       cancel: 'Close',
       html: `<div class="ab-panel"><div class="ab-hero">${AI ? `<span class="ab-hl">${LOGO(A.type, 54)}</span>` : ''}<div class="ab-hb"><b>${E(A.label || t.label)}</b><p>${E(A.message || t.desc)}</p><div class="ab-meta">${meta.map(x => `<span>${x}</span>`).join('')}</div></div></div>
         ${acts.length ? `<div class="ab-acts">${acts.join('')}</div>` : '<p class="ab-note">No game this time, just chaos. Everything you earn is multiplied while it lasts!</p>'}
+        ${m.tally && (m.tally.coins || m.tally.xp || m.tally.cash || (m.tally.items || []).length) ? `<div class="ab-haul"><small>Your haul so far</small><span>${[m.tally.coins ? (+m.tally.coins).toLocaleString() + ' coins' : '', m.tally.cash ? '$' + (+m.tally.cash).toLocaleString() + ' cash' : '', m.tally.xp ? (+m.tally.xp).toLocaleString() + ' XP' : '', ...(m.tally.items || [])].filter(Boolean).map(x => `<b>${E(x)}</b>`).join('')}</span></div>` : ''}
+        ${WIN.length ? `<div class="ab-wins"><small>Recent winners</small>${WIN.map(w => `<span><b>@${E(w.who)}</b> won ${E(w.prize)}</span>`).join('')}</div>` : ''}
         ${!cloud() && acts.length ? '<p class="ab-note">Sign up or log in (Profile) to play for prizes.</p>' : ''}</div>`,
       onMount: r =>
         r.querySelectorAll('[data-a]').forEach(

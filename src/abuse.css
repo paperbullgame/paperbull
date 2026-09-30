@@ -179,3 +179,46 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
 .ab-sh b { font-size: 17px; line-height: 1.3; }
 @keyframes abShIn { from { opacity: 0; transform: translateX(-50%) translateY(-16px) scale(0.97); } }
 @media (prefers-reduced-motion: reduce) { #abShout { animation: none; } }
+
+/* ---------- v2: progress, final countdown, big win, combos, recap ---------- */
+#abBar { overflow: hidden; }
+#abBar .ab-prog { position: absolute; left: 14px; right: 14px; bottom: 2px; height: 2px; border-radius: 2px; background: var(--ab1); box-shadow: 0 0 8px var(--ab1); transform-origin: left center; transition: transform 1s linear; opacity: .85; pointer-events: none; }
+#abBar.ab-late { animation: abLate 1s ease-in-out infinite; }
+#abBar.ab-late .ab-time { background: #ef4444; color: #fff; }
+@keyframes abLate { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, #ef4444 35%, transparent), 0 14px 40px -8px #ef4444; } }
+#abBar .ab-pl { background: rgba(255, 255, 255, .16); }
+#abBar .ab-pl.gone { opacity: .6; }
+@media (max-width: 600px) { #abBar .ab-pl { display: none; } }
+#abCount { position: fixed; inset: 0; z-index: 63; display: grid; place-items: center; pointer-events: none; }
+#abCount b { font: 900 clamp(120px, 34vw, 260px)/1 var(--sans); color: #fff; text-shadow: 0 0 30px var(--ab1), 0 0 80px var(--ab1), 0 6px 0 rgba(0, 0, 0, .35); animation: abCnt 1s cubic-bezier(.2, 1.3, .4, 1) forwards; }
+@keyframes abCnt { 0% { transform: scale(1.8); opacity: 0; } 25% { transform: scale(1); opacity: .95; } 80% { opacity: .8; } 100% { transform: scale(.85); opacity: 0; } }
+#abWon { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--ab1, #ffc53d) 30%, transparent), rgba(0, 0, 0, .6) 70%); backdrop-filter: blur(2px); animation: abWonBg .3s ease-out; cursor: pointer; }
+#abWon.out { opacity: 0; transition: opacity .45s; }
+@keyframes abWonBg { from { opacity: 0; } }
+.ab-won { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 20px; color: #fff; animation: abWonIn .7s cubic-bezier(.2, 1.5, .4, 1) both; }
+@keyframes abWonIn { from { transform: scale(.3) rotate(-8deg); opacity: 0; } }
+.ab-won-rays { position: absolute; left: 50%; top: 50%; width: 520px; height: 520px; margin: -300px 0 0 -260px; border-radius: 50%; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--ab1, #ffc53d) 45%, transparent) 0 10deg, transparent 10deg 20deg); mask: radial-gradient(circle, #000 20%, transparent 68%); -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%); animation: abRays 6s linear infinite; z-index: -1; opacity: .8; }
+@keyframes abRays { to { transform: rotate(360deg); } }
+.ab-won small { font: 900 14px var(--sans); letter-spacing: .45em; text-shadow: 0 0 14px var(--ab1, #ffc53d); }
+.ab-won-art { width: 128px; height: 128px; filter: drop-shadow(0 10px 30px color-mix(in srgb, var(--ab1, #ffc53d) 70%, transparent)); animation: abFloat 2s ease-in-out infinite; }
+.ab-won-art svg, .ab-won-art img { width: 100%; height: 100%; display: block; }
+@keyframes abFloat { 50% { transform: translateY(-8px); } }
+.ab-won b { font: 900 clamp(28px, 7vw, 54px)/1 var(--sans); text-transform: uppercase; letter-spacing: -.01em; text-shadow: 0 0 24px var(--ab1, #ffc53d), 0 4px 0 rgba(0, 0, 0, .3); max-width: 90vw; }
+.ab-won span { font: 600 15px var(--sans); opacity: .9; }
+.ab-cmb { position: fixed; z-index: 66; transform: translate(-50%, 0); pointer-events: none; font: 900 16px var(--sans); letter-spacing: .04em; color: #fff; padding: 4px 10px; border-radius: 99px; background: color-mix(in srgb, var(--ab1, #ffc53d) 80%, #000); box-shadow: 0 0 18px var(--ab1, #ffc53d); animation: abCmb .9s cubic-bezier(.2, 1.4, .4, 1) forwards; white-space: nowrap; }
+.ab-cmb.big { font-size: 20px; }
+.ab-cmb.mega { font-size: 24px; background: linear-gradient(90deg, #ff3df0, #ffc53d, #3ddc84, #3d8bff); }
+@keyframes abCmb { 0% { transform: translate(-50%, 8px) scale(.5); opacity: 0; } 25% { transform: translate(-50%, 0) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -34px) scale(1); opacity: 0; } }
+.ab-haul, .ab-wins { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--bg2, rgba(255, 255, 255, .05)); display: flex; flex-direction: column; gap: 6px; }
+.ab-haul small, .ab-wins small { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.ab-haul span { display: flex; flex-wrap: wrap; gap: 6px; }
+.ab-haul b { font-size: 13px; padding: 3px 9px; border-radius: 99px; background: color-mix(in srgb, #3ddc84 20%, transparent); }
+.ab-wins span { font-size: 13px; }
+.ab-recap { text-align: center; }
+.ab-recap > b { font-size: 20px; }
+.ab-recap p { margin: 6px 0 14px; opacity: .75; font-size: 14px; }
+.ab-rc { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ab-rc span { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: var(--bg2, rgba(255, 255, 255, .06)); }
+.ab-rc svg { width: 28px; height: 28px; flex: none; }
+.ab-rc b { font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .ab-won-rays, .ab-won-art, #abBar.ab-late { animation: none; } #abCount b { animation-duration: .01s; } }

@@ -126,8 +126,9 @@
           v.innerHTML =
             head('Admin Abuse', 'Make the game go nuts for everyone online. Pick an abuse, set a mini game and prizes, and hit Start. Players see it instantly.') +
             `<div id="abLive"></div><div id="abCtl"></div>
-            <div class="card"><div class="ch"><h3>Quick start</h3><span class="muted small">One tap fills everything in below. Change anything, then Start.</span></div>
-              <div class="ab-pre" id="abPre">${PRESETS.map((p, i) => `<button type="button" class="ab-pc" data-pre="${i}" style="--a1:${FXA.TYPE[p.type].c1};--a2:${FXA.TYPE[p.type].c2}"><span class="ab-cic">${abLogo(p.type, 40)}</span><span><b>${esc(p.name)}</b><small>${esc(p.blurb)}</small></span></button>`).join('')}</div></div>
+            <div class="card"><div class="ch"><h3>Quick start</h3><div class="ab-qa"><button type="button" class="btn sm" id="abRnd">${ABI ? ABI.loot('star', 16) : ''}Surprise me</button>${can('admin') ? '<button type="button" class="btn sm" id="abSaveP">Save as my preset</button>' : ''}</div></div>
+              <p class="muted small" style="margin:-4px 0 10px">One tap fills everything in below. Change anything, then Start.</p>
+              <div class="ab-pre" id="abPre">${PRESETS.map((p, i) => `<button type="button" class="ab-pc" data-pre="${i}" style="--a1:${FXA.TYPE[p.type].c1};--a2:${FXA.TYPE[p.type].c2}"><span class="ab-cic">${abLogo(p.type, 40)}</span><span><b>${esc(p.name)}</b><small>${esc(p.blurb)}</small></span></button>`).join('')}</div><div id="abMy"></div></div>
             <div class="card"><div class="ch"><h3>1 · Pick an abuse</h3><span class="muted small">Tap Preview to see it here</span></div>
               <div class="ab-grid" id="abGrid">${T.map(t => `<button class="ab-card${t.id === st.type ? ' on' : ''}" data-t="${t.id}" style="--a1:${t.c1};--a2:${t.c2}"><span class="ab-cic">${abLogo(t.id, 48)}</span><b>${esc(t.label)}</b><small>${esc(t.desc)}</small><span class="ab-pvb" data-pv="${t.id}">Preview</span></button>`).join('')}</div></div>
             <div class="grid g2" style="align-items:start">
@@ -160,13 +161,16 @@
                 <label class="f" data-gw="catch"><span>Coins per loot</span><input class="in" type="number" id="abDc" min="1" max="5000" value="50"></label>
                 <label class="f" data-gw="quiz" style="grid-column:1/-1"><span>Question</span><input class="in" id="abQ" maxlength="160" placeholder="What's Apple's ticker?"></label>
                 <label class="f" data-gw="quiz" style="grid-column:1/-1"><span>Answer (hidden from players, not case sensitive)</span><input class="in" id="abA" maxlength="60" placeholder="AAPL"></label>
+                <div data-gw="quiz" style="grid-column:1/-1;margin:-4px 0 12px"><button type="button" class="btn sm" id="abQR">Random question</button> <span class="muted small">from ${window.PBA_PLUS ? PBA_PLUS.QUIZ.length : 0} built-in questions</span></div>
                 <label class="f" data-gw="chest"><span>Win chance</span><select class="in" id="abCh">${[5, 10, 17, 20, 25, 33, 50, 100].map(p => `<option value="${p / 100}" ${p === 20 ? 'selected' : ''}>${p}%</option>`).join('')}</select></label>
                 <label class="f" data-gw="prize"><span>How many can win the prize</span><input class="in" type="number" id="abW" min="1" max="1000" value="3"></label>
               </div>
               <div data-gw="prize"><div class="f" style="margin-bottom:4px"><span>Prize</span></div>${prizeUI('abPrize')}</div>
             </div></div>
-            <div class="ab-go-row"><button class="btn pri ab-start" id="abStart"${can('admin') ? '' : ' disabled title="Admins only"'}>${ABI ? ABI.loot('bolt', 20) : ''}<span>Start Admin Abuse</span></button></div>
-            <div class="card"><div class="ch"><h3>History</h3></div><div id="abHist">${skeleton(3)}</div></div>`;
+            <div class="ab-go-row"><button class="btn pri ab-start" id="abStart"${can('admin') ? '' : ' disabled title="Admins only"'}>${ABI ? ABI.loot('bolt', 20) : ''}<span>Start Admin Abuse</span></button>
+              ${can('admin') ? `<div class="ab-later"><select class="in" id="abLt" aria-label="Start later">${[1, 2, 5, 10, 15, 30, 60, 120].map(m => `<option value="${m}" ${m === 5 ? 'selected' : ''}>in ${m < 60 ? m + ' min' : m / 60 + ' h'}</option>`).join('')}</select><button class="btn" id="abLater">Start later</button><button class="btn" id="abQ2">Add to autopilot</button></div>` : ''}</div>
+            ${can('admin') ? '<div id="abAuto"></div>' : ''}
+            <div class="card"><div class="ch"><h3>History</h3><span class="muted small" id="abTot"></span></div><div id="abHist">${skeleton(3)}</div></div>`;
           const gd = {
             none: 'No game: just the crazy theme and the coin/XP multipliers.',
             catch: 'Loot falls from the sky and players tap it for coins. Each tap has a 3% chance to win the big prize (until the winners run out).',
@@ -239,9 +243,7 @@
             toast(`${PRESETS[+b.dataset.pre].name} is set up. Check it, then hit Start.`);
             $('#abStart').scrollIntoView({ behavior: 'smooth', block: 'center' });
           };
-          $('#abStart').onclick = async () => {
-            let sent = false;
-            try {
+          const readCfg = () => {
               const cfg = {
                 type: st.type,
                 label: $('#abL').value.trim() || FXA.TYPE[st.type].label,
@@ -262,6 +264,52 @@
                 gift: $('#abG').checked ? getGift() : null,
               };
               if (cfg.game === 'quiz' && (!cfg.question || !cfg.answer)) throw new Error('Add a quiz question and its answer.');
+              return cfg;
+          };
+          this.readCfg = readCfg;
+          const P = window.PBA_PLUS;
+          const tryCfg = () => {
+            try {
+              return readCfg();
+            } catch (e) {
+              toast(e.message, 'err');
+              return null;
+            }
+          };
+          if (P) {
+            P.paintMy(this);
+            $('#abRnd').onclick = () => {
+              const c = P.surprise();
+              fill(c);
+              FXA.preview(c.type, 3000);
+              toast(`Surprise: ${c.label}. Check it, then hit Start.`);
+            };
+            if ($('#abSaveP'))
+              $('#abSaveP').onclick = () => {
+                const c = tryCfg();
+                if (c) P.savePreset(c, this);
+              };
+            $('#abQR').onclick = () => {
+              const q = P.QUIZ[Math.floor(Math.random() * P.QUIZ.length)];
+              $('#abQ').value = q[0];
+              $('#abA').value = q[1];
+            };
+            if ($('#abLater'))
+              $('#abLater').onclick = () => {
+                const c = tryCfg();
+                if (c) P.schedule(c, +$('#abLt').value);
+              };
+            if ($('#abQ2'))
+              $('#abQ2').onclick = () => {
+                const c = tryCfg();
+                if (c) P.enqueue(c);
+              };
+            if ($('#abAuto')) P.paintAuto($('#abAuto'));
+          } else ['#abRnd', '#abSaveP', '#abQR', '#abLater', '#abQ2'].forEach(id => $(id) && ($(id).hidden = true));
+          $('#abStart').onclick = async () => {
+            let sent = false;
+            try {
+              const cfg = readCfg();
               const b = $('#abStart');
               b.disabled = true;
               sent = true;
@@ -323,6 +371,8 @@
           this.tick();
           if (!h) return;
           const R = d.recent || [];
+          const tot = $('#abTot');
+          if (tot && R.length) tot.textContent = `${num(R.length)} events · ${num(R.reduce((s, r) => s + (+r.players || 0), 0))} plays · ${num(R.reduce((s, r) => s + (+r.wins || 0), 0))} prizes won`;
           h.innerHTML = R.length
             ? `<div class="tw"><table><thead><tr><th>Abuse</th><th>Started</th><th>Game</th><th class="r">Players</th><th class="r">Wins</th><th>Top winners</th><th>By</th>${can('admin') ? '<th></th>' : ''}</tr></thead><tbody>${R.map(r => {
                 const t = FXA.TYPE[r.type] || { label: r.type };
@@ -363,6 +413,10 @@
                 <div class="ab-cb"><small>Shout to everyone</small><div class="ab-row"><input class="in" id="abSh" maxlength="120" placeholder="Last 2 minutes! Grab the loot!"><button class="btn sm pri" id="abShGo">Shout</button></div></div>
                 <div class="ab-cb"><small>Coin rain on everyone online</small><div class="ab-row"><select class="in" id="abRc">${[100, 500, 1000, 5000, 25000].map(c => `<option value="${c}" ${c === 500 ? 'selected' : ''}>${num(c)} coins each</option>`).join('')}</select><button class="btn sm pri" id="abRGo">Make it rain</button></div></div>
               </div>
+              <div class="ab-qs" id="abQs">${['Last chance!', 'GG everyone!', 'Who’s still here?', 'More loot incoming…', 'The admin is watching 👀', 'Prizes are almost gone!'].map(t => `<button type="button" class="btn sm" data-qs="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+              <div class="ch" style="margin-top:14px"><h3 style="font-size:14px">Combo moves</h3><span class="muted small">One tap, several things at once</span></div>
+              <div class="ab-combos">${(window.PBA_PLUS ? PBA_PLUS.COMBOS : []).map((c, i) => `<button type="button" class="ab-combo" data-combo="${i}" style="--a1:${c.c}"><b>${esc(c.name)}</b><small>${esc(c.blurb)}</small></button>`).join('')}</div>
+              <label class="gall" style="margin-top:12px"><input type="checkbox" id="abChaos"><span class="sw"></span><span><b>Chaos mode</b><small>Switch to a random effect every <select class="in ab-chs" id="abChS">${[15, 30, 60, 120].map(s => `<option value="${s}" ${s === 30 ? 'selected' : ''}>${s}s</option>`).join('')}</select> while this event runs (keep this page open)</small></span></label>
               <div class="ch" style="margin-top:14px"><h3 style="font-size:14px">Live feed</h3><span class="muted small">Who’s playing right now</span></div><div id="abFeed" class="ab-feed"></div></div>`;
             const go = async (action, arg, msg) => {
               try {
@@ -385,6 +439,36 @@
             $('#abShGo').onclick = shout;
             $('#abSh').onkeydown = e => e.key === 'Enter' && (e.preventDefault(), shout());
             $('#abRGo').onclick = () => go('rain', { coins: +$('#abRc').value }, r => `Coin rain sent to ${num(r.players || 0)} player${r.players === 1 ? '' : 's'}`);
+            $('#abQs').onclick = e => {
+              const b = e.target.closest('[data-qs]');
+              if (b) go('shout', { text: b.dataset.qs }, 'Shouted to everyone');
+            };
+            const P = window.PBA_PLUS;
+            if (P) {
+              $$('[data-combo]', box).forEach(
+                b =>
+                  (b.onclick = async () => {
+                    b.disabled = true;
+                    try {
+                      await P.combo(+b.dataset.combo, this.data.active);
+                    } catch (e) {
+                      toast(e.message, 'err');
+                    }
+                    b.disabled = false;
+                    this.load();
+                  })
+              );
+              const ch = $('#abChaos', box),
+                chs = $('#abChS', box);
+              ch.checked = P.chaosOn(a.id);
+              if (P.chaosOn(a.id)) chs.value = String(P.chaosEvery());
+              const setChaos = () => {
+                P.setChaos(ch.checked ? a.id : null, +chs.value);
+                toast(ch.checked ? `Chaos mode on: a new effect every ${chs.value}s` : 'Chaos mode off');
+              };
+              ch.onchange = setChaos;
+              chs.onchange = () => ch.checked && setChaos();
+            }
           }
           const on = $('#abOn');
           if (on) on.textContent = `${num(this.data.online || 0)} players online in the last 10 minutes`;
