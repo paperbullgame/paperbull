@@ -1,0 +1,83 @@
+/* ---------- chart drawing overlay ---------- */
+.dr-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; overflow: hidden; }
+.dr-on .dr-svg { pointer-events: auto; touch-action: none; cursor: crosshair; }
+.dr-on.dr-erase .dr-svg { cursor: pointer; }
+.dr-svg [data-di] { cursor: pointer; }
+.dr-svg [data-di]:hover { opacity: .55; }
+.dr-lbl text { font: 700 12px/1 'Geist', system-ui, -apple-system, sans-serif; letter-spacing: .01em; }
+.dr-lbl rect { filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+
+.dr-bar {
+  position: absolute; z-index: 6; left: 50%; bottom: 36px; transform: translateX(-50%);
+  display: flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 4px;
+  max-width: calc(100% - 16px); padding: 5px 6px; border-radius: 14px;
+  background: rgba(17, 20, 28, .92); border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 10px 28px rgba(0,0,0,.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  animation: drIn .18s ease-out;
+}
+.dr-bar[hidden] { display: none !important; }
+@keyframes drIn { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.dr-tools, .dr-cols { display: flex; align-items: center; gap: 2px; }
+.dr-cols { gap: 5px; padding: 0 3px; }
+.dr-sep { width: 1px; height: 20px; background: rgba(255,255,255,.14); margin: 0 3px; }
+.dr-b {
+  width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center;
+  background: transparent; color: #cbd2de; border: 0; cursor: pointer; padding: 0;
+  transition: background .12s, color .12s;
+}
+.dr-b svg { width: 18px; height: 18px; }
+.dr-b:hover:not(:disabled) { background: rgba(255,255,255,.08); color: #fff; }
+.dr-bar .dr-b.sel { background: #f59e0b !important; color: #111827 !important; }
+.dr-b:disabled { opacity: .35; cursor: default; }
+.dr-c {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--c); border: 2px solid rgba(255,255,255,.18);
+  cursor: pointer; padding: 0; transition: transform .12s, box-shadow .12s;
+}
+.dr-c:hover { transform: scale(1.12); }
+.dr-bar .dr-c.sel { background: var(--c) !important; box-shadow: 0 0 0 2px rgba(17,20,28,.95), 0 0 0 4px var(--c); border-color: transparent; }
+.dr-done {
+  height: 32px; padding: 0 14px; border-radius: 9px; border: 0; cursor: pointer; margin-left: 2px;
+  background: #f8fafc; color: #111827; font: 700 13px/1 'Geist', system-ui, sans-serif;
+}
+.dr-done:hover { background: #fff; }
+
+.dr-inp {
+  position: absolute; z-index: 7; display: flex; gap: 4px; padding: 4px; border-radius: 11px;
+  background: rgba(17,20,28,.96); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 8px 22px rgba(0,0,0,.45);
+}
+.dr-inp input {
+  width: 128px; height: 30px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06);
+  color: #fff; padding: 0 9px; font: 600 13px/1 'Geist', system-ui, sans-serif; outline: none;
+}
+.dr-inp input:focus { border-color: #f59e0b; }
+.dr-inp button { height: 30px; padding: 0 11px; border: 0; border-radius: 8px; background: #f59e0b; color: #111827; font: 700 12px/1 'Geist', system-ui, sans-serif; cursor: pointer; }
+
+/* the Draw button next to the zoom buttons */
+.chart-tools .dr-toggle { width: auto !important; min-width: 0; padding: 0 10px 0 8px; gap: 5px; display: inline-flex !important; align-items: center; position: relative; }
+.chart-tools .dr-toggle svg { width: 16px; height: 16px; flex: none; }
+.chart-tools .dr-toggle span { font-size: 12.5px; font-weight: 650; }
+.chart-tools .dr-toggle em { font-style: normal; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #f59e0b; color: #111827; display: grid; place-items: center; line-height: 1; }
+.chart-tools .dr-toggle em:empty { display: none; }
+.chart-tools .dr-toggle.dr-act { background: #f59e0b !important; color: #111827 !important; opacity: 1; }
+.chart-tools .dr-toggle.dr-act em { background: #111827; color: #f59e0b; }
+
+html.classic:not(.dark) .dr-bar { background: rgba(255,255,255,.96); border-color: rgba(15,23,42,.12); box-shadow: 0 10px 28px rgba(15,23,42,.18); }
+html.classic:not(.dark) .dr-b { color: #475569; }
+html.classic:not(.dark) .dr-b:hover:not(:disabled) { background: rgba(15,23,42,.07); color: #0f172a; }
+html.classic:not(.dark) .dr-sep { background: rgba(15,23,42,.14); }
+html.classic:not(.dark) .dr-c { border-color: rgba(15,23,42,.18); }
+html.classic:not(.dark) .dr-bar .dr-c.sel { background: var(--c) !important; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--c); }
+html.classic:not(.dark) .dr-done { background: #0f172a; color: #fff; }
+
+@media (max-width: 600px) {
+  .dr-bar { position: relative; left: auto; bottom: auto; transform: none; width: fit-content; max-width: 100%; margin: 8px auto 0; gap: 2px; padding: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+  @keyframes drIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .dr-b { width: 34px; height: 34px; }
+  .dr-c { width: 22px; height: 22px; }
+  .chart-tools .dr-toggle span { display: none; }
+  .chart-tools .dr-toggle { padding: 0 8px; }
+}
+/* full-screen chart: keep the bar floating over the chart */
+.skf-body .chart-wrap .dr-bar { position: absolute; left: 50%; top: auto; bottom: 36px; transform: translateX(-50%); margin: 0; animation: none; }
+html.classic:not(.dark) .dr-inp { background: #fff; border-color: rgba(15,23,42,.14); box-shadow: 0 8px 22px rgba(15,23,42,.18); }
+html.classic:not(.dark) .dr-inp input { background: #f1f5f9; border-color: rgba(15,23,42,.12); color: #0f172a; }
