@@ -10,7 +10,7 @@ window.PB_LEGAL = {
   region: 'Maine, USA',
   law: 'the State of Maine, USA',
   updated: 'September 29, 2026',
-  site: 'https://taylanthe10.github.io/paperbull/',
+  site: 'https://paperbullgame.github.io/paperbull/',
 };
 (function () {
   var L = window.PB_LEGAL;
