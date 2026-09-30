@@ -77,6 +77,7 @@
     no_room: 'That chat isn’t available anymore.',
     dm_closed: 'They only take messages from friends. Send a friend request instead.',
     friends_only: 'Younger players can only message friends.',
+    their_age: 'They haven’t added their birth year yet, so only their friends can message them.',
     no_user: 'That player isn’t around anymore.',
     empty: 'Type a message first.',
     feature_off: 'That’s turned off right now.',

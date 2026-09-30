@@ -80,7 +80,7 @@
       toast('Uploaded! An admin checks every picture before other players see it.', 'ok');
       await sync();
     } catch (e) {
-      toast(ERR[e.message] || e.message || 'Upload failed', 'err');
+      toast(ERR[e.code] || ERR[e.message] || e.message || 'Upload failed', 'err');
     }
     busy = false;
     paint();

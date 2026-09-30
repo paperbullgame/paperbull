@@ -68,3 +68,9 @@ img.pb-pic { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; d
 .pic-b { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
 .pic-b label { cursor: pointer; }
 .pic-rules { margin: 12px 0 0; }
+
+/* "new version" pill */
+#pbUpd { position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 10025; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 0; cursor: pointer; font: 700 13.5px var(--sans, system-ui); color: #1c0c00; background: linear-gradient(160deg, #ffc15c, #ff7a1a); box-shadow: 0 14px 34px -12px rgba(255, 120, 30, 0.8); animation: pbUpdIn 380ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+#pbUpd span { width: 8px; height: 8px; border-radius: 50%; background: #1c0c00; opacity: 0.7; }
+@keyframes pbUpdIn { from { transform: translate(-50%, 20px); opacity: 0; } }
+@media (min-width: 900px) { #pbUpd { bottom: 24px; } }

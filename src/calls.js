@@ -15,7 +15,8 @@
     feature_off: 'Calls are turned off right now.',
     age_needed: 'Add your birth year first (Settings → Data & about).',
     kid_blocked: 'Calls are for players 14 and up.',
-    cant_call: 'You can’t call this player.',
+    cant_call: 'Calls are for players 14 and up, so you can’t call this player.',
+    their_age: 'They haven’t added their birth year yet, so they can’t get calls. Ask them to add it in Settings → Data & about.',
     not_friends: 'You can only call friends.',
     dm_closed: 'They only take calls from friends. Send a friend request.',
     in_call: 'You’re already in a call.',
@@ -25,7 +26,7 @@
     call_over: 'That call already ended.',
     not_found: 'That player isn’t available.',
   };
-  const say = e => ERR[e && e.message] || (e && e.message) || 'Call failed';
+  const say = e => ERR[e && e.code] || ERR[e && e.message] || (e && e.message) || 'Call failed';
 
   let C = null; // the current call: {id, caller, with, status, pc, stream, after, t0, muted, ...}
   let pollT = 0,
@@ -228,7 +229,7 @@
     ui();
     if (!quiet) {
       const who = '@' + (w.username || 'friend');
-      const msg = { declined: `${who} declined the call.`, missed: `${who} didn’t pick up.`, busy: `${who} is on another call.` }[status] || (dur ? `Call ended · ${dur}` : 'Call ended');
+      const msg = { declined: `${who} declined the call.`, missed: `${who} didn’t pick up. Their game has to be open to get calls.`, busy: `${who} is on another call.` }[status] || (dur ? `Call ended · ${dur}` : 'Call ended');
       toast(msg, status === 'ended' ? 'info' : 'err');
     }
   }
@@ -323,11 +324,11 @@
       else checkIncoming();
     });
   setTimeout(checkIncoming, 5000);
+  // backup for missed pings: look for a ringing call every few seconds while the game is open
   setInterval(() => {
     if (document.visibilityState !== 'visible' || C) return;
-    const up = window.PBLive && PBLive.state && PBLive.state() === 'on';
-    if (!up || Math.random() < 0.25) checkIncoming();
-  }, 12000);
+    checkIncoming();
+  }, 5000);
   addEventListener('pagehide', () => C && hangup(true));
   window.PBCalls = { start, hangup, state: () => C, check: checkIncoming };
 })();
