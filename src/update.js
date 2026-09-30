@@ -1,7 +1,7 @@
 /* =====================================================================
    AUTO-UPDATE — every build writes version.txt. The game checks it now
    and then; when a newer build is live it reloads itself at a safe
-   moment (not during a call, a pop-up or while typing), or shows a
+   moment (not during a pop-up or while typing), or shows a
    small "Update" pill the player can tap.
    ===================================================================== */
 (() => {
@@ -9,7 +9,6 @@
   if (!ME || location.protocol === 'file:') return;
   let newer = null;
   const busy = () =>
-    (window.PBCalls && PBCalls.state && PBCalls.state()) ||
     document.querySelector('#modalRoot.open, #packRoot.open, #tutRoot, #abSplash') ||
     (document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName));
   const reload = () => {
@@ -46,6 +45,6 @@
   setInterval(check, 120000);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') setTimeout(check, 1500);
-    else if (newer && !(window.PBCalls && PBCalls.state && PBCalls.state())) reload();
+    else if (newer) reload();
   });
 })();
