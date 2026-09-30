@@ -543,6 +543,7 @@
     const ic = S.room === 'global' ? `<span class="sc-rm-ic g">${IC.globe}</span>` : m.ic || '';
     const acts = [];
     if (S.room.startsWith('clan:')) acts.push(`<button class="btn sm" data-scgo="clan">Clan</button>`);
+    if (m.with && feat('calls') && window.PBCalls) acts.push(`<button class="btn sm sc-callb" data-callwith="${E(m.with)}" aria-label="Voice call @${E(m.with)}"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg><span>Call</span></button>`);
     if (m.with && feat('duels')) acts.push(`<button class="btn sm" data-duelwith="${E(m.with)}">${IC.swords}<span>Duel</span></button>`);
     el.innerHTML = `${ic}<div class="sc-ph-t"><b>${m.tag ? `<em class="sc-tag">${E(m.tag)}</em>` : ''}${E(n)}</b><small>${sub}</small></div><div class="sc-ph-a">${acts.join('')}</div>`;
   }
@@ -978,6 +979,8 @@
       Cloud.C.tab = 'friends';
       return go('ranks');
     }
+    const cw = t.closest('[data-callwith]');
+    if (cw) return window.PBCalls && PBCalls.start(cw.dataset.callwith);
     const dw = t.closest('[data-duelwith]');
     if (dw) return challengeDialog(dw.dataset.duelwith);
     const dmb = t.closest('[data-dmwith]');
