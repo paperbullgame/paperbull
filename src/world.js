@@ -14,7 +14,7 @@
   if (!ON) return;
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const T0 = Date.UTC(2026, 8, 28) / 1000, // the shared market's "day zero": prices equal the list prices here
+  const T0 = Date.UTC(2026, 8, 30) / 1000, // MARKET RESET (Sep 29 2026, 8pm New York): every price starts fresh from its list price here; nothing before it counts
     DAY = 86400,
     H = 3600;
   W.T0 = T0;
@@ -179,6 +179,7 @@
     for (let w = w0; w <= w1; w++)
       for (const e of newsWin(a, w)) {
         if (e.te > t) break;
+        if (e.te < (a._T0 || T0)) continue; // headlines from before the reset are forgotten
         s += e.J * sh(t - e.te, 0.85, 8 * H);
       }
     return s;
@@ -211,7 +212,7 @@
     for (let k = Math.floor((t + o) / P); ; k--) {
       const te = k * P - o;
       if (t - te > 5 * DAY) break;
-      if (te > t || te < (a._T0 || 0)) continue;
+      if (te > t || te < (a._T0 || T0)) continue;
       s += earnOut(a, k).J * sh(t - te, 0.65, 1.5 * DAY);
     }
     return s;
@@ -225,7 +226,7 @@
     for (let k = Math.floor((t + o) / P); ; k--) {
       const te = k * P - o;
       if (t - te > 4 * DAY) break;
-      if (te > t) continue;
+      if (te > t || te < (a._T0 || T0)) continue;
       s += L * Math.exp(-(t - te) / DAY); // ex-dividend drop, recovered over a day or two
     }
     return s;
@@ -269,10 +270,10 @@
       const g = rngOf(mix(0x4e61e, w));
       if (g() < 0.63) {
         const start = w * WR + g() * Math.max(60, WR - 600),
-          up = g() < 0.45,
+          up = g() < 0.5,
           group = g() < 0.55 ? 'stock' : 'crypto',
           len = Math.round(180 + g() * 240),
-          size = group === 'stock' ? 0.05 + g() * 0.06 : 0.08 + g() * 0.1;
+          size = group === 'stock' ? 0.03 + g() * 0.04 : 0.05 + g() * 0.07;
         r = { start, end: start + len, up, group, total: (up ? 1 : -1) * size, id: 'r:' + w };
       }
     }
@@ -352,6 +353,7 @@
     for (let w = Math.floor((t - 30 * H) / WM); w <= Math.floor(t / WM); w++)
       for (const e of macroWin(w)) {
         if (e.te > t) break;
+        if (e.te < T0) continue;
         g[e.group] += e.base * sh(t - e.te, 0.9, 6 * H);
       }
     // crashes / bull runs: a ramp that sticks, then fades over days
@@ -359,7 +361,7 @@
       const WR = WRl();
       for (let w = Math.floor((t - 5 * DAY) / WR); w <= Math.floor(t / WR); w++) {
         const r = regWin(w);
-        if (!r || t < r.start) continue;
+        if (!r || t < r.start || r.start < T0) continue; // crashes from before the reset don't drag prices
         const ramp = Math.min(1, (t - r.start) / (r.end - r.start)),
           dec = t > r.end ? Math.exp(-(t - r.end) / DAY) : 1;
         g[r.group] += r.total * ramp * dec;
@@ -369,7 +371,7 @@
     if (CAL)
       for (let s = Math.floor((t - 5 * H) / WC); s <= Math.floor(t / WC); s++) {
         const c = W.calSlot(s);
-        if (!c || !c.out || c.at > t) continue;
+        if (!c || !c.out || c.at > t || c.at < T0) continue;
         const k = sh(t - c.at, 0.9, H);
         g.stock += (c.out.stocks || 0) * k;
         g.crypto += (c.out.crypto || 0) * k;
@@ -388,7 +390,7 @@
     seeds(a);
     const T = a._T0 || T0;
     if (a._L0 == null) a._L0 = Math.log(a.p0);
-    if (a._T0 && t < T) return a._L0; // an IPO didn't trade before it listed
+    if (t < T) return a._T0 ? a._L0 : a._L0 + fast(a, t); // before the reset (or an IPO's listing) the price sat at its list price
     if (a._s0k !== a.sigA + ':' + T) {
       a._s0k = a.sigA + ':' + T;
       a._s0 = slow(a, T);
@@ -911,4 +913,71 @@
     } catch (e) {}
     return r;
   };
+
+  /* ---------------- the market reset: sell everything, nobody loses money ----------------
+     Once per saved game: every open position is closed at what the player PAID for it or
+     today's price, whichever is higher. Shorts, leverage and options get their money back too. */
+  const EPOCH = 'reset-2026-09-30';
+  function resetHoldings() {
+    if (typeof acct === 'undefined' || !acct || !acct.positions || acct.mktEpoch === EPOCH || !W.builtAt) return;
+    const px = s => {
+      const v = typeof priceOf === 'function' ? priceOf(s) : null;
+      return v > 0 ? v : 0;
+    };
+    let back = 0,
+      n = 0;
+    for (const [sym, p] of Object.entries(acct.positions || {})) {
+      const v = (+p.qty || 0) * Math.max(+p.avgCost || 0, px(sym));
+      back += v;
+      n++;
+    }
+    for (const [sym, x] of Object.entries(acct.shorts || {})) {
+      const now = px(sym) || +x.avg;
+      back += (+x.qty || 0) * (+x.avg || 0) + Math.max(0, ((+x.avg || 0) - now) * (+x.qty || 0));
+      n++;
+    }
+    for (const l of acct.lev || []) {
+      const now = px(l.sym) || l.entry,
+        pnl = (l.dir === 'short' || l.dir < 0 ? -1 : 1) * (now - l.entry) * (+l.qty || 0);
+      back += (+l.margin || 0) + Math.max(0, pnl);
+      n++;
+    }
+    for (const o of acct.options || []) {
+      back += +o.paid || 0;
+      n++;
+    }
+    acct.cash = Math.round(((+acct.cash || 0) + back) * 100) / 100;
+    acct.positions = {};
+    acct.shorts = {};
+    if (Array.isArray(acct.lev)) acct.lev = [];
+    if (Array.isArray(acct.options)) acct.options = [];
+    if (Array.isArray(acct.orders)) acct.orders = [];
+    if (Array.isArray(acct.brackets)) acct.brackets = [];
+    if (acct.office && Array.isArray(acct.office.lots)) acct.office.lots = [];
+    acct.mktEpoch = EPOCH;
+    try {
+      if (acct.dayStart) acct.dayStart.value = valuation().total;
+    } catch (e) {}
+    try {
+      saveAcct(true);
+    } catch (e) {}
+    if (n)
+      setTimeout(() => {
+        try {
+          modal({
+            title: 'The market was reset',
+            confirm: 'Got it',
+            cancel: '',
+            html: `<p style="margin:0 0 10px">Prices kept falling, so we gave the market a fresh start. Every stock and coin is back at its normal price.</p><p style="margin:0">We sold everything you owned (${n} position${n === 1 ? '' : 's'}) at <b>what you paid or more</b>, so nobody lost money. <b class="mono">${typeof fmtUSD === 'function' ? fmtUSD(back) : '$' + back.toFixed(2)}</b> went back to your cash.</p>`,
+          });
+        } catch (e) {}
+      }, 1500);
+    try {
+      needRender = true;
+    } catch (e) {}
+  }
+  // run as soon as the game and the new prices are ready, and again whenever another save is loaded
+  setInterval(resetHoldings, 2500);
+  setTimeout(resetHoldings, 600);
+  W.resetHoldings = resetHoldings;
 })();
