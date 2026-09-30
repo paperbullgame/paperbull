@@ -1,5 +1,5 @@
 /* =====================================================================
-   PETS MORE — 60 new pets (15 Common, 15 Rare, 15 Epic, 15 Legendary).
+   PETS MORE — 120 new pets (30 each: Common, Rare, Epic, Legendary).
    Drawn with the shared critter() parts, so they get the same body,
    rarity glow and animations as every other pet. They hatch from eggs,
    show up in the Pet shop and the collection, and can be gifted.
@@ -34,6 +34,9 @@
     scales: o => `<g fill="none" stroke="${o.a || sh(o.c, -0.3)}" stroke-width="1.2" opacity=".6"><path d="M16 26q3 3 6 0M22 21q3 3 6 0M36 21q3 3 6 0M42 26q3 3 6 0M17 46q3 3 6 0M41 46q3 3 6 0"/></g>`,
     circuit: o => `<g stroke="${o.a || '#5ef2ff'}" stroke-width="1.3" fill="none" opacity=".85" stroke-linecap="round"><path d="M14 30h5l3 3M50 30h-5l-3 3M32 13v5M18 46h5M46 46h-5"/><circle cx="14" cy="30" r="1.3" fill="${o.a || '#5ef2ff'}"/><circle cx="50" cy="30" r="1.3" fill="${o.a || '#5ef2ff'}"/></g>`,
     flower: o => `<g opacity=".85">${[[16, 26], [48, 24]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.4" fill="${o.a || '#ff8fc8'}"/><circle cx="${x - 2.4}" cy="${y}" r="1.6" fill="${o.a || '#ff8fc8'}"/><circle cx="${x + 2.4}" cy="${y}" r="1.6" fill="${o.a || '#ff8fc8'}"/><circle cx="${x}" cy="${y}" r="1.1" fill="#fff5a8"/>`).join('')}</g>`,
+    heart: o => `<path d="M17 25q-3-3 0-5 2-1 3 1 1-2 3-1 3 2 0 5l-3 3zM41 25q-3-3 0-5 2-1 3 1 1-2 3-1 3 2 0 5l-3 3z" fill="${o.a || '#ff5f8f'}" opacity=".8"/><ellipse cx="32" cy="44.5" rx="9" ry="6.5" fill="${o.snout || sh(o.c, 0.45)}"/>`,
+    patch: o => `<ellipse cx="39" cy="33" rx="7.5" ry="7" fill="${o.a || sh(o.c, -0.3)}" opacity=".85"/><ellipse cx="32" cy="44.5" rx="9" ry="6.5" fill="${o.snout || sh(o.c, 0.45)}"/>`,
+    glasses: o => `<g stroke="${o.a || K}" stroke-width="1.8" fill="#ffffff22"><circle cx="24.5" cy="34" r="6.2"/><circle cx="39.5" cy="34" r="6.2"/><path d="M30.7 34h2.6" fill="none"/></g>`,
     frost: o => [[18, 24], [46, 22], [20, 47], [44, 48]].map(([x, y]) => `<path d="M${x} ${y - 3}v6M${x - 3} ${y}h6M${x - 2} ${y - 2}l4 4M${x + 2} ${y - 2}l-4 4" stroke="${o.a || '#fff'}" stroke-width="1" opacity=".85"/>`).join('') + `<ellipse cx="32" cy="44.5" rx="9" ry="6.5" fill="${o.snout || '#f2fbff'}"/>`,
   };
   /* ---- things on top of the head ---- */
@@ -52,6 +55,11 @@
     wizard: a => `<path d="M20 16l12-15 12 15z" fill="${a || '#5b3fe0'}"/><path d="M18 16h28" stroke="${sh(a || '#5b3fe0', -0.3)}" stroke-width="3" stroke-linecap="round"/>${sparkle(30, 9, 1.8, '#ffe27a')}`,
     cap: a => `<path d="M17 18q15-14 30 0z" fill="${a || '#3d8bff'}"/><path d="M40 16q9 0 12 3-6 1-12 0z" fill="${sh(a || '#3d8bff', -0.25)}"/>`,
     ice: a => `<path d="M22 16l2-9 4 6 4-10 4 10 4-6 2 9z" fill="${a || '#bfe8ff'}" stroke="#7cc4f0" stroke-width="1" opacity=".95"/>`,
+    party: a => `<path d="M26 16l6-15 6 15z" fill="${a || '#ff5fa2'}" stroke="${sh(a || '#ff5fa2', -0.3)}" stroke-width="1"/><path d="M28 11l7-2M27 14.5l9-2.5" stroke="#fff" stroke-width="1.2" opacity=".8"/><circle cx="32" cy="1.6" r="2" fill="#ffe27a"/>`,
+    phones: a => `<path d="M11 32q0-24 21-24t21 24" stroke="${K}" stroke-width="3" fill="none"/><rect x="6" y="28" width="8" height="13" rx="3.5" fill="${a || '#3d8bff'}"/><rect x="50" y="28" width="8" height="13" rx="3.5" fill="${a || '#3d8bff'}"/>`,
+    tophat: a => `<rect x="23" y="1" width="18" height="14" rx="1.5" fill="${a || '#2a2233'}"/><rect x="18" y="14" width="28" height="4" rx="2" fill="${a || '#2a2233'}"/><rect x="23" y="10" width="18" height="3" fill="#e8394d"/>`,
+    star: a => sparkle(32, 8, 6, a || '#ffe27a'),
+    sprout2: a => `<path d="M32 15v-6" stroke="#3f8a3b" stroke-width="1.6"/><circle cx="32" cy="7" r="4" fill="${a || '#ff8fc8'}"/><circle cx="32" cy="7" r="1.6" fill="#fff5a8"/>`,
   };
   /* ---- things behind the head ---- */
   const BACK = {
@@ -61,6 +69,9 @@
     fins: a => `<path d="M9 34l-7-8 2 14zM55 34l7-8-2 14z" fill="${a || '#5ec8ff'}" stroke="${sh(a || '#5ec8ff', -0.3)}" stroke-width="1"/>`,
     spikes: a => `<path d="M14 22l-6-4 7-1M50 22l6-4-7-1M20 14l-3-7 6 3M44 14l3-7-6 3" fill="${a}" stroke="${sh(a, -0.3)}" stroke-width="1"/>`,
     petals: a => `<g fill="${a}" opacity=".9">${Array.from({ length: 8 }, (_, i) => `<ellipse cx="32" cy="9" rx="6" ry="10" transform="rotate(${i * 45} 32 35)"/>`).join('')}</g>`,
+    bubbles: a => [[7, 22, 3], [5, 34, 2], [57, 20, 2.6], [59, 32, 1.8], [10, 46, 1.6]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${a || '#9fe3ff'}" stroke-width="1.2"/>`).join(''),
+    leaves: a => `<g fill="${a || '#6fd46a'}" opacity=".9"><ellipse cx="8" cy="30" rx="4" ry="9" transform="rotate(-30 8 30)"/><ellipse cx="56" cy="30" rx="4" ry="9" transform="rotate(30 56 30)"/><ellipse cx="12" cy="16" rx="3" ry="7" transform="rotate(-50 12 16)"/><ellipse cx="52" cy="16" rx="3" ry="7" transform="rotate(50 52 16)"/></g>`,
+    rays: a => `<g stroke="${a || '#ffe27a'}" stroke-width="3" stroke-linecap="round" opacity=".8">${Array.from({ length: 12 }, (_, i) => { const t = (i / 12) * Math.PI * 2; return `<path d="M${(32 + Math.cos(t) * 25).toFixed(1)} ${(35 + Math.sin(t) * 25).toFixed(1)}L${(32 + Math.cos(t) * 30).toFixed(1)} ${(35 + Math.sin(t) * 30).toFixed(1)}"/>`; }).join('')}</g>`,
     aura: a => `<circle cx="32" cy="35" r="29" fill="none" stroke="${a}" stroke-width="2" stroke-dasharray="3 5" opacity=".7"/>`,
   };
 
@@ -130,6 +141,71 @@
     ['v_nebula', 'Nebula Bunny', 'l', 'xpPct', 'big', 'long', '#5b3fe0', '#2a1a8a', '#ff8fe0', 'stars', 'buck', '', 'aura', '#ffe27a', '#8a74ff'],
     ['v_kingcrab', 'King Crabby', 'l', 'passive', 'happy', '', '#ff6a5a', '#c23a2a', '', 'spots', 'smile', 'crown', 'spikes', '#ffd0c8', ''],
     ['v_chrono', 'Chrono Owl', 'l', 'packTimer', 'owl', 'tufts', '#c9a06a', '#8a6a3a', '', 'circuit', 'beak', 'gem', 'wings', '#ffe27a', ''],
+    // ===== wave 2 =====
+    // ---- Common ----
+    ['w_biscuit', 'Biscuit Pup', 'c', 'coinPct', 'big', 'floppy', '#e0b27a', '#b5824a', '', 'patch', 'muz', '', '', '#8a5a2a', '#fff0dc'],
+    ['w_pudding', 'Pudding Cat', 'c', 'xpPct', 'happy', 'point', '#ffe6a8', '#e8c070', '#ffc2c8', 'belly', 'cat', '', '', '', '#fff8e6'],
+    ['w_nibbles', 'Nibbles Hamster', 'c', 'passive', 'dot', 'small', '#f0c08a', '#c8925a', '#ffc9b8', 'belly', 'buck', '', '', '', '#fff4e6'],
+    ['w_pip', 'Pip Sparrow', 'c', 'newsSense', 'dot', '', '#a8805a', '#7a5638', '', 'belly', 'beak', 'tuft', '', '#6a4428', '#f4e6d4'],
+    ['w_squish', 'Squish Blob', 'c', 'packLuck', 'happy', '', '#9fe3c8', '#62b89a', '', '', 'smile', '', 'bubbles', '', ''],
+    ['w_waffle', 'Waffle Corgi', 'c', 'loginPct', 'dot', 'point', '#f0a860', '#c8783a', '#ffd2b0', 'blaze', 'muz', '', '', '#fff', '#fff'],
+    ['w_dewdrop', 'Dewdrop Frog', 'c', 'packTimer', 'big', '', '#8ed86a', '#5aa83e', '', 'spots', 'smile', '', '', '#4e8a3a', ''],
+    ['w_pickle', 'Pickle Gecko', 'c', 'xpPct', 'dot', '', '#a8d84a', '#78a82a', '', 'scales', 'smile', '', '', '#5a8a1e', ''],
+    ['w_marsh', 'Marshmallow', 'c', 'passive', 'sleepy', 'round', '#ffffff', '#e0e0ea', '#ffd0dc', '', 'smile', '', '', '', ''],
+    ['w_rusty', 'Rusty Fox', 'c', 'coinPct', 'dot', 'point', '#d8743a', '#a8481a', '#ffe0c8', 'blaze', 'cat', '', '', '#fff', '#fff'],
+    ['w_patches', 'Patches Cow', 'c', 'loginPct', 'dot', 'small', '#ffffff', '#d8d8e0', '#ffc2c8', 'patch', 'snoot', 'horns', '', '#2a2233', ''],
+    ['w_sunny', 'Sunny Chick', 'c', 'xpPct', 'happy', '', '#ffe04a', '#e8b81a', '', '', 'beak', 'sprout2', '', '#ff9f1a', ''],
+    ['w_dusty', 'Dusty Bunny', 'c', 'packTimer', 'sleepy', 'long', '#c8c0b8', '#9a928a', '#ffd0dc', 'belly', 'buck', '', '', '', '#f0ece8'],
+    ['w_gumdrop', 'Gumdrop Bear', 'c', 'packLuck', 'dot', 'round', '#ff8fb8', '#d85a88', '#ffd0e0', 'belly', 'muz', '', '', '', '#ffe0ec'],
+    ['w_sock', 'Sock Puppet', 'c', 'newsSense', 'big', '', '#7a9ae8', '#4a6ac8', '', 'stripes', 'open', 'tuft', '', '#e8394d', ''],
+    // ---- Rare ----
+    ['w_dj', 'DJ Panda', 'r', 'xpPct', 'panda', 'round', '#ffffff', '#d8d8e0', '#2a2233', 'mask', 'smile', 'phones', '', '#2a2233', '#fff'],
+    ['w_gent', 'Gentle Penguin', 'r', 'coinPct', 'dot', '', '#2f3446', '#1b1e2a', '', 'belly', 'beak', 'tophat', '', '', '#f4f0e8'],
+    ['w_nerd', 'Nerdy Owl', 'r', 'xpPct', 'dot', 'tufts', '#a8886a', '#7a5a3e', '', 'glasses', 'beak', '', '', '#2a2233', ''],
+    ['w_partypug', 'Party Pug', 'r', 'loginPct', 'happy', 'floppy', '#e8c8a0', '#b8966a', '', 'mask', 'muz', 'party', '', '#5a4030', '#d8b890'],
+    ['w_bubbles', 'Bubble Fish', 'r', 'passive', 'big', '', '#ff9f4a', '#d8701a', '', 'scales', 'open', '', 'fins', '#fff', ''],
+    ['w_mint', 'Mint Kitten', 'r', 'packLuck', 'dot', 'point', '#b8f0d8', '#7ac8a8', '#fff', 'freckles', 'cat', 'bow', '', '#4aa888', '#e8fff4'],
+    ['w_bamboo', 'Bamboo Lemur', 'r', 'packTimer', 'big', 'round', '#a8a0b0', '#7a7288', '#e8e0f0', 'mask', 'snoot', 'leaf', '', '#3a3448', '#f0ecf4'],
+    ['w_sherbet', 'Sherbet Ferret', 'r', 'coinPct', 'dot', 'small', '#ffc8a8', '#e89a78', '#ffe0d0', 'mask', 'cat', '', '', '#d8785a', '#fff'],
+    ['w_skater', 'Skater Rat', 'r', 'newsSense', 'dot', 'round', '#a8a8b8', '#7a7a8e', '#ffc2d0', 'belly', 'buck', 'cap', '', '#e8394d', '#e8e8f0'],
+    ['w_disco', 'Disco Duck', 'r', 'xpPct', 'happy', '', '#ffe27a', '#e8b82a', '', 'stars', 'beak', 'star', '', '#ff5fa2', ''],
+    ['w_pinecone', 'Pinecone Porcupine', 'r', 'passive', 'dot', 'small', '#a8784a', '#7a4e2a', '#ffd0b0', 'belly', 'snoot', '', 'spikes', '', '#e8d0b0'],
+    ['w_cocoa', 'Cocoa Bear', 'r', 'loginPct', 'sleepy', 'round', '#8a5a3a', '#5e3a22', '#c8966a', 'belly', 'muz', '', '', '', '#c8966a'],
+    ['w_lilypad', 'Lilypad Turtle', 'r', 'packTimer', 'dot', '', '#6ac88a', '#3e9a5e', '', 'scales', 'smile', 'sprout2', 'leaves', '', ''],
+    ['w_lovebird', 'Lovebird', 'r', 'packLuck', 'dot', '', '#ff8fb0', '#e05a88', '', 'heart', 'beak', 'tuft', 'wings', '#ff3f7a', ''],
+    ['w_snowcub', 'Snow Cub', 'r', 'coinPct', 'dot', 'round', '#f4faff', '#c8dcec', '#bfe8ff', 'frost', 'muz', '', '', '#9fd0f0', '#fff'],
+    // ---- Epic ----
+    ['w_samurai', 'Samurai Cat', 'e', 'coinPct', 'dot', 'point', '#f4e6d0', '#c8b08a', '#ffc2c8', 'stripes', 'cat', 'tuft', '', '#c8102e', '#fff'],
+    ['w_wizard', 'Wizard Toad', 'e', 'xpPct', 'big', '', '#6ab85a', '#3e8a2e', '', 'spots', 'smile', 'wizard', '', '#2e5a1e', ''],
+    ['w_robo', 'Robo Pup', 'e', 'packTimer', 'big', 'point', '#b8c4d8', '#7a889e', '#5ef2ff', 'circuit', 'open', 'antenna', '', '#5ef2ff', ''],
+    ['w_sunflower', 'Sunflower Bear', 'e', 'loginPct', 'happy', 'round', '#c8783a', '#9a4e1a', '#ffe27a', 'belly', 'muz', '', 'petals', '#ffd34d', '#e8b078'],
+    ['w_ghostpup', 'Ghost Pup', 'e', 'newsSense', 'big', 'floppy', '#eef0ff', '#b8bce8', '', 'stars', 'open', 'halo', 'aura', '#b8a8ff', ''],
+    ['w_rockstar', 'Rockstar Fox', 'e', 'packLuck', 'dot', 'point', '#ff6a4a', '#c83a1e', '#2a2233', 'blaze', 'fang', 'star', 'rays', '#ffe27a', '#fff'],
+    ['w_pirate', 'Pirate Parrot', 'e', 'coinPct', 'dot', '', '#2ec85a', '#1a8a3a', '', 'patch', 'beak', 'tophat', 'wings', '#2a2233', ''],
+    ['w_crystal', 'Crystal Deer', 'e', 'passive', 'big', 'point', '#d8f0ff', '#98c8e8', '#fff', 'frost', 'snoot', 'ice', '', '#9fd0f0', ''],
+    ['w_lava', 'Lava Pup', 'e', 'xpPct', 'dot', 'floppy', '#3a2a2a', '#1e1414', '', 'spots', 'fang', 'flame', '', '#ff6a1a', ''],
+    ['w_blossom', 'Blossom Fawn', 'e', 'loginPct', 'dot', 'point', '#f0c0a0', '#c89068', '#ffd0e0', 'spots', 'snoot', 'sprout2', 'petals', '#fff', ''],
+    ['w_stormcat', 'Storm Cat', 'e', 'newsSense', 'big', 'point', '#5a6a8a', '#3a4868', '#c8d8ff', 'circuit', 'cat', '', 'aura', '#ffe27a', '#8a9ab8'],
+    ['w_tanuki', 'Tanuki', 'e', 'packLuck', 'dot', 'round', '#a8784a', '#7a4e2a', '#e8c8a0', 'mask', 'muz', 'leaf', '', '#3a2a1e', '#f0dcc0'],
+    ['w_jelly', 'Jellyfish', 'e', 'passive', 'happy', '', '#ff9fe0', '#d85ab8', '', 'spots', 'smile', '', 'bubbles', '#fff', ''],
+    ['w_bard', 'Bard Mouse', 'e', 'xpPct', 'dot', 'round', '#c8b8a8', '#9a8a7a', '#ffc2d0', 'belly', 'buck', 'phones', '', '#8a3ae8', '#f0e8e0'],
+    ['w_sphinx', 'Sphinx Cat', 'e', 'coinPct', 'dot', 'point', '#e8c89a', '#b8966a', '#ffd0b0', 'stripes', 'cat', 'gem', '', '#1e4aa8', '#fff4e0'],
+    // ---- Legendary ----
+    ['w_kraken', 'Kraken', 'l', 'passive', 'big', '', '#8a3ae8', '#5a1ab8', '', 'spots', 'open', 'crown', 'bubbles', '#ff8fe0', ''],
+    ['w_sunking', 'Sun King', 'l', 'coinPct', 'happy', 'small', '#ffd34d', '#e0a01a', '#fff', 'belly', 'smile', 'crown', 'rays', '#ff8a1a', '#fff4c8'],
+    ['w_moonhare', 'Moon Hare', 'l', 'xpPct', 'sleepy', 'long', '#e8ecff', '#b0b8e8', '#c9b8ff', 'stars', 'buck', 'halo', 'aura', '#c9b8ff', ''],
+    ['w_thunder', 'Thunderbird', 'l', 'newsSense', 'dot', 'tufts', '#3a6ae8', '#1a3ab8', '', 'circuit', 'beak', 'flame', 'wings', '#ffe27a', ''],
+    ['w_worldtree', 'World Tree Ent', 'l', 'loginPct', 'sleepy', '', '#8a6a4a', '#5e4428', '', 'flower', 'smile', 'leaf', 'leaves', '#ff8fc8', ''],
+    ['w_diamond', 'Diamond Panther', 'l', 'packLuck', 'dot', 'point', '#2a2a3a', '#14141e', '#9fe3ff', 'scales', 'cat', 'gem', 'aura', '#9fe3ff', '#3a3a4e'],
+    ['w_timelord', 'Time Lord Tortoise', 'l', 'packTimer', 'owl', '', '#6a9a5a', '#3e6a2e', '', 'circuit', 'smile', 'tophat', '', '#ffe27a', ''],
+    ['w_starwhale', 'Star Whale', 'l', 'passive', 'happy', '', '#3a4ae8', '#1a2ab8', '', 'stars', 'smile', 'star', 'fins', '#ffe27a', '#8a9aff'],
+    ['w_phoenix2', 'Blue Phoenix', 'l', 'xpPct', 'dot', 'tufts', '#3ac8ff', '#1a8ad8', '', 'stars', 'beak', 'flame', 'wings', '#9fe3ff', ''],
+    ['w_goldbull', 'Golden Bull', 'l', 'coinPct', 'dot', 'small', '#ffd34d', '#c8901a', '#fff4c8', 'belly', 'snoot', 'horns', 'rays', '#ffe27a', ''],
+    ['w_icequeen', 'Ice Queen Fox', 'l', 'packLuck', 'dot', 'point', '#f0faff', '#b8d8f0', '#bfe8ff', 'frost', 'cat', 'ice', 'petals', '#bfe8ff', '#fff'],
+    ['w_shadow', 'Shadow Wolf', 'l', 'newsSense', 'big', 'point', '#2a2a3a', '#101018', '#9b5cff', 'mask', 'fang', '', 'aura', '#9b5cff', '#4a4a5e'],
+    ['w_rainbow', 'Rainbow Dragon', 'l', 'loginPct', 'dot', '', '#ff8fc8', '#d85aa8', '', 'scales', 'fang', 'horns', 'batwings', '#8a5aff', ''],
+    ['w_cosmo', 'Cosmo Cat', 'l', 'packTimer', 'big', 'point', '#1e1a4e', '#0a0828', '#ff8fe0', 'stars', 'cat', 'phones', 'aura', '#5ef2ff', '#3a3478'],
+    ['w_emperor', 'Emperor Penguin', 'l', 'passive', 'dot', '', '#2a3040', '#141824', '', 'belly', 'beak', 'crown', 'rays', '#ffd34d', '#fff8e0'],
   ];
   // perk strength per rarity (matches the older pets)
   const BASE = {

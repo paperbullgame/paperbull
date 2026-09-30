@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#06080c">
 <title>PAPERBULL</title>
 <!-- BRAND:START -->
-<script>window.PB_BUILD="20260930190244";</script>
+<script>window.PB_BUILD="20260930195509";</script>
 <script>/* MOVE-IN — the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull.
    The page at the old address packs up the player's login and (for guests) their save into the link
    (#pbmove=…) and sends them here. This runs before anything else: it stops the page, writes that data
@@ -16899,7 +16899,7 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
 })();
 
 /* =====================================================================
-   PETS MORE — 60 new pets (15 Common, 15 Rare, 15 Epic, 15 Legendary).
+   PETS MORE — 120 new pets (30 each: Common, Rare, Epic, Legendary).
    Drawn with the shared critter() parts, so they get the same body,
    rarity glow and animations as every other pet. They hatch from eggs,
    show up in the Pet shop and the collection, and can be gifted.
@@ -16934,6 +16934,9 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
     scales: o => `<g fill="none" stroke="${o.a || sh(o.c, -0.3)}" stroke-width="1.2" opacity=".6"><path d="M16 26q3 3 6 0M22 21q3 3 6 0M36 21q3 3 6 0M42 26q3 3 6 0M17 46q3 3 6 0M41 46q3 3 6 0"/></g>`,
     circuit: o => `<g stroke="${o.a || '#5ef2ff'}" stroke-width="1.3" fill="none" opacity=".85" stroke-linecap="round"><path d="M14 30h5l3 3M50 30h-5l-3 3M32 13v5M18 46h5M46 46h-5"/><circle cx="14" cy="30" r="1.3" fill="${o.a || '#5ef2ff'}"/><circle cx="50" cy="30" r="1.3" fill="${o.a || '#5ef2ff'}"/></g>`,
     flower: o => `<g opacity=".85">${[[16, 26], [48, 24]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.4" fill="${o.a || '#ff8fc8'}"/><circle cx="${x - 2.4}" cy="${y}" r="1.6" fill="${o.a || '#ff8fc8'}"/><circle cx="${x + 2.4}" cy="${y}" r="1.6" fill="${o.a || '#ff8fc8'}"/><circle cx="${x}" cy="${y}" r="1.1" fill="#fff5a8"/>`).join('')}</g>`,
+    heart: o => `<path d="M17 25q-3-3 0-5 2-1 3 1 1-2 3-1 3 2 0 5l-3 3zM41 25q-3-3 0-5 2-1 3 1 1-2 3-1 3 2 0 5l-3 3z" fill="${o.a || '#ff5f8f'}" opacity=".8"/><ellipse cx="32" cy="44.5" rx="9" ry="6.5" fill="${o.snout || sh(o.c, 0.45)}"/>`,
+    patch: o => `<ellipse cx="39" cy="33" rx="7.5" ry="7" fill="${o.a || sh(o.c, -0.3)}" opacity=".85"/><ellipse cx="32" cy="44.5" rx="9" ry="6.5" fill="${o.snout || sh(o.c, 0.45)}"/>`,
+    glasses: o => `<g stroke="${o.a || K}" stroke-width="1.8" fill="#ffffff22"><circle cx="24.5" cy="34" r="6.2"/><circle cx="39.5" cy="34" r="6.2"/><path d="M30.7 34h2.6" fill="none"/></g>`,
     frost: o => [[18, 24], [46, 22], [20, 47], [44, 48]].map(([x, y]) => `<path d="M${x} ${y - 3}v6M${x - 3} ${y}h6M${x - 2} ${y - 2}l4 4M${x + 2} ${y - 2}l-4 4" stroke="${o.a || '#fff'}" stroke-width="1" opacity=".85"/>`).join('') + `<ellipse cx="32" cy="44.5" rx="9" ry="6.5" fill="${o.snout || '#f2fbff'}"/>`,
   };
   /* ---- things on top of the head ---- */
@@ -16952,6 +16955,11 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
     wizard: a => `<path d="M20 16l12-15 12 15z" fill="${a || '#5b3fe0'}"/><path d="M18 16h28" stroke="${sh(a || '#5b3fe0', -0.3)}" stroke-width="3" stroke-linecap="round"/>${sparkle(30, 9, 1.8, '#ffe27a')}`,
     cap: a => `<path d="M17 18q15-14 30 0z" fill="${a || '#3d8bff'}"/><path d="M40 16q9 0 12 3-6 1-12 0z" fill="${sh(a || '#3d8bff', -0.25)}"/>`,
     ice: a => `<path d="M22 16l2-9 4 6 4-10 4 10 4-6 2 9z" fill="${a || '#bfe8ff'}" stroke="#7cc4f0" stroke-width="1" opacity=".95"/>`,
+    party: a => `<path d="M26 16l6-15 6 15z" fill="${a || '#ff5fa2'}" stroke="${sh(a || '#ff5fa2', -0.3)}" stroke-width="1"/><path d="M28 11l7-2M27 14.5l9-2.5" stroke="#fff" stroke-width="1.2" opacity=".8"/><circle cx="32" cy="1.6" r="2" fill="#ffe27a"/>`,
+    phones: a => `<path d="M11 32q0-24 21-24t21 24" stroke="${K}" stroke-width="3" fill="none"/><rect x="6" y="28" width="8" height="13" rx="3.5" fill="${a || '#3d8bff'}"/><rect x="50" y="28" width="8" height="13" rx="3.5" fill="${a || '#3d8bff'}"/>`,
+    tophat: a => `<rect x="23" y="1" width="18" height="14" rx="1.5" fill="${a || '#2a2233'}"/><rect x="18" y="14" width="28" height="4" rx="2" fill="${a || '#2a2233'}"/><rect x="23" y="10" width="18" height="3" fill="#e8394d"/>`,
+    star: a => sparkle(32, 8, 6, a || '#ffe27a'),
+    sprout2: a => `<path d="M32 15v-6" stroke="#3f8a3b" stroke-width="1.6"/><circle cx="32" cy="7" r="4" fill="${a || '#ff8fc8'}"/><circle cx="32" cy="7" r="1.6" fill="#fff5a8"/>`,
   };
   /* ---- things behind the head ---- */
   const BACK = {
@@ -16961,6 +16969,9 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
     fins: a => `<path d="M9 34l-7-8 2 14zM55 34l7-8-2 14z" fill="${a || '#5ec8ff'}" stroke="${sh(a || '#5ec8ff', -0.3)}" stroke-width="1"/>`,
     spikes: a => `<path d="M14 22l-6-4 7-1M50 22l6-4-7-1M20 14l-3-7 6 3M44 14l3-7-6 3" fill="${a}" stroke="${sh(a, -0.3)}" stroke-width="1"/>`,
     petals: a => `<g fill="${a}" opacity=".9">${Array.from({ length: 8 }, (_, i) => `<ellipse cx="32" cy="9" rx="6" ry="10" transform="rotate(${i * 45} 32 35)"/>`).join('')}</g>`,
+    bubbles: a => [[7, 22, 3], [5, 34, 2], [57, 20, 2.6], [59, 32, 1.8], [10, 46, 1.6]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${a || '#9fe3ff'}" stroke-width="1.2"/>`).join(''),
+    leaves: a => `<g fill="${a || '#6fd46a'}" opacity=".9"><ellipse cx="8" cy="30" rx="4" ry="9" transform="rotate(-30 8 30)"/><ellipse cx="56" cy="30" rx="4" ry="9" transform="rotate(30 56 30)"/><ellipse cx="12" cy="16" rx="3" ry="7" transform="rotate(-50 12 16)"/><ellipse cx="52" cy="16" rx="3" ry="7" transform="rotate(50 52 16)"/></g>`,
+    rays: a => `<g stroke="${a || '#ffe27a'}" stroke-width="3" stroke-linecap="round" opacity=".8">${Array.from({ length: 12 }, (_, i) => { const t = (i / 12) * Math.PI * 2; return `<path d="M${(32 + Math.cos(t) * 25).toFixed(1)} ${(35 + Math.sin(t) * 25).toFixed(1)}L${(32 + Math.cos(t) * 30).toFixed(1)} ${(35 + Math.sin(t) * 30).toFixed(1)}"/>`; }).join('')}</g>`,
     aura: a => `<circle cx="32" cy="35" r="29" fill="none" stroke="${a}" stroke-width="2" stroke-dasharray="3 5" opacity=".7"/>`,
   };
 
@@ -17030,6 +17041,71 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
     ['v_nebula', 'Nebula Bunny', 'l', 'xpPct', 'big', 'long', '#5b3fe0', '#2a1a8a', '#ff8fe0', 'stars', 'buck', '', 'aura', '#ffe27a', '#8a74ff'],
     ['v_kingcrab', 'King Crabby', 'l', 'passive', 'happy', '', '#ff6a5a', '#c23a2a', '', 'spots', 'smile', 'crown', 'spikes', '#ffd0c8', ''],
     ['v_chrono', 'Chrono Owl', 'l', 'packTimer', 'owl', 'tufts', '#c9a06a', '#8a6a3a', '', 'circuit', 'beak', 'gem', 'wings', '#ffe27a', ''],
+    // ===== wave 2 =====
+    // ---- Common ----
+    ['w_biscuit', 'Biscuit Pup', 'c', 'coinPct', 'big', 'floppy', '#e0b27a', '#b5824a', '', 'patch', 'muz', '', '', '#8a5a2a', '#fff0dc'],
+    ['w_pudding', 'Pudding Cat', 'c', 'xpPct', 'happy', 'point', '#ffe6a8', '#e8c070', '#ffc2c8', 'belly', 'cat', '', '', '', '#fff8e6'],
+    ['w_nibbles', 'Nibbles Hamster', 'c', 'passive', 'dot', 'small', '#f0c08a', '#c8925a', '#ffc9b8', 'belly', 'buck', '', '', '', '#fff4e6'],
+    ['w_pip', 'Pip Sparrow', 'c', 'newsSense', 'dot', '', '#a8805a', '#7a5638', '', 'belly', 'beak', 'tuft', '', '#6a4428', '#f4e6d4'],
+    ['w_squish', 'Squish Blob', 'c', 'packLuck', 'happy', '', '#9fe3c8', '#62b89a', '', '', 'smile', '', 'bubbles', '', ''],
+    ['w_waffle', 'Waffle Corgi', 'c', 'loginPct', 'dot', 'point', '#f0a860', '#c8783a', '#ffd2b0', 'blaze', 'muz', '', '', '#fff', '#fff'],
+    ['w_dewdrop', 'Dewdrop Frog', 'c', 'packTimer', 'big', '', '#8ed86a', '#5aa83e', '', 'spots', 'smile', '', '', '#4e8a3a', ''],
+    ['w_pickle', 'Pickle Gecko', 'c', 'xpPct', 'dot', '', '#a8d84a', '#78a82a', '', 'scales', 'smile', '', '', '#5a8a1e', ''],
+    ['w_marsh', 'Marshmallow', 'c', 'passive', 'sleepy', 'round', '#ffffff', '#e0e0ea', '#ffd0dc', '', 'smile', '', '', '', ''],
+    ['w_rusty', 'Rusty Fox', 'c', 'coinPct', 'dot', 'point', '#d8743a', '#a8481a', '#ffe0c8', 'blaze', 'cat', '', '', '#fff', '#fff'],
+    ['w_patches', 'Patches Cow', 'c', 'loginPct', 'dot', 'small', '#ffffff', '#d8d8e0', '#ffc2c8', 'patch', 'snoot', 'horns', '', '#2a2233', ''],
+    ['w_sunny', 'Sunny Chick', 'c', 'xpPct', 'happy', '', '#ffe04a', '#e8b81a', '', '', 'beak', 'sprout2', '', '#ff9f1a', ''],
+    ['w_dusty', 'Dusty Bunny', 'c', 'packTimer', 'sleepy', 'long', '#c8c0b8', '#9a928a', '#ffd0dc', 'belly', 'buck', '', '', '', '#f0ece8'],
+    ['w_gumdrop', 'Gumdrop Bear', 'c', 'packLuck', 'dot', 'round', '#ff8fb8', '#d85a88', '#ffd0e0', 'belly', 'muz', '', '', '', '#ffe0ec'],
+    ['w_sock', 'Sock Puppet', 'c', 'newsSense', 'big', '', '#7a9ae8', '#4a6ac8', '', 'stripes', 'open', 'tuft', '', '#e8394d', ''],
+    // ---- Rare ----
+    ['w_dj', 'DJ Panda', 'r', 'xpPct', 'panda', 'round', '#ffffff', '#d8d8e0', '#2a2233', 'mask', 'smile', 'phones', '', '#2a2233', '#fff'],
+    ['w_gent', 'Gentle Penguin', 'r', 'coinPct', 'dot', '', '#2f3446', '#1b1e2a', '', 'belly', 'beak', 'tophat', '', '', '#f4f0e8'],
+    ['w_nerd', 'Nerdy Owl', 'r', 'xpPct', 'dot', 'tufts', '#a8886a', '#7a5a3e', '', 'glasses', 'beak', '', '', '#2a2233', ''],
+    ['w_partypug', 'Party Pug', 'r', 'loginPct', 'happy', 'floppy', '#e8c8a0', '#b8966a', '', 'mask', 'muz', 'party', '', '#5a4030', '#d8b890'],
+    ['w_bubbles', 'Bubble Fish', 'r', 'passive', 'big', '', '#ff9f4a', '#d8701a', '', 'scales', 'open', '', 'fins', '#fff', ''],
+    ['w_mint', 'Mint Kitten', 'r', 'packLuck', 'dot', 'point', '#b8f0d8', '#7ac8a8', '#fff', 'freckles', 'cat', 'bow', '', '#4aa888', '#e8fff4'],
+    ['w_bamboo', 'Bamboo Lemur', 'r', 'packTimer', 'big', 'round', '#a8a0b0', '#7a7288', '#e8e0f0', 'mask', 'snoot', 'leaf', '', '#3a3448', '#f0ecf4'],
+    ['w_sherbet', 'Sherbet Ferret', 'r', 'coinPct', 'dot', 'small', '#ffc8a8', '#e89a78', '#ffe0d0', 'mask', 'cat', '', '', '#d8785a', '#fff'],
+    ['w_skater', 'Skater Rat', 'r', 'newsSense', 'dot', 'round', '#a8a8b8', '#7a7a8e', '#ffc2d0', 'belly', 'buck', 'cap', '', '#e8394d', '#e8e8f0'],
+    ['w_disco', 'Disco Duck', 'r', 'xpPct', 'happy', '', '#ffe27a', '#e8b82a', '', 'stars', 'beak', 'star', '', '#ff5fa2', ''],
+    ['w_pinecone', 'Pinecone Porcupine', 'r', 'passive', 'dot', 'small', '#a8784a', '#7a4e2a', '#ffd0b0', 'belly', 'snoot', '', 'spikes', '', '#e8d0b0'],
+    ['w_cocoa', 'Cocoa Bear', 'r', 'loginPct', 'sleepy', 'round', '#8a5a3a', '#5e3a22', '#c8966a', 'belly', 'muz', '', '', '', '#c8966a'],
+    ['w_lilypad', 'Lilypad Turtle', 'r', 'packTimer', 'dot', '', '#6ac88a', '#3e9a5e', '', 'scales', 'smile', 'sprout2', 'leaves', '', ''],
+    ['w_lovebird', 'Lovebird', 'r', 'packLuck', 'dot', '', '#ff8fb0', '#e05a88', '', 'heart', 'beak', 'tuft', 'wings', '#ff3f7a', ''],
+    ['w_snowcub', 'Snow Cub', 'r', 'coinPct', 'dot', 'round', '#f4faff', '#c8dcec', '#bfe8ff', 'frost', 'muz', '', '', '#9fd0f0', '#fff'],
+    // ---- Epic ----
+    ['w_samurai', 'Samurai Cat', 'e', 'coinPct', 'dot', 'point', '#f4e6d0', '#c8b08a', '#ffc2c8', 'stripes', 'cat', 'tuft', '', '#c8102e', '#fff'],
+    ['w_wizard', 'Wizard Toad', 'e', 'xpPct', 'big', '', '#6ab85a', '#3e8a2e', '', 'spots', 'smile', 'wizard', '', '#2e5a1e', ''],
+    ['w_robo', 'Robo Pup', 'e', 'packTimer', 'big', 'point', '#b8c4d8', '#7a889e', '#5ef2ff', 'circuit', 'open', 'antenna', '', '#5ef2ff', ''],
+    ['w_sunflower', 'Sunflower Bear', 'e', 'loginPct', 'happy', 'round', '#c8783a', '#9a4e1a', '#ffe27a', 'belly', 'muz', '', 'petals', '#ffd34d', '#e8b078'],
+    ['w_ghostpup', 'Ghost Pup', 'e', 'newsSense', 'big', 'floppy', '#eef0ff', '#b8bce8', '', 'stars', 'open', 'halo', 'aura', '#b8a8ff', ''],
+    ['w_rockstar', 'Rockstar Fox', 'e', 'packLuck', 'dot', 'point', '#ff6a4a', '#c83a1e', '#2a2233', 'blaze', 'fang', 'star', 'rays', '#ffe27a', '#fff'],
+    ['w_pirate', 'Pirate Parrot', 'e', 'coinPct', 'dot', '', '#2ec85a', '#1a8a3a', '', 'patch', 'beak', 'tophat', 'wings', '#2a2233', ''],
+    ['w_crystal', 'Crystal Deer', 'e', 'passive', 'big', 'point', '#d8f0ff', '#98c8e8', '#fff', 'frost', 'snoot', 'ice', '', '#9fd0f0', ''],
+    ['w_lava', 'Lava Pup', 'e', 'xpPct', 'dot', 'floppy', '#3a2a2a', '#1e1414', '', 'spots', 'fang', 'flame', '', '#ff6a1a', ''],
+    ['w_blossom', 'Blossom Fawn', 'e', 'loginPct', 'dot', 'point', '#f0c0a0', '#c89068', '#ffd0e0', 'spots', 'snoot', 'sprout2', 'petals', '#fff', ''],
+    ['w_stormcat', 'Storm Cat', 'e', 'newsSense', 'big', 'point', '#5a6a8a', '#3a4868', '#c8d8ff', 'circuit', 'cat', '', 'aura', '#ffe27a', '#8a9ab8'],
+    ['w_tanuki', 'Tanuki', 'e', 'packLuck', 'dot', 'round', '#a8784a', '#7a4e2a', '#e8c8a0', 'mask', 'muz', 'leaf', '', '#3a2a1e', '#f0dcc0'],
+    ['w_jelly', 'Jellyfish', 'e', 'passive', 'happy', '', '#ff9fe0', '#d85ab8', '', 'spots', 'smile', '', 'bubbles', '#fff', ''],
+    ['w_bard', 'Bard Mouse', 'e', 'xpPct', 'dot', 'round', '#c8b8a8', '#9a8a7a', '#ffc2d0', 'belly', 'buck', 'phones', '', '#8a3ae8', '#f0e8e0'],
+    ['w_sphinx', 'Sphinx Cat', 'e', 'coinPct', 'dot', 'point', '#e8c89a', '#b8966a', '#ffd0b0', 'stripes', 'cat', 'gem', '', '#1e4aa8', '#fff4e0'],
+    // ---- Legendary ----
+    ['w_kraken', 'Kraken', 'l', 'passive', 'big', '', '#8a3ae8', '#5a1ab8', '', 'spots', 'open', 'crown', 'bubbles', '#ff8fe0', ''],
+    ['w_sunking', 'Sun King', 'l', 'coinPct', 'happy', 'small', '#ffd34d', '#e0a01a', '#fff', 'belly', 'smile', 'crown', 'rays', '#ff8a1a', '#fff4c8'],
+    ['w_moonhare', 'Moon Hare', 'l', 'xpPct', 'sleepy', 'long', '#e8ecff', '#b0b8e8', '#c9b8ff', 'stars', 'buck', 'halo', 'aura', '#c9b8ff', ''],
+    ['w_thunder', 'Thunderbird', 'l', 'newsSense', 'dot', 'tufts', '#3a6ae8', '#1a3ab8', '', 'circuit', 'beak', 'flame', 'wings', '#ffe27a', ''],
+    ['w_worldtree', 'World Tree Ent', 'l', 'loginPct', 'sleepy', '', '#8a6a4a', '#5e4428', '', 'flower', 'smile', 'leaf', 'leaves', '#ff8fc8', ''],
+    ['w_diamond', 'Diamond Panther', 'l', 'packLuck', 'dot', 'point', '#2a2a3a', '#14141e', '#9fe3ff', 'scales', 'cat', 'gem', 'aura', '#9fe3ff', '#3a3a4e'],
+    ['w_timelord', 'Time Lord Tortoise', 'l', 'packTimer', 'owl', '', '#6a9a5a', '#3e6a2e', '', 'circuit', 'smile', 'tophat', '', '#ffe27a', ''],
+    ['w_starwhale', 'Star Whale', 'l', 'passive', 'happy', '', '#3a4ae8', '#1a2ab8', '', 'stars', 'smile', 'star', 'fins', '#ffe27a', '#8a9aff'],
+    ['w_phoenix2', 'Blue Phoenix', 'l', 'xpPct', 'dot', 'tufts', '#3ac8ff', '#1a8ad8', '', 'stars', 'beak', 'flame', 'wings', '#9fe3ff', ''],
+    ['w_goldbull', 'Golden Bull', 'l', 'coinPct', 'dot', 'small', '#ffd34d', '#c8901a', '#fff4c8', 'belly', 'snoot', 'horns', 'rays', '#ffe27a', ''],
+    ['w_icequeen', 'Ice Queen Fox', 'l', 'packLuck', 'dot', 'point', '#f0faff', '#b8d8f0', '#bfe8ff', 'frost', 'cat', 'ice', 'petals', '#bfe8ff', '#fff'],
+    ['w_shadow', 'Shadow Wolf', 'l', 'newsSense', 'big', 'point', '#2a2a3a', '#101018', '#9b5cff', 'mask', 'fang', '', 'aura', '#9b5cff', '#4a4a5e'],
+    ['w_rainbow', 'Rainbow Dragon', 'l', 'loginPct', 'dot', '', '#ff8fc8', '#d85aa8', '', 'scales', 'fang', 'horns', 'batwings', '#8a5aff', ''],
+    ['w_cosmo', 'Cosmo Cat', 'l', 'packTimer', 'big', 'point', '#1e1a4e', '#0a0828', '#ff8fe0', 'stars', 'cat', 'phones', 'aura', '#5ef2ff', '#3a3478'],
+    ['w_emperor', 'Emperor Penguin', 'l', 'passive', 'dot', '', '#2a3040', '#141824', '', 'belly', 'beak', 'crown', 'rays', '#ffd34d', '#fff8e0'],
   ];
   // perk strength per rarity (matches the older pets)
   const BASE = {
@@ -17059,6 +17135,359 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
         cheeks: mouth !== 'snoot',
       });
   }
+})();
+
+/* =====================================================================
+   SHOP MORE — a big batch of new things to collect and use:
+   · 10 color themes, 8 chart skins, 16 titles, 10 avatars
+   · 6 pet treats, 6 eggs
+   · 8 new power-ups (longer boosts, big cash, pet party, office party,
+     mystery box, power combo) that really work when you use them
+   · 5 new packs to find them in
+   ===================================================================== */
+(() => {
+  if (typeof ITEMS === 'undefined' || typeof DESIGNS === 'undefined' || typeof wrap !== 'function') return;
+  const K = typeof INK !== 'undefined' ? INK : '#2b2233';
+  const skin = '#f1c39a',
+    skinD = '#d79b6c';
+  const sp = (x, y, s = 2.2, c = '#fff') => `<path d="M${x} ${y - s}q${s * 0.18} ${s * 0.82} ${s} ${s}q-${s * 0.82} ${s * 0.18}-${s} ${s}q-${s * 0.18}-${s * 0.82}-${s}-${s}q${s * 0.82}-${s * 0.18} ${s}-${s}z" fill="${c}"/>`;
+  const sm = (y = 43, w = 3.6) => `<path d="M${32 - w} ${y}q${w} ${w * 0.9} ${w * 2} 0" stroke="${K}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  const av = (k, o) => critter(k, Object.assign({ c: skin, d: skinD, mouth: sm() }, o));
+
+  /* ---------------- art ---------------- */
+  Object.assign(DESIGNS, {
+    /* avatars */
+    av_cowboy: () =>
+      av('cwb', {
+        top: `<path d="M4 20q28 8 56 0-6 6-28 6T4 20z" fill="#8a5a2b"/><path d="M18 21q0-16 14-16t14 16z" fill="#a8703a"/><path d="M18 17h28" stroke="#5a3a1a" stroke-width="3"/>`,
+      }),
+    av_ninja: () =>
+      av('nja', {
+        c: '#2a2a36',
+        d: '#14141c',
+        face: `<rect x="14" y="28" width="36" height="12" rx="6" fill="${skin}"/>`,
+        mouth: '',
+        top: `<path d="M50 24l10-4-6 8z" fill="#e8394d"/><rect x="11" y="22" width="42" height="4" fill="#e8394d"/>`,
+        cheeks: false,
+      }),
+    av_wizard: () =>
+      av('wzd', {
+        top: `<path d="M14 20L32-2l18 22z" fill="#5b3fe0"/><path d="M10 20h44" stroke="#3a24a8" stroke-width="5" stroke-linecap="round"/>${sp(30, 8, 2.4, '#ffe27a')}${sp(38, 14, 1.6, '#ffe27a')}`,
+        mouth: `<path d="M20 42q12 22 24 0-12 6-24 0z" fill="#f4f4f8" stroke="#d0d0dc"/>${sm(42, 3)}`,
+      }),
+    av_king: () =>
+      av('kng', {
+        top: `<path d="M16 18l2-13 7 7 7-10 7 10 7-7 2 13z" fill="#ffd34d" stroke="#c9901a" stroke-width="1.4"/><circle cx="32" cy="12" r="2" fill="#e8394d"/><circle cx="22" cy="14" r="1.4" fill="#3d8bff"/><circle cx="42" cy="14" r="1.4" fill="#3d8bff"/>`,
+        mouth: `<path d="M24 42q4-3 8 0 4-3 8 0" stroke="#6b4a2f" stroke-width="2.4" fill="none" stroke-linecap="round"/>${sm(46, 2.6)}`,
+      }),
+    av_robot: () =>
+      wrap(
+        gradV('rbt', '#dfe6f2', '#8a96ac'),
+        `<path d="M32 4v8" stroke="#64748b" stroke-width="2"/><circle cx="32" cy="4" r="3" fill="#ff4d6d"/><rect x="10" y="12" width="44" height="42" rx="10" fill="url(#rbt)" stroke="#64748b" stroke-width="1.4"/><rect x="16" y="22" width="32" height="14" rx="5" fill="#0f172a"/><circle cx="25" cy="29" r="3.4" fill="#5ef2ff"/><circle cx="39" cy="29" r="3.4" fill="#5ef2ff"/><path d="M22 44h20" stroke="#475569" stroke-width="3" stroke-linecap="round" stroke-dasharray="3 2"/><rect x="5" y="28" width="5" height="12" rx="2" fill="#94a3b8"/><rect x="54" y="28" width="5" height="12" rx="2" fill="#94a3b8"/>`
+      ),
+    av_alien: () =>
+      av('aln', {
+        c: '#8ef08a',
+        d: '#4cb84a',
+        eyes: 'big',
+        top: `<path d="M24 16q-4-8-8-10M40 16q4-8 8-10" stroke="#4cb84a" stroke-width="2" fill="none"/><circle cx="16" cy="6" r="3" fill="#ffe27a"/><circle cx="48" cy="6" r="3" fill="#ffe27a"/>`,
+      }),
+    av_surfer: () =>
+      av('srf', {
+        c: '#e8b078',
+        d: '#c08050',
+        top: `<path d="M11 26q0-18 21-18t21 18q-6-10-21-10T11 26z" fill="#ffe27a"/><path d="M13 30h38" stroke="${K}" stroke-width="0" />`,
+        face: `<rect x="17" y="29" width="30" height="9" rx="4" fill="#0f172a"/><path d="M19 31h8M37 31h8" stroke="#5ef2ff" stroke-width="1.5"/>`,
+        eyes: 'happy',
+      }),
+    av_scientist: () =>
+      av('sci', {
+        top: `<path d="M10 28q-4-18 8-20 2-6 14-4 12-2 14 4 12 2 8 20-4-10-8-12-10 2-14 0-10-2-14 0-4 2-8 12z" fill="#e8e8f0" stroke="#b8b8c8"/>`,
+        face: `<g stroke="${K}" stroke-width="1.8" fill="#bfe8ff55"><circle cx="24.5" cy="34" r="6.4"/><circle cx="39.5" cy="34" r="6.4"/><path d="M31 34h2" fill="none"/></g>`,
+      }),
+    av_rockstar: () =>
+      av('rck', {
+        top: `<path d="M10 30q-2-22 22-24 24 2 22 24l-4-8-3 6-4-10-4 8-7-10-7 10-4-8-4 10-3-6z" fill="#2a2233"/>`,
+        mouth: `<path d="M26 41q6 8 12 0z" fill="${K}"/><path d="M28 43q4 3 8 0" fill="#ff7e9d"/>`,
+        face: `<path d="M20 26l2 4-3 1zM44 26l-2 4 3 1z" fill="#ffe27a"/>`,
+      }),
+    av_hacker: () =>
+      av('hck', {
+        top: `<path d="M6 44q-2-38 26-38t26 38l-8 4q2-30-18-30T14 48z" fill="#1e293b"/>`,
+        face: `<g fill="#22c55e" font-family="monospace" font-size="5" opacity=".75"><text x="17" y="24">10</text><text x="40" y="22">01</text></g>`,
+        eyes: 'sleepy',
+      }),
+
+    /* treats */
+    tr_cookie: () =>
+      wrap(
+        gradR('ck2', '#f4c98f', '#c8864a'),
+        `<circle cx="32" cy="34" r="20" fill="url(#ck2)" stroke="#a8683a" stroke-width="1.4"/>${[[24, 28], [38, 26], [30, 40], [42, 38], [22, 38]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.6" fill="#4a2a14"/>`).join('')}${hi(24, 24)}`
+      ),
+    tr_icecream: () =>
+      wrap(
+        gradV('ic2', '#ffd6e8', '#ff8fbf'),
+        `<path d="M20 30l12 28 12-28z" fill="#e8b068" stroke="#b8803a"/><path d="M22 34l18 0M24 40h14M26 46h10" stroke="#b8803a" stroke-width="1"/><circle cx="32" cy="22" r="12" fill="url(#ic2)"/><circle cx="24" cy="28" r="6" fill="#fff4dc"/><circle cx="40" cy="28" r="6" fill="#8a5a3a"/><circle cx="32" cy="10" r="3" fill="#e8394d"/>`
+      ),
+    tr_burger: () =>
+      wrap(
+        gradV('bg2', '#ffc870', '#d8883a'),
+        `<path d="M12 30q0-16 20-16t20 16z" fill="url(#bg2)"/><rect x="11" y="30" width="42" height="4" rx="2" fill="#4caf50"/><rect x="12" y="34" width="40" height="7" rx="3" fill="#6b3a1e"/><rect x="11" y="41" width="42" height="3" fill="#ffd34d"/><path d="M12 44h40q0 8-20 8t-20-8z" fill="#d8883a"/><g fill="#fff4c8"><ellipse cx="24" cy="21" rx="1.4" ry=".8"/><ellipse cx="34" cy="19" rx="1.4" ry=".8"/><ellipse cx="42" cy="23" rx="1.4" ry=".8"/></g>`
+      ),
+    tr_donut: () =>
+      wrap(
+        gradR('dn2', '#ffb0d0', '#ff5fa2'),
+        `<circle cx="32" cy="34" r="20" fill="#e8a868"/><circle cx="32" cy="33" r="17" fill="url(#dn2)"/><circle cx="32" cy="34" r="6" fill="#0000" stroke="#e8a868" stroke-width="0"/><circle cx="32" cy="34" r="6.4" fill="#1a1420" opacity=".0"/><circle cx="32" cy="34" r="6" fill="#fff"/>${[[22, 26, '#ffe27a'], [40, 24, '#5ef2ff'], [44, 38, '#8ef08a'], [24, 42, '#fff'], [36, 46, '#ffe27a']].map(([x, y, c]) => `<rect x="${x}" y="${y}" width="4" height="1.6" rx=".8" fill="${c}" transform="rotate(30 ${x} ${y})"/>`).join('')}`
+      ),
+    tr_steak: () =>
+      wrap(
+        gradR('stk', '#e8584a', '#9a2a1e'),
+        `<path d="M12 34c0-12 12-20 24-18s18 10 16 20-12 16-24 14-16-6-16-16z" fill="url(#stk)" stroke="#6a1a12" stroke-width="1.2"/><path d="M20 30c6 4 16 4 24 0M20 38c6 4 14 4 22 0" stroke="#fff" stroke-width="1.6" opacity=".5" fill="none"/><circle cx="46" cy="24" r="4" fill="#fff4e8" stroke="#d8c8b0"/>`
+      ),
+    tr_rainbow: () =>
+      wrap(
+        gradR('rbw', '#ffffff', '#e0e0f0'),
+        `${['#ff4d6d', '#ffb02e', '#ffe27a', '#8ef08a', '#5ec8ff', '#8a74ff'].map((c, i) => `<path d="M${10 + i * 2.4} 44a${22 - i * 2.4} ${22 - i * 2.4} 0 0 1 ${44 - i * 4.8} 0" stroke="${c}" stroke-width="2.6" fill="none"/>`).join('')}<circle cx="16" cy="46" r="6" fill="#fff"/><circle cx="48" cy="46" r="6" fill="#fff"/>${sp(32, 14, 3, '#ffe27a')}`
+      ),
+
+    /* power-ups */
+    pu_xp3: () =>
+      wrap(
+        gradR('x3', '#b8f0ff', '#2a8ad6'),
+        `<circle cx="32" cy="32" r="22" fill="url(#x3)" stroke="#1a5aa8" stroke-width="1.6"/><path d="M35 12L22 34h9l-3 18 14-24h-9z" fill="#ffe27a" stroke="#c9901a" stroke-width="1.2" stroke-linejoin="round"/><text x="46" y="52" font-size="10" font-weight="900" fill="#fff" font-family="system-ui" stroke="#1a5aa8" stroke-width=".6">1h</text>`
+      ),
+    pu_coin3: () =>
+      wrap(
+        gradR('c3', '#fff3a8', '#e0a100'),
+        `<path d="M10 22q22-14 44 0" stroke="#9fd8ff" stroke-width="3" fill="none" stroke-linecap="round"/>${[[20, 34], [34, 40], [46, 30], [28, 50]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="url(#c3)" stroke="#c28a00" stroke-width="1.4"/><text x="${x}" y="${y + 3.4}" text-anchor="middle" font-size="9" font-weight="900" fill="#a36b00" font-family="system-ui">$</text>`).join('')}`
+      ),
+    pu_cash3: () =>
+      wrap(
+        gradV('cs3', '#8ef0a8', '#1f9a4e'),
+        `${[0, 1, 2, 3].map(i => `<rect x="${12 + i * 2}" y="${36 - i * 6}" width="36" height="16" rx="2.4" fill="url(#cs3)" stroke="#146a34" stroke-width="1.2"/><circle cx="${30 + i * 2}" cy="${44 - i * 6}" r="4.4" fill="#d8ffe4" stroke="#146a34"/>`).join('')}<text x="36" y="23.6" text-anchor="middle" font-size="7" font-weight="900" fill="#146a34" font-family="system-ui">$</text>`
+      ),
+    pu_truck: () =>
+      wrap(
+        gradV('trk', '#ffe27a', '#e0a100'),
+        `<rect x="6" y="18" width="34" height="24" rx="3" fill="url(#trk)" stroke="#a36b00" stroke-width="1.4"/><path d="M40 26h10l8 9v7H40z" fill="#3d8bff" stroke="#1a4aa8" stroke-width="1.4"/><rect x="43" y="28" width="7" height="6" rx="1" fill="#bfe8ff"/><circle cx="16" cy="46" r="5" fill="#2a2233"/><circle cx="48" cy="46" r="5" fill="#2a2233"/><circle cx="16" cy="46" r="2" fill="#c8c8d0"/><circle cx="48" cy="46" r="2" fill="#c8c8d0"/><text x="23" y="35" text-anchor="middle" font-size="12" font-weight="900" fill="#a36b00" font-family="system-ui">$$$</text>`
+      ),
+    pu_petparty: () =>
+      wrap(
+        gradV('pp2', '#ffb0d0', '#ff5fa2'),
+        `<path d="M20 50L32 8l12 42z" fill="url(#pp2)" stroke="#c83a7a" stroke-width="1.4"/><path d="M24 36h16M22 44h20M27 24h10" stroke="#fff" stroke-width="2.4"/><circle cx="32" cy="7" r="4" fill="#ffe27a"/>${[[10, 16, '#5ef2ff'], [52, 20, '#8ef08a'], [12, 40, '#ffe27a'], [54, 44, '#ff8a5c']].map(([x, y, c]) => `<rect x="${x}" y="${y}" width="5" height="2.4" rx="1" fill="${c}" transform="rotate(${x} ${x} ${y})"/>`).join('')}<path d="M8 28q2-3 4 0 2-3 4 0-4 6-4 6z" fill="#ff4d6d"/>`
+      ),
+    pu_offparty: () =>
+      wrap(
+        gradR('op2', '#ffe08a', '#e8a01a'),
+        `<path d="M8 52L32 8l24 44z" fill="#f4c070" stroke="#a8683a" stroke-width="1.4"/><path d="M14 44h36" stroke="#e8394d" stroke-width="5"/>${[[26, 30], [36, 34], [30, 22], [22, 40], [40, 42]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3" fill="#c8302a"/>`).join('')}<path d="M46 14q4-4 8 0M50 10v8" stroke="#5ef2ff" stroke-width="2" fill="none" stroke-linecap="round"/>`
+      ),
+    pu_mystery: () =>
+      wrap(
+        gradV('mb2', '#b388ff', '#5b2fcf'),
+        `<rect x="10" y="24" width="44" height="30" rx="3" fill="url(#mb2)" stroke="#3a1a8a" stroke-width="1.4"/><rect x="8" y="18" width="48" height="9" rx="2" fill="#9a6aff" stroke="#3a1a8a" stroke-width="1.4"/><rect x="29" y="18" width="6" height="36" fill="#ffd34d"/><text x="32" y="46" text-anchor="middle" font-size="16" font-weight="900" fill="#fff" font-family="system-ui" stroke="#3a1a8a" stroke-width=".8">?</text>${sp(50, 12, 3, '#ffe27a')}${sp(14, 10, 2, '#ffe27a')}`
+      ),
+    pu_combo: () =>
+      wrap(
+        gradR('cb2', '#ffd6f4', '#b02aa8'),
+        `<path d="M22 8l16 6v10c0 10-6 17-16 21C12 41 6 34 6 24V14z" fill="#3d8bff" stroke="#1d438f" stroke-width="1.4"/><path d="M14 24l5 5 9-9" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="42" cy="40" r="16" fill="url(#cb2)" stroke="#7a1a78" stroke-width="1.4"/><text x="42" y="45" text-anchor="middle" font-size="12" font-weight="900" fill="#fff" font-family="system-ui">1.5×</text>`
+      ),
+  });
+
+  /* ---------------- the new items ---------------- */
+  const P = (id, name, r, price, desc) => ({ id, type: 'power', name, r, ic: '', price, desc });
+  const NEW = [
+    // color themes
+    { id: 'th_mint', type: 'theme', name: 'Mint', r: 'c', color: '#5eead4' },
+    { id: 'th_coral', type: 'theme', name: 'Coral', r: 'c', color: '#fb7185' },
+    { id: 'th_lemon', type: 'theme', name: 'Lemon', r: 'c', color: '#facc15' },
+    { id: 'th_ocean', type: 'theme', name: 'Deep Ocean', r: 'r', color: '#0ea5e9' },
+    { id: 'th_grape', type: 'theme', name: 'Grape', r: 'r', color: '#a855f7' },
+    { id: 'th_cherry', type: 'theme', name: 'Cherry', r: 'r', color: '#e11d48' },
+    { id: 'th_sunset', type: 'theme', name: 'Sunset', r: 'e', color: '#f97316' },
+    { id: 'th_neon', type: 'theme', name: 'Neon', r: 'e', color: '#39ff14' },
+    { id: 'th_royal', type: 'theme', name: 'Royal', r: 'l', color: '#6366f1' },
+    { id: 'th_rosegold', type: 'theme', name: 'Rose Gold', r: 'l', color: '#f4a6a0' },
+    // chart skins
+    { id: 'sk_candy', type: 'skin', name: 'Cotton Candy', r: 'c', up: '#f9a8d4', dn: '#93c5fd' },
+    { id: 'sk_mono', type: 'skin', name: 'Newspaper', r: 'c', up: '#e5e7eb', dn: '#4b5563' },
+    { id: 'sk_retro', type: 'skin', name: 'Retro Arcade', r: 'r', up: '#22d3ee', dn: '#f472b6' },
+    { id: 'sk_lava', type: 'skin', name: 'Lava Lamp', r: 'r', up: '#fb923c', dn: '#7c3aed' },
+    { id: 'sk_matrix', type: 'skin', name: 'The Matrix', r: 'e', up: '#39ff14', dn: '#14532d' },
+    { id: 'sk_ocean', type: 'skin', name: 'Coral Reef', r: 'e', up: '#2dd4bf', dn: '#f97316' },
+    { id: 'sk_royal', type: 'skin', name: 'Royal Purple', r: 'l', up: '#e9d5ff', dn: '#581c87' },
+    { id: 'sk_emerald', type: 'skin', name: 'Emerald & Ruby', r: 'l', up: '#10b981', dn: '#be123c' },
+    // avatars
+    { id: 'av_cowboy', type: 'avatar', name: 'Cowboy', r: 'c', ic: '' },
+    { id: 'av_ninja', type: 'avatar', name: 'Ninja', r: 'c', ic: '' },
+    { id: 'av_surfer', type: 'avatar', name: 'Surfer', r: 'c', ic: '' },
+    { id: 'av_scientist', type: 'avatar', name: 'Scientist', r: 'r', ic: '' },
+    { id: 'av_rockstar', type: 'avatar', name: 'Rock Star', r: 'r', ic: '' },
+    { id: 'av_hacker', type: 'avatar', name: 'Hacker', r: 'r', ic: '' },
+    { id: 'av_wizard', type: 'avatar', name: 'Wizard', r: 'e', ic: '' },
+    { id: 'av_alien', type: 'avatar', name: 'Alien', r: 'e', ic: '' },
+    { id: 'av_robot', type: 'avatar', name: 'Robot', r: 'e', ic: '' },
+    { id: 'av_king', type: 'avatar', name: 'The King', r: 'l', ic: '' },
+    // titles
+    { id: 'ti_dip', type: 'title', name: 'Dip Buyer', r: 'c' },
+    { id: 'ti_hodl', type: 'title', name: 'HODL Hero', r: 'c' },
+    { id: 'ti_coffee', type: 'title', name: 'Runs on Coffee', r: 'c' },
+    { id: 'ti_moon', type: 'title', name: 'To The Moon', r: 'c' },
+    { id: 'ti_petlover', type: 'title', name: 'Pet Whisperer', r: 'r' },
+    { id: 'ti_boss', type: 'title', name: 'Office Boss', r: 'r' },
+    { id: 'ti_spreadsheet', type: 'title', name: 'Spreadsheet Wizard', r: 'r' },
+    { id: 'ti_nightowl', type: 'title', name: 'Night Owl Trader', r: 'r' },
+    { id: 'ti_collector', type: 'title', name: 'The Collector', r: 'e' },
+    { id: 'ti_diamond', type: 'title', name: 'Diamond Hands', r: 'e' },
+    { id: 'ti_shark', type: 'title', name: 'Loan Shark', r: 'e' },
+    { id: 'ti_tycoon', type: 'title', name: 'Tycoon', r: 'e' },
+    { id: 'ti_moonbase', type: 'title', name: 'Moon Base Owner', r: 'l' },
+    { id: 'ti_billion', type: 'title', name: 'Paper Billionaire', r: 'l' },
+    { id: 'ti_wolf', type: 'title', name: 'Wolf of Paper Street', r: 'l' },
+    { id: 'ti_final', type: 'title', name: 'Final Boss', r: 'l' },
+    // treats
+    { id: 'tr_cookie', type: 'treat', name: 'Cookie', r: 'c', ic: '', price: 40, mood: 30, pxp: 6, desc: '+30 happiness.' },
+    { id: 'tr_icecream', type: 'treat', name: 'Ice Cream', r: 'c', ic: '', price: 90, mood: 50, pxp: 15, desc: '+50 happiness and +15 pet XP.' },
+    { id: 'tr_burger', type: 'treat', name: 'Burger', r: 'r', ic: '', price: 250, mood: 70, pxp: 150, desc: '+70 happiness and +150 pet XP.' },
+    { id: 'tr_donut', type: 'treat', name: 'Sprinkle Donut', r: 'r', ic: '', price: 160, mood: 90, pxp: 30, desc: '+90 happiness.' },
+    { id: 'tr_steak', type: 'treat', name: 'Big Steak', r: 'e', ic: '', price: 450, mood: 100, pxp: 300, desc: 'Full happiness and +300 pet XP.' },
+    { id: 'tr_rainbow', type: 'treat', name: 'Rainbow Snack', r: 'l', ic: '', price: 1200, mood: 100, pxp: 1000, desc: 'Full happiness and +1,000 pet XP.' },
+    // eggs
+    { id: 'egg_bubble', type: 'egg', name: 'Bubble Egg', r: 'c', ic: '', price: 300, hatch: { c: 70, r: 27, e: 3, l: 0 }, shell: ['#e0f7ff', '#7cc4f0'], desc: 'A cheap egg with a small shot at Epic.' },
+    { id: 'egg_party', type: 'egg', name: 'Party Egg', r: 'r', ic: '', price: 1000, hatch: { c: 30, r: 45, e: 20, l: 5 }, shell: ['#fff0f8', '#ff5fa2'], desc: 'Mostly Rare. One in twenty is Legendary.' },
+    { id: 'egg_thunder', type: 'egg', name: 'Thunder Egg', r: 'e', ic: '', price: 1700, hatch: { c: 0, r: 40, e: 45, l: 15 }, shell: ['#fff9c2', '#3a4ae8'], desc: 'Rare or better. Crackles when you hold it.' },
+    { id: 'egg_crystal', type: 'egg', name: 'Crystal Egg', r: 'e', ic: '', price: 2600, hatch: { c: 0, r: 10, e: 65, l: 25 }, shell: ['#f0fbff', '#8ad0f0'], desc: 'Mostly Epic, and one in four is Legendary.' },
+    { id: 'egg_royal', type: 'egg', name: 'Royal Egg', r: 'l', ic: '', price: 9000, hatch: { c: 0, r: 0, e: 0, l: 100 }, myth: 0.08, shell: ['#fff4c2', '#8a2be2'], desc: 'Guaranteed Legendary, with an 8% chance of a MYTHIC pet.' },
+    { id: 'egg_void', type: 'egg', name: 'Void Egg', r: 'l', ic: '', price: 50000, hatch: { c: 0, r: 0, e: 0, l: 100 }, myth: 0.3, shell: ['#4a3a78', '#05030f'], desc: 'Guaranteed Legendary, with a 30% chance of a MYTHIC pet.' },
+    // power-ups
+    P('pu_xp3', 'XP Surge', 'r', 450, '2× XP for a whole hour.'),
+    P('pu_coin3', 'Coin Storm', 'e', 800, '2× coins from everything for a whole hour.'),
+    P('pu_cash3', 'Cash Stack', 'e', 2400, 'Adds $25,000 of virtual cash.'),
+    { id: 'pu_truck', type: 'power', name: 'Money Truck', r: 'l', ic: '', desc: 'Adds $100,000 of virtual cash. Packs only.' },
+    P('pu_petparty', 'Pet Party', 'r', 500, 'Every pet you own gets full happiness and +150 XP.'),
+    P('pu_offparty', 'Office Party', 'r', 600, 'Everyone in your office gets +40 mood.'),
+    P('pu_mystery', 'Mystery Box', 'e', 999, 'Could be coins, cash, treats or a rare power-up. Open it and see!'),
+    P('pu_combo', 'Power Combo', 'e', 600, 'Arms a Profit Multiplier and a Loss Shield at the same time.'),
+  ];
+  for (const it of NEW)
+    if (!ITEM[it.id]) {
+      ITEMS.push(it);
+      ITEM[it.id] = it;
+    }
+
+  /* ---------------- new packs ---------------- */
+  if (typeof PACKS !== 'undefined')
+    for (const p of [
+      { id: 'party', name: 'Party Pack', price: 700, cards: 4, guarantee: 'r', w: { c: 40, r: 40, e: 15, l: 5 }, art: ['#c2185b', '#2a0616'], ico: 'gift', accent: '#ff9ad5', types: ['power', 'treat'], blurb: '4 power-ups & treats · 1 Rare+' },
+      { id: 'fashion', name: 'Fashion Pack', price: 900, cards: 4, guarantee: 'e', w: { c: 40, r: 36, e: 18, l: 6 }, art: ['#6a1b9a', '#1c0726'], ico: 'star', accent: '#e1bee7', types: ['theme', 'skin', 'avatar', 'title'], blurb: '4 looks · 1 Epic+' },
+      { id: 'cash', name: 'Cash Pack', price: 1500, cards: 3, guarantee: 'e', w: { c: 0, r: 50, e: 38, l: 12 }, art: ['#1b5e20', '#06200a'], ico: 'coin', accent: '#a5d6a7', types: ['power'], blurb: '3 power-ups · 1 Epic+' },
+      { id: 'titan', name: 'Titan Pack', price: 5000, cards: 7, guarantee: 'l', w: { c: 15, r: 35, e: 32, l: 18 }, art: ['#263238', '#050709'], ico: 'trophy', accent: '#ffd54f', blurb: '7 cards · 1 Legendary' },
+      { id: 'cosmic', name: 'Cosmic Pack', price: 12000, cards: 8, guarantee: 'l', w: { c: 0, r: 30, e: 40, l: 30 }, art: ['#311b92', '#07021c'], ico: 'galaxy', accent: '#b39ddb', blurb: '8 cards · no Commons' },
+    ])
+      if (!PACK[p.id]) {
+        PACKS.push(p);
+        PACK[p.id] = p;
+      }
+
+  /* ---------------- making the new power-ups work ---------------- */
+  const MINE = ['pu_xp3', 'pu_coin3', 'pu_cash3', 'pu_truck', 'pu_petparty', 'pu_offparty', 'pu_mystery', 'pu_combo'];
+  const simOnly = () => document.body.classList.contains('off-bank');
+  const done = () => {
+    try {
+      recordHistory(true);
+    } catch (e) {}
+    saveAcct(true);
+    try {
+      needRender = true;
+    } catch (e) {}
+  };
+  const up0 = usePower;
+  usePower = function (id) {
+    if (!MINE.includes(id)) return up0.apply(this, arguments);
+    const it = ITEM[id];
+    if (!it || !(acct.inv[id] > 0)) return;
+    const take = () => acct.inv[id]--;
+    if (id === 'pu_xp3') {
+      take();
+      acct.xpBoostUntil = Math.max(Date.now(), acct.xpBoostUntil || 0) + 60 * 60000;
+      toast('2× XP active for 1 hour', 'xp');
+    } else if (id === 'pu_coin3') {
+      take();
+      acct.coinBoostUntil = Math.max(Date.now(), acct.coinBoostUntil || 0) + 60 * 60000;
+      toast('2× coins for 1 hour', 'xp');
+    } else if (id === 'pu_cash3' || id === 'pu_truck') {
+      if (simOnly()) return toast('That power-up only works in the simulated market.', 'err');
+      take();
+      const n = id === 'pu_truck' ? 100000 : 25000;
+      acct.cash += n;
+      toast(`+${fmtUSD(n, 0)} virtual cash`, 'ok');
+      try {
+        confetti();
+      } catch (e) {}
+    } else if (id === 'pu_petparty') {
+      const list = (acct.pets && acct.pets.list) || [];
+      if (!list.length) return toast('You don’t have any pets yet. Hatch an egg first!', 'err');
+      take();
+      for (const p of list) {
+        p.mood = 100;
+        try {
+          petGainXP(p, 150);
+        } catch (e) {}
+      }
+      toast(`Pet party! ${list.length} pet${list.length > 1 ? 's are' : ' is'} super happy`, 'xp');
+      try {
+        confetti();
+      } catch (e) {}
+    } else if (id === 'pu_offparty') {
+      const O = window.PBOffice && PBOffice.O && PBOffice.O(),
+        staff = O ? O.staff.filter(s => !PBOffice.roleOf(s).bot) : [];
+      if (!staff.length) return toast('Hire someone for your office first.', 'err');
+      take();
+      for (const s of staff) s.mood = Math.min(100, (s.mood || 70) + 40);
+      toast(`Office party! ${staff.length} ${staff.length > 1 ? 'people are' : 'person is'} happier`, 'xp');
+    } else if (id === 'pu_combo') {
+      if (acct.armed.mult && acct.armed.shield) return toast('Both are already armed', 'err');
+      take();
+      acct.armed.mult = true;
+      acct.armed.shield = true;
+      toast('Profit Multiplier and Loss Shield armed', 'xp');
+    } else if (id === 'pu_mystery') {
+      take();
+      const r = Math.random();
+      let what;
+      if (r < 0.35) {
+        const n = 150 + Math.floor(Math.random() * 850);
+        acct.coins += n;
+        what = `${n} coins`;
+      } else if (r < 0.55 && !simOnly()) {
+        const n = 5000 + Math.floor(Math.random() * 4) * 5000;
+        acct.cash += n;
+        what = `${fmtUSD(n, 0)} of virtual cash`;
+      } else if (r < 0.75) {
+        const tr = ITEMS.filter(x => x.type === 'treat' && x.price);
+        const t = tr[(Math.random() * tr.length) | 0];
+        acct.inv[t.id] = (acct.inv[t.id] || 0) + 3;
+        what = `3× ${t.name}`;
+      } else {
+        const pw = ITEMS.filter(x => x.type === 'power' && x.id !== 'pu_mystery' && x.id !== 'pu_streak' && (x.r === 'e' || x.r === 'l'));
+        const t = pw[(Math.random() * pw.length) | 0];
+        acct.inv[t.id] = (acct.inv[t.id] || 0) + 1;
+        what = `a ${t.name}`;
+      }
+      try {
+        modal({ title: 'Mystery Box', html: `<div style="text-align:center;font-size:18px">You got <b>${esc(what)}</b>!</div>`, confirm: 'Nice!', cancel: null });
+      } catch (e) {
+        toast(`Mystery Box: you got ${what}!`, 'xp');
+      }
+      try {
+        confetti();
+        bumpCoins();
+      } catch (e) {}
+    }
+    try {
+      SFX.play('coin');
+    } catch (e) {}
+    done();
+  };
 })();
 
 /* ===================== THEMES: 20 named themes with logos ===================== */
@@ -43363,7 +43792,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
      buy the dips that actually bounce and cut the ones that don't
    · Managers lift the skill and mood of the workers under them
    · Salaries are paid from your cash while the game is open
-   · Office levels add desks: Garage → Skyscraper
+   · Office levels add desks: Garage → Skyscraper → Moon Base
    · Watch it in 2D here, or in 3D (office3d.js)
    ===================================================================== */
 (() => {
@@ -43378,13 +43807,21 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       { id: 'pm', name: 'Portfolio Manager', skill: 0.76, hire: 110000, pay: 130, size: 0.026, extraLots: 1, color: '#ec4899', tip: 'Runs several positions at once.' },
       { id: 'quant', name: 'Quant', skill: 0.82, hire: 180000, pay: 180, size: 0.03, color: '#f59e0b', tip: 'Wins most trades. Expensive.' },
       { id: 'bot', name: 'AI Trading Bot', skill: 0.8, hire: 250000, pay: 60, size: 0.02, speed: 2.5, bot: true, color: '#06b6d4', tip: 'Never sleeps, never sulks. Can’t be promoted; upgrade its model instead.' },
+      { id: 'scalper', name: 'Scalper', skill: 0.5, hire: 9000, pay: 22, size: 0.007, speed: 2.4, extraLots: 1, color: '#f97316', tip: 'In and out in seconds. Tiny trades, lots of them.' },
+      { id: 'swing', name: 'Swing Trader', skill: 0.64, hire: 40000, pay: 60, size: 0.02, speed: 0.8, color: '#84cc16', tip: 'Patient. Holds for the big move.' },
+      { id: 'hedge', name: 'Hedge Fund Manager', skill: 0.86, hire: 420000, pay: 280, size: 0.032, extraLots: 2, color: '#0f766e', tip: 'Runs a whole book of positions at once.' },
       { id: 'legend', name: 'Wall Street Legend', skill: 0.9, hire: 900000, pay: 400, size: 0.036, extraLots: 1, color: '#eab308', tip: 'The best there is. Needs a big account to pay off.' },
+      { id: 'oracle', name: 'Market Oracle', skill: 0.91, hire: 2500000, pay: 700, size: 0.04, extraLots: 2, color: '#c026d3', tip: 'Somehow always knows. Costs a fortune.' },
+      { id: 'quantum', name: 'Quantum AI', skill: 0.88, hire: 3000000, pay: 150, size: 0.03, speed: 3.2, extraLots: 1, bot: true, color: '#22d3ee', tip: 'A bot that thinks in every timeline at once. Upgrade it, don’t promote it.' },
     ];
     const MGRS = [
+      { id: 'mentor', name: 'Mentor', boost: 0.04, span: 2, hire: 8000, pay: 20, color: '#65a30d' },
       { id: 'lead', name: 'Team Lead', boost: 0.06, span: 3, hire: 25000, pay: 45, color: '#0ea5e9' },
       { id: 'manager', name: 'Manager', boost: 0.1, span: 5, hire: 90000, pay: 110, color: '#6366f1' },
+      { id: 'head', name: 'Head of Desk', boost: 0.12, span: 7, hire: 180000, pay: 170, color: '#0d9488' },
       { id: 'director', name: 'Director', boost: 0.15, span: 9, hire: 300000, pay: 240, color: '#e11d48' },
       { id: 'vp', name: 'VP of Trading', boost: 0.18, span: 13, hire: 700000, pay: 400, color: '#7c3aed' },
+      { id: 'cfo', name: 'CFO', boost: 0.2, span: 16, hire: 1200000, pay: 550, color: '#15803d', one: true, perk: 'Every salary is 5% lower' },
       { id: 'ceo', name: 'CEO', boost: 0.22, span: 22, hire: 2000000, pay: 800, color: '#b91c1c', one: true, perk: '+10 mood for everyone' },
     ];
     const SUPS = [
@@ -43394,8 +43831,14 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       { id: 'it', name: 'IT Specialist', hire: 12000, pay: 25, color: '#0891b2', perk: 'Your staff decide 20% faster' },
       { id: 'researcher', name: 'Research Analyst', hire: 40000, pay: 60, color: '#4f46e5', perk: '+3 skill for every worker' },
       { id: 'risk', name: 'Risk Officer', hire: 50000, pay: 70, color: '#dc2626', perk: 'Stop-losses 30% tighter, so losing trades lose less' },
+      { id: 'chef', name: 'Office Chef', hire: 15000, pay: 25, color: '#ea580c', perk: '+10 mood for everyone' },
+      { id: 'dj', name: 'Office DJ', hire: 9000, pay: 15, color: '#9333ea', perk: '+5 mood for everyone' },
+      { id: 'coach', name: 'Trading Coach', hire: 60000, pay: 80, color: '#0284c7', perk: '+2 skill for every worker' },
+      { id: 'lawyer', name: 'Lawyer', hire: 45000, pay: 65, color: '#334155', perk: '10% back on staff trading fees' },
+      { id: 'engineer', name: 'Systems Engineer', hire: 80000, pay: 90, color: '#0e7490', perk: 'Your staff decide 15% faster, AI bots +3 skill' },
+      { id: 'yoga', name: 'Wellness Coach', hire: 20000, pay: 30, color: '#db2777', perk: '+6 mood, and moods drop slower' },
     ].map(r => ({ ...r, one: true }));
-    const NEXT = { intern: 'analyst', analyst: 'trader', trader: 'senior', daytrader: 'senior', senior: 'pm', pm: 'quant', quant: 'legend', lead: 'manager', manager: 'director', director: 'vp', vp: 'ceo' };
+    const NEXT = { intern: 'analyst', analyst: 'trader', trader: 'senior', daytrader: 'senior', senior: 'pm', pm: 'quant', quant: 'hedge', hedge: 'legend', legend: 'oracle', scalper: 'daytrader', swing: 'senior', mentor: 'lead', lead: 'manager', manager: 'head', head: 'director', director: 'vp', vp: 'cfo', cfo: 'ceo' };
     // things to buy for the office: each one does something, and shows up in 2D and 3D
     const ITEMS = [
       { id: 'plants', name: 'Office Plants', cost: 1500, lvl: 0, mood: 3, desc: '+3 mood' },
@@ -43414,6 +43857,21 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       { id: 'servers', name: 'AI Server Room', cost: 250000, lvl: 3, bot: 0.06, speed: 0.15, desc: 'AI bots +6 skill, everyone 15% faster' },
       { id: 'statue', name: 'Golden Bull Statue', cost: 500000, lvl: 4, mood: 5, skill: 0.01, desc: '+5 mood, +1 skill' },
       { id: 'helipad', name: 'Rooftop Helipad', cost: 2000000, lvl: 4, mood: 10, desc: '+10 mood. The ultimate flex.' },
+      { id: 'snacks', name: 'Snack Wall', cost: 2500, lvl: 0, mood: 3, desc: '+3 mood' },
+      { id: 'lamp', name: 'Desk Lamps', cost: 4000, lvl: 0, skill: 0.01, desc: '+1 skill' },
+      { id: 'books', name: 'Trading Library', cost: 9000, lvl: 1, skill: 0.015, desc: '+1.5 skill' },
+      { id: 'beanbags', name: 'Beanbag Corner', cost: 11000, lvl: 1, mood: 4, desc: '+4 mood' },
+      { id: 'jukebox', name: 'Jukebox', cost: 25000, lvl: 2, mood: 5, desc: '+5 mood' },
+      { id: 'bell', name: 'Opening Bell', cost: 40000, lvl: 2, speed: 0.05, desc: 'Everyone 5% faster' },
+      { id: 'newsfeed', name: 'Live News Wire', cost: 70000, lvl: 3, skill: 0.02, speed: 0.05, desc: '+2 skill, 5% faster' },
+      { id: 'sauna', name: 'Sauna', cost: 120000, lvl: 3, mood: 7, desc: '+7 mood' },
+      { id: 'cinema', name: 'Screening Room', cost: 400000, lvl: 4, mood: 8, desc: '+8 mood' },
+      { id: 'pool', name: 'Infinity Pool', cost: 1500000, lvl: 5, mood: 10, desc: '+10 mood' },
+      { id: 'supercomp', name: 'Supercomputer', cost: 3000000, lvl: 5, skill: 0.02, bot: 0.05, speed: 0.1, desc: 'AI bots +5 skill, +2 skill, 10% faster' },
+      { id: 'yacht', name: 'Company Yacht', cost: 6000000, lvl: 6, mood: 12, desc: '+12 mood' },
+      { id: 'submarine', name: 'Mini Submarine', cost: 15000000, lvl: 7, mood: 10, skill: 0.01, desc: '+10 mood, +1 skill' },
+      { id: 'rocket', name: 'Private Rocket', cost: 40000000, lvl: 8, mood: 14, speed: 0.1, desc: '+14 mood, 10% faster' },
+      { id: 'moonrover', name: 'Moon Rover', cost: 90000000, lvl: 9, mood: 12, skill: 0.02, desc: '+12 mood, +2 skill. Out of this world.' },
     ];
     const ICONS = {
       plants: '<ellipse cx="24" cy="44" rx="12" ry="2.5" fill="#000" opacity=".2"/><path d="M15 31h18l-2.5 12h-13z" fill="#c2410c"/><circle cx="24" cy="20" r="8" fill="#22c55e"/><circle cx="17" cy="25" r="6" fill="#16a34a"/><circle cx="31" cy="25" r="6" fill="#15803d"/>',
@@ -43431,6 +43889,21 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       gym: '<rect x="8" y="21" width="32" height="6" rx="2" fill="#475569"/><rect x="4" y="14" width="6" height="20" rx="2" fill="#0f172a"/><rect x="38" y="14" width="6" height="20" rx="2" fill="#0f172a"/><rect x="11" y="17" width="4" height="14" rx="1.5" fill="#dc2626"/><rect x="33" y="17" width="4" height="14" rx="1.5" fill="#dc2626"/>',
       servers: '<rect x="10" y="4" width="28" height="40" rx="2" fill="#0f172a"/><path d="M13 11h22M13 19h22M13 27h22M13 35h22" stroke="#334155" stroke-width="5"/><circle cx="31" cy="11" r="1.4" fill="#22c55e"/><circle cx="31" cy="19" r="1.4" fill="#22c55e"/><circle cx="31" cy="27" r="1.4" fill="#f59e0b"/><circle cx="31" cy="35" r="1.4" fill="#22c55e"/>',
       statue: '<rect x="12" y="36" width="24" height="7" rx="1.5" fill="#57534e"/><path d="M10 26c0-7 5-11 14-11s14 4 14 11v4H10z" fill="#eab308"/><path d="M12 17c-3-3-3-7 0-9M36 17c3-3 3-7 0-9" stroke="#ca8a04" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="19" cy="22" r="1.5" fill="#713f12"/><path d="M14 30v6M34 30v6" stroke="#ca8a04" stroke-width="3"/>',
+      snacks: '<rect x="8" y="6" width="32" height="36" rx="3" fill="#1e293b"/><rect x="11" y="10" width="7" height="8" rx="1" fill="#f43f5e"/><rect x="20.5" y="10" width="7" height="8" rx="1" fill="#facc15"/><rect x="30" y="10" width="7" height="8" rx="1" fill="#22c55e"/><rect x="11" y="21" width="7" height="8" rx="1" fill="#38bdf8"/><rect x="20.5" y="21" width="7" height="8" rx="1" fill="#fb923c"/><rect x="30" y="21" width="7" height="8" rx="1" fill="#a855f7"/><rect x="11" y="33" width="26" height="5" rx="1" fill="#0f172a"/>',
+      lamp: '<path d="M14 42h20" stroke="#334155" stroke-width="4" stroke-linecap="round"/><path d="M20 42l6-18-8-8" stroke="#475569" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M8 18l12-10 6 8z" fill="#eab308"/><path d="M11 21l-4 6M17 23l-1 6" stroke="#fde68a" stroke-width="2" stroke-linecap="round"/>',
+      books: '<rect x="6" y="6" width="36" height="38" rx="2" fill="#78350f"/><path d="M6 20h36M6 32h36" stroke="#451a03" stroke-width="3"/><rect x="9" y="9" width="4" height="10" fill="#dc2626"/><rect x="14" y="10" width="4" height="9" fill="#2563eb"/><rect x="19" y="9" width="3" height="10" fill="#16a34a"/><rect x="25" y="11" width="5" height="8" fill="#eab308"/><rect x="10" y="22" width="5" height="9" fill="#7c3aed"/><rect x="16" y="23" width="4" height="8" fill="#0ea5e9"/><rect x="28" y="22" width="4" height="9" fill="#f97316"/><rect x="33" y="23" width="4" height="8" fill="#e11d48"/>',
+      beanbags: '<ellipse cx="24" cy="42" rx="18" ry="3" fill="#000" opacity=".2"/><path d="M8 38c-2-10 4-18 11-18s10 6 10 12-5 8-11 8-9 0-10-2z" fill="#f97316"/><path d="M22 40c-1-8 4-15 10-15s9 6 9 11-4 6-9 6-9 0-10-2z" fill="#0ea5e9"/>',
+      jukebox: '<path d="M10 44V18a14 14 0 0128 0v26z" fill="#b91c1c"/><path d="M14 44V19a10 10 0 0120 0v25z" fill="#fde047"/><rect x="16" y="22" width="16" height="10" rx="2" fill="#1e293b"/><circle cx="24" cy="38" r="3" fill="#b91c1c"/>',
+      bell: '<path d="M24 6v4" stroke="#78716c" stroke-width="3"/><path d="M12 34c2-3 2-8 2-12a10 10 0 0120 0c0 4 0 9 2 12z" fill="#eab308"/><rect x="10" y="34" width="28" height="4" rx="2" fill="#ca8a04"/><circle cx="24" cy="41" r="3" fill="#a16207"/>',
+      newsfeed: '<rect x="4" y="12" width="40" height="22" rx="2" fill="#0f172a"/><rect x="4" y="12" width="12" height="22" rx="2" fill="#dc2626"/><path d="M7 20h6M7 25h6" stroke="#fff" stroke-width="2"/><path d="M19 18h21M19 23h16M19 28h19" stroke="#e2e8f0" stroke-width="2"/><path d="M18 34v6M30 34v6M12 40h24" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>',
+      sauna: '<rect x="6" y="14" width="36" height="28" rx="2" fill="#b45309"/><path d="M6 22h36M6 30h36M6 38h36" stroke="#92400e" stroke-width="2"/><rect x="18" y="20" width="12" height="22" fill="#78350f"/><path d="M16 11c0-3 3-3 3-6M24 11c0-3 3-3 3-6M32 11c0-3 3-3 3-6" stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round"/>',
+      cinema: '<rect x="4" y="6" width="40" height="24" rx="2" fill="#e2e8f0"/><path d="M20 12l10 6-10 6z" fill="#dc2626"/><rect x="6" y="34" width="10" height="8" rx="2" fill="#7f1d1d"/><rect x="19" y="34" width="10" height="8" rx="2" fill="#7f1d1d"/><rect x="32" y="34" width="10" height="8" rx="2" fill="#7f1d1d"/>',
+      pool: '<rect x="4" y="16" width="40" height="22" rx="4" fill="#e2e8f0"/><rect x="7" y="19" width="34" height="16" rx="3" fill="#06b6d4"/><path d="M10 25c3-2 5 2 8 0s5 2 8 0 5 2 8 0M12 30c3-2 5 2 8 0s5 2 8 0" stroke="#a5f3fc" stroke-width="1.5" fill="none"/><path d="M36 16V8M40 16V8M36 11h4M36 14h4" stroke="#94a3b8" stroke-width="1.5"/>',
+      supercomp: '<rect x="4" y="8" width="12" height="36" rx="2" fill="#111827"/><rect x="18" y="8" width="12" height="36" rx="2" fill="#111827"/><rect x="32" y="8" width="12" height="36" rx="2" fill="#111827"/><path d="M7 14h6M7 20h6M7 26h6M21 14h6M21 20h6M21 26h6M35 14h6M35 20h6M35 26h6" stroke="#22d3ee" stroke-width="2"/><path d="M7 36h30" stroke="#a855f7" stroke-width="2"/>',
+      yacht: '<path d="M4 32h40l-6 8H10z" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/><path d="M12 32v-8h18l6 8z" fill="#e2e8f0"/><rect x="15" y="26" width="4" height="3" fill="#38bdf8"/><rect x="21" y="26" width="4" height="3" fill="#38bdf8"/><path d="M4 42c4-2 8 2 12 0s8 2 12 0 8 2 12 0" stroke="#0ea5e9" stroke-width="2" fill="none"/>',
+      submarine: '<ellipse cx="24" cy="28" rx="18" ry="9" fill="#eab308"/><rect x="18" y="13" width="10" height="9" rx="2" fill="#ca8a04"/><circle cx="16" cy="28" r="3" fill="#bae6fd" stroke="#854d0e" stroke-width="1.5"/><circle cx="25" cy="28" r="3" fill="#bae6fd" stroke="#854d0e" stroke-width="1.5"/><circle cx="34" cy="28" r="3" fill="#bae6fd" stroke="#854d0e" stroke-width="1.5"/><path d="M42 24l4-4v16l-4-4" fill="#a16207"/>',
+      rocket: '<path d="M24 4c7 6 9 15 8 26H16c-1-11 1-20 8-26z" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/><circle cx="24" cy="16" r="4" fill="#38bdf8" stroke="#475569" stroke-width="1.5"/><path d="M16 22l-6 10h6M32 22l6 10h-6" fill="#dc2626"/><path d="M19 30c0 6 2 10 5 14 3-4 5-8 5-14z" fill="#f97316"/>',
+      moonrover: '<path d="M4 40c10-4 30-4 40 0v4H4z" fill="#9ca3af"/><rect x="10" y="20" width="28" height="10" rx="2" fill="#e5e7eb" stroke="#6b7280" stroke-width="1.5"/><path d="M30 20v-8M26 12h8" stroke="#6b7280" stroke-width="2"/><circle cx="14" cy="34" r="5" fill="#374151"/><circle cx="34" cy="34" r="5" fill="#374151"/><circle cx="24" cy="34" r="4" fill="#374151"/>',
       helipad: '<circle cx="24" cy="24" r="19" fill="#334155"/><circle cx="24" cy="24" r="15" fill="none" stroke="#fde047" stroke-width="2"/><path d="M17 15v18M31 15v18M17 24h14" stroke="#fff" stroke-width="3.5"/>',
     };
     const icon = id => `<svg viewBox="0 0 48 48" aria-hidden="true">${ICONS[id] || ''}</svg>`;
@@ -43440,6 +43913,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       { name: 'Office Floor', desks: 8, cost: 80000, floor: 'office' },
       { name: 'Trading Floor', desks: 14, cost: 350000, floor: 'floor' },
       { name: 'Skyscraper', desks: 22, cost: 1200000, floor: 'tower' },
+      { name: 'Penthouse Suite', desks: 26, cost: 3500000, floor: 'penthouse' },
+      { name: 'Private Island HQ', desks: 30, cost: 8000000, floor: 'island' },
+      { name: 'Underwater Dome', desks: 34, cost: 20000000, floor: 'ocean' },
+      { name: 'Space Station', desks: 40, cost: 50000000, floor: 'space' },
+      { name: 'Moon Base', desks: 48, cost: 120000000, floor: 'moon' },
     ];
     const ETF = ['SPY', 'QQQ', 'DIA', 'IWM', 'VTI', 'VOO', 'ARKK', 'XLK', 'XLF', 'GLD'];
     const BLUE = ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'JPM', 'V', 'KO', 'WMT', 'JNJ', 'PG', 'COST', 'BRK.B', 'MA', 'HD'];
@@ -43485,9 +43963,9 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       o.seq ??= 0;
       o.items ||= {};
       o.company ||= 'PAPERBULL Capital';
-      if (o.candsV !== 2) {
+      if (o.candsV !== 3) {
         o.cands = {};
-        o.candsV = 2;
+        o.candsV = 3;
       }
       return o;
     };
@@ -43505,11 +43983,17 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       if (hasSup('barista')) k.mood += 8;
       if (hasSup('researcher')) k.skill += 0.03;
       if (hasSup('it')) k.speed += 0.2;
+      if (hasSup('chef')) k.mood += 10;
+      if (hasSup('dj')) k.mood += 5;
+      if (hasSup('yoga')) k.mood += 6;
+      if (hasSup('coach')) k.skill += 0.02;
+      if (hasSup('lawyer')) k.fee += 0.1;
+      if (hasSup('engineer')) (k.speed += 0.15), (k.bot += 0.03);
       if (o.staff.some(s => s.kind === 'mgr' && s.role === 'ceo')) k.mood += 10;
-      k.speed = Math.min(0.6, k.speed);
+      k.speed = Math.min(0.9, k.speed);
       k.fee = Math.min(0.5, k.fee);
       k.risk = hasSup('risk');
-      k.pay = hasSup('accountant') ? 0.9 : 1;
+      k.pay = (hasSup('accountant') ? 0.9 : 1) * (o.staff.some(s => s.kind === 'mgr' && s.role === 'cfo') ? 0.95 : 1);
       k.recruit = hasSup('recruiter');
       return k;
     }
@@ -43955,7 +44439,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
           continue;
         }
         const target = broke ? 0 : Math.min(100, 70 + (hasBoss ? 12 : 0) + pk.mood);
-        s.mood = (s.mood ?? 70) + (target - (s.mood ?? 70)) * Math.min(1, dt / (broke ? 90 : 900));
+        const down = target < (s.mood ?? 70) && !broke && hasSup('yoga');
+        s.mood = (s.mood ?? 70) + (target - (s.mood ?? 70)) * Math.min(1, dt / (broke ? 90 : down ? 1800 : 900));
       }
       if (broke) {
         const q = o.staff.find(s => s.mood < 3 && !roleOf(s).bot);
@@ -44027,7 +44512,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     /* ---------------- desk layout (shared by 2D and 3D) ---------------- */
     function layout() {
       const n = level().desks,
-        cols = n <= 2 ? 2 : n <= 4 ? 4 : n <= 8 ? 4 : n <= 14 ? 5 : 6,
+        cols = n <= 2 ? 2 : n <= 4 ? 4 : n <= 8 ? 4 : n <= 14 ? 5 : n <= 22 ? 6 : 8,
         rows = Math.ceil(n / cols),
         out = [];
       for (let i = 0; i < n; i++) {
@@ -44069,13 +44554,13 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         for (const p of staff) if (map[p.id]) by[map[p.id].i] = p;
         // the 2D room re-flows its own grid: fewer columns on a phone, and it grows taller with more rows
         const narrow = (el.clientWidth || innerWidth) < 560,
-          cols = Math.min(desks.length ? desks[0].cols : 2, narrow ? 4 : 6),
+          cols = Math.min(desks.length ? desks[0].cols : 2, narrow ? 4 : 8),
           rows = Math.max(1, Math.ceil(desks.length / cols));
         for (const d of desks) {
           d.c2 = d.i % cols;
           d.r2 = Math.floor(d.i / cols);
         }
-        el.style.aspectRatio = String(Math.max(narrow ? 0.42 : 0.95, Math.min(1.9, cols / (rows * (narrow ? 1.6 : 1.5)))));
+        el.style.aspectRatio = String(Math.max(narrow ? (rows > 6 ? 0.2 : 0.42) : rows > 4 ? 0.6 : 0.95, Math.min(1.9, cols / (rows * (narrow ? 1.6 : 1.5)))));
         el.style.setProperty('--dw', `${Math.min(120, 58 / cols)}%`);
         el.innerHTML = `<div class="of2 f-${lv.floor}">
           <div class="of2-wall"><div class="of2-win">${skyline()}${O().items.helipad ? '<span class="of2-heli" aria-hidden="true"><svg viewBox="0 0 60 24"><path d="M2 3h56" stroke="#1e293b" stroke-width="2"/><path d="M30 3v4" stroke="#1e293b" stroke-width="2"/><path d="M14 9h26c5 0 9 3 9 7s-4 5-9 5H22c-5 0-8-3-8-6z" fill="#eab308"/><path d="M14 13H3l-2-4" stroke="#1e293b" stroke-width="2" fill="none"/><rect x="36" y="11" width="8" height="5" rx="1.5" fill="#bae6fd"/></svg></span>' : ''}</div><div class="of2-board"><small>${E(O().company.toUpperCase())}</small><b id="of2Pnl"></b><i id="of2Tape"></i></div></div>
@@ -44093,6 +44578,8 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
               })
               .join('')}
             <div class="of2-decor">${ITEMS.filter(it => O().items[it.id] && it.id !== 'helipad' && it.id !== 'fiber')
+              .sort((x, y) => O().items[y.id] - O().items[x.id])
+              .slice(0, narrow ? 7 : 12)
               .map(it => `<span class="of2-dc d-${it.id}" title="${E(it.name)}">${icon(it.id)}</span>`)
               .join('')}</div>
             <div class="of2-cooler"></div>
@@ -44439,7 +44926,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
           nx = LEVELS[o.lvl + 1];
         if (!v) return;
         v.querySelector('#ofLvl').innerHTML = `<div class="of-lv"><div><small class="muted">Your office</small><b>${lv.name}</b><span class="muted small">${lv.desks} desks</span></div>
-          ${nx ? `<div class="of-lv-nx"><span>Next: <b>${nx.name}</b> · ${nx.desks} desks</span><button class="btn ${acct.cash >= nx.cost ? 'primary' : ''}" id="ofUp" ${acct.cash >= nx.cost ? '' : 'disabled'}>Move in · ${money(nx.cost)}</button></div>` : '<div class="of-lv-nx"><span>You’ve got the whole tower.</span></div>'}</div>`;
+          ${nx ? `<div class="of-lv-nx"><span>Next: <b>${nx.name}</b> · ${nx.desks} desks</span><button class="btn ${acct.cash >= nx.cost ? 'primary' : ''}" id="ofUp" ${acct.cash >= nx.cost ? '' : 'disabled'}>Move in · ${money(nx.cost)}</button></div>` : '<div class="of-lv-nx"><span>You’ve got the biggest office there is.</span></div>'}</div>`;
       },
       perks() {
         const v = this.v,
@@ -44535,7 +45022,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       focus: id => Screen.focus(id),
       hireScroll: () => document.getElementById('ofHireCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
     };
-    window.PBOffice = { O, hire, fire, promote, upgrade, closeAll, candidates, tick, tickAt, effSkill, roleOf, level, seated, train, bonus, pizza, buyItem, rename, perks, ROLES, MGRS, SUPS, ITEMS, LEVELS, STRATS, api: API, on: f => listeners.push(f), ver: () => ver };
+    window.PBOffice = { O, hire, fire, promote, upgrade, closeAll, candidates, tick, tickAt, effSkill, roleOf, level, seated, train, bonus, pizza, buyItem, rename, perks, ROLES, MGRS, SUPS, ITEMS, ICONS, LEVELS, STRATS, api: API, on: f => listeners.push(f), ver: () => ver };
   } catch (e) {
     console.error('office', e);
   }
@@ -44591,6 +45078,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       office: { floor: '#4f5b73', wall: '#e8e6e1', trim: '#8b93a3', rug: '#394559' },
       floor: { floor: '#2c3342', wall: '#1d2330', trim: '#0f1320', rug: '#1f5f8b' },
       tower: { floor: '#d8d3ca', wall: '#f4f2ee', trim: '#b8a987', rug: '#1c2b3f' },
+      penthouse: { floor: '#3b2f2a', wall: '#292524', trim: '#d4a64a', rug: '#7f1d1d' },
+      island: { floor: '#e9d8a6', wall: '#7dd3c0', trim: '#9a6b3f', rug: '#0f766e' },
+      ocean: { floor: '#1e3a5f', wall: '#0e7490', trim: '#164e63', rug: '#0c4a6e' },
+      space: { floor: '#2a2f3a', wall: '#cbd5e1', trim: '#64748b', rug: '#1e293b' },
+      moon: { floor: '#9ca3af', wall: '#374151', trim: '#111827', rug: '#4b5563' },
     };
     const SX = 3.3,
       SZ = 3.6;
@@ -44598,12 +45090,73 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     let S = null; // live scene state
     let enterSeq = 0;
 
-    function skyCanvas(w, h) {
+    function skyCanvas(w, h, fl) {
       const c = document.createElement('canvas');
       c.width = w;
       c.height = h;
-      const g = c.getContext('2d'),
-        hr = new Date().getHours(),
+      const g = c.getContext('2d');
+      // the far-out offices get their own view instead of the city
+      if (fl === 'ocean' || fl === 'space' || fl === 'moon' || fl === 'island') {
+        const gr = g.createLinearGradient(0, 0, 0, h);
+        if (fl === 'ocean') gr.addColorStop(0, '#0891b2'), gr.addColorStop(1, '#082f49');
+        else if (fl === 'island') gr.addColorStop(0, '#7dd3fc'), gr.addColorStop(0.6, '#bae6fd'), gr.addColorStop(0.61, '#06b6d4'), gr.addColorStop(1, '#0e7490');
+        else gr.addColorStop(0, '#000'), gr.addColorStop(1, '#0b1026');
+        g.fillStyle = gr;
+        g.fillRect(0, 0, w, h);
+        if (fl === 'ocean') {
+          for (let i = 0; i < 40; i++) {
+            g.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.3})`;
+            g.beginPath();
+            g.arc(Math.random() * w, Math.random() * h, 1 + Math.random() * 4, 0, 7);
+            g.fill();
+          }
+          for (let i = 0; i < 9; i++) {
+            const x = Math.random() * w,
+              y = h * (0.3 + Math.random() * 0.5);
+            g.fillStyle = ['#f97316', '#facc15', '#f472b6'][i % 3];
+            g.beginPath();
+            g.ellipse(x, y, 12, 6, 0, 0, 7);
+            g.moveTo(x - 10, y);
+            g.lineTo(x - 20, y - 6);
+            g.lineTo(x - 20, y + 6);
+            g.fill();
+          }
+          g.fillStyle = '#a16207';
+          g.fillRect(0, h - 14, w, 14);
+        } else if (fl === 'island') {
+          g.fillStyle = '#fde047';
+          g.beginPath();
+          g.arc(w * 0.8, h * 0.2, 22, 0, 7);
+          g.fill();
+          g.fillStyle = '#e9d8a6';
+          g.beginPath();
+          g.ellipse(w * 0.3, h * 0.62, 120, 18, 0, Math.PI, 0);
+          g.fill();
+          g.fillStyle = '#15803d';
+          g.beginPath();
+          g.arc(w * 0.3, h * 0.42, 22, 0, 7);
+          g.fill();
+        } else {
+          for (let i = 0; i < 160; i++) {
+            g.fillStyle = `rgba(255,255,255,${0.3 + Math.random() * 0.7})`;
+            g.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
+          }
+          g.fillStyle = fl === 'moon' ? '#2563eb' : '#e5e7eb';
+          g.beginPath();
+          g.arc(w * 0.78, h * 0.35, fl === 'moon' ? 36 : 50, 0, 7);
+          g.fill();
+          if (fl === 'moon') {
+            g.fillStyle = '#16a34a';
+            g.beginPath();
+            g.arc(w * 0.77, h * 0.33, 14, 0, 7);
+            g.fill();
+            g.fillStyle = '#9ca3af';
+            g.fillRect(0, h - 30, w, 30);
+          }
+        }
+        return c;
+      }
+      const hr = new Date().getHours(),
         night = hr < 6 || hr >= 20,
         dusk = (hr >= 17 && hr < 20) || (hr >= 6 && hr < 8);
       const sky = g.createLinearGradient(0, 0, 0, h);
@@ -45008,6 +45561,27 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         root.add(g);
         S.anim.push(t => (g.rotation.y = Math.sin(t * 0.3) * 0.25));
       }
+      // everything else you've bought stands on a little display stand with its picture
+      const DONE = ['plants', 'coffee', 'whiteboard', 'chairs', 'monitors', 'pingpong', 'arcade', 'aquarium', 'wallscreen', 'terminals', 'fiber', 'napods', 'gym', 'servers', 'statue', 'helipad'],
+        OF = window.PBOffice || {};
+      for (const it of OF.ITEMS || [])
+        if (own[it.id] && !DONE.includes(it.id) && OF.ICONS && OF.ICONS[it.id])
+          place(g => {
+            box(0.9, 0.5, 0.9, M('#334155'), 0, 0.25, 0, g);
+            const cv = document.createElement('canvas');
+            cv.width = cv.height = 128;
+            const tx = new T.CanvasTexture(cv),
+              im = new Image();
+            im.onload = () => {
+              cv.getContext('2d').drawImage(im, 0, 0, 128, 128);
+              tx.needsUpdate = true;
+            };
+            im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">${OF.ICONS[it.id]}</svg>`);
+            const sp = new T.Sprite(new T.SpriteMaterial({ map: tx, transparent: true }));
+            sp.scale.set(1.3, 1.3, 1);
+            sp.position.set(0, 1.2, 0);
+            g.add(sp);
+          });
       if (own.helipad) {
         const sign = new T.Mesh(new T.CircleGeometry(0.5, 24), new T.MeshBasicMaterial({ color: '#eab308' }));
         sign.position.set(W / 2 - 1.2, 4.3, -D / 2 + 0.06);
@@ -45043,7 +45617,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       const back = new T.Mesh(new T.PlaneGeometry(W, 5), wallM);
       back.position.set(0, 2.5, -D / 2);
       root.add(back);
-      const sky = new T.CanvasTexture(skyCanvas(1024, 256));
+      const sky = new T.CanvasTexture(skyCanvas(1024, 256, lv.floor));
       sky.colorSpace = T.SRGBColorSpace;
       const win = new T.Mesh(new T.PlaneGeometry(W - 1.2, 2.6), new T.MeshBasicMaterial({ map: sky }));
       win.position.set(0, 2.55, -D / 2 + 0.02);
@@ -59737,6 +60311,18 @@ body.sk-fs-on #buckFab, body.sk-fs-on .buck-fab, body.sk-fs-on #tradeBar { displ
 .of2.f-office { --fl: #55607a; --wl: #e8e6e1; --tr: #8b93a3; }
 .of2.f-floor { --fl: #2c3342; --wl: #1d2330; --tr: #0f1320; }
 .of2.f-tower { --fl: #d8d3ca; --wl: #f4f2ee; --tr: #b8a987; }
+.of2.f-penthouse { --fl: #3b2f2a; --wl: #1c1917; --tr: #d4a64a; }
+.of2.f-island { --fl: #e9d8a6; --wl: #7dd3c0; --tr: #9a6b3f; }
+.of2.f-ocean { --fl: #1e3a5f; --wl: #0e7490; --tr: #164e63; }
+.of2.f-space { --fl: #2a2f3a; --wl: #cbd5e1; --tr: #64748b; }
+.of2.f-moon { --fl: #9ca3af; --wl: #374151; --tr: #111827; }
+.of2.f-ocean .of2-win { background: linear-gradient(#0891b2, #0c4a6e); }
+.of2.f-ocean .of2-win svg, .of2.f-space .of2-win svg, .of2.f-moon .of2-win svg { opacity: 0.35; }
+.of2.f-space .of2-win, .of2.f-moon .of2-win { background: radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 1.5px) 0 0 / 23px 19px, radial-gradient(circle at 70% 60%, #cbd5e1 0 1px, transparent 1.5px) 0 0 / 31px 27px, #020617; }
+.of2.f-moon .of2-win::after { content: ''; position: absolute; right: 12%; top: 16%; width: 18%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #60a5fa, #1d4ed8 60%, #1e3a8a); box-shadow: 0 0 18px #3b82f6; }
+.of2.f-island .of2-win { background: linear-gradient(#7dd3fc 0 60%, #06b6d4 60%); }
+.of2.f-island .of2-win svg { opacity: 0.25; }
+.of2.f-penthouse .of2-win { background: linear-gradient(#1e1b4b, #7c2d12); }
 .of2-wall { position: relative; flex: 0 0 min(26%, 190px); background: var(--wl); display: flex; align-items: center; justify-content: center; padding: 3% 4% 0; gap: 3%; border-bottom: 6px solid var(--tr); }
 .of2-win { flex: 1; height: 82%; border: 5px solid var(--tr); border-bottom-width: 7px; border-radius: 4px; overflow: hidden; background: linear-gradient(90deg, transparent 49.4%, var(--tr) 49.4% 50.6%, transparent 50.6%); position: relative; }
 .of2-win svg { width: 100%; height: 100%; display: block; }

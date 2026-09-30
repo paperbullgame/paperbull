@@ -48,6 +48,11 @@
       office: { floor: '#4f5b73', wall: '#e8e6e1', trim: '#8b93a3', rug: '#394559' },
       floor: { floor: '#2c3342', wall: '#1d2330', trim: '#0f1320', rug: '#1f5f8b' },
       tower: { floor: '#d8d3ca', wall: '#f4f2ee', trim: '#b8a987', rug: '#1c2b3f' },
+      penthouse: { floor: '#3b2f2a', wall: '#292524', trim: '#d4a64a', rug: '#7f1d1d' },
+      island: { floor: '#e9d8a6', wall: '#7dd3c0', trim: '#9a6b3f', rug: '#0f766e' },
+      ocean: { floor: '#1e3a5f', wall: '#0e7490', trim: '#164e63', rug: '#0c4a6e' },
+      space: { floor: '#2a2f3a', wall: '#cbd5e1', trim: '#64748b', rug: '#1e293b' },
+      moon: { floor: '#9ca3af', wall: '#374151', trim: '#111827', rug: '#4b5563' },
     };
     const SX = 3.3,
       SZ = 3.6;
@@ -55,12 +60,73 @@
     let S = null; // live scene state
     let enterSeq = 0;
 
-    function skyCanvas(w, h) {
+    function skyCanvas(w, h, fl) {
       const c = document.createElement('canvas');
       c.width = w;
       c.height = h;
-      const g = c.getContext('2d'),
-        hr = new Date().getHours(),
+      const g = c.getContext('2d');
+      // the far-out offices get their own view instead of the city
+      if (fl === 'ocean' || fl === 'space' || fl === 'moon' || fl === 'island') {
+        const gr = g.createLinearGradient(0, 0, 0, h);
+        if (fl === 'ocean') gr.addColorStop(0, '#0891b2'), gr.addColorStop(1, '#082f49');
+        else if (fl === 'island') gr.addColorStop(0, '#7dd3fc'), gr.addColorStop(0.6, '#bae6fd'), gr.addColorStop(0.61, '#06b6d4'), gr.addColorStop(1, '#0e7490');
+        else gr.addColorStop(0, '#000'), gr.addColorStop(1, '#0b1026');
+        g.fillStyle = gr;
+        g.fillRect(0, 0, w, h);
+        if (fl === 'ocean') {
+          for (let i = 0; i < 40; i++) {
+            g.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.3})`;
+            g.beginPath();
+            g.arc(Math.random() * w, Math.random() * h, 1 + Math.random() * 4, 0, 7);
+            g.fill();
+          }
+          for (let i = 0; i < 9; i++) {
+            const x = Math.random() * w,
+              y = h * (0.3 + Math.random() * 0.5);
+            g.fillStyle = ['#f97316', '#facc15', '#f472b6'][i % 3];
+            g.beginPath();
+            g.ellipse(x, y, 12, 6, 0, 0, 7);
+            g.moveTo(x - 10, y);
+            g.lineTo(x - 20, y - 6);
+            g.lineTo(x - 20, y + 6);
+            g.fill();
+          }
+          g.fillStyle = '#a16207';
+          g.fillRect(0, h - 14, w, 14);
+        } else if (fl === 'island') {
+          g.fillStyle = '#fde047';
+          g.beginPath();
+          g.arc(w * 0.8, h * 0.2, 22, 0, 7);
+          g.fill();
+          g.fillStyle = '#e9d8a6';
+          g.beginPath();
+          g.ellipse(w * 0.3, h * 0.62, 120, 18, 0, Math.PI, 0);
+          g.fill();
+          g.fillStyle = '#15803d';
+          g.beginPath();
+          g.arc(w * 0.3, h * 0.42, 22, 0, 7);
+          g.fill();
+        } else {
+          for (let i = 0; i < 160; i++) {
+            g.fillStyle = `rgba(255,255,255,${0.3 + Math.random() * 0.7})`;
+            g.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
+          }
+          g.fillStyle = fl === 'moon' ? '#2563eb' : '#e5e7eb';
+          g.beginPath();
+          g.arc(w * 0.78, h * 0.35, fl === 'moon' ? 36 : 50, 0, 7);
+          g.fill();
+          if (fl === 'moon') {
+            g.fillStyle = '#16a34a';
+            g.beginPath();
+            g.arc(w * 0.77, h * 0.33, 14, 0, 7);
+            g.fill();
+            g.fillStyle = '#9ca3af';
+            g.fillRect(0, h - 30, w, 30);
+          }
+        }
+        return c;
+      }
+      const hr = new Date().getHours(),
         night = hr < 6 || hr >= 20,
         dusk = (hr >= 17 && hr < 20) || (hr >= 6 && hr < 8);
       const sky = g.createLinearGradient(0, 0, 0, h);
@@ -465,6 +531,27 @@
         root.add(g);
         S.anim.push(t => (g.rotation.y = Math.sin(t * 0.3) * 0.25));
       }
+      // everything else you've bought stands on a little display stand with its picture
+      const DONE = ['plants', 'coffee', 'whiteboard', 'chairs', 'monitors', 'pingpong', 'arcade', 'aquarium', 'wallscreen', 'terminals', 'fiber', 'napods', 'gym', 'servers', 'statue', 'helipad'],
+        OF = window.PBOffice || {};
+      for (const it of OF.ITEMS || [])
+        if (own[it.id] && !DONE.includes(it.id) && OF.ICONS && OF.ICONS[it.id])
+          place(g => {
+            box(0.9, 0.5, 0.9, M('#334155'), 0, 0.25, 0, g);
+            const cv = document.createElement('canvas');
+            cv.width = cv.height = 128;
+            const tx = new T.CanvasTexture(cv),
+              im = new Image();
+            im.onload = () => {
+              cv.getContext('2d').drawImage(im, 0, 0, 128, 128);
+              tx.needsUpdate = true;
+            };
+            im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">${OF.ICONS[it.id]}</svg>`);
+            const sp = new T.Sprite(new T.SpriteMaterial({ map: tx, transparent: true }));
+            sp.scale.set(1.3, 1.3, 1);
+            sp.position.set(0, 1.2, 0);
+            g.add(sp);
+          });
       if (own.helipad) {
         const sign = new T.Mesh(new T.CircleGeometry(0.5, 24), new T.MeshBasicMaterial({ color: '#eab308' }));
         sign.position.set(W / 2 - 1.2, 4.3, -D / 2 + 0.06);
@@ -500,7 +587,7 @@
       const back = new T.Mesh(new T.PlaneGeometry(W, 5), wallM);
       back.position.set(0, 2.5, -D / 2);
       root.add(back);
-      const sky = new T.CanvasTexture(skyCanvas(1024, 256));
+      const sky = new T.CanvasTexture(skyCanvas(1024, 256, lv.floor));
       sky.colorSpace = T.SRGBColorSpace;
       const win = new T.Mesh(new T.PlaneGeometry(W - 1.2, 2.6), new T.MeshBasicMaterial({ map: sky }));
       win.position.set(0, 2.55, -D / 2 + 0.02);

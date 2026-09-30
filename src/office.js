@@ -5,7 +5,7 @@
      buy the dips that actually bounce and cut the ones that don't
    · Managers lift the skill and mood of the workers under them
    · Salaries are paid from your cash while the game is open
-   · Office levels add desks: Garage → Skyscraper
+   · Office levels add desks: Garage → Skyscraper → Moon Base
    · Watch it in 2D here, or in 3D (office3d.js)
    ===================================================================== */
 (() => {
@@ -20,13 +20,21 @@
       { id: 'pm', name: 'Portfolio Manager', skill: 0.76, hire: 110000, pay: 130, size: 0.026, extraLots: 1, color: '#ec4899', tip: 'Runs several positions at once.' },
       { id: 'quant', name: 'Quant', skill: 0.82, hire: 180000, pay: 180, size: 0.03, color: '#f59e0b', tip: 'Wins most trades. Expensive.' },
       { id: 'bot', name: 'AI Trading Bot', skill: 0.8, hire: 250000, pay: 60, size: 0.02, speed: 2.5, bot: true, color: '#06b6d4', tip: 'Never sleeps, never sulks. Can’t be promoted; upgrade its model instead.' },
+      { id: 'scalper', name: 'Scalper', skill: 0.5, hire: 9000, pay: 22, size: 0.007, speed: 2.4, extraLots: 1, color: '#f97316', tip: 'In and out in seconds. Tiny trades, lots of them.' },
+      { id: 'swing', name: 'Swing Trader', skill: 0.64, hire: 40000, pay: 60, size: 0.02, speed: 0.8, color: '#84cc16', tip: 'Patient. Holds for the big move.' },
+      { id: 'hedge', name: 'Hedge Fund Manager', skill: 0.86, hire: 420000, pay: 280, size: 0.032, extraLots: 2, color: '#0f766e', tip: 'Runs a whole book of positions at once.' },
       { id: 'legend', name: 'Wall Street Legend', skill: 0.9, hire: 900000, pay: 400, size: 0.036, extraLots: 1, color: '#eab308', tip: 'The best there is. Needs a big account to pay off.' },
+      { id: 'oracle', name: 'Market Oracle', skill: 0.91, hire: 2500000, pay: 700, size: 0.04, extraLots: 2, color: '#c026d3', tip: 'Somehow always knows. Costs a fortune.' },
+      { id: 'quantum', name: 'Quantum AI', skill: 0.88, hire: 3000000, pay: 150, size: 0.03, speed: 3.2, extraLots: 1, bot: true, color: '#22d3ee', tip: 'A bot that thinks in every timeline at once. Upgrade it, don’t promote it.' },
     ];
     const MGRS = [
+      { id: 'mentor', name: 'Mentor', boost: 0.04, span: 2, hire: 8000, pay: 20, color: '#65a30d' },
       { id: 'lead', name: 'Team Lead', boost: 0.06, span: 3, hire: 25000, pay: 45, color: '#0ea5e9' },
       { id: 'manager', name: 'Manager', boost: 0.1, span: 5, hire: 90000, pay: 110, color: '#6366f1' },
+      { id: 'head', name: 'Head of Desk', boost: 0.12, span: 7, hire: 180000, pay: 170, color: '#0d9488' },
       { id: 'director', name: 'Director', boost: 0.15, span: 9, hire: 300000, pay: 240, color: '#e11d48' },
       { id: 'vp', name: 'VP of Trading', boost: 0.18, span: 13, hire: 700000, pay: 400, color: '#7c3aed' },
+      { id: 'cfo', name: 'CFO', boost: 0.2, span: 16, hire: 1200000, pay: 550, color: '#15803d', one: true, perk: 'Every salary is 5% lower' },
       { id: 'ceo', name: 'CEO', boost: 0.22, span: 22, hire: 2000000, pay: 800, color: '#b91c1c', one: true, perk: '+10 mood for everyone' },
     ];
     const SUPS = [
@@ -36,8 +44,14 @@
       { id: 'it', name: 'IT Specialist', hire: 12000, pay: 25, color: '#0891b2', perk: 'Your staff decide 20% faster' },
       { id: 'researcher', name: 'Research Analyst', hire: 40000, pay: 60, color: '#4f46e5', perk: '+3 skill for every worker' },
       { id: 'risk', name: 'Risk Officer', hire: 50000, pay: 70, color: '#dc2626', perk: 'Stop-losses 30% tighter, so losing trades lose less' },
+      { id: 'chef', name: 'Office Chef', hire: 15000, pay: 25, color: '#ea580c', perk: '+10 mood for everyone' },
+      { id: 'dj', name: 'Office DJ', hire: 9000, pay: 15, color: '#9333ea', perk: '+5 mood for everyone' },
+      { id: 'coach', name: 'Trading Coach', hire: 60000, pay: 80, color: '#0284c7', perk: '+2 skill for every worker' },
+      { id: 'lawyer', name: 'Lawyer', hire: 45000, pay: 65, color: '#334155', perk: '10% back on staff trading fees' },
+      { id: 'engineer', name: 'Systems Engineer', hire: 80000, pay: 90, color: '#0e7490', perk: 'Your staff decide 15% faster, AI bots +3 skill' },
+      { id: 'yoga', name: 'Wellness Coach', hire: 20000, pay: 30, color: '#db2777', perk: '+6 mood, and moods drop slower' },
     ].map(r => ({ ...r, one: true }));
-    const NEXT = { intern: 'analyst', analyst: 'trader', trader: 'senior', daytrader: 'senior', senior: 'pm', pm: 'quant', quant: 'legend', lead: 'manager', manager: 'director', director: 'vp', vp: 'ceo' };
+    const NEXT = { intern: 'analyst', analyst: 'trader', trader: 'senior', daytrader: 'senior', senior: 'pm', pm: 'quant', quant: 'hedge', hedge: 'legend', legend: 'oracle', scalper: 'daytrader', swing: 'senior', mentor: 'lead', lead: 'manager', manager: 'head', head: 'director', director: 'vp', vp: 'cfo', cfo: 'ceo' };
     // things to buy for the office: each one does something, and shows up in 2D and 3D
     const ITEMS = [
       { id: 'plants', name: 'Office Plants', cost: 1500, lvl: 0, mood: 3, desc: '+3 mood' },
@@ -56,6 +70,21 @@
       { id: 'servers', name: 'AI Server Room', cost: 250000, lvl: 3, bot: 0.06, speed: 0.15, desc: 'AI bots +6 skill, everyone 15% faster' },
       { id: 'statue', name: 'Golden Bull Statue', cost: 500000, lvl: 4, mood: 5, skill: 0.01, desc: '+5 mood, +1 skill' },
       { id: 'helipad', name: 'Rooftop Helipad', cost: 2000000, lvl: 4, mood: 10, desc: '+10 mood. The ultimate flex.' },
+      { id: 'snacks', name: 'Snack Wall', cost: 2500, lvl: 0, mood: 3, desc: '+3 mood' },
+      { id: 'lamp', name: 'Desk Lamps', cost: 4000, lvl: 0, skill: 0.01, desc: '+1 skill' },
+      { id: 'books', name: 'Trading Library', cost: 9000, lvl: 1, skill: 0.015, desc: '+1.5 skill' },
+      { id: 'beanbags', name: 'Beanbag Corner', cost: 11000, lvl: 1, mood: 4, desc: '+4 mood' },
+      { id: 'jukebox', name: 'Jukebox', cost: 25000, lvl: 2, mood: 5, desc: '+5 mood' },
+      { id: 'bell', name: 'Opening Bell', cost: 40000, lvl: 2, speed: 0.05, desc: 'Everyone 5% faster' },
+      { id: 'newsfeed', name: 'Live News Wire', cost: 70000, lvl: 3, skill: 0.02, speed: 0.05, desc: '+2 skill, 5% faster' },
+      { id: 'sauna', name: 'Sauna', cost: 120000, lvl: 3, mood: 7, desc: '+7 mood' },
+      { id: 'cinema', name: 'Screening Room', cost: 400000, lvl: 4, mood: 8, desc: '+8 mood' },
+      { id: 'pool', name: 'Infinity Pool', cost: 1500000, lvl: 5, mood: 10, desc: '+10 mood' },
+      { id: 'supercomp', name: 'Supercomputer', cost: 3000000, lvl: 5, skill: 0.02, bot: 0.05, speed: 0.1, desc: 'AI bots +5 skill, +2 skill, 10% faster' },
+      { id: 'yacht', name: 'Company Yacht', cost: 6000000, lvl: 6, mood: 12, desc: '+12 mood' },
+      { id: 'submarine', name: 'Mini Submarine', cost: 15000000, lvl: 7, mood: 10, skill: 0.01, desc: '+10 mood, +1 skill' },
+      { id: 'rocket', name: 'Private Rocket', cost: 40000000, lvl: 8, mood: 14, speed: 0.1, desc: '+14 mood, 10% faster' },
+      { id: 'moonrover', name: 'Moon Rover', cost: 90000000, lvl: 9, mood: 12, skill: 0.02, desc: '+12 mood, +2 skill. Out of this world.' },
     ];
     const ICONS = {
       plants: '<ellipse cx="24" cy="44" rx="12" ry="2.5" fill="#000" opacity=".2"/><path d="M15 31h18l-2.5 12h-13z" fill="#c2410c"/><circle cx="24" cy="20" r="8" fill="#22c55e"/><circle cx="17" cy="25" r="6" fill="#16a34a"/><circle cx="31" cy="25" r="6" fill="#15803d"/>',
@@ -73,6 +102,21 @@
       gym: '<rect x="8" y="21" width="32" height="6" rx="2" fill="#475569"/><rect x="4" y="14" width="6" height="20" rx="2" fill="#0f172a"/><rect x="38" y="14" width="6" height="20" rx="2" fill="#0f172a"/><rect x="11" y="17" width="4" height="14" rx="1.5" fill="#dc2626"/><rect x="33" y="17" width="4" height="14" rx="1.5" fill="#dc2626"/>',
       servers: '<rect x="10" y="4" width="28" height="40" rx="2" fill="#0f172a"/><path d="M13 11h22M13 19h22M13 27h22M13 35h22" stroke="#334155" stroke-width="5"/><circle cx="31" cy="11" r="1.4" fill="#22c55e"/><circle cx="31" cy="19" r="1.4" fill="#22c55e"/><circle cx="31" cy="27" r="1.4" fill="#f59e0b"/><circle cx="31" cy="35" r="1.4" fill="#22c55e"/>',
       statue: '<rect x="12" y="36" width="24" height="7" rx="1.5" fill="#57534e"/><path d="M10 26c0-7 5-11 14-11s14 4 14 11v4H10z" fill="#eab308"/><path d="M12 17c-3-3-3-7 0-9M36 17c3-3 3-7 0-9" stroke="#ca8a04" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="19" cy="22" r="1.5" fill="#713f12"/><path d="M14 30v6M34 30v6" stroke="#ca8a04" stroke-width="3"/>',
+      snacks: '<rect x="8" y="6" width="32" height="36" rx="3" fill="#1e293b"/><rect x="11" y="10" width="7" height="8" rx="1" fill="#f43f5e"/><rect x="20.5" y="10" width="7" height="8" rx="1" fill="#facc15"/><rect x="30" y="10" width="7" height="8" rx="1" fill="#22c55e"/><rect x="11" y="21" width="7" height="8" rx="1" fill="#38bdf8"/><rect x="20.5" y="21" width="7" height="8" rx="1" fill="#fb923c"/><rect x="30" y="21" width="7" height="8" rx="1" fill="#a855f7"/><rect x="11" y="33" width="26" height="5" rx="1" fill="#0f172a"/>',
+      lamp: '<path d="M14 42h20" stroke="#334155" stroke-width="4" stroke-linecap="round"/><path d="M20 42l6-18-8-8" stroke="#475569" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M8 18l12-10 6 8z" fill="#eab308"/><path d="M11 21l-4 6M17 23l-1 6" stroke="#fde68a" stroke-width="2" stroke-linecap="round"/>',
+      books: '<rect x="6" y="6" width="36" height="38" rx="2" fill="#78350f"/><path d="M6 20h36M6 32h36" stroke="#451a03" stroke-width="3"/><rect x="9" y="9" width="4" height="10" fill="#dc2626"/><rect x="14" y="10" width="4" height="9" fill="#2563eb"/><rect x="19" y="9" width="3" height="10" fill="#16a34a"/><rect x="25" y="11" width="5" height="8" fill="#eab308"/><rect x="10" y="22" width="5" height="9" fill="#7c3aed"/><rect x="16" y="23" width="4" height="8" fill="#0ea5e9"/><rect x="28" y="22" width="4" height="9" fill="#f97316"/><rect x="33" y="23" width="4" height="8" fill="#e11d48"/>',
+      beanbags: '<ellipse cx="24" cy="42" rx="18" ry="3" fill="#000" opacity=".2"/><path d="M8 38c-2-10 4-18 11-18s10 6 10 12-5 8-11 8-9 0-10-2z" fill="#f97316"/><path d="M22 40c-1-8 4-15 10-15s9 6 9 11-4 6-9 6-9 0-10-2z" fill="#0ea5e9"/>',
+      jukebox: '<path d="M10 44V18a14 14 0 0128 0v26z" fill="#b91c1c"/><path d="M14 44V19a10 10 0 0120 0v25z" fill="#fde047"/><rect x="16" y="22" width="16" height="10" rx="2" fill="#1e293b"/><circle cx="24" cy="38" r="3" fill="#b91c1c"/>',
+      bell: '<path d="M24 6v4" stroke="#78716c" stroke-width="3"/><path d="M12 34c2-3 2-8 2-12a10 10 0 0120 0c0 4 0 9 2 12z" fill="#eab308"/><rect x="10" y="34" width="28" height="4" rx="2" fill="#ca8a04"/><circle cx="24" cy="41" r="3" fill="#a16207"/>',
+      newsfeed: '<rect x="4" y="12" width="40" height="22" rx="2" fill="#0f172a"/><rect x="4" y="12" width="12" height="22" rx="2" fill="#dc2626"/><path d="M7 20h6M7 25h6" stroke="#fff" stroke-width="2"/><path d="M19 18h21M19 23h16M19 28h19" stroke="#e2e8f0" stroke-width="2"/><path d="M18 34v6M30 34v6M12 40h24" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>',
+      sauna: '<rect x="6" y="14" width="36" height="28" rx="2" fill="#b45309"/><path d="M6 22h36M6 30h36M6 38h36" stroke="#92400e" stroke-width="2"/><rect x="18" y="20" width="12" height="22" fill="#78350f"/><path d="M16 11c0-3 3-3 3-6M24 11c0-3 3-3 3-6M32 11c0-3 3-3 3-6" stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round"/>',
+      cinema: '<rect x="4" y="6" width="40" height="24" rx="2" fill="#e2e8f0"/><path d="M20 12l10 6-10 6z" fill="#dc2626"/><rect x="6" y="34" width="10" height="8" rx="2" fill="#7f1d1d"/><rect x="19" y="34" width="10" height="8" rx="2" fill="#7f1d1d"/><rect x="32" y="34" width="10" height="8" rx="2" fill="#7f1d1d"/>',
+      pool: '<rect x="4" y="16" width="40" height="22" rx="4" fill="#e2e8f0"/><rect x="7" y="19" width="34" height="16" rx="3" fill="#06b6d4"/><path d="M10 25c3-2 5 2 8 0s5 2 8 0 5 2 8 0M12 30c3-2 5 2 8 0s5 2 8 0" stroke="#a5f3fc" stroke-width="1.5" fill="none"/><path d="M36 16V8M40 16V8M36 11h4M36 14h4" stroke="#94a3b8" stroke-width="1.5"/>',
+      supercomp: '<rect x="4" y="8" width="12" height="36" rx="2" fill="#111827"/><rect x="18" y="8" width="12" height="36" rx="2" fill="#111827"/><rect x="32" y="8" width="12" height="36" rx="2" fill="#111827"/><path d="M7 14h6M7 20h6M7 26h6M21 14h6M21 20h6M21 26h6M35 14h6M35 20h6M35 26h6" stroke="#22d3ee" stroke-width="2"/><path d="M7 36h30" stroke="#a855f7" stroke-width="2"/>',
+      yacht: '<path d="M4 32h40l-6 8H10z" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/><path d="M12 32v-8h18l6 8z" fill="#e2e8f0"/><rect x="15" y="26" width="4" height="3" fill="#38bdf8"/><rect x="21" y="26" width="4" height="3" fill="#38bdf8"/><path d="M4 42c4-2 8 2 12 0s8 2 12 0 8 2 12 0" stroke="#0ea5e9" stroke-width="2" fill="none"/>',
+      submarine: '<ellipse cx="24" cy="28" rx="18" ry="9" fill="#eab308"/><rect x="18" y="13" width="10" height="9" rx="2" fill="#ca8a04"/><circle cx="16" cy="28" r="3" fill="#bae6fd" stroke="#854d0e" stroke-width="1.5"/><circle cx="25" cy="28" r="3" fill="#bae6fd" stroke="#854d0e" stroke-width="1.5"/><circle cx="34" cy="28" r="3" fill="#bae6fd" stroke="#854d0e" stroke-width="1.5"/><path d="M42 24l4-4v16l-4-4" fill="#a16207"/>',
+      rocket: '<path d="M24 4c7 6 9 15 8 26H16c-1-11 1-20 8-26z" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/><circle cx="24" cy="16" r="4" fill="#38bdf8" stroke="#475569" stroke-width="1.5"/><path d="M16 22l-6 10h6M32 22l6 10h-6" fill="#dc2626"/><path d="M19 30c0 6 2 10 5 14 3-4 5-8 5-14z" fill="#f97316"/>',
+      moonrover: '<path d="M4 40c10-4 30-4 40 0v4H4z" fill="#9ca3af"/><rect x="10" y="20" width="28" height="10" rx="2" fill="#e5e7eb" stroke="#6b7280" stroke-width="1.5"/><path d="M30 20v-8M26 12h8" stroke="#6b7280" stroke-width="2"/><circle cx="14" cy="34" r="5" fill="#374151"/><circle cx="34" cy="34" r="5" fill="#374151"/><circle cx="24" cy="34" r="4" fill="#374151"/>',
       helipad: '<circle cx="24" cy="24" r="19" fill="#334155"/><circle cx="24" cy="24" r="15" fill="none" stroke="#fde047" stroke-width="2"/><path d="M17 15v18M31 15v18M17 24h14" stroke="#fff" stroke-width="3.5"/>',
     };
     const icon = id => `<svg viewBox="0 0 48 48" aria-hidden="true">${ICONS[id] || ''}</svg>`;
@@ -82,6 +126,11 @@
       { name: 'Office Floor', desks: 8, cost: 80000, floor: 'office' },
       { name: 'Trading Floor', desks: 14, cost: 350000, floor: 'floor' },
       { name: 'Skyscraper', desks: 22, cost: 1200000, floor: 'tower' },
+      { name: 'Penthouse Suite', desks: 26, cost: 3500000, floor: 'penthouse' },
+      { name: 'Private Island HQ', desks: 30, cost: 8000000, floor: 'island' },
+      { name: 'Underwater Dome', desks: 34, cost: 20000000, floor: 'ocean' },
+      { name: 'Space Station', desks: 40, cost: 50000000, floor: 'space' },
+      { name: 'Moon Base', desks: 48, cost: 120000000, floor: 'moon' },
     ];
     const ETF = ['SPY', 'QQQ', 'DIA', 'IWM', 'VTI', 'VOO', 'ARKK', 'XLK', 'XLF', 'GLD'];
     const BLUE = ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'JPM', 'V', 'KO', 'WMT', 'JNJ', 'PG', 'COST', 'BRK.B', 'MA', 'HD'];
@@ -127,9 +176,9 @@
       o.seq ??= 0;
       o.items ||= {};
       o.company ||= 'PAPERBULL Capital';
-      if (o.candsV !== 2) {
+      if (o.candsV !== 3) {
         o.cands = {};
-        o.candsV = 2;
+        o.candsV = 3;
       }
       return o;
     };
@@ -147,11 +196,17 @@
       if (hasSup('barista')) k.mood += 8;
       if (hasSup('researcher')) k.skill += 0.03;
       if (hasSup('it')) k.speed += 0.2;
+      if (hasSup('chef')) k.mood += 10;
+      if (hasSup('dj')) k.mood += 5;
+      if (hasSup('yoga')) k.mood += 6;
+      if (hasSup('coach')) k.skill += 0.02;
+      if (hasSup('lawyer')) k.fee += 0.1;
+      if (hasSup('engineer')) (k.speed += 0.15), (k.bot += 0.03);
       if (o.staff.some(s => s.kind === 'mgr' && s.role === 'ceo')) k.mood += 10;
-      k.speed = Math.min(0.6, k.speed);
+      k.speed = Math.min(0.9, k.speed);
       k.fee = Math.min(0.5, k.fee);
       k.risk = hasSup('risk');
-      k.pay = hasSup('accountant') ? 0.9 : 1;
+      k.pay = (hasSup('accountant') ? 0.9 : 1) * (o.staff.some(s => s.kind === 'mgr' && s.role === 'cfo') ? 0.95 : 1);
       k.recruit = hasSup('recruiter');
       return k;
     }
@@ -597,7 +652,8 @@
           continue;
         }
         const target = broke ? 0 : Math.min(100, 70 + (hasBoss ? 12 : 0) + pk.mood);
-        s.mood = (s.mood ?? 70) + (target - (s.mood ?? 70)) * Math.min(1, dt / (broke ? 90 : 900));
+        const down = target < (s.mood ?? 70) && !broke && hasSup('yoga');
+        s.mood = (s.mood ?? 70) + (target - (s.mood ?? 70)) * Math.min(1, dt / (broke ? 90 : down ? 1800 : 900));
       }
       if (broke) {
         const q = o.staff.find(s => s.mood < 3 && !roleOf(s).bot);
@@ -669,7 +725,7 @@
     /* ---------------- desk layout (shared by 2D and 3D) ---------------- */
     function layout() {
       const n = level().desks,
-        cols = n <= 2 ? 2 : n <= 4 ? 4 : n <= 8 ? 4 : n <= 14 ? 5 : 6,
+        cols = n <= 2 ? 2 : n <= 4 ? 4 : n <= 8 ? 4 : n <= 14 ? 5 : n <= 22 ? 6 : 8,
         rows = Math.ceil(n / cols),
         out = [];
       for (let i = 0; i < n; i++) {
@@ -711,13 +767,13 @@
         for (const p of staff) if (map[p.id]) by[map[p.id].i] = p;
         // the 2D room re-flows its own grid: fewer columns on a phone, and it grows taller with more rows
         const narrow = (el.clientWidth || innerWidth) < 560,
-          cols = Math.min(desks.length ? desks[0].cols : 2, narrow ? 4 : 6),
+          cols = Math.min(desks.length ? desks[0].cols : 2, narrow ? 4 : 8),
           rows = Math.max(1, Math.ceil(desks.length / cols));
         for (const d of desks) {
           d.c2 = d.i % cols;
           d.r2 = Math.floor(d.i / cols);
         }
-        el.style.aspectRatio = String(Math.max(narrow ? 0.42 : 0.95, Math.min(1.9, cols / (rows * (narrow ? 1.6 : 1.5)))));
+        el.style.aspectRatio = String(Math.max(narrow ? (rows > 6 ? 0.2 : 0.42) : rows > 4 ? 0.6 : 0.95, Math.min(1.9, cols / (rows * (narrow ? 1.6 : 1.5)))));
         el.style.setProperty('--dw', `${Math.min(120, 58 / cols)}%`);
         el.innerHTML = `<div class="of2 f-${lv.floor}">
           <div class="of2-wall"><div class="of2-win">${skyline()}${O().items.helipad ? '<span class="of2-heli" aria-hidden="true"><svg viewBox="0 0 60 24"><path d="M2 3h56" stroke="#1e293b" stroke-width="2"/><path d="M30 3v4" stroke="#1e293b" stroke-width="2"/><path d="M14 9h26c5 0 9 3 9 7s-4 5-9 5H22c-5 0-8-3-8-6z" fill="#eab308"/><path d="M14 13H3l-2-4" stroke="#1e293b" stroke-width="2" fill="none"/><rect x="36" y="11" width="8" height="5" rx="1.5" fill="#bae6fd"/></svg></span>' : ''}</div><div class="of2-board"><small>${E(O().company.toUpperCase())}</small><b id="of2Pnl"></b><i id="of2Tape"></i></div></div>
@@ -735,6 +791,8 @@
               })
               .join('')}
             <div class="of2-decor">${ITEMS.filter(it => O().items[it.id] && it.id !== 'helipad' && it.id !== 'fiber')
+              .sort((x, y) => O().items[y.id] - O().items[x.id])
+              .slice(0, narrow ? 7 : 12)
               .map(it => `<span class="of2-dc d-${it.id}" title="${E(it.name)}">${icon(it.id)}</span>`)
               .join('')}</div>
             <div class="of2-cooler"></div>
@@ -1081,7 +1139,7 @@
           nx = LEVELS[o.lvl + 1];
         if (!v) return;
         v.querySelector('#ofLvl').innerHTML = `<div class="of-lv"><div><small class="muted">Your office</small><b>${lv.name}</b><span class="muted small">${lv.desks} desks</span></div>
-          ${nx ? `<div class="of-lv-nx"><span>Next: <b>${nx.name}</b> · ${nx.desks} desks</span><button class="btn ${acct.cash >= nx.cost ? 'primary' : ''}" id="ofUp" ${acct.cash >= nx.cost ? '' : 'disabled'}>Move in · ${money(nx.cost)}</button></div>` : '<div class="of-lv-nx"><span>You’ve got the whole tower.</span></div>'}</div>`;
+          ${nx ? `<div class="of-lv-nx"><span>Next: <b>${nx.name}</b> · ${nx.desks} desks</span><button class="btn ${acct.cash >= nx.cost ? 'primary' : ''}" id="ofUp" ${acct.cash >= nx.cost ? '' : 'disabled'}>Move in · ${money(nx.cost)}</button></div>` : '<div class="of-lv-nx"><span>You’ve got the biggest office there is.</span></div>'}</div>`;
       },
       perks() {
         const v = this.v,
@@ -1177,7 +1235,7 @@
       focus: id => Screen.focus(id),
       hireScroll: () => document.getElementById('ofHireCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
     };
-    window.PBOffice = { O, hire, fire, promote, upgrade, closeAll, candidates, tick, tickAt, effSkill, roleOf, level, seated, train, bonus, pizza, buyItem, rename, perks, ROLES, MGRS, SUPS, ITEMS, LEVELS, STRATS, api: API, on: f => listeners.push(f), ver: () => ver };
+    window.PBOffice = { O, hire, fire, promote, upgrade, closeAll, candidates, tick, tickAt, effSkill, roleOf, level, seated, train, bonus, pizza, buyItem, rename, perks, ROLES, MGRS, SUPS, ITEMS, ICONS, LEVELS, STRATS, api: API, on: f => listeners.push(f), ver: () => ver };
   } catch (e) {
     console.error('office', e);
   }
