@@ -31,7 +31,7 @@ _ati='data:image/png;base64,'+base64.b64encode(open('src/brand/icon-180.png','rb
 import time as _tm
 _build=_tm.strftime('%Y%m%d%H%M%S')
 open('version.txt','w').write(_build+'\n')
-_head='<!-- BRAND:START -->\n<script>window.PB_BUILD="'+_build+'";</script>\n<meta http-equiv="Content-Security-Policy" content="%s">\n<meta name="referrer" content="strict-origin-when-cross-origin">\n'%GAME_CSP+'<link rel="icon" type="image/svg+xml" href="'+_fav+'">\n<link rel="apple-touch-icon" href="'+_ati+'">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="PAPERBULL">\n<meta name="description" content="PAPERBULL: trade stocks and crypto with fake money. Learn, compete with friends and climb the leaderboard.">\n<!-- BRAND:END -->\n'
+_head='<!-- BRAND:START -->\n<script>window.PB_BUILD="'+_build+'";</script>\n<script>'+open('src/move-in.js',encoding='utf-8').read()+'</script>\n<meta http-equiv="Content-Security-Policy" content="%s">\n<meta name="referrer" content="strict-origin-when-cross-origin">\n'%GAME_CSP+'<link rel="icon" type="image/svg+xml" href="'+_fav+'">\n<link rel="apple-touch-icon" href="'+_ati+'">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="PAPERBULL">\n<meta name="description" content="PAPERBULL: trade stocks and crypto with fake money. Learn, compete with friends and climb the leaderboard.">\n<!-- BRAND:END -->\n'
 s2=open('index.html',encoding='utf-8').read()
 s2=re.sub(r'<!-- BRAND:START -->.*?<!-- BRAND:END -->\n','',s2,flags=re.S)
 s2=s2.replace('<title>PAPERBULL</title>\n','<title>PAPERBULL</title>\n'+_head,1)

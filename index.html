@@ -6,7 +6,113 @@
 <meta name="theme-color" content="#06080c">
 <title>PAPERBULL</title>
 <!-- BRAND:START -->
-<script>window.PB_BUILD="20260930182012";</script>
+<script>window.PB_BUILD="20260930190244";</script>
+<script>/* MOVE-IN — the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull.
+   The page at the old address packs up the player's login and (for guests) their save into the link
+   (#pbmove=…) and sends them here. This runs before anything else: it stops the page, writes that data
+   into this site's storage, fetches a logged-in player's save from the server, then reloads, so the
+   player lands already logged in with all their stuff. Only accepted when the visit really came from
+   the old page and this browser has no PAPERBULL data here yet, so it can never overwrite anything. */
+(function () {
+  var m = /[#&]pbmove=([A-Za-z0-9_\-.]+)/.exec(location.hash || '');
+  if (!m) return;
+  var clean = location.pathname + location.search;
+  try {
+    history.replaceState(null, '', clean);
+  } catch (e) {}
+  var fromOld = /^https:\/\/taylanthe10\.github\.io\//.test(document.referrer || '');
+  var fresh = true;
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('pb2.') === 0 && k !== 'pb2.cookieOk' && k !== 'pb2.quotes') {
+        fresh = false;
+        break;
+      }
+    }
+  } catch (e) {
+    return;
+  }
+  if (!fromOld || !fresh || !window.TextDecoder) return;
+  var raw = m[1],
+    kind = raw.charAt(0),
+    body = raw.slice(1);
+  if (kind === 'z' && !window.DecompressionStream) return;
+  // hold the game back until the data is in place
+  try {
+    window.stop();
+  } catch (e) {}
+  document.documentElement.innerHTML =
+    '<head><meta name="viewport" content="width=device-width,initial-scale=1"><title>PAPERBULL</title></head><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#06080c;color:#eef1f6;font:600 16px system-ui,-apple-system,sans-serif"><div style="text-align:center"><div style="width:34px;height:34px;margin:0 auto 14px;border-radius:50%;border:3px solid #ff9a2e;border-right-color:transparent;animation:s 0.8s linear infinite"></div>Moving your game to the new link…<style>@keyframes s{to{transform:rotate(1turn)}}</style></div></body>';
+  var done = function () {
+    location.replace(clean);
+  };
+  var bytes = function (s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '=');
+    var b = atob(s),
+      u = new Uint8Array(b.length);
+    for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+    return u;
+  };
+  var text =
+    kind === 'z'
+      ? new Response(new Blob([bytes(body)]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text()
+      : Promise.resolve(new TextDecoder().decode(bytes(body)));
+  var API = 'https://amnbnuabxoxhggidlhcn.supabase.co/rest/v1/rpc/',
+    ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtbmJudWFieG94aGdnaWRsaGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjc5ODAsImV4cCI6MjEwNTYwMzk4MH0.WwHTYzYEwKtW2_fjoyPiltnxI331-Ve5IGolTpavISo';
+  var get = function (k) {
+    try {
+      return JSON.parse(localStorage.getItem(k));
+    } catch (e) {
+      return null;
+    }
+  };
+  text
+    .then(function (t) {
+      var d = JSON.parse(t);
+      if (!d || d.v !== 1 || typeof d.ls !== 'object') return;
+      Object.keys(d.ls).forEach(function (k) {
+        if (/^pb2\./.test(k) && typeof d.ls[k] === 'string') localStorage.setItem(k, d.ls[k]);
+      });
+      if (d.ss && typeof d.ss['pb2.session'] === 'string') {
+        try {
+          sessionStorage.setItem('pb2.session', d.ss['pb2.session']);
+          // keep them logged in after the browser closes too
+          if (!localStorage.getItem('pb2.session')) {
+            var s = JSON.parse(d.ss['pb2.session']);
+            s.exp = Date.now() + 90 * 864e5;
+            localStorage.setItem('pb2.session', JSON.stringify(s));
+          }
+        } catch (e) {}
+      }
+      // a logged-in player: their save lives on the server, so fetch it with their session
+      var cloud = get('pb2.cloud'),
+        auth = get('pb2.auth'),
+        st = get('pb2.settings') || {};
+      if (!cloud || !cloud.token || !auth || !auth.users || !auth.users[cloud.u]) return;
+      var id = auth.users[cloud.u].id;
+      if (!id) return;
+      st.activePlayerId = st.activePlayerId || id;
+      st.playerIds = (st.playerIds || []).indexOf(id) < 0 ? (st.playerIds || []).concat(id) : st.playerIds;
+      localStorage.setItem('pb2.settings', JSON.stringify(st));
+      if (get('pb2.player.' + id)) return;
+      return fetch(API + 'pb_pull', { method: 'POST', headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_token: cloud.token }) })
+        .then(function (r) {
+          return r.ok ? r.json() : null;
+        })
+        .then(function (p) {
+          if (p && p.save && typeof p.save === 'object') {
+            p.save.id = id;
+            p.save.user = cloud.u;
+            localStorage.setItem('pb2.player.' + id, JSON.stringify(p.save));
+          }
+        });
+    })
+    .catch(function () {})
+    .then(done, done);
+  setTimeout(done, 12000); // never leave anyone stuck on the moving screen
+})();
+</script>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://assets.parqet.com https://financialmodelingprep.com https://coin-images.coingecko.com https://cdn.jsdelivr.net https://amnbnuabxoxhggidlhcn.supabase.co; font-src 'self' data:; connect-src 'self' https://amnbnuabxoxhggidlhcn.supabase.co wss://amnbnuabxoxhggidlhcn.supabase.co https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; media-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22pbLg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffb52e%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff5e1a%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22url%28%23pbLg%29%22/%3E%3Cpath%20d%3D%22M13.5%2014.5c.6%208.4%205.6%2012.5%2012.5%2012.5h12c6.9%200%2011.9-4.1%2012.5-12.5%22%20stroke%3D%22%23fff%22%20stroke-width%3D%225.2%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M21.2%2025.5h21.6l-3.6%2018.2c-1%204.9-3.8%207.8-7.2%207.8s-6.2-2.9-7.2-7.8z%22%20fill%3D%22%23fff%22/%3E%3Cpath%20d%3D%22M28.3%2030.5v13.5M35.7%2027.5v12.5%22%20stroke%3D%22%2316c784%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Crect%20x%3D%2226.5%22%20y%3D%2233%22%20width%3D%223.6%22%20height%3D%228.5%22%20rx%3D%221.3%22%20fill%3D%22%2316c784%22/%3E%3Crect%20x%3D%2233.9%22%20y%3D%2229.8%22%20width%3D%223.6%22%20height%3D%228%22%20rx%3D%221.3%22%20fill%3D%22%2316c784%22/%3E%3C/svg%3E">
