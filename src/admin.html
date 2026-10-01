@@ -4795,7 +4795,7 @@
             ? `<div class="tw"><table><thead><tr>${th('username', 'User')}${th('status', 'Status')}${th('birth_year', 'Age')}${th('return_pct', 'Return', 1)}${th('value', 'Value', 1)}${th('level', 'Level', 1)}${th('trades', 'Trades', 1)}${th('coins', 'Coins', 1)}${th('created_at', 'Joined')}${th('last_seen', 'Last seen')}</tr></thead>
       <tbody>${r.rows
         .map(
-          u => `<tr class="click" data-id="${u.id}"><td><div class="who">${avatar(u.name)}<div><b>${esc(u.name)}${(u.tags || []).map(t => ` <span class="tag sm">${esc(t)}</span>`).join('')}${u.lb_hidden ? ' <span class="tag sm warn">hidden</span>' : ''}</b><small>@${esc(u.username)}</small></div></div></td><td>${statusPill(u.status)}</td><td>${ageCell(u)}</td>
+          u => `<tr class="click" data-id="${u.id}"><td><div class="who">${avatar(u.name)}<div><b>${esc(u.name)}${(u.tags || []).map(t => ` <span class="tag sm">${esc(t)}</span>`).join('')}${u.lb_hidden ? ' <span class="tag sm warn">hidden</span>' : ''}</b><small>@${esc(u.username)}${u.real_name ? ' · ' + esc(u.real_name) : ''}</small></div></div></td><td>${statusPill(u.status)}</td><td>${ageCell(u)}</td>
         <td class="r mono ${cls(u.return_pct)}">${pct(u.return_pct)}</td><td class="r mono">${usd(u.value)}</td><td class="r mono">${u.level}</td><td class="r mono">${num(u.trades)}</td><td class="r mono">${num(u.coins)}</td><td>${dday(u.created_at)}</td><td>${ago(u.last_seen)}</td></tr>`
         )
         .join('')}</tbody></table></div>${pager(r.total, r.page, r.per)}`
@@ -4881,7 +4881,7 @@
           ].join('');
           const posRows = p && p.positions ? Object.entries(p.positions) : [];
           v.innerHTML = `<a href="#/users" class="btn ghost sm" style="margin-bottom:12px">${IC.back}All users</a>
-      <div class="card"><div class="prof">${avatar(u.name)}<div style="flex:1;min-width:0"><h2>${esc(u.name)} ${statusPill(u.status)}${u.lb_hidden ? ' <span class="pill p-warn"><i></i>Hidden from leaderboard</span>' : ''}</h2><div class="muted">@${esc(u.username)} · ${u.age == null ? 'age not set' : `age ${u.age} (born ${u.birth_year})`} · joined ${dday(u.created_at)} · last seen ${ago(u.last_seen)}</div>
+      <div class="card"><div class="prof">${avatar(u.name)}<div style="flex:1;min-width:0"><h2>${esc(u.name)} ${statusPill(u.status)}${u.lb_hidden ? ' <span class="pill p-warn"><i></i>Hidden from leaderboard</span>' : ''}</h2><div class="muted">@${esc(u.username)} · ${u.real_name ? `real name <b>${esc(u.real_name)}</b> · ` : ''}${u.age == null ? 'age not set' : `age ${u.age} (born ${u.birth_year})`} · joined ${dday(u.created_at)} · last seen ${ago(u.last_seen)}</div>
         ${(u.tags || []).length ? `<div class="tags">${u.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
         ${u.status_reason ? `<div class="small" style="margin-top:4px">Reason: ${esc(u.status_reason)}${u.suspended_until ? ` · until ${dt(u.suspended_until)}` : ''}</div>` : ''}</div></div>
         <div class="stats"><div class="stat"><small>Total return</small><b class="mono ${cls(u.return_pct)}">${pct(u.return_pct)}</b></div><div class="stat"><small>Account value</small><b class="mono">${usd(u.value)}</b></div>
@@ -6985,6 +6985,8 @@
         again: false,
         poll: 0,
         render(v) {
+          const rq = this.q && this.q.get('room');
+          if (rq && /^(global|clan:\d+)$/.test(rq)) this.room = rq;
           v.innerHTML =
             head('Chat moderation', 'Reports, the live room and muted players. Hidden messages disappear for every player right away.', `<button class="btn" id="chRf">Refresh</button>`) +
             `<div class="kpis" id="chK">${Array.from({ length: 4 }, () => `<div class="kpi">${skeleton(2)}</div>`).join('')}</div>

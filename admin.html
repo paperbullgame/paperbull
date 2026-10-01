@@ -8263,7 +8263,7 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
             ? `<div class="tw"><table><thead><tr>${th('username', 'User')}${th('status', 'Status')}${th('birth_year', 'Age')}${th('return_pct', 'Return', 1)}${th('value', 'Value', 1)}${th('level', 'Level', 1)}${th('trades', 'Trades', 1)}${th('coins', 'Coins', 1)}${th('created_at', 'Joined')}${th('last_seen', 'Last seen')}</tr></thead>
       <tbody>${r.rows
         .map(
-          u => `<tr class="click" data-id="${u.id}"><td><div class="who">${avatar(u.name)}<div><b>${esc(u.name)}${(u.tags || []).map(t => ` <span class="tag sm">${esc(t)}</span>`).join('')}${u.lb_hidden ? ' <span class="tag sm warn">hidden</span>' : ''}</b><small>@${esc(u.username)}</small></div></div></td><td>${statusPill(u.status)}</td><td>${ageCell(u)}</td>
+          u => `<tr class="click" data-id="${u.id}"><td><div class="who">${avatar(u.name)}<div><b>${esc(u.name)}${(u.tags || []).map(t => ` <span class="tag sm">${esc(t)}</span>`).join('')}${u.lb_hidden ? ' <span class="tag sm warn">hidden</span>' : ''}</b><small>@${esc(u.username)}${u.real_name ? ' · ' + esc(u.real_name) : ''}</small></div></div></td><td>${statusPill(u.status)}</td><td>${ageCell(u)}</td>
         <td class="r mono ${cls(u.return_pct)}">${pct(u.return_pct)}</td><td class="r mono">${usd(u.value)}</td><td class="r mono">${u.level}</td><td class="r mono">${num(u.trades)}</td><td class="r mono">${num(u.coins)}</td><td>${dday(u.created_at)}</td><td>${ago(u.last_seen)}</td></tr>`
         )
         .join('')}</tbody></table></div>${pager(r.total, r.page, r.per)}`
@@ -8349,7 +8349,7 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
           ].join('');
           const posRows = p && p.positions ? Object.entries(p.positions) : [];
           v.innerHTML = `<a href="#/users" class="btn ghost sm" style="margin-bottom:12px">${IC.back}All users</a>
-      <div class="card"><div class="prof">${avatar(u.name)}<div style="flex:1;min-width:0"><h2>${esc(u.name)} ${statusPill(u.status)}${u.lb_hidden ? ' <span class="pill p-warn"><i></i>Hidden from leaderboard</span>' : ''}</h2><div class="muted">@${esc(u.username)} · ${u.age == null ? 'age not set' : `age ${u.age} (born ${u.birth_year})`} · joined ${dday(u.created_at)} · last seen ${ago(u.last_seen)}</div>
+      <div class="card"><div class="prof">${avatar(u.name)}<div style="flex:1;min-width:0"><h2>${esc(u.name)} ${statusPill(u.status)}${u.lb_hidden ? ' <span class="pill p-warn"><i></i>Hidden from leaderboard</span>' : ''}</h2><div class="muted">@${esc(u.username)} · ${u.real_name ? `real name <b>${esc(u.real_name)}</b> · ` : ''}${u.age == null ? 'age not set' : `age ${u.age} (born ${u.birth_year})`} · joined ${dday(u.created_at)} · last seen ${ago(u.last_seen)}</div>
         ${(u.tags || []).length ? `<div class="tags">${u.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
         ${u.status_reason ? `<div class="small" style="margin-top:4px">Reason: ${esc(u.status_reason)}${u.suspended_until ? ` · until ${dt(u.suspended_until)}` : ''}</div>` : ''}</div></div>
         <div class="stats"><div class="stat"><small>Total return</small><b class="mono ${cls(u.return_pct)}">${pct(u.return_pct)}</b></div><div class="stat"><small>Account value</small><b class="mono">${usd(u.value)}</b></div>
@@ -10453,6 +10453,8 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
         again: false,
         poll: 0,
         render(v) {
+          const rq = this.q && this.q.get('room');
+          if (rq && /^(global|clan:\d+)$/.test(rq)) this.room = rq;
           v.innerHTML =
             head('Chat moderation', 'Reports, the live room and muted players. Hidden messages disappear for every player right away.', `<button class="btn" id="chRf">Refresh</button>`) +
             `<div class="kpis" id="chK">${Array.from({ length: 4 }, () => `<div class="kpi">${skeleton(2)}</div>`).join('')}</div>
@@ -12834,6 +12836,152 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
           `;
           document.head.appendChild(st);
         }
+      }
+
+      /* ================= CLANS: look inside any clan, edit it, remove members, delete it ================= */
+      {
+        Object.assign(ERR, { not_member: 'That player isn’t in this clan anymore.', is_owner: 'Make someone else the owner first.', bad_tag: 'Tags are 2–4 letters or numbers.', taken: 'That clan name or tag is already taken.', not_found: 'That clan doesn’t exist anymore.' });
+        NI.clans = ['#c4b5fd', '#7c3aed', NF('<path class="f" d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>')];
+        {
+          const gi = NAV.findIndex(n => n[0] === 'social');
+          NAV.splice(gi + 1, 0, ['clans', 'Clans', IC.users, 'moderator']);
+        }
+        const seen = t => (t ? ago(t) : '—');
+        VIEWS.clans = {
+          role: 'moderator',
+          q: null,
+          f: '',
+          sort: 'members',
+          async render(v) {
+            const id = (location.hash.split('/')[2] || '').replace(/\?.*$/, '');
+            if (id) return this.one(v, id);
+            v.innerHTML = head('Clans', 'Every clan in the game. Open one to see its members and chat, rename it, remove players or delete it.', `<button class="btn" id="clRf">Refresh</button>`) + `<div class="card">${skeleton(6)}</div>`;
+            let L;
+            try {
+              L = await A('pba_clans_all');
+            } catch (e) {
+              v.innerHTML = head('Clans', '') + `<div class="card empty">${esc(e.message)}</div>`;
+              return;
+            }
+            this.L = L || [];
+            const draw = () => {
+              const q = this.f.toLowerCase();
+              const rows = this.L.filter(c => !q || [c.name, c.tag, c.owner].some(x => String(x || '').toLowerCase().includes(q))).sort((a, b) =>
+                this.sort === 'name' ? String(a.name).localeCompare(String(b.name)) : this.sort === 'chat' ? (+b.msgs_week || 0) - (+a.msgs_week || 0) : this.sort === 'new' ? Date.parse(b.created_at) - Date.parse(a.created_at) : (+b.members || 0) - (+a.members || 0)
+              );
+              const tot = this.L.reduce((s, c) => s + (+c.members || 0), 0);
+              v.innerHTML =
+                head('Clans', 'Every clan in the game. Open one to see its members and chat, rename it, remove players or delete it.', `<button class="btn" id="clRf">Refresh</button>`) +
+                `<div class="kpis"><div class="kpi c4"><small>Clans</small><b class="mono">${num(this.L.length)}</b></div><div class="kpi c2"><small>Players in clans</small><b class="mono">${num(tot)}</b></div><div class="kpi c3"><small>Open to join</small><b class="mono">${num(this.L.filter(c => c.open).length)}</b></div><div class="kpi c1"><small>Clan messages this week</small><b class="mono">${num(this.L.reduce((s, c) => s + (+c.msgs_week || 0), 0))}</b></div></div>
+                <div class="card" style="margin-top:16px"><div class="card-h"><h3>All clans</h3><div class="row-act"><input class="in" id="clQ" placeholder="Search name, tag or owner…" style="max-width:240px" value="${esc(this.f)}"><select class="in" id="clS" style="max-width:170px">${[['members', 'Most members'], ['chat', 'Most chat'], ['new', 'Newest'], ['name', 'Name A–Z']].map(([k, l]) => `<option value="${k}" ${this.sort === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+                ${rows.length ? `<div class="tw"><table><thead><tr><th>Clan</th><th>Owner</th><th class="r">Members</th><th class="r">Avg return</th><th class="r">Chat (7d)</th><th>Joining</th><th>Last active</th><th class="r"></th></tr></thead><tbody>${rows
+                  .map(
+                    c => `<tr class="click" data-open="${c.id}"><td data-l="Clan"><div class="who"><span class="cl-e">${esc(c.emoji || '🛡️')}</span><div><b>${esc(c.name)} <span class="tag sm mono">${esc(c.tag)}</span></b><small style="white-space:normal;max-width:300px;display:block">${esc(c.about || 'No description')}</small></div></div></td>
+                      <td data-l="Owner">${c.owner ? '@' + esc(c.owner) : '<span class="muted">—</span>'}</td><td class="r mono" data-l="Members">${num(c.members)}<span class="muted">/30</span></td><td class="r ${cls(+c.avg_return || 0)}" data-l="Avg return">${c.avg_return == null ? '—' : pct(+c.avg_return)}</td><td class="r mono" data-l="Chat (7d)">${num(c.msgs_week || 0)}</td>
+                      <td data-l="Joining">${c.open ? '<span class="pill p-ok">Open</span>' : '<span class="pill p-mut">Invite only</span>'}</td><td data-l="Last active">${seen(c.last_active)}</td><td class="r"><button class="btn sm" data-open="${c.id}">Open</button></td></tr>`
+                  )
+                  .join('')}</tbody></table></div>` : `<div class="empty">${q ? 'No clans match.' : 'No clans yet.'}</div>`}</div>`;
+              $('#clRf').onclick = () => this.render(v);
+              $('#clQ').oninput = e => {
+                this.f = e.target.value;
+                clearTimeout(this._t);
+                this._t = setTimeout(() => {
+                  draw();
+                  const i = $('#clQ');
+                  i.focus();
+                  i.setSelectionRange(i.value.length, i.value.length);
+                }, 250);
+              };
+              $('#clS').onchange = e => ((this.sort = e.target.value), draw());
+              v.onclick = e => {
+                const r = e.target.closest('[data-open]');
+                if (r) location.hash = '#/clans/' + r.dataset.open;
+              };
+            };
+            draw();
+          },
+          async one(v, id) {
+            v.innerHTML = `<a href="#/clans" class="btn ghost sm" style="margin-bottom:12px">${IC.back}All clans</a><div class="card">${skeleton(6)}</div>`;
+            let d;
+            try {
+              d = await A('pba_clan_get', { p_id: +id });
+            } catch (e) {
+              v.innerHTML = `<a href="#/clans" class="btn ghost sm">${IC.back}All clans</a><div class="card empty">${esc(e.message)}</div>`;
+              return;
+            }
+            const c = d.clan,
+              M = d.members || [],
+              CH = d.chat || [];
+            const act = async (action, arg, msg) => {
+              try {
+                await A('pba_clan_act', { p_id: c.id, p_action: action, p_arg: arg || {} });
+                toast(msg);
+                this.one(v, id);
+              } catch (e) {
+                toast(e.message, 'err');
+              }
+            };
+            v.innerHTML = `<a href="#/clans" class="btn ghost sm" style="margin-bottom:12px">${IC.back}All clans</a>
+              <div class="card"><div class="prof"><span class="cl-e big">${esc(c.emoji || '🛡️')}</span><div style="flex:1;min-width:0"><h2>${esc(c.name)} <span class="tag mono">${esc(c.tag)}</span> ${c.open ? '<span class="pill p-ok">Open</span>' : '<span class="pill p-mut">Invite only</span>'}</h2>
+                <div class="muted">Owner ${c.owner_name ? '@' + esc(c.owner_name) : '—'} · ${num(M.length)}/30 members · made ${dday(c.created_at)}</div>
+                <p style="margin:8px 0 0">${esc(c.about || 'No description')}</p></div></div>
+                <div class="row-act" style="margin-top:14px;flex-wrap:wrap"><button class="btn" id="clEdit">${IC.edit || ''}Edit name, tag or about</button><button class="btn" id="clOpen">${c.open ? 'Make invite only' : 'Open to join'}</button><a class="btn" href="#/chat?room=clan:${c.id}">${IC.chat}Open clan chat</a>${can('admin') ? `<button class="btn dan-o" id="clClear">Clear clan chat</button><button class="btn dan" id="clDel">${IC.trash}Delete clan</button>` : ''}</div></div>
+              <div style="display:flex;flex-direction:column;gap:16px;margin-top:16px">
+              <div class="card"><div class="card-h"><h3>Members</h3><span class="small muted">${num(M.length)}</span></div>
+                ${M.length ? `<div class="tw"><table><thead><tr><th>Player</th><th class="r">Return</th><th>Joined</th><th>Last seen</th><th class="r"></th></tr></thead><tbody>${M.map(m => `<tr><td data-l="Player"><div class="who">${avatar(m.name)}<div><b><a href="#/user/${esc(m.id)}">${esc(m.name || m.username)}</a>${m.role === 'owner' ? ' <span class="pill p-brand">Owner</span>' : ''}${m.status !== 'active' ? ` ${statusPill(m.status)}` : ''}</b><small>@${esc(m.username)}${m.real_name ? ' · ' + esc(m.real_name) : ''} · LV ${esc(m.level || 1)}</small></div></div></td><td class="r ${cls(+m.return_pct || 0)}" data-l="Return">${pct(+m.return_pct || 0)}</td><td data-l="Joined">${dday(m.joined_at)}</td><td data-l="Last seen">${seen(m.last_seen)}</td>
+                  <td class="r"><div class="row-act">${m.role !== 'owner' ? `<button class="btn sm" data-own="${esc(m.username)}">Make owner</button><button class="btn sm dan-o" data-kick="${esc(m.username)}">Remove</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Nobody is in this clan.</div>'}</div>
+              <div class="card"><div class="card-h"><h3>Latest clan chat</h3><span class="small muted">Last 30 messages</span></div>
+                ${CH.length ? `<div class="cl-chat">${CH.map(m => `<div class="cl-msg"><b>@${esc(m.username || '?')}</b><span>${esc(m.body)}</span><small>${ago(m.created_at)}</small></div>`).join('')}</div>` : '<div class="empty small">No messages yet.</div>'}</div></div>`;
+            $('#clOpen').onclick = () => act('open', { open: !c.open }, c.open ? 'Clan is invite only now' : 'Clan is open to join');
+            $('#clEdit').onclick = () =>
+              modal({
+                title: `Edit ${c.name}`,
+                ok: 'Save',
+                body: `<label class="f"><span>Name (3–24 letters, numbers or spaces)</span><input class="in" id="ceN" maxlength="24" value="${esc(c.name)}"></label>
+                  <label class="f"><span>Tag (2–4 letters or numbers)</span><input class="in mono" id="ceT" maxlength="4" value="${esc(c.tag)}"></label>
+                  <label class="f"><span>Emoji</span><input class="in" id="ceE" maxlength="8" value="${esc(c.emoji || '')}"></label>
+                  <label class="f"><span>About</span><input class="in" id="ceA" maxlength="140" value="${esc(c.about || '')}" placeholder="Leave empty to remove it"></label><div class="err"></div>`,
+                onOk: async ov => {
+                  await A('pba_clan_act', { p_id: c.id, p_action: 'edit', p_arg: { name: $('#ceN', ov).value, tag: $('#ceT', ov).value, emoji: $('#ceE', ov).value, about: $('#ceA', ov).value } });
+                  toast('Clan updated');
+                  this.one(v, id);
+                },
+              });
+            const del = $('#clDel');
+            if (del)
+              del.onclick = async () => {
+                const ok = await confirmBox({ title: `Delete ${c.name}?`, text: `The clan, its roster and its chat are removed for all ${num(M.length)} member${M.length === 1 ? '' : 's'}. This can’t be undone.`, ok: 'Delete clan', type: c.tag });
+                if (!ok) return;
+                try {
+                  await A('pba_clan_delete', { p_id: c.id });
+                  toast(`${c.name} deleted`);
+                  location.hash = '#/clans';
+                } catch (e) {
+                  toast(e.message, 'err');
+                }
+              };
+            const clr = $('#clClear');
+            if (clr)
+              clr.onclick = async () => {
+                const ok = await confirmBox({ title: 'Clear this clan’s chat?', text: 'Every message in the clan chat is deleted.', ok: 'Clear chat' });
+                if (ok) act('clear_chat', {}, 'Clan chat cleared');
+              };
+            v.onclick = async e => {
+              const b = e.target.closest('[data-kick],[data-own]');
+              if (!b) return;
+              if (b.dataset.kick) {
+                const ok = await confirmBox({ title: `Remove @${esc(b.dataset.kick)}?`, text: `They’re taken out of ${esc(c.name)}. They can join another clan.`, ok: 'Remove' });
+                if (ok) act('kick', { username: b.dataset.kick }, `@${b.dataset.kick} removed`);
+              } else {
+                const ok = await confirmBox({ title: `Make @${esc(b.dataset.own)} the owner?`, text: 'The current owner becomes a normal member.', ok: 'Make owner', danger: false });
+                if (ok) act('owner', { username: b.dataset.own }, `@${b.dataset.own} owns the clan now`);
+              }
+            };
+          },
+        };
+        const st = document.createElement('style');
+        st.textContent = `.cl-e.big{font-size:44px;width:64px;height:64px;display:grid;place-items:center;border-radius:18px;background:var(--bg2)}.cl-chat{display:flex;flex-direction:column;gap:6px;max-height:520px;overflow:auto}.cl-msg{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;padding:7px 10px;border-radius:10px;background:var(--bg2);font-size:13px}.cl-msg small{color:var(--mut);font-size:11px}.cl-msg span{overflow-wrap:anywhere}`;
+        document.head.appendChild(st);
       }
 
       /* ================= HELPERS: a weaker gift panel (helper.html) for trusted people =================
