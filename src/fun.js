@@ -105,6 +105,7 @@
     if (w.last !== today()) w.last = today();
     else w.bonus = Math.max(0, w.bonus - 1);
     w.n++;
+    if (window.PBBus) PBBus.emit('wheel', {});
     // pick the prize first, then turn the wheel to land on it
     let r = Math.random() * SEG.reduce((s, x) => s + x.w, 0),
       k = 0;
@@ -366,6 +367,7 @@
     if (k === 0) W().bonus++;
     s.hist.unshift({ t: Date.now(), place: k + 1, pet: me.id });
     s.hist = s.hist.slice(0, 20);
+    if (window.PBBus) PBBus.emit('race', { place: k });
     saveAcct(true);
     const say = UI.v.querySelector('#prSay');
     if (say) say.textContent = k === 0 ? `${me.name} wins!` : `${me.name} finished ${PLACE[k]}.`;

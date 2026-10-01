@@ -10,7 +10,7 @@
       social: ['social'],
       profile: ['profile', 'learn'],
     };
-    const LBL = { markets: 'Stocks & coins', news: 'News', portfolio: 'Holdings', office: 'Office', bank: 'Bank', inventory: 'Overview', pets: 'Pets', garden: 'Garden', shop: 'Shop', store: 'Store', play: 'Modes', races: 'Pet Races', tourney: 'Tournaments', pass: 'Battle Pass', ranks: 'Leaderboard', profile: 'Profile', learn: 'Learn' };
+    const LBL = { markets: 'Stocks & coins', news: 'News', portfolio: 'Holdings', office: 'Office', bank: 'Bank', inventory: 'Overview', pets: 'Pets', garden: 'Garden', shop: 'Shop', store: 'Store', play: 'Modes', races: 'Pet Races', fall: 'Fall Event', tourney: 'Tournaments', pass: 'Battle Pass', ranks: 'Leaderboard', profile: 'Profile', learn: 'Learn' };
     const hubOf = {};
     for (const [h, ks] of Object.entries(HUBS)) for (const k of ks) hubOf[k] = h;
     hubOf.asset = 'markets';

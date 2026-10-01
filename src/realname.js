@@ -7,7 +7,7 @@
 (() => {
   const CL = () => window.PBCloud;
   let asking = false;
-  const busy = () => document.querySelector('#modalRoot.open, #packRoot.open, #tutRoot, .fw-pop, .ar-wrap');
+  const busy = () => document.querySelector('#modalRoot.open, #packRoot.open, #tutRoot, .fw-pop, .ar-wrap, #fallIntro');
   async function check() {
     try {
       if (asking || !CL() || !CL().linked()) return;

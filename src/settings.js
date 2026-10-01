@@ -9,6 +9,7 @@
   const SEC = [
     ['account', 'Account', '<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/>'],
     ['game', 'Game', '<rect x="3" y="7" width="18" height="11" rx="4"/><path d="M8 11v3M6.5 12.5h3M15 12h.01M17.5 11h.01"/>'],
+    ['sound', 'Sound & music', '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>'],
     ['look', 'Appearance', '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18c-2 0-2-2-1-3s1-3-1-3-3-1-3-3 2-3 5-3 3-3 0-6z"/>'],
     ['alerts', 'Notifications', '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>'],
     ['data', 'Data & about', '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'],
@@ -104,8 +105,9 @@
       ${row('Default chart', 'Used when you open a stock.', `<select class="txt st-sel" id="stChart">${CHART_MODES.map(([v, l]) => `<option value="${v}" ${(settings.chartStyle || 'area') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
       ${row('Chart overlays', 'Shown on every price chart.', `<div class="st-chk"><label><input type="checkbox" data-ind="vol" ${ind.vol !== false ? 'checked' : ''}> Volume</label><label><input type="checkbox" data-ind="ma20" ${ind.ma20 ? 'checked' : ''}> MA 20</label><label><input type="checkbox" data-ind="ma50" ${ind.ma50 ? 'checked' : ''}> MA 50</label></div>`)}
       ${row('AI assistant', `You’re chatting with <b>${esc(who.name)}</b>. 22 personalities to pick from.`, '<button class="btn sm" id="stAI">Change</button>')}
-      ${row('Sound effects', 'Little blips for trades, headlines and pack pulls.', sw('stSound', settings.sound !== false, 'Sound effects'))}
     </section>
+
+    ${window.PBAudio ? PBAudio.settingsHTML() : ''}
 
     <section class="card st-sec" id="st-look"><div class="st-h"><h2>Appearance</h2><p>Make it yours.</p></div>
       ${row('Look', 'Classic is the clean graphite look. Terminal is the dark trading-desk look.', seg('stLook', [['classic', 'Classic'], ['terminal', 'Terminal']], isClassic() ? 'classic' : 'terminal'))}
@@ -226,6 +228,7 @@
         })
     );
     el.querySelector('#stAI').onclick = () => window.BuckAI && BuckAI.picker && BuckAI.picker();
+    if (window.PBAudio) PBAudio.bindSettings(el);
     on('stSound', v => {
       settings.sound = v;
       saveSettings();
