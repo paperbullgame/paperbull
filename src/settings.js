@@ -1,5 +1,5 @@
 /* =====================================================================
-   SETTINGS — one organized place for everything: Account, Game,
+   SETTINGS, one organized place for everything: Account, Game,
    Appearance (themes live here), Notifications, Data & about.
    Replaces the themes-only settings page; the theme picker is kept.
    ===================================================================== */
@@ -125,7 +125,7 @@
 
     <section class="card st-sec" id="st-data"><div class="st-h"><h2>Data & about</h2><p>Your save lives in this browser${u ? ' and in your online account' : ''}. Save codes are under <b>Account</b>.</p></div>
       ${row('Clear this device', 'Removes every player, setting and cached market from this browser. Online accounts are not deleted.', '<button class="btn sm danger" id="stWipe">Clear data…</button>')}
-      <div class="st-about"><b>${APP_NAME}</b> is a game. Virtual money, a simulated market, made-up headlines — no real trades, no real funds, no real market data. Prices start near real-world ballpark levels and then move on their own.
+      <div class="st-about"><b>${APP_NAME}</b> is a game. Virtual money, a simulated market, made-up headlines, no real trades, no real funds, no real market data. Prices start near real-world ballpark levels and then move on their own.
         <small>Made by Taylan Gurcan · ${ASSETS.length.toLocaleString()} assets · ${(typeof THEMES !== 'undefined' ? THEMES.length : 0) || ''} themes</small></div>
     </section>
   </div></div>`;
@@ -205,7 +205,7 @@
     on('stOneTap', v => {
       settings.oneTap = v;
       saveSettings();
-      toast(v ? 'One-tap trading on — orders go straight through' : 'One-tap trading off', 'ok');
+      toast(v ? 'One-tap trading on: orders go straight through' : 'One-tap trading off', 'ok');
     });
     on('stPro', v => {
       settings.advanced = v;
@@ -310,7 +310,7 @@
         if (p === 'granted') {
           settings.nDesktop = true;
           saveSettings();
-          toast('Browser notifications on — you’ll hear about fills while you’re in another tab', 'ok');
+          toast('Browser notifications on: you’ll hear about fills while you’re in another tab', 'ok');
         } else {
           input.checked = false;
           settings.nDesktop = false;
@@ -326,7 +326,7 @@
         title: 'Clear this device?',
         confirm: 'Clear everything',
         danger: true,
-        html: `This removes <b>every player, setting and cached market</b> from this browser and reloads the game. Online accounts stay safe on the server — you can log back in.<br><br>Type <b>CLEAR</b> to confirm.<input class="txt" id="wipeT" autocomplete="off" style="margin-top:10px">`,
+        html: `This removes <b>every player, setting and cached market</b> from this browser and reloads the game. Online accounts stay safe on the server, you can log back in.<br><br>Type <b>CLEAR</b> to confirm.<input class="txt" id="wipeT" autocomplete="off" style="margin-top:10px">`,
         onConfirm: r => {
           if (r.querySelector('#wipeT').value.trim().toUpperCase() !== 'CLEAR') return false;
           try {

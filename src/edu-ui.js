@@ -1,4 +1,4 @@
-/* ===================== PAPERBULL LEARN — UI ===================== */
+/* ===================== PAPERBULL LEARN. UI ===================== */
 (function () {
   'use strict';
   const L = EDU,
@@ -846,7 +846,7 @@ button.ed-sc{cursor:pointer}@media(hover:hover){button.ed-sc:hover{transform:tra
     isArc
       ? ''
       : `<div class="ed-tabs">${['All', ...subs].map(s => `<button class="ed-tab ${gState.s === s ? 'on' : ''}" data-a="subj" data-s="${E(s)}" style="--c:${s === 'All' ? '#6f5cff' : COL[s]}">${IC[s]}${E(s)} <span>${fmt(s === 'All' ? topicsN : sks.filter(k => k.s === s).length * 10)}</span></button>`).join('')}</div>
-  <div class="ed-tools"><label class="ed-sbox">${IC.search}<input class="ed-search" id="edSearch" placeholder="Search ${fmt(topicsN)} topics — try fractions, planets, capitals" value="${E(gState.q)}" autocomplete="off"></label><button class="ed-btn pri" data-a="random">${IC.dice}<span class="t">Random</span></button></div>`
+  <div class="ed-tools"><label class="ed-sbox">${IC.search}<input class="ed-search" id="edSearch" placeholder="Search ${fmt(topicsN)} topics: try fractions, planets, capitals" value="${E(gState.q)}" autocomplete="off"></label><button class="ed-btn pri" data-a="random">${IC.dice}<span class="t">Random</span></button></div>`
   }
   <div class="ed-list" id="edList" style="${isArc ? 'margin-top:16px' : ''}"></div><div id="edMore"></div>`;
     list(g);
@@ -2204,7 +2204,7 @@ button.ed-sc{cursor:pointer}@media(hover:hover){button.ed-sc:hover{transform:tra
       b.className = 'edu-toggle';
       b.type = 'button';
       b.innerHTML = `${IC.cap}<span class="t">Learn Mode</span>`;
-      b.title = 'Switch to Learn Mode — K–12 lessons & games';
+      b.title = 'Switch to Learn Mode. K–12 lessons & games';
       b.onclick = () => open({ v: 'home' });
       tr.insertBefore(b, tr.firstChild);
     }
@@ -2230,7 +2230,7 @@ button.ed-sc{cursor:pointer}@media(hover:hover){button.ed-sc:hover{transform:tra
           try {
             el.insertAdjacentHTML(
               'afterbegin',
-              `<section class="card pb-arc-banner" id="pbArc"><span class="i">${IC['Candle Arcade']}</span><div><b>Candle Arcade — 60 games</b><small>Pattern Spotter, Signal Reader, Candle Builder, Price Reader, Trend Detective, Support & Resistance</small></div></section>`
+              `<section class="card pb-arc-banner" id="pbArc"><span class="i">${IC['Candle Arcade']}</span><div><b>Candle Arcade: 60 games</b><small>Pattern Spotter, Signal Reader, Candle Builder, Price Reader, Trend Detective, Support & Resistance</small></div></section>`
             );
             q$('#pbArc', el).onclick = () => open({ v: 'grade', g: 'arc' });
           } catch (e) {}

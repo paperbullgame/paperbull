@@ -3799,7 +3799,7 @@
         same_code: 'That’s the same code as now.',
         bad_tag: 'Tags can only use letters, numbers, spaces, - and _ (max 20 characters).',
         too_many_tags: 'Max 12 tags per player.',
-        slow_down: 'Slow down — wait a minute and try again.',
+        slow_down: 'Slow down: wait a minute and try again.',
         setup_done: 'Setup is already finished. Sign in instead.',
         weak_password: 'Password must be at least 10 characters.',
         bad_username: 'Username: 3–20 letters, numbers, _ . or -',
@@ -4553,7 +4553,7 @@
         <div class="card dchart"><div class="card-h"><h3>Players per day</h3><div class="seg" id="dSeg">${[['dau', 'Active'], ['new', 'New']].map(([m, l]) => `<button data-m="${m}" class="${this.metric === m ? 'on' : ''}">${l}</button>`).join('')}</div></div>
           <div class="chart" id="c1"></div><p class="small muted chart-note" id="cNote"></p></div>
         <div class="dside">
-          <div class="card"><div class="card-h"><h3>Needs attention</h3></div>${att.length ? `<div class="att">${att.map(([c, t, d, h]) => `<a class="att-i ${c}" href="${h}"><i></i><span><b>${t}</b><small>${d}</small></span><em>›</em></a>`).join('')}</div>` : `<div class="empty small ok-empty">${IC.ok}<span>All clear — nothing needs you right now.</span></div>`}</div>
+          <div class="card"><div class="card-h"><h3>Needs attention</h3></div>${att.length ? `<div class="att">${att.map(([c, t, d, h]) => `<a class="att-i ${c}" href="${h}"><i></i><span><b>${t}</b><small>${d}</small></span><em>›</em></a>`).join('')}</div>` : `<div class="empty small ok-empty">${IC.ok}<span>All clear: nothing needs you right now.</span></div>`}</div>
         </div>
       </div>
       <div class="card" style="margin-top:16px"><div class="card-h"><h3>Who’s online</h3><span class="small muted" id="onlNote">Refreshes every 30 seconds</span></div><div id="onl"></div></div>`;
@@ -5542,7 +5542,7 @@
         <label class="f" id="piw" hidden><span>Item</span><select class="in" id="pi">${itemOptions(x.item_id)}</select></label>
         <label class="f"><span>Max uses (empty = unlimited)</span><input class="in" id="pm" type="number" min="1" value="${x.max_uses || ''}" placeholder="Unlimited"></label>
         <label class="f"><span>Expires (empty = never)</span><input class="in" id="pe" type="datetime-local" value="${localInput(x.expires_at)}"></label>
-        <label class="f"><span>Status</span><select class="in" id="ps"><option value="1" ${x.active ? 'selected' : ''}>Live — players can use it</option><option value="0" ${x.active ? '' : 'selected'}>Off</option></select></label></div>
+        <label class="f"><span>Status</span><select class="in" id="ps"><option value="1" ${x.active ? 'selected' : ''}>Live: players can use it</option><option value="0" ${x.active ? '' : 'selected'}>Off</option></select></label></div>
         <label class="f"><span>Message (optional, shown in the game)</span><input class="in" id="pmsg" maxlength="200" value="${esc(x.message || '')}" placeholder="Thanks for playing PAPERBULL!"></label>
         <div class="promo-prev" id="pPrev"></div><div class="err"></div>`,
             onMount: ov => {
@@ -5588,7 +5588,7 @@
                   active: $('#ps', ov).value === '1',
                 },
               });
-              toast(p ? 'Code saved' : 'Code created — share it with your players!');
+              toast(p ? 'Code saved' : 'Code created: share it with your players!');
               this.load();
             },
           });
@@ -6707,7 +6707,7 @@
           if (!ro)
             $('#shReset').onclick = async () => {
               const n = Object.keys(this.ov || {}).length;
-              if (!n) return toast('Nothing to clear — every item is at its normal price.');
+              if (!n) return toast('Nothing to clear, every item is at its normal price.');
               const ok = await confirmBox({ title: 'Clear all overrides?', text: `${n} item${n === 1 ? '' : 's'} go back to their normal price and on sale.`, ok: 'Clear all' });
               if (!ok) return;
               const p = {};
@@ -6827,7 +6827,7 @@
         <div class="kpi c2"><small><span class="ic">${IC.pulse}</span>Last 30 days</small><b class="mono">${cents(d.revenue_30d_cents)}</b><em>before Stripe fees</em></div>
         <div class="kpi c4"><small><span class="ic">${IC.users}</span>Buyers</small><b class="mono">${num(d.buyers)}</b><em>players who paid</em></div>
         <div class="kpi"><small><span class="ic">${IC.shield}</span>VIP / Pro</small><b class="mono">${num(d.vips)} / ${num(d.pros)}</b><em>active VIPs · Pro owners</em></div></div>
-      <div class="card sto-live ${d.live ? 'on' : ''}"><div class="card-h"><h3>Store status</h3><span class="pill ${d.live ? 'p-ok' : 'p-warn'}"><i></i>${d.live ? 'Open — players can buy' : 'Closed — buttons say “Coming soon”'}</span></div>
+      <div class="card sto-live ${d.live ? 'on' : ''}"><div class="card-h"><h3>Store status</h3><span class="pill ${d.live ? 'p-ok' : 'p-warn'}"><i></i>${d.live ? 'Open, players can buy' : 'Closed, buttons say “Coming soon”'}</span></div>
         <ol class="sto-steps">
           <li>Create a free <b>Stripe</b> account at stripe.com (use <b>Test mode</b> first to try it without real money).</li>
           <li>Stripe → Developers → API keys → copy the <b>Secret key</b> (<span class="mono">sk_…</span>).</li>
@@ -6846,7 +6846,7 @@
           <td class="r mono">${num(p.sold)}</td><td><label class="sw"><input type="checkbox" data-sa="${esc(p.id)}" ${p.active ? 'checked' : ''} ${own ? '' : 'disabled'}><span></span></label></td></tr>`
           )
           .join('')}</tbody></table></div></div>
-      <div class="grid g2"><div class="card"><div class="card-h"><h3>Give Pro or VIP</h3><span class="small muted">For support — e.g. a payment that went wrong</span></div>
+      <div class="grid g2"><div class="card"><div class="card-h"><h3>Give Pro or VIP</h3><span class="small muted">For support: e.g. a payment that went wrong</span></div>
         <label class="f"><span>Username</span><input class="in" id="enU" placeholder="username" autocomplete="off"></label>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-en="pro">Give Pro</button><button class="btn" data-en="unpro">Remove Pro</button><button class="btn" data-en="vip30">+30 days VIP</button><button class="btn" data-en="unvip">End VIP</button></div></div>
       <div class="card"><div class="card-h"><h3>How money flows</h3></div><p class="small muted" style="margin:0">Players pay on Stripe’s own checkout page. When Stripe confirms the payment, the server adds coins/items as a gift the player receives instantly, and turns on Pro/VIP. Refunds you make in Stripe automatically take the coins back and switch off Pro/VIP. Stripe pays out to your bank on its normal schedule.</p></div></div>
@@ -7066,7 +7066,7 @@
             st = d.stats || {},
             recent = d.recent || [],
             muted = d.muted || [];
-          /* reports come one row per report — group them by message */
+          /* reports come one row per report: group them by message */
           const groups = [],
             byMsg = {};
           for (const r of d.reports || []) {

@@ -1,5 +1,5 @@
 /* =====================================================================
-   PETS+ — missions, a sidekick slot, Prime evolution, auto-feeder and
+   PETS+: missions, a sidekick slot, Prime evolution, auto-feeder and
    pet records. Patches the base Pets screen and the perk system.
    ===================================================================== */
 (() => {

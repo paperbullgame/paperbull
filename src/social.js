@@ -1,5 +1,5 @@
 /* =====================================================================
-   SOCIAL — chat (global, clan, DMs), clans, 1v1 duels in the shared
+   SOCIAL: chat (global, clan, DMs), clans, 1v1 duels in the shared
    arena, and the weekly season board. Everything server-backed goes
    through PBCloud.rpc; realtime pings come from PBLive with polling
    as the fallback (only while the relevant tab is on screen).

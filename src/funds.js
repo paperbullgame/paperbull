@@ -1,5 +1,5 @@
 /* =====================================================================
-   FUNDS — sector ETFs and index funds built from the real companies in
+   FUNDS: sector ETFs and index funds built from the real companies in
    the game. In the simulated market a fund's price follows the average
    move of its members (so XLK really is "all of tech"); in real-market
    mode it follows the real ETF's price.

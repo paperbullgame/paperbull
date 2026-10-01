@@ -1,5 +1,5 @@
 /* =====================================================================
-   WORLD MARKET — one market for every player.
+   WORLD MARKET, one market for every player.
    Before: every browser ran its own random market, so no two players
    ever saw the same price. Now every price, headline and market event is
    a pure function of the clock: log price(t) = drift + multi-scale noise

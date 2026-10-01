@@ -1,5 +1,5 @@
 /* ============================================================
-   PAPERBULL legal settings — change these in ONE place.
+   PAPERBULL legal settings: change these in ONE place.
    Every legal page and the in-game footer read from here.
    ============================================================ */
 window.PB_LEGAL = {

@@ -165,7 +165,7 @@
   }
 
   /* =====================================================================================
-     SCENE: market — parallax price lines (far = dim/slow/thin, near = brighter with glow + wash),
+     SCENE: market: parallax price lines (far = dim/slow/thin, near = brighter with glow + wash),
      tick pulses running along the lines, an occasional faint candlestick train, drifting dust
      ===================================================================================== */
   const market = (() => {
@@ -453,7 +453,7 @@
   })();
 
   /* =====================================================================================
-     SCENE: snow — far/mid/near flakes (near ones are big soft blurred sprites), sway, wind gusts
+     SCENE: snow: far/mid/near flakes (near ones are big soft blurred sprites), sway, wind gusts
      that tilt the whole field, a few sparkly flakes, and a soft bank that slowly builds at the bottom
      ===================================================================================== */
   const snow = (() => {
@@ -673,7 +673,7 @@
   })();
 
   /* =====================================================================================
-     SCENE: aurora — ribbons drawn column-by-column (2px columns) into a 1/8-scale buffer (one unit gradient per ribbon),
+     SCENE: aurora: ribbons drawn column-by-column (2px columns) into a 1/8-scale buffer (one unit gradient per ribbon),
      upscaled onto the canvas (bilinear = soft for free). The whole scene repaints at 15fps.
      ===================================================================================== */
   const aurora = (() => {
@@ -786,7 +786,7 @@
   })();
 
   /* =====================================================================================
-     SCENE: bokeh — out-of-focus light orbs in theme colors; near orbs bigger, softer, dimmer
+     SCENE: bokeh: out-of-focus light orbs in theme colors; near orbs bigger, softer, dimmer
      ===================================================================================== */
   const bokeh = (() => {
     const NO = 44,
@@ -864,7 +864,7 @@
   })();
 
   /* =====================================================================================
-     SCENE: stars — 3 parallax layers drifting left, twinkle, soft nebula glow, rare shooting stars
+     SCENE: stars: 3 parallax layers drifting left, twinkle, soft nebula glow, rare shooting stars
      ===================================================================================== */
   const stars = (() => {
     const NS = 460,
@@ -1107,7 +1107,7 @@
     },
     on: () => wantOn(),
     repaint,
-    frame, // draw one frame (dt seconds) — used by tests / perf checks
+    frame, // draw one frame (dt seconds): used by tests / perf checks
     running: () => !!raf,
     frames: () => frames,
     /** get or set the scene: 'market' | 'snow' | 'aurora' | 'bokeh' | 'stars' | 'off' */

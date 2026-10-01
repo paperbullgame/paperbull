@@ -1,5 +1,5 @@
 /* =====================================================================
-   TIDY — splits the long screens into small tabs so each page shows one
+   TIDY: splits the long screens into small tabs so each page shows one
    thing at a time (Pets, Shop, Profile), and packs the Home extras into
    a neat row. It only regroups the cards other modules already draw,
    so nothing else has to change. The last tab you picked is remembered.

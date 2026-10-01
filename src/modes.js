@@ -1,5 +1,5 @@
 /* =====================================================================
-   PLAY — game modes hub (route 'play', 'play/<mode>').
+   PLAY: game modes hub (route 'play', 'play/<mode>').
    Speed Round · Up or Down · Crash (free tokens only) · Historical Replay.
    Per-player state lives in acct.modes (normalized for old saves):
      wk (Monday UTC key), best{mode: weekly best}, sub{mode: best sent},
@@ -245,7 +245,7 @@
         if (ret >= 0.05) confetti();
         repaint();
         return {
-          html: rewardHTML(c, xp, pb ? 'New weekly best!' : r.tradeCount ? '' : 'No trades — make at least one trade to earn coins.'),
+          html: rewardHTML(c, xp, pb ? 'New weekly best!' : r.tradeCount ? '' : 'No trades: make at least one trade to earn coins.'),
           actions: [{ label: 'Play again', primary: true, fn: startSpeed }],
         };
       },
@@ -302,7 +302,7 @@
         <div class="ud-btns"><button class="ud-b up" data-call="up"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Higher</button><button class="ud-b dn" data-call="down"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>Lower</button></div>
       </div>
       <div class="ud-meta"><div><small>Streak</small><b data-u="streak">${m.udStreak}</b></div><div><small>Next win pays</small><b data-u="mult">×${udMult(m.udStreak + 1).toFixed(1)}</b></div><div><small>Best this week</small><b>${m.best.updown || 0}</b></div></div>
-      <p class="md-fine">Will the price be higher or lower in 30 seconds? Each correct call in a row pays more (×1.5 each time). A wrong call resets your streak. Free and unlimited${m.daily.udCoins >= DAILY.udCoins ? ' — daily coin limit reached, wins now pay XP' : ` — up to ${DAILY.udCoins} coins a day`}.</p>
+      <p class="md-fine">Will the price be higher or lower in 30 seconds? Each correct call in a row pays more (×1.5 each time). A wrong call resets your streak. Free and unlimited${m.daily.udCoins >= DAILY.udCoins ? ': daily coin limit reached, wins now pay XP' : `: up to ${DAILY.udCoins} coins a day`}.</p>
     </div>`;
   }
   const udSec = () => clamp(+A._udSec || 30, 1, 120);
@@ -606,7 +606,7 @@
         <button class="cr-go" data-c="go"></button>
       </div>
       <div class="cr-pay" data-c="pay"></div>
-      <p class="cr-free"><b>Tokens are free and can’t be bought or cashed out.</b> Wins turn into XP and battle-pass points — never coins.</p>
+      <p class="cr-free"><b>Tokens are free and can’t be bought or cashed out.</b> Wins turn into XP and battle-pass points, never coins.</p>
       <details class="cr-fair"><summary>Provably fair</summary><p>Before each launch you see the hash of a secret seed. After the round the seed is revealed, so you can check the crash point wasn’t changed: <code>crash = max(1, 0.97 ÷ (1 − r))</code>, where <code>r</code> = first 13 hex digits of SHA-256(seed + ":crash") ÷ 16¹³ (max 100×).</p><div class="cr-seed" data-c="fair"></div></details>
     </div>`;
   }
@@ -620,7 +620,7 @@
     const m = st();
     if (CR.phase === 'run') return;
     if (m.tokens < CR.bet) {
-      toast(m.tokens ? `You only have ${m.tokens} token${m.tokens === 1 ? '' : 's'} left.` : 'Out of tokens — 10 new ones at midnight.', 'info');
+      toast(m.tokens ? `You only have ${m.tokens} token${m.tokens === 1 ? '' : 's'} left.` : 'Out of tokens: 10 new ones at midnight.', 'info');
       return;
     }
     m.tokens -= CR.bet;
@@ -749,7 +749,7 @@
     } else if (CR.phase === 'done') {
       b.textContent = CR.crash.toFixed(2) + '×';
       el.className = 'cr-mult boom';
-      s.textContent = CR.cashed ? `Crashed — you got out at ${CR.cashed.toFixed(2)}×` : 'Crashed!';
+      s.textContent = CR.cashed ? `Crashed, you got out at ${CR.cashed.toFixed(2)}×` : 'Crashed!';
     } else {
       b.textContent = '1.00×';
       el.className = 'cr-mult';
@@ -924,7 +924,7 @@
       name: '2008 Crash',
       when: 'Sep 2008 → Jun 2009',
       dates: ['Sep 2008', 'Jun 2009'],
-      blurb: 'Banks collapse and the market loses half its value. Can you survive — and catch the rebound?',
+      blurb: 'Banks collapse and the market loses half its value. Can you survive, and catch the rebound?',
       ac: '#f0525a',
       assets: [
         ['SPY', 'S&P 500 ETF', 0.004, [[0, 125], [0.08, 121], [0.15, 112], [0.22, 99], [0.3, 91], [0.38, 95], [0.45, 87], [0.55, 90], [0.65, 80], [0.74, 68], [0.8, 72], [0.88, 84], [1, 92]]],
@@ -934,7 +934,7 @@
       ],
       news: [
         [0.07, 'Lehman Brothers files for bankruptcy', 'BANK', false, true],
-        [0.19, 'Congress rejects the $700B bailout — Dow drops 778 points', null, false, false],
+        [0.19, 'Congress rejects the $700B bailout. Dow drops 778 points', null, false, false],
         [0.48, 'The Fed cuts interest rates to almost zero', null, true, false],
         [0.73, 'Stocks hit a 12-year low', null, false, true],
         [0.8, 'Bank stress tests: most big banks are OK', 'BANK', true, true],
@@ -979,7 +979,7 @@
         [0.45, 'Elon Musk tweets “Gamestonk!!”', 'GME', true, true],
         [0.5, 'Short sellers lose billions; a hedge fund needs a $2.75B rescue', 'GME', true, false],
         [0.58, 'Brokers stop people buying GME and AMC', 'GME', false, true],
-        [0.82, 'The squeeze fizzles — GME is down 80% from its peak', 'GME', false, false],
+        [0.82, 'The squeeze fizzles. GME is down 80% from its peak', 'GME', false, false],
       ],
     },
   ];
@@ -1050,7 +1050,7 @@
       </div>`
     ).join('')}</div>
     <div class="md-rew"><span>${coinHTML(40)} + up to ${coinHTML(300)} more at +50%</span><small>${left ? `${left} of ${DAILY.replay} coin replays left today` : 'Coin replays used up today. You still earn XP.'}</small></div>
-    <p class="md-fine">3½ minutes each, $10,000 to start. Price paths are <b>inspired by</b> real events — simplified, squeezed in time and not real market data. Headlines pop at the right moments.</p>`;
+    <p class="md-fine">3½ minutes each, $10,000 to start. Price paths are <b>inspired by</b> real events: simplified, squeezed in time and not real market data. Headlines pop at the right moments.</p>`;
   }
   function startReplay(id) {
     const sc = SBY[id];
@@ -1082,7 +1082,7 @@
         if (ret >= 0.1) confetti();
         repaint();
         return {
-          html: rewardHTML(c, xp, pb ? 'New weekly best!' : played ? '' : 'No trades — make at least one trade to earn coins.'),
+          html: rewardHTML(c, xp, pb ? 'New weekly best!' : played ? '' : 'No trades: make at least one trade to earn coins.'),
           actions: [{ label: 'Play again', primary: true, fn: () => startReplay(id) }],
         };
       },
@@ -1219,7 +1219,7 @@
       UI.v = v;
       UI.feat = featOn();
       if (!UI.feat) {
-        v.innerHTML = `<div class="card md-off"><span class="md-art">${ART.crash}</span><h3>Game modes are turned off right now</h3><p class="muted">Check back soon — the regular market is still open.</p><button class="btn primary" data-go="markets">Go to Markets</button></div>`;
+        v.innerHTML = `<div class="card md-off"><span class="md-art">${ART.crash}</span><h3>Game modes are turned off right now</h3><p class="muted">Check back soon: the regular market is still open.</p><button class="btn primary" data-go="markets">Go to Markets</button></div>`;
         return;
       }
       if (sub && MBY[sub]) UI.mode = sub;

@@ -1,5 +1,5 @@
 /* =====================================================================
-   ARENA — a full-screen, self-contained trading round with its own
+   ARENA: a full-screen, self-contained trading round with its own
    deterministic mini-market. Used by Speed Round, Historical Replay
    (src/modes.js) and friend Duels (src/social.js).
 
@@ -380,7 +380,7 @@
     const txt =
       R.o.leaveText ||
       (R.o.mode === 'duel'
-        ? 'The duel keeps running. Your trades are saved — open the duel again before the timer ends to keep trading.'
+        ? 'The duel keeps running. Your trades are saved: open the duel again before the timer ends to keep trading.'
         : 'This round won’t count and you won’t get a reward.');
     modal({ title: 'Leave the round?', html: `<p>${E(txt)}</p>`, confirm: 'Leave', cancel: 'Keep trading', variant: 'danger', onConfirm: () => close() });
   }
@@ -713,7 +713,7 @@
               return `<button class="ar-hr" data-sel="${i}">${badge(M.assets[i])}<span><b>${E(s)}</b><small>${fmtQty(pp.qty)}</small></span><span class="ar-hv"><b>${money(mv)}</b><small class="${cls(pl)}">${fmtPct(pl)}</small></span></button>`;
             })
             .join('')
-        : `<p class="ar-empty">${R.tick < 0 ? 'Get ready — pick a stock to start with.' : 'No positions. Buy something that’s moving!'}</p>`);
+        : `<p class="ar-empty">${R.tick < 0 ? 'Get ready: pick a stock to start with.' : 'No positions. Buy something that’s moving!'}</p>`);
     if (q.hold._h !== hh) q.hold.innerHTML = q.hold._h = hh;
   }
 

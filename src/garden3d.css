@@ -25,7 +25,7 @@
 .g3-hint { position: absolute; left: 50%; bottom: 16px; z-index: 5; transform: translateX(-50%); font: 700 12px var(--sans); color: #fff; background: rgba(10, 14, 30, 0.55); backdrop-filter: blur(6px); padding: 7px 13px; border-radius: 99px; pointer-events: none; transition: opacity 1s; white-space: nowrap; }
 .g3-hint.off { opacity: 0; }
 .pg-stage.g3d .pg-top { flex-wrap: wrap; row-gap: 6px; }
-.pg-act.g3-tog { background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; }
+.pg-act.g3-tog { background: #2563eb; color: #fff; }
 .pg-act.g3-tog.on { background: linear-gradient(135deg, #ff9a1f, #ff5e1a); }
 .pg-stage.g3d:fullscreen, .pg-stage.g3d:-webkit-full-screen { height: 100vh !important; width: 100vw !important; border-radius: 0 !important; margin: 0; background: #000; }
 .pg-stage.g3d:fullscreen .g3-canvas { touch-action: none; }

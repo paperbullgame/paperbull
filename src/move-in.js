@@ -1,4 +1,4 @@
-/* MOVE-IN — the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull.
+/* MOVE-IN: the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull.
    The page at the old address packs up the player's login and (for guests) their save into the link
    (#pbmove=…) and sends them here. This runs before anything else: it stops the page, writes that data
    into this site's storage, fetches a logged-in player's save from the server, then reloads, so the

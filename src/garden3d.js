@@ -1,5 +1,5 @@
 /* =====================================================================
-   3D PET GARDEN — a living, explorable 3D world for your pets.
+   3D PET GARDEN: a living, explorable 3D world for your pets.
    · three.js (loaded on demand from a CDN, falls back to the 2D garden)
    · Rolling terrain, swaying grass, flowers, trees, a pet house, fence,
      mountains, clouds, sun / moon / stars from your real clock

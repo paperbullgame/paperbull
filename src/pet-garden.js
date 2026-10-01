@@ -1,5 +1,5 @@
 /* =====================================================================
-   PET GARDEN — a living scene where your pets hang out.
+   PET GARDEN: a living scene where your pets hang out.
    · Real day / sunset / night sky from your clock (stars, moon, fireflies)
    · Pets wander, hop, nap and say hi; exotics that fly float in the air
    · Tap a pet to pet it, feed it or make it your companion

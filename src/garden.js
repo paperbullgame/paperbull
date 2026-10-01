@@ -557,7 +557,7 @@
     draw() {
       const el = this.el;
       if (!el) return;
-      el.innerHTML = `<section class="card gd-head"><div><h2 style="margin:0">Stock Garden</h2><p class="muted" style="margin:4px 0 0">Plant a seed on any stock. It grows over time and thrives when the stock goes up — or wilts when it drops. Harvest a full-grown plant for a bonus.</p></div><div class="gd-stats" id="gdStats"></div></section>
+      el.innerHTML = `<section class="card gd-head"><div><h2 style="margin:0">Stock Garden</h2><p class="muted" style="margin:4px 0 0">Plant a seed on any stock. It grows over time and thrives when the stock goes up, or wilts when it drops. Harvest a full-grown plant for a bonus.</p></div><div class="gd-stats" id="gdStats"></div></section>
         <section class="card"><div class="gd-grid" id="gdPlots"></div></section><section class="card" id="gdPanel" hidden></section>`;
       this.drawPlots();
       this.drawPanel();

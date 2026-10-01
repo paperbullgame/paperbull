@@ -1,5 +1,5 @@
 /* =====================================================================
-   PROGRESSION — Battle Pass, Quests, Login calendar, Prestige.
+   PROGRESSION. Battle Pass, Quests, Login calendar, Prestige.
    Screen: SCREENS.pass (route 'pass', 'pass/quests', 'pass/calendar',
    'pass/prestige'). All state lives in acct so it syncs with the save:
      acct.pass     = {season, pts, claimed:{free:[t], prem:[t]}, prem, recap}
@@ -235,7 +235,7 @@
     p.pts += Math.round(n);
     const t1 = tierOf(p.pts);
     if (t1 > t0 && passOn()) {
-      toast(`Battle Pass tier ${t1} reached — rewards ready`, 'xp');
+      toast(`Battle Pass tier ${t1} reached: rewards ready`, 'xp');
       try {
         SFX.play('rare');
       } catch (e) {}
@@ -562,7 +562,7 @@
       title: `Prestige ${ROMAN[n + 1]}!`,
       cancel: '',
       confirm: 'Let’s go',
-      html: `<div class="bp-pdone">${badge(n + 1, 'xl')}<p>You’re back to level 1 with a permanent <b>+${5 * (n + 1)}% XP</b> and <b>+${5 * (n + 1)}% coins</b>.${t ? ` New title unlocked: <b>${esc(ITEM[t].name)}</b> — equip it in the Shop.` : ''}</p></div>`,
+      html: `<div class="bp-pdone">${badge(n + 1, 'xl')}<p>You’re back to level 1 with a permanent <b>+${5 * (n + 1)}% XP</b> and <b>+${5 * (n + 1)}% coins</b>.${t ? ` New title unlocked: <b>${esc(ITEM[t].name)}</b>: equip it in the Shop.` : ''}</p></div>`,
     });
     paintBadges();
     dirty();
@@ -869,7 +869,7 @@
       return `<div class="bp-qgrid">
         <section class="card bp-qc"><div class="card-h"><h3>Daily quests <span class="bp-cnt">${dn}/${s.daily.length}</span></h3><span class="muted small bp-reset">${I_CLOCK}New in <span data-dleft>${fmtLeft(nextMidnight() - now())}</span></span></div>
           ${s.daily.map((q, i) => row(q, 'd', i)).join('')}
-          <p class="muted small bp-note">${s.reroll > 0 ? 'Don’t like one? Swap it — 1 free swap per day.' : 'Swap used for today.'}</p></section>
+          <p class="muted small bp-note">${s.reroll > 0 ? 'Don’t like one? Swap it: 1 free swap per day.' : 'Swap used for today.'}</p></section>
         <section class="card bp-qc"><div class="card-h"><h3>Weekly quests <span class="bp-cnt">${wn}/${s.weekly.length}</span></h3><span class="muted small bp-reset">${I_CLOCK}New in <span data-wleft>${fmtLeft(nextMonday() - now())}</span></span></div>
           ${s.weekly.map((q, i) => row(q, 'w', i)).join('')}</section></div>`;
     },
@@ -891,7 +891,7 @@
       const doneAll = c.days.length >= CAL_DAYS;
       return `<section class="card bp-cal">
         <div class="bp-calh"><div><span class="bp-eye2">${esc(mon)}</span><h3>${c.days.length} of ${CAL_DAYS} days claimed</h3>
-          <p class="muted small">Log in any day to claim the next reward — missed days don’t reset you. The calendar starts over each month.</p></div>
+          <p class="muted small">Log in any day to claim the next reward: missed days don’t reset you. The calendar starts over each month.</p></div>
           ${can ? `<button class="btn primary bp-calb" data-cal>Claim day ${next}</button>` : `<span class="bp-calw">${doneAll ? 'Month complete!' : `${I_CLOCK}Next in <span data-dleft>${fmtLeft(nextMidnight() - now())}</span>`}</span>`}</div>
         <div class="bp-days">${cells.join('')}</div>
         <p class="muted small bp-note">Every claim also gives <b>+${CAL_PTS} pass points</b>. Day 30 unlocks the exclusive <b>Loyal Bull</b> title.</p></section>`;
@@ -910,7 +910,7 @@
           <div class="bp-bar"><i style="width:${(pct * 100).toFixed(1)}%"></i></div>
           <div class="bp-bl"><span>Level <b>${lv.level}</b> / ${P_LEVEL}</span><span>${acct.xp.toLocaleString('en-US')} / ${xpForLevel(P_LEVEL).toLocaleString('en-US')} XP</span></div></div></div>
         <div class="bp-bon"><div><small>XP bonus</small><b>+${5 * n}%</b></div><div><small>Coin bonus</small><b>+${5 * n}%</b></div><div><small>Prestige</small><b>${n} / ${MAX_P}</b></div></div>
-        <p class="muted small">Prestige resets <b>only your XP and level</b> — your cash, positions, coins, items and pets stay. Each prestige adds a permanent +5% XP and +5% coins (up to ${MAX_P}), a star badge next to your name, and exclusive titles at I, V and X.</p>
+        <p class="muted small">Prestige resets <b>only your XP and level</b>, your cash, positions, coins, items and pets stay. Each prestige adds a permanent +5% XP and +5% coins (up to ${MAX_P}), a star badge next to your name, and exclusive titles at I, V and X.</p>
         <button class="btn ${can ? 'primary' : ''} bp-prbtn" data-prest ${can ? '' : 'disabled'}>${n >= MAX_P ? 'Max prestige' : can ? `Prestige to ${ROMAN[n + 1]}` : `Locked until level ${P_LEVEL}`}</button>
         <div class="bp-steps">${steps.join('')}</div></section>`;
     },
@@ -940,7 +940,7 @@
       const linked = window.PBCloud && PBCloud.C.s && acct.user === PBCloud.C.s.u;
       if (!linked) return PBStore.buy('pass', btn) ?? Gate.show('signup');
       PBStore.refresh(true);
-      return toast('Couldn’t load the Store — check your connection and try again.', 'err');
+      return toast('Couldn’t load the Store: check your connection and try again.', 'err');
     }
     PBStore.buy('pass', btn);
   }

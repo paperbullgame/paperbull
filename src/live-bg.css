@@ -1,4 +1,4 @@
-/* ===== LIVE BG — one fixed canvas behind the app (market / snow / aurora / bokeh / stars) =====
+/* ===== LIVE BG, one fixed canvas behind the app (market / snow / aurora / bokeh / stars) =====
    Sits above the page background (body / body::before sky) and below #app (z-index 1).
    Never takes pointer events, never affects layout. Hidden on the Space theme (it has its own sky),
    except the Snow scene, which falls over it. */

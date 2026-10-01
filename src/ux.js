@@ -1,5 +1,5 @@
 /* =====================================================================
-   UX — a tidier menu (grouped sections on desktop) and a first-run
+   UX: a tidier menu (grouped sections on desktop) and a first-run
    tutorial with a Skip button on every step.
    ===================================================================== */
 (() => {
@@ -47,14 +47,14 @@
   /* ---------- tutorial ---------- */
   const isPhone = () => innerWidth < 900;
   const STEPS = [
-    { t: 'Welcome to PAPERBULL', b: 'You get <b>$100,000 of pretend money</b> to trade real companies and coins. No real money, no risk — just see how good a trader you are.', center: true },
+    { t: 'Welcome to PAPERBULL', b: 'You get <b>$100,000 of pretend money</b> to trade real companies and coins. No real money, no risk, just see how good a trader you are.', center: true },
     { t: 'Your account value', b: 'This is everything you own: cash plus your stocks and coins. Watch it go up (hopefully) as prices move.', sel: '.card.hero', route: 'home' },
     { t: 'Find something to buy', b: 'Markets has 1,000+ real companies, ETFs and coins. Search, sort by gainers, or tap one to open it.', sel: () => (isPhone() ? '#nav a[data-go="markets"]' : '#nav a[data-go="markets"]'), route: 'home' },
     { t: 'Buy, sell or short', b: 'On a stock’s page, pick an amount and hit <b>Buy</b>. <b>Sell</b> takes your profit. <b>Short</b> bets the price will fall.', sel: '#tradeCard .seg', route: 'asset/AAPL' },
     { t: 'Simulated or real market', b: 'Tap here to switch between the 24/7 <b>simulated market</b> and the <b>real market</b> with actual prices. Each has its own portfolio and leaderboard.', sel: '#top .mkt-chip', route: 'home' },
     { t: 'Coins & the Shop', b: 'You earn <b>coins</b> by trading and logging in. Spend them on packs, pets, themes and power-ups.', sel: '#top .coin-chip', route: 'home' },
-    { t: 'Play more ways', b: 'Game modes, the <b>Battle Pass</b> with quests, clans, chat and 1v1 duels — all in the menu.', sel: () => (isPhone() ? '#navMore' : '#nav a[data-go="play"]'), route: 'home' },
-    { t: 'You’re ready!', b: 'Make your first trade — Buck will cheer you on. You can replay this tour any time from Settings.', center: true, last: true },
+    { t: 'Play more ways', b: 'Game modes, the <b>Battle Pass</b> with quests, clans, chat and 1v1 duels, all in the menu.', sel: () => (isPhone() ? '#navMore' : '#nav a[data-go="play"]'), route: 'home' },
+    { t: 'You’re ready!', b: 'Make your first trade. Buck will cheer you on. You can replay this tour any time from Settings.', center: true, last: true },
   ];
   let i = 0,
     root = null;

@@ -1,4 +1,4 @@
-/* ===== REVEAL FX — pack opening + egg hatching choreography (scoped to #packRoot) =====
+/* ===== REVEAL FX: pack opening + egg hatching choreography (scoped to #packRoot) =====
    Transform/opacity only. One-shot particles are DOM spans removed after they finish. */
 #packRoot.open {
   overflow-x: hidden;

@@ -1,5 +1,5 @@
 /* =====================================================================
-   LOGOS — every stock and coin gets its own logo, everywhere.
+   LOGOS, every stock and coin gets its own logo, everywhere.
    Real companies and coins load their real logo; everything else (the
    2,000 generated names, admin-added tickers, offline) gets a brand mark
    that is generated from the ticker: same mark every time, on every

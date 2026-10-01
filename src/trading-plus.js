@@ -1,5 +1,5 @@
 /* =====================================================================
-   TRADING PLUS — leverage, options, market events and copy trading.
+   TRADING PLUS: leverage, options, market events and copy trading.
    Everything wraps core globals (Asset, Portfolio, valuation, simStep,
    loadMarket, normalizeAcct, newAccount) so the core stays untouched.
    Per-player state lives in acct (lev, options, copy, splitF, levHist,
@@ -238,7 +238,7 @@
   }
 
   /* ================================================================
-     OPTIONS — Black-Scholes with the variance the sim actually produces
+     OPTIONS. Black-Scholes with the variance the sim actually produces
      ================================================================ */
   const erf = x => {
     const s = x < 0 ? -1 : 1;
@@ -522,7 +522,7 @@
       saveMarket();
     } catch (e) {}
     const held = holds(a.sym);
-    addNews({ id: uid(), t, sym: a.sym, text: `SPLIT: ${a.name} completes a ${r}-for-1 stock split — shares now ${fmtUSD(a.price)}`, pct: 0, up: true, mega: held, kind: 'split' }, quiet || !newsworthy(a));
+    addNews({ id: uid(), t, sym: a.sym, text: `SPLIT: ${a.name} completes a ${r}-for-1 stock split: shares now ${fmtUSD(a.price)}`, pct: 0, up: true, mega: held, kind: 'split' }, quiet || !newsworthy(a));
     if (!quiet && held) {
       toast(`${a.sym} split ${r}-for-1: you now have ${r}× the shares at 1/${r} the price. Same value.`, 'news', '✂️');
       notify(`${a.sym} ${r}-for-1 split`, 'Your shares were multiplied. Your position is worth the same.');
@@ -593,7 +593,7 @@
     World.rebuild(a, simT || nowSec());
     IPOS.push(row);
     if (!UNIVERSE.some(u => u[0] === row.sym)) UNIVERSE.push([row.sym, row.name, 'stock', row.p0, row.vol]);
-    if (!quiet || nowSec() - row.t < 2 * 3600) addNews({ id: 'ipo' + slot.w, t: row.t, sym: a.sym, text: `IPO: ${row.name} (${row.sym}) lists today at ${fmtUSD(row.p0)} — ${pop > 0 ? 'strong demand' : 'a shaky debut'}`, pct: pop, up: pop > 0, mega: true, kind: 'ipo' }, quiet);
+    if (!quiet || nowSec() - row.t < 2 * 3600) addNews({ id: 'ipo' + slot.w, t: row.t, sym: a.sym, text: `IPO: ${row.name} (${row.sym}) lists today at ${fmtUSD(row.p0)}, ${pop > 0 ? 'strong demand' : 'a shaky debut'}`, pct: pop, up: pop > 0, mega: true, kind: 'ipo' }, quiet);
     try {
       if (window.BuckAI && BuckAI.reindex) BuckAI.reindex();
     } catch (e) {}
@@ -636,7 +636,7 @@
     if (!UNIVERSE.some(u => u[0] === row.sym)) UNIVERSE.push([row.sym, row.name, 'stock', row.p0, row.vol]);
     const pop = Math.random() < 0.8 ? 0.05 + Math.random() * 0.3 : -(0.03 + Math.random() * 0.12);
     kick(a, Math.log(1 + pop), 0.5);
-    addNews({ id: uid(), t, sym: a.sym, text: `IPO: ${row.name} (${row.sym}) lists today at ${fmtUSD(row.p0)} — ${pop > 0 ? 'strong demand' : 'a shaky debut'}`, pct: pop, up: pop > 0, mega: true, kind: 'ipo' }, quiet);
+    addNews({ id: uid(), t, sym: a.sym, text: `IPO: ${row.name} (${row.sym}) lists today at ${fmtUSD(row.p0)}, ${pop > 0 ? 'strong demand' : 'a shaky debut'}`, pct: pop, up: pop > 0, mega: true, kind: 'ipo' }, quiet);
     try {
       if (window.BuckAI && BuckAI.reindex) BuckAI.reindex();
       saveMarket();
@@ -875,7 +875,7 @@
   }
 
   /* ================================================================
-     ASSET PAGE — leverage in the trade panel, options card, badges
+     ASSET PAGE: leverage in the trade panel, options card, badges
      ================================================================ */
   const levActive = st => st && (st.side === 'buy' || st.side === 'short') && st.lev > 1 && maxLev() >= 2;
   const rt0 = Asset.renderTrade;
@@ -995,7 +995,7 @@
       title: `${st.lev}× ${r.dir === 'long' ? 'Long' : 'Short'} ${E(sym)}`,
       confirm: 'Open position',
       variant: r.dir === 'long' ? 'buy' : 'sell',
-      html: `<div class="preview">${this.previewHTML(r)}</div><p class="small muted" style="margin-top:10px">You ${r.dir === 'long' ? 'profit if the price rises' : 'profit if the price falls'}, ${st.lev}× as fast as a normal trade. If ${E(sym)} reaches <b class="neg">${fmtUSD(r.liq)}</b>, the position is liquidated automatically and you get back only 10% of your margin.<br><b style="color:var(--amber)">Simulation only — no real money.</b></p>`,
+      html: `<div class="preview">${this.previewHTML(r)}</div><p class="small muted" style="margin-top:10px">You ${r.dir === 'long' ? 'profit if the price rises' : 'profit if the price falls'}, ${st.lev}× as fast as a normal trade. If ${E(sym)} reaches <b class="neg">${fmtUSD(r.liq)}</b>, the position is liquidated automatically and you get back only 10% of your margin.<br><b style="color:var(--amber)">Simulation only, no real money.</b></p>`,
       onConfirm: submit,
     });
   };
@@ -1081,7 +1081,7 @@
       title: `Buy ${E(a.sym)} ${os.type}`,
       confirm: `Pay ${fmtUSD(q.cost, 2)}`,
       variant: os.type === 'call' ? 'buy' : 'sell',
-      html: `<div class="preview">${optPrevRows(a, os, K, q, len)}</div><p class="small muted" style="margin-top:10px">${os.type === 'call' ? `Pays off if ${E(a.sym)} is above ${fmtUSD(K)} when it expires in ${lab}.` : `Pays off if ${E(a.sym)} is below ${fmtUSD(K)} when it expires in ${lab}.`} The most you can lose is the premium. You can sell it back any time before expiry.<br><b style="color:var(--amber)">Simulation only — no real money.</b></p>`,
+      html: `<div class="preview">${optPrevRows(a, os, K, q, len)}</div><p class="small muted" style="margin-top:10px">${os.type === 'call' ? `Pays off if ${E(a.sym)} is above ${fmtUSD(K)} when it expires in ${lab}.` : `Pays off if ${E(a.sym)} is below ${fmtUSD(K)} when it expires in ${lab}.`} The most you can lose is the premium. You can sell it back any time before expiry.<br><b style="color:var(--amber)">Simulation only, no real money.</b></p>`,
       onConfirm: buy,
     });
   }
@@ -1197,7 +1197,7 @@
     let h = '';
     if (a.ipo && simT - (a.ipoT || 0) < 86400) h += '<span class="tp-bdg new">NEW</span>';
     const ne = nextEarnings(a);
-    if (ne != null && ne - simT < 2 * H) h += `<span class="tp-bdg earn" title="Earnings report coming — expect a big move">Earnings in ${durShort(ne - simT)}</span>`;
+    if (ne != null && ne - simT < 2 * H) h += `<span class="tp-bdg earn" title="Earnings report coming: expect a big move">Earnings in ${durShort(ne - simT)}</span>`;
     const nd = nextDividend(a);
     if (nd != null && nd - simT < 3 * H) h += `<span class="tp-bdg div" title="Holders get ${fmtPct(divYield(a))} in cash">Dividend in ${durShort(nd - simT)}</span>`;
     return h;
@@ -1241,7 +1241,7 @@
   };
 
   /* ================================================================
-     PORTFOLIO — Leveraged, Options and Copy traders sections
+     PORTFOLIO. Leveraged, Options and Copy traders sections
      ================================================================ */
   const pm0 = Portfolio.mount;
   Portfolio.mount = function (v) {

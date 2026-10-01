@@ -1,4 +1,4 @@
-/* ===== ART PLUS (src/art-plus.css) — pets, eggs, packs, cosmetics =====
+/* ===== ART PLUS (src/art-plus.css): pets, eggs, packs, cosmetics =====
    Loaded before pro.css, whose selectors carry 3 ids; rules that must win use
    `html body:not(#_):not(#_):not(#_):not(#_)` (4 ids) and !important. */
 

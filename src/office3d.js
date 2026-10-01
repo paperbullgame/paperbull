@@ -1,5 +1,5 @@
 /* =====================================================================
-   THE OFFICE IN 3D — a trading floor you look over from behind the desks.
+   THE OFFICE IN 3D: a trading floor you look over from behind the desks.
    Screens show each worker's last trade, managers walk the aisles,
    the city outside follows your clock. three.js loads on demand;
    anything goes wrong and the 2D office takes over.

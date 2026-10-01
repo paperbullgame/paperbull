@@ -1,5 +1,5 @@
 /* =====================================================================
-   REAL MARKET MODE — a second way to play: the real companies and coins
+   REAL MARKET MODE: a second way to play: the real companies and coins
    follow actual market prices (refreshed about once a minute, shared by
    everyone via the pb-quotes Edge Function + pb_quotes cache).
    Your real-market portfolio is completely separate from your simulated
@@ -187,7 +187,7 @@
     toast('Swapping cash for coins only works in the simulated market.', 'err');
   };
   buyLuck = function () {
-    toast('Luck only works in the simulated market — real prices can’t be nudged.', 'err');
+    toast('Luck only works in the simulated market: real prices can’t be nudged.', 'err');
   };
   document.body.classList.add('off-bank');
 
@@ -276,7 +276,7 @@
     let b = document.getElementById('rmBanner');
     const closed = Q && Q.open === false,
       age = Q && Q.at ? Math.round((Date.now() - new Date(Q.at)) / 60000) : null;
-    const html = `<span class="rm-ic real">🌎</span><span><b>Real market</b> · prices from the real stock and crypto markets${age != null ? `, updated ${age <= 1 ? 'just now' : age + ' min ago'}` : ''}.${closed ? ' <b>US stock market is closed</b> — stocks move again at 9:30am ET; crypto trades 24/7.' : ''}</span><button class="linkish" data-rmswitch>Switch</button>`;
+    const html = `<span class="rm-ic real">🌎</span><span><b>Real market</b> · prices from the real stock and crypto markets${age != null ? `, updated ${age <= 1 ? 'just now' : age + ' min ago'}` : ''}.${closed ? ' <b>US stock market is closed</b>: stocks move again at 9:30am ET; crypto trades 24/7.' : ''}</span><button class="linkish" data-rmswitch>Switch</button>`;
     if (!b) {
       b = document.createElement('div');
       b.id = 'rmBanner';

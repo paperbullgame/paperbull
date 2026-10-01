@@ -1,4 +1,4 @@
-/* ===================== ART PLUS — premium pets, eggs, packs & cosmetics =====================
+/* ===================== ART PLUS: premium pets, eggs, packs & cosmetics =====================
    Runs right after shop-plus.js, before init(). Everything here re-skins the existing art:
    - head() / EYES: richer shading, rim light, glossy eyes (pets + avatars)
    - pets (rarity c/r/e/l, never exotic): chibi body + paws under a smaller head, rarity flair
@@ -288,7 +288,7 @@
   function skinFace(it, c) {
     const up = it.up || '#21c77a',
       dn = it.dn || '#f0515f';
-    // [x, open, close, high, low] — a little uptrend with two red pullbacks
+    // [x, open, close, high, low]: a little uptrend with two red pullbacks
     const K = [[6, 31, 27, 25, 33], [12.5, 27, 29, 25, 31], [19, 29, 22, 20, 30], [25.5, 22, 18, 15, 24], [32, 18, 21, 17, 23], [38.5, 21, 14, 12, 22]];
     const candles = K.map(([x, o, cl, h, l]) => {
       const col = cl < o ? up : dn,

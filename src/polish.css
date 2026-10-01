@@ -1,4 +1,4 @@
-/* ===================== PAPERBULL — VISUAL OVERHAUL ===================== */
+/* ===================== PAPERBULL. VISUAL OVERHAUL ===================== */
 :root {
   --pb-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --pb-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -216,10 +216,7 @@ html:not(.classic) .stat-card::after {
   font-family: var(--sans) !important;
 }
 html.classic:not(.dark) .hero [data-b='total'] {
-  background: linear-gradient(120deg, #2b2466 10%, #6b4bff 60%, #c04dff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--tx);
 }
 .hero-sub {
   display: flex;
@@ -315,7 +312,7 @@ html.classic:not(.dark) .hero [data-b='total'] {
 }
 
 /* =====================================================================
-   CLASSIC PURPLE (default look) — aurora sky, glass chrome, crisp cards
+   CLASSIC PURPLE (default look): aurora sky, glass chrome, crisp cards
    ===================================================================== */
 html.classic body {
   background:
@@ -358,11 +355,9 @@ html.classic .promo {
   border-radius: 20px;
 }
 html.classic .stats-wrap {
-  background: rgba(255, 255, 255, 0.14) !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
+  background: var(--panel) !important;
+  border-color: var(--line) !important;
   box-shadow: none !important;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   padding: 12px !important;
 }
 html.classic #topWrap {
@@ -378,8 +373,8 @@ html.classic .tk {
 }
 html.classic body:not(.custom-accent) .btn.primary,
 html.classic body:not(.custom-accent) .promo-go {
-  background: linear-gradient(135deg, #7c6bff, #b44dff) !important;
-  box-shadow: 0 10px 22px -10px #7c4dff;
+  background: var(--brand, #e8700a) !important;
+  box-shadow: none;
 }
 html.classic #view > .card-h h3,
 html.classic .asset-top h2 {
@@ -499,7 +494,7 @@ html.classic.dark .stats-wrap {
 }
 
 /* =====================================================================
-   THEMED LOOK (all 19 color themes) — glow sky + layered surfaces
+   THEMED LOOK (all 19 color themes): glow sky + layered surfaces
    ===================================================================== */
 html:not(.classic) body {
   background:
@@ -1026,9 +1021,9 @@ html.classic.dark #topWrap {
 .tiles .tile {
   position: relative;
   overflow: hidden;
-  padding-top: 16px !important;
 }
 .tiles .tile::before {
+  display: none !important;
   content: '';
   position: absolute;
   inset: 0 0 auto;

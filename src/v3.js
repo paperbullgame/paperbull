@@ -1,5 +1,5 @@
 /* =====================================================================
-   UI v3 — native feel + the new screens
+   UI v3: native feel + the new screens
    · Home: a greeting, and "your office today" next to the daily reward
    · Stock page on phones: a Buy / Sell bar that opens a one-thumb trade sheet
    · Leaderboard: your rank pinned to the bottom, with the gap to the next spot
@@ -205,7 +205,7 @@
           this.el.querySelector('#v3Err').textContent = r.msg;
           return;
         }
-        toast(`${this.side === 'buy' ? 'Bought' : 'Sold'} ${fmtQty(r.trade.qty)} ${this.sym} @ ${fmtUSD(r.trade.price)} — ${tradeQuip(r.trade)}`, 'ok');
+        toast(`${this.side === 'buy' ? 'Bought' : 'Sold'} ${fmtQty(r.trade.qty)} ${this.sym} @ ${fmtUSD(r.trade.price)}, ${tradeQuip(r.trade)}`, 'ok');
         this.close();
         if (current === Asset) Asset.update(true);
       },

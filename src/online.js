@@ -1,5 +1,5 @@
 /* =====================================================================
-   ONLINE — accounts that work on any device, cloud saves,
+   ONLINE: accounts that work on any device, cloud saves,
    a global leaderboard, friends and coin gifts (Supabase RPCs).
    ===================================================================== */
 (() => {

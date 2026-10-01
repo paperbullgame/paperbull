@@ -1,5 +1,5 @@
 /* =====================================================================
-   PAPERBULL — "Trading desk after hours"
+   PAPERBULL, "Trading desk after hours"
    One design language for the default look. Loaded last.
    $P = default dark look, $L = default light look (replaced at build).
    Rules: one accent (orange) for action + selection, green/red only for
@@ -213,7 +213,7 @@ $P .btn:active,
 $L .btn:active {
   transform: scale(0.97);
 }
-/* buy is green, sell is red — money semantics, not brand */
+/* buy is green, sell is red: money semantics, not brand */
 $P .btn.buy,
 $P .btn.big.buy,
 $L .btn.buy,

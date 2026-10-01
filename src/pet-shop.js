@@ -1,5 +1,5 @@
 /* =====================================================================
-   PET SHOP — buy the exact pet you want with coins (Pets screen).
+   PET SHOP: buy the exact pet you want with coins (Pets screen).
    Common → Legendary pets only; Mythic, Secret and Exotic pets still
    come from eggs, events and admin gifts. One pet a day is 30% off.
    ===================================================================== */

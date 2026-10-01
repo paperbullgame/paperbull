@@ -1,5 +1,5 @@
 /* =====================================================================
-   CHART DRAW — label any stock or coin chart: pen, highlighter, line,
+   CHART DRAW: label any stock or coin chart: pen, highlighter, line,
    arrow, text and eraser, in six colors, with undo and clear.
    Drawings are pinned to (time, price), so they stay on the right
    candles when you zoom, scroll, change range or chart style.

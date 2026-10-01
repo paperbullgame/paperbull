@@ -1,5 +1,5 @@
 /* =====================================================================
-   VISUAL 3 — icon set, theme-aware charts, smoother sparklines
+   VISUAL 3: icon set, theme-aware charts, smoother sparklines
    ===================================================================== */
 (() => {
   /* ---------------- colors from the active theme ---------------- */

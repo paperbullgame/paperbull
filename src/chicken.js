@@ -1,5 +1,5 @@
 /* =====================================================================
-   CHICKEN CROSS — a Play mode (route 'play/chicken').
+   CHICKEN CROSS: a Play mode (route 'play/chicken').
    Hop your chicken across a busy road one lane at a time. Every safe
    lane raises the multiplier; cash out whenever you like. Get hit and
    the bet is gone. Uses the same FREE daily tokens as Crash: wins turn
@@ -99,7 +99,7 @@
       <div class="ck-go" data-ck="go"></div>
       <div class="ck-note" data-ck="note">${E(d.note)} · ${d.lanes} lanes · up to ${fmtM(multAt(CH.diff, d.lanes))}</div>
       <div class="cr-pay" data-ck="pay"></div>
-      <p class="cr-free"><b>Tokens are free and can’t be bought or cashed out.</b> Wins turn into XP and battle-pass points — never coins.</p>
+      <p class="cr-free"><b>Tokens are free and can’t be bought or cashed out.</b> Wins turn into XP and battle-pass points, never coins.</p>
       <details class="cr-fair"><summary>Provably fair</summary><p>Before each round you see the hash of a secret seed. Each lane is decided by it in advance and the seed is shown after the round, so you can check nothing was changed: lane <code>i</code> has a car when <code>r &lt; p</code>, where <code>r</code> = first 13 hex digits of SHA-256(seed + ":lane:" + i) ÷ 16¹³ and <code>p</code> is the difficulty’s car chance. Multiplier = 0.97 ÷ (1 − p)<sup>lanes</sup>.</p><div class="cr-seed" data-ck="fair"></div></details>
     </div>`;
   }
@@ -266,7 +266,7 @@
   function start() {
     if (CH.phase === 'run' || CH.busy) return;
     const m = st();
-    if (m.tokens < CH.bet) return toast(m.tokens ? `You only have ${m.tokens} token${m.tokens === 1 ? '' : 's'} left.` : 'Out of tokens — new ones at midnight.', 'info');
+    if (m.tokens < CH.bet) return toast(m.tokens ? `You only have ${m.tokens} token${m.tokens === 1 ? '' : 's'} left.` : 'Out of tokens: new ones at midnight.', 'info');
     m.tokens -= CH.bet;
     if (!CH.next) newNext();
     CH.seed = CH.next.seed;

@@ -1,5 +1,5 @@
 /* =====================================================================
-   PROFILE PICTURES — players 14+ can upload a photo. It's shrunk to a
+   PROFILE PICTURES: players 14+ can upload a photo. It's shrunk to a
    256px square in the browser, checked on the server, and an admin
    approves it before anyone else can see it. Under-14s use avatars.
    An approved picture is the avatar "pic:<id>" everywhere in the game.

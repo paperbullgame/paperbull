@@ -1,4 +1,4 @@
-/* ===== PLAY — game modes hub (src/modes.js) ===== */
+/* ===== PLAY: game modes hub (src/modes.js) ===== */
 .md { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; font-variant-numeric: tabular-nums; }
 .md [hidden] { display: none !important; }
 .md .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

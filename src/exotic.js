@@ -1,5 +1,5 @@
 /* =====================================================================
-   EXOTIC — a new rarity above Legendary that never drops from packs or
+   EXOTIC: a new rarity above Legendary that never drops from packs or
    eggs you can buy. Exotic pets only come from Admin Abuse events and
    admin gifts. Also: pet MUTATIONS (any pet can mutate: Golden, Frozen,
    Inferno … Celestial) that change how the pet looks everywhere and

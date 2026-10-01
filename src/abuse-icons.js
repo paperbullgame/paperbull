@@ -1,5 +1,5 @@
 /* =====================================================================
-   ABUSE ICONS — crafted inline SVG logos for Admin Abuse (no emojis).
+   ABUSE ICONS: crafted inline SVG logos for Admin Abuse (no emojis).
    window.AbuseIcons = {
      svg(typeId, size)   glossy rounded-square logo for one of the 20 abuse types
      badge(typeId, size) round medallion version of the same logo (banner pill, live box)

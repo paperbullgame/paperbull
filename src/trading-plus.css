@@ -1,5 +1,5 @@
 /* =====================================================================
-   TRADING PLUS — leverage, options, market events, copy trading.
+   TRADING PLUS: leverage, options, market events, copy trading.
    Uses theme tokens only (--panel/--panel2/--bg2/--line/--line2/--tx/
    --mut/--dim/--amber/--up/--dn) so every site theme + dark/light works.
    Leverage + options lean "careful": amber for risk, red for liquidation.

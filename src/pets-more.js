@@ -1,5 +1,5 @@
 /* =====================================================================
-   PETS MORE — 120 new pets (30 each: Common, Rare, Epic, Legendary).
+   PETS MORE: 120 new pets (30 each: Common, Rare, Epic, Legendary).
    Drawn with the shared critter() parts, so they get the same body,
    rarity glow and animations as every other pet. They hatch from eggs,
    show up in the Pet shop and the collection, and can be gifted.

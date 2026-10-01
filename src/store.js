@@ -1,5 +1,5 @@
 /* =====================================================================
-   STORE — real-money purchases through Stripe Checkout.
+   STORE: real-money purchases through Stripe Checkout.
    Prices and delivery live on the server (store_products / pbs_fulfill);
    this screen only shows products and sends the player to Stripe.
    Pro mode is a paid unlock (or part of VIP).
@@ -145,7 +145,7 @@
       return;
     }
     if (!S.live) {
-      toast('The Store opens soon — payments aren’t switched on yet.', 'info');
+      toast('The Store opens soon: payments aren’t switched on yet.', 'info');
       return;
     }
     if ((window.PBAge && PBAge.state().kid) || ENT().kid) {
@@ -173,11 +173,11 @@
         return;
       }
       const M = {
-        not_configured: 'The Store opens soon — payments aren’t switched on yet.',
+        not_configured: 'The Store opens soon: payments aren’t switched on yet.',
         already_owned: 'You already own that.',
         already_vip: 'You’re already VIP.',
         auth: 'Log in again to buy.',
-        slow_down: 'Too many checkouts — wait a few minutes.',
+        slow_down: 'Too many checkouts: wait a few minutes.',
         not_available: 'That isn’t for sale right now.',
         kid_blocked: 'Purchases are turned off for players under 13.',
         store_blocked: 'Purchases are turned off for this account after a payment was disputed. Use the Contact form if this is a mistake.',
@@ -200,7 +200,7 @@
     if (!st) return;
     history.replaceState(null, '', location.pathname + location.hash);
     if (st === 'cancel') {
-      setTimeout(() => toast('Checkout cancelled — you weren’t charged.', 'info'), 1500);
+      setTimeout(() => toast('Checkout cancelled, you weren’t charged.', 'info'), 1500);
       return;
     }
     let n = 0;
@@ -264,7 +264,7 @@
         pro = by('pro')[0],
         start = by('bundle')[0];
       box.innerHTML = `
-      ${S.live ? '' : '<div class="st-note">The Store is almost ready. Look around — buying opens very soon.</div>'}
+      ${S.live ? '' : '<div class="st-note">The Store is almost ready. Look around: buying opens very soon.</div>'}
       ${!linked() ? `<div class="st-note acc">Purchases are saved to your online account. <button class="linkish" data-ol="${acct.user ? 'connect' : 'signup'}">${acct.user ? 'Connect your account' : 'Sign up'}</button> to buy.</div>` : ''}
       ${vp ? `<section class="st-vip ${vip ? 'on' : ''}"><div class="st-vip-t"><span class="st-badge">${vip ? 'You’re VIP' : esc(vp.badge || 'Monthly')}</span><h2>${esc(vp.name)}</h2>
         <ul><li>Pro mode included</li><li>${coinHTML(1000)} every day</li><li>2× XP on everything</li><li>Free packs twice as often</li><li>VIP Gold theme + VIP badge</li></ul>
@@ -282,7 +282,7 @@
       <div class="st-grid">${by('item')
         .map(p => `<section class="st-card st-ex">${p.items.map(i => `<span class="st-exf">${ITEM[i] ? itemFace(ITEM[i], true) : ''}</span>`).join('')}<h3>${esc(p.name)}</h3><p>${esc(p.blurb || '')}</p><div class="st-foot"><b>${money(p.price_cents)}</b>${btn(p, 'Buy')}</div></section>`)
         .join('')}</div>
-      <p class="st-legal">Payments are handled securely by Stripe — PAPERBULL never sees your card. Prices in US dollars; taxes or bank fees may apply depending on where you live. There are no other fees. Everything bought here is a virtual item for use in PAPERBULL, has no cash value and can’t be exchanged for real money. The Royal Egg gives a random Legendary pet (0.5% chance of a Mythic). Ask a parent before buying if you’re under 18. <a href="legal/refunds.html" target="_blank" rel="noopener">Refund Policy</a> · <a href="legal/terms.html" target="_blank" rel="noopener">Terms</a></p>`;
+      <p class="st-legal">Payments are handled securely by Stripe. PAPERBULL never sees your card. Prices in US dollars; taxes or bank fees may apply depending on where you live. There are no other fees. Everything bought here is a virtual item for use in PAPERBULL, has no cash value and can’t be exchanged for real money. The Royal Egg gives a random Legendary pet (0.5% chance of a Mythic). Ask a parent before buying if you’re under 18. <a href="legal/refunds.html" target="_blank" rel="noopener">Refund Policy</a> · <a href="legal/terms.html" target="_blank" rel="noopener">Terms</a></p>`;
     },
     update() {},
   };

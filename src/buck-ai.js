@@ -1,5 +1,5 @@
 /* =====================================================================
-   BUCK AI — an in-game market assistant that reads the live simulation.
+   BUCK AI: an in-game market assistant that reads the live simulation.
    Ask about any ticker, your portfolio, risk, news or game features,
    or tell it to trade ("buy $500 of NVDA", "sell half TSLA").
    ===================================================================== */

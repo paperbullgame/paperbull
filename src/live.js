@@ -1,5 +1,5 @@
 /* =====================================================================
-   LIVE — admin changes reach every open game within about a second.
+   LIVE: admin changes reach every open game within about a second.
    The database itself broadcasts a tiny "something changed" ping over
    Supabase Realtime (public channel "pb"); the game then re-fetches the
    real data with pb_site, so everything stays server-authoritative.

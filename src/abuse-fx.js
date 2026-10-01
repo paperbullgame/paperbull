@@ -1,5 +1,5 @@
 /* =====================================================================
-   ABUSE FX — the "the map goes nuts" engine for Admin Abuse events.
+   ABUSE FX: the "the map goes nuts" engine for Admin Abuse events.
    One full-screen canvas + a tint layer + a vignette, all click-through,
    above the app but below modals, packs, toasts and the tutorial.
    20 effect types. Pauses when the tab is hidden, calms way down for

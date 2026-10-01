@@ -1,5 +1,5 @@
 /* =====================================================================
-   THE OFFICE — hire traders who buy and sell for you.
+   THE OFFICE: hire traders who buy and sell for you.
    · Workers (Intern → Quant) trade with your real cash, fees included
    · Skill = how well they read a stock's fair value; better staff
      buy the dips that actually bounce and cut the ones that don't

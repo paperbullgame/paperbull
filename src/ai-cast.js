@@ -1,5 +1,5 @@
 /* =====================================================================
-   THE CAST — 21 market assistants you can pick from. Same brain, very
+   THE CAST: 21 market assistants you can pick from. Same brain, very
    different personalities. Each one has a drawn face (with moods), colors
    and a voice pack the chat uses for greetings, intros and asides.
    ===================================================================== */

@@ -1,5 +1,5 @@
 /* =====================================================================
-   BUS — a tiny event bus so feature modules can react to each other
+   BUS: a tiny event bus so feature modules can react to each other
    (quests & the battle pass listen; trading, modes, social emit).
    Events: 'trade' {trade}, 'mode' {mode, score, won}, 'duel' {won},
    'chat' {room}, 'pack' {id}, 'hatch' {id}, 'passxp' {n}, 'login' {streak}

@@ -1,5 +1,5 @@
 /* =====================================================================
-   ADMIN ABUSE — when an admin starts an abuse from the admin panel, the
+   ADMIN ABUSE: when an admin starts an abuse from the admin panel, the
    whole game goes nuts for everyone online (20 effects in abuse-fx.js),
    coins/XP are multiplied, and players can play the admin's mini game
    for prizes: catch falling loot, quiz (first N correct answers win),
@@ -595,7 +595,7 @@
         ),
     });
   }
-  // [label, color, icon] — icons are crafted SVGs nested inside the wheel
+  // [label, color, icon]: icons are crafted SVGs nested inside the wheel
   const SEG = [
     ['100', '#3d8bff', 'coin'],
     ['250', '#8a5cff', 'coin'],

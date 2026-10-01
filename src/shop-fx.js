@@ -1,5 +1,5 @@
 /* =====================================================================
-   SHOP FX — nicer item cards, clear prices and ownership, sale tags
+   SHOP FX: nicer item cards, clear prices and ownership, sale tags
    when the admin panel lowers a price, and a coin-fly animation when
    you buy something. Works on top of the existing Shop screen.
    ===================================================================== */

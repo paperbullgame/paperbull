@@ -1,4 +1,4 @@
-/* ===================== PAPERBULL LEARN — CORE (question engine) ===================== */
+/* ===================== PAPERBULL LEARN. CORE (question engine) ===================== */
 const EDU = (function () {
   'use strict';
   const R = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
@@ -1680,7 +1680,7 @@ zebra zoo zero zipper zone zigzag zucchini`.split(/\s+/);
     n: 'Long Division',
     g: [4, 7],
     foc: () => range(2, 25).map(d => ({ l: `Dividing by ${d}`, d })),
-    tip: 'Divide, multiply, subtract, bring down — repeat for every digit.',
+    tip: 'Divide, multiply, subtract, bring down: repeat for every digit.',
     gen: (f, lv) => {
       const qd = 1 + Math.ceil(lv / 3),
         q = R(10 ** (qd - 1), 10 ** qd - 1);
@@ -4294,7 +4294,7 @@ zebra zoo zero zipper zone zigzag zucchini`.split(/\s+/);
       EMO.forEach(e => ['add', 'take away'].forEach(k => o.push({ l: `${k} ${e}`, e, k })));
       return o;
     },
-    tip: 'Count the first group, then count on for adding — or cross some out for taking away.',
+    tip: 'Count the first group, then count on for adding, or cross some out for taking away.',
     gen: (f, lv) => {
       const m = 2 + Math.ceil(lv / 2);
       if (f.k === 'add') {
@@ -4370,7 +4370,7 @@ zebra zoo zero zipper zone zigzag zucchini`.split(/\s+/);
         IOP.forEach(op => o.push({ l: `${a}x + b ${op} c`, a, op }));
       return o;
     },
-    tip: 'Solve like an equation — but if you multiply or divide by a NEGATIVE, flip the inequality sign.',
+    tip: 'Solve like an equation, but if you multiply or divide by a NEGATIVE, flip the inequality sign.',
     gen: (f, lv) => {
       const k = R(-5 - lv, 5 + lv),
         b = R(-10, 10),
@@ -4446,7 +4446,7 @@ zebra zoo zero zipper zone zigzag zucchini`.split(/\s+/);
     n: 'Powers of i',
     g: [10, 12],
     foc: () => range(2, 40).map(n => ({ l: `i^${n}`, n })),
-    tip: 'i¹ = i, i² = −1, i³ = −i, i⁴ = 1 — then it repeats every 4. Divide the exponent by 4 and use the remainder.',
+    tip: 'i¹ = i, i² = −1, i³ = −i, i⁴ = 1, then it repeats every 4. Divide the exponent by 4 and use the remainder.',
     gen: f => ({ q: `Simplify <b><i>i</i><sup>${f.n}</sup></b>`, a: IPOW[f.n % 4], ch: SH(IPOW) }),
   });
   fam({
@@ -4885,7 +4885,7 @@ zebra zoo zero zipper zone zigzag zucchini`.split(/\s+/);
       col = c >= o ? 'var(--up)' : 'var(--dn)';
     return `<svg class="ed-cc" viewBox="0 0 50 120" width="50" height="120"><line x1="25" x2="25" y1="${y(h)}" y2="${y(l)}" stroke="${col}" stroke-width="2"/><rect x="14" width="22" y="${y(Math.max(o, c))}" height="${Math.max(2, Math.abs(y(o) - y(c)))}" fill="${col}" rx="2"/></svg>`;
   }
-  const SIGS = ['Bullish — price may rise', 'Bearish — price may fall', 'Indecision — no clear direction'];
+  const SIGS = ['Bullish, price may rise', 'Bearish, price may fall', 'Indecision, no clear direction'];
   const sigTxt = s => SIGS.find(x => x.startsWith(s));
   const ARC = [
     {

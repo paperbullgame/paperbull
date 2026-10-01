@@ -1,4 +1,4 @@
-/* progression — Battle Pass, quests, calendar, prestige (src/progression.js) */
+/* progression. Battle Pass, quests, calendar, prestige (src/progression.js) */
 .bp-wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

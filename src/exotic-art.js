@@ -1,5 +1,5 @@
 /* =====================================================================
-   EXOTIC ART — the Exotic pets (admin-only rarity) and pet mutations.
+   EXOTIC ART: the Exotic pets (admin-only rarity) and pet mutations.
    Self-contained: used by the game AND the admin panel for previews.
    Every exotic is a 64×64 SVG built from a shared kit of glowing parts,
    with a pulsing aura, orbiting sparkles and animated features.
@@ -409,7 +409,7 @@
   const LUM = '<feColorMatrix type="matrix" values=".2126 .7152 .0722 0 0 .2126 .7152 .0722 0 0 .2126 .7152 .0722 0 0 0 0 0 1 0"/>';
   // gradient map: luminance → the mutation's palette (dark → light), optionally blended with the original colors
   // one filter on the pet's body: gradient-map recolor + optional solid rims / offset ghosts under it
-  // (edges: [{ r: dilate radius, dx, dy, c: colour, o: opacity }]) — no masks, no extra copies of the pet
+  // (edges: [{ r: dilate radius, dx, dy, c: colour, o: opacity }]), no masks, no extra copies of the pet
   const GMAP = (id, stops, mix = 1, edges = []) => {
     let f = `<filter id="${id}" filterUnits="userSpaceOnUse" x="-20" y="-20" width="104" height="104" color-interpolation-filters="sRGB">`;
     if (stops)

@@ -1,5 +1,5 @@
 /* =====================================================================
-   AUTO-UPDATE — every build writes version.txt. The game checks it now
+   AUTO-UPDATE, every build writes version.txt. The game checks it now
    and then; when a newer build is live it reloads itself at a safe
    moment (not during a pop-up or while typing), or shows a
    small "Update" pill the player can tap.

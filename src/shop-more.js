@@ -1,5 +1,5 @@
 /* =====================================================================
-   SHOP MORE — a big batch of new things to collect and use:
+   SHOP MORE: a big batch of new things to collect and use:
    · 10 color themes, 8 chart skins, 16 titles, 10 avatars
    · 6 pet treats, 6 eggs
    · 8 new power-ups (longer boosts, big cash, pet party, office party,
