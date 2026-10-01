@@ -283,6 +283,25 @@
         `<path d="M50 20C54 22 56 26 55 30M8 26C6 29 6 33 8 36" stroke="${p.w}" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/>` +
         `<rect x="45" y="37" width="4" height="4" rx="1" transform="rotate(25 47 39)" fill="${p.w}" opacity=".8"/><rect x="14" y="44" width="3.4" height="3.4" rx="1" transform="rotate(-20 15.7 45.7)" fill="${p.w}" opacity=".7"/>`;
     },
+    nuke(p) {
+      return `<circle cx="32" cy="32" r="6" fill="${p.w}"/>` + [0, 120, 240].map(r => `<path d="M32 32L22.5 15.5A19 19 0 0 1 41.5 15.5Z" fill="${p.w}" transform="rotate(${r} 32 32)"/>`).join('') + `<circle cx="32" cy="32" r="24" fill="none" stroke="${p.w}" stroke-width="2.4" opacity=".7"/>`;
+    },
+    candy(p) {
+      return `<path d="M30 40l-4 16" stroke="${p.w}" stroke-width="3.4" stroke-linecap="round"/><circle cx="32" cy="26" r="15" fill="${p.w}"/>` + (p.sh ? '' : `<path d="M32 26m-10 0a10 10 0 1 1 10 10a6 6 0 1 1-6-6a3 3 0 1 1 3 3" stroke="${p.a}" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+    },
+    ufo(p) {
+      return `<path d="M22 30a10 9 0 0 1 20 0z" fill="${p.w}" opacity=".85"/><ellipse cx="32" cy="32" rx="22" ry="7" fill="${p.w}"/>` + (p.sh ? '' : [16, 26, 38, 48].map(x => `<circle cx="${x}" cy="33" r="2" fill="${p.a}"/>`).join('')) + `<path d="M26 40l-6 16h24l-6-16z" fill="${p.w}" opacity=".35"/>`;
+    },
+    petrain(p) {
+      const paw = (x, y, sc) => `<g transform="translate(${x} ${y}) scale(${sc})"><ellipse cx="0" cy="4" rx="6" ry="5" fill="${p.w}"/><circle cx="-6" cy="-3" r="2.6" fill="${p.w}"/><circle cx="-2" cy="-7" r="2.6" fill="${p.w}"/><circle cx="3" cy="-7" r="2.6" fill="${p.w}"/><circle cx="7" cy="-3" r="2.6" fill="${p.w}"/></g>`;
+      return paw(22, 22, 1.1) + paw(42, 36, 1.3) + paw(22, 48, 0.8) + star4(48, 14, 3.4, p.w, 0.9);
+    },
+    lasers(p) {
+      return [[-30, p.w], [-10, p.a], [12, p.w], [32, p.a]].map(([r, c]) => `<path d="M32 56L32 8" stroke="${p.sh ? p.w : c}" stroke-width="3.4" stroke-linecap="round" transform="rotate(${r} 32 56)"/>`).join('') + `<circle cx="32" cy="56" r="5" fill="${p.w}"/>`;
+    },
+    armageddon(p) {
+      return `<path d="M32 6l5 15 15-6-8 14 14 6-15 5 6 15-14-8-6 14-4-15-15 6 8-14-14-6 15-5-6-15 14 8z" fill="${p.w}"/>` + (p.sh ? '' : `<circle cx="32" cy="32" r="8" fill="${p.a}"/>`);
+    },
     moon(p, u) {
       const m = u + 'mn';
       return (
@@ -322,6 +341,12 @@
     petparade: ['#ff9ed2', '#7a5cff'],
     tornado: ['#a3b8c9', '#2a3440'],
     moon: ['#c9b8ff', '#0a0826'],
+    nuke: ['#ffd23d', '#3d2a00'],
+    candy: ['#ff8fd0', '#6b3dd6'],
+    ufo: ['#7dff7a', '#06260f'],
+    petrain: ['#ffb3e6', '#3a1f6b'],
+    lasers: ['#3dfcff', '#16063a'],
+    armageddon: ['#ff3d1f', '#1a0000'],
   };
   // badge backgrounds: a bit richer than the raw type colors so white glyphs always read
   const BG = {
@@ -345,6 +370,12 @@
     petparade: ['#ffa3d6', '#d65cc2', '#6b4aff'],
     tornado: ['#aebfcd', '#5f7285', '#2a3440'],
     moon: ['#8f7bff', '#3a2a8a', '#0a0826'],
+    nuke: ['#ffd23d', '#c27a00', '#3d2a00'],
+    candy: ['#ff9ad8', '#c45cff', '#5b2fb8'],
+    ufo: ['#5ce67a', '#14803a', '#06260f'],
+    petrain: ['#ffb3e6', '#a35cd6', '#3a1f6b'],
+    lasers: ['#3dd6ff', '#5b2fd6', '#16063a'],
+    armageddon: ['#ff5a1f', '#a8100a', '#1a0000'],
   };
   const pal = id => {
     const t = FXT()[id] || {},

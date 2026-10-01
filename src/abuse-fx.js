@@ -32,6 +32,12 @@
     { id: 'petparade', label: 'Pet Parade', ic: '🐾', desc: 'Hearts, paws and pets everywhere.', c1: '#ff9ed2', c2: '#7a5cff' },
     { id: 'tornado', label: 'Tornado', ic: '🌪️', desc: 'A tornado rips across the screen.', c1: '#a3b8c9', c2: '#2a3440' },
     { id: 'moon', label: 'To The Moon', ic: '🚀', desc: 'Warp speed. Rockets. The moon.', c1: '#c9b8ff', c2: '#0a0826' },
+    { id: 'nuke', label: 'Nuclear Blast', ic: '☢️', desc: 'Huge blasts, shockwaves and falling ash.', c1: '#ffd23d', c2: '#3d2a00' },
+    { id: 'candy', label: 'Candy Land', ic: '🍭', desc: 'It rains candy, lollipops and donuts.', c1: '#ff8fd0', c2: '#6b3dd6' },
+    { id: 'ufo', label: 'Alien Invasion', ic: '🛸', desc: 'UFOs beam up everyone’s coins.', c1: '#7dff7a', c2: '#06260f' },
+    { id: 'petrain', label: 'Pet Storm', ic: '🐾', desc: 'Real pets falling from the sky. Hundreds of them.', c1: '#ffb3e6', c2: '#3a1f6b' },
+    { id: 'lasers', label: 'Laser Show', ic: '🔦', desc: 'Giant lasers sweep the whole screen.', c1: '#3dfcff', c2: '#16063a' },
+    { id: 'armageddon', label: 'TOTAL CHAOS', ic: '💥', desc: 'Meteors, fire, lightning and blood rain. All at once.', c1: '#ff3d1f', c2: '#1a0000' },
   ];
   const TYPE = Object.fromEntries(TYPES.map(t => [t.id, t]));
 
@@ -1195,6 +1201,225 @@
           ctx.drawImage(rocket, k.x - 24, k.y - 24, 48, 48);
         }
         rockets = rockets.filter(k => k.y > -60);
+      };
+    },
+    /* ---------- the crazy ones ---------- */
+    nuke() {
+      const ash = risers(N(50, 90), (x, y, d) => {
+        ctx.globalAlpha = 0.35 + d.k * 0.3;
+        ctx.fillStyle = d.k > 0.5 ? '#b8b0a0' : '#5c5448';
+        ctx.fillRect(x, H - y, 2 + d.s * 2, 2 + d.s * 2);
+        ctx.globalAlpha = 1;
+      }, 20, 60, 40);
+      let blasts = [];
+      const boom = every(2.2, 4.2, () => {
+        const b = { x: rnd(W * 0.15, W * 0.85), y: rnd(H * 0.45, H * 0.9), t: 0 };
+        blasts.push(b);
+        flash('#fff3b0', 0.3);
+        shake(600, 'quake');
+      });
+      const core = glow('rgba(255,240,180,1)', 128),
+        fire = glow('rgba(255,120,30,1)', 96);
+      return dt => {
+        boom(dt);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for (const b of blasts) {
+          b.t += dt;
+          const k = b.t / 2.2,
+            r = 30 + k * Math.max(W, H) * 0.7;
+          ctx.globalAlpha = Math.max(0, 1 - k);
+          ctx.strokeStyle = '#ffe9a0';
+          ctx.lineWidth = 10 * (1 - k) + 2;
+          ctx.beginPath();
+          ctx.ellipse(b.x, b.y, r, r * 0.42, 0, 0, TAU);
+          ctx.stroke();
+          // the mushroom: a column and a cap rising
+          const up = Math.min(1, b.t / 0.9),
+            cy = b.y - up * H * 0.32,
+            cs = 70 + up * 110;
+          ctx.globalAlpha = Math.max(0, 1 - k) * 0.85;
+          ctx.drawImage(fire, b.x - 30, cy, 60, b.y - cy);
+          ctx.drawImage(fire, b.x - cs, cy - cs * 0.55, cs * 2, cs * 1.1);
+          ctx.drawImage(core, b.x - cs * 0.6, cy - cs * 0.35, cs * 1.2, cs * 0.7);
+        }
+        ctx.restore();
+        blasts = blasts.filter(b => b.t < 2.2);
+        ash.step(dt);
+      };
+    },
+    candy() {
+      const mk = (k, w, h, f) => sprite('cd' + k, w, h, f);
+      const wrapped = c =>
+        mk('w' + c, 46, 24, (g, w, h) => {
+          g.fillStyle = c;
+          g.beginPath();
+          g.moveTo(0, 2);
+          g.lineTo(11, 12);
+          g.lineTo(0, 22);
+          g.moveTo(46, 2);
+          g.lineTo(35, 12);
+          g.lineTo(46, 22);
+          g.fill();
+          g.beginPath();
+          g.ellipse(23, 12, 13, 10, 0, 0, TAU);
+          g.fill();
+          g.strokeStyle = 'rgba(255,255,255,.7)';
+          g.lineWidth = 2.5;
+          for (const x of [17, 23, 29]) {
+            g.beginPath();
+            g.moveTo(x - 3, 4);
+            g.lineTo(x + 3, 20);
+            g.stroke();
+          }
+        });
+      const lolly = mk('lol', 32, 48, g => {
+        g.fillStyle = '#f4e6d0';
+        g.fillRect(14.5, 26, 3, 22);
+        for (let i = 0; i < 5; i++) {
+          g.fillStyle = ['#ff5fa2', '#fff', '#7dd3fc', '#fff', '#ffd23d'][i];
+          g.beginPath();
+          g.arc(16, 16, 15 - i * 3, 0, TAU);
+          g.fill();
+        }
+      });
+      const donut = mk('don', 36, 36, g => {
+        g.fillStyle = '#e8a868';
+        g.beginPath();
+        g.arc(18, 18, 17, 0, TAU);
+        g.fill();
+        g.fillStyle = '#ff7ac8';
+        g.beginPath();
+        g.arc(18, 17, 14, 0, TAU);
+        g.fill();
+        g.globalCompositeOperation = 'destination-out';
+        g.beginPath();
+        g.arc(18, 18, 5.5, 0, TAU);
+        g.fill();
+        g.globalCompositeOperation = 'source-over';
+        for (let i = 0; i < 10; i++) {
+          g.fillStyle = ['#fff', '#7dd3fc', '#ffd23d', '#8ef08a'][i % 4];
+          const a = i * 0.63,
+            r = 9 + (i % 3);
+          g.fillRect(18 + Math.cos(a) * r, 17 + Math.sin(a) * r, 3, 1.4);
+        }
+      });
+      const f = fallers(N(70, 130), [wrapped('#ff5fa2'), wrapped('#7a5cff'), wrapped('#3ddc84'), lolly, donut, lolly, donut], 90, 200, 50, 3);
+      const tw = twinkles(N(50), ['#fff', '#ffd6f0', '#d6f0ff']);
+      return dt => {
+        tw.step(dt);
+        f.step(dt);
+      };
+    },
+    ufo() {
+      const ship = sprite('ufo', 120, 64, g => {
+        g.fillStyle = 'rgba(160,255,200,.85)';
+        g.beginPath();
+        g.ellipse(60, 22, 22, 18, 0, Math.PI, 0);
+        g.fill();
+        const gr = g.createLinearGradient(0, 22, 0, 46);
+        gr.addColorStop(0, '#d8dde6');
+        gr.addColorStop(1, '#6b7280');
+        g.fillStyle = gr;
+        g.beginPath();
+        g.ellipse(60, 34, 58, 13, 0, 0, TAU);
+        g.fill();
+        g.fillStyle = '#7dff7a';
+        for (let i = 0; i < 7; i++) {
+          g.beginPath();
+          g.arc(16 + i * 14.5, 36, 3.2, 0, TAU);
+          g.fill();
+        }
+      });
+      const cn = coin(),
+        tw = twinkles(N(80), ['#fff', '#b6ffcf', '#7dff7a']);
+      const ships = arr(Math.max(2, Math.round(N(4, 6) / 2)), i => ({ x: rnd(0, W), y: rnd(H * 0.08, H * 0.32), v: rnd(60, 140) * (i % 2 ? 1 : -1), ph: rnd(0, TAU), beam: 0, coins: [] }));
+      return dt => {
+        tw.step(dt);
+        for (const s of ships) {
+          s.x += s.v * dt;
+          s.ph += dt;
+          if (s.x < -140) s.x = W + 120;
+          if (s.x > W + 140) s.x = -120;
+          const y = s.y + Math.sin(s.ph * 1.6) * 10;
+          s.beam = 0.5 + 0.5 * Math.sin(s.ph * 0.9);
+          if (s.beam > 0.4) {
+            ctx.save();
+            ctx.globalAlpha = 0.18 * s.beam;
+            const g = ctx.createLinearGradient(0, y, 0, H);
+            g.addColorStop(0, '#9dff9a');
+            g.addColorStop(1, 'rgba(157,255,154,0)');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.moveTo(s.x - 20, y + 20);
+            ctx.lineTo(s.x + 20, y + 20);
+            ctx.lineTo(s.x + 110, H);
+            ctx.lineTo(s.x - 110, H);
+            ctx.fill();
+            ctx.restore();
+            if (R() < dt * 4) s.coins.push({ x: s.x + rnd(-80, 80), y: H + 10 });
+          }
+          for (const c of s.coins) {
+            c.y -= 260 * dt;
+            c.x += (s.x - c.x) * dt * 1.8;
+            ctx.drawImage(cn, c.x - 10, c.y - 10, 20, 20);
+          }
+          s.coins = s.coins.filter(c => c.y > y + 10);
+          ctx.drawImage(ship, s.x - 60, y - 32, 120, 64);
+        }
+      };
+    },
+    petrain() {
+      // real pet pictures from the game, rasterized once
+      const ids = typeof PETS !== 'undefined' && typeof petArt === 'function' ? PETS.filter(p => ['r', 'e', 'l'].includes(p.r) && !p.exotic).sort(() => R() - 0.5).slice(0, 14).map(p => p.id) : [];
+      const sprs = ids.map(id => svgSprite('pr' + id, petArt(id).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" '), 64));
+      const f = sprs.length ? fallers(N(45, 90), sprs, 70, 170, 40, 1.4) : null;
+      const tw = twinkles(N(40), ['#fff', '#ffc2e2', '#d8c8ff']);
+      return dt => {
+        tw.step(dt);
+        f && f.step(dt);
+      };
+    },
+    lasers() {
+      const cols = ['#3dfcff', '#ff3df0', '#7dff3d', '#ffd23d'],
+        beams = arr(8, i => ({ x: i % 2 ? W + 20 : -20, y: H + 20, a: rnd(0, TAU), v: rnd(0.4, 0.9) * (i % 3 ? 1 : -1), c: cols[i % cols.length] }));
+      const tw = twinkles(N(40), ['#fff', '#bff', '#fbf']);
+      return dt => {
+        tw.step(dt);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const L = Math.hypot(W, H) * 1.2;
+        for (const b of beams) {
+          b.a += b.v * dt;
+          const base = b.x < 0 ? -Math.PI / 2 + 0.6 : -Math.PI / 2 - 0.6,
+            ang = base + Math.sin(b.a) * 0.75,
+            ex = b.x + Math.cos(ang) * L,
+            ey = b.y + Math.sin(ang) * L;
+          ctx.strokeStyle = b.c;
+          ctx.lineCap = 'round';
+          ctx.globalAlpha = 0.12;
+          ctx.lineWidth = 22;
+          ctx.beginPath();
+          ctx.moveTo(b.x, b.y);
+          ctx.lineTo(ex, ey);
+          ctx.stroke();
+          ctx.globalAlpha = 0.55;
+          ctx.lineWidth = 4;
+          ctx.stroke();
+          ctx.globalAlpha = 0.9;
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+        ctx.restore();
+      };
+    },
+    armageddon() {
+      const parts = ['inferno', 'meteor', 'thunder', 'bloodrain'].map(k => MAKE[k]());
+      const sh = every(3, 6, () => shake(500, 'quake'));
+      return dt => {
+        sh(dt);
+        for (const f of parts) f(dt);
       };
     },
   };

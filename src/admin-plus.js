@@ -420,6 +420,33 @@
             },
           },
           {
+            name: 'GO NUTS',
+            blurb: 'Total Chaos + every crazy move + 10× coins',
+            c: '#ff3d1f',
+            run: async () => {
+              await live('switch', { type: 'armageddon' });
+              await live('mult', { coin_mult: 10, xp_mult: 5 });
+              await live('shout', { text: 'THE ADMIN HAS GONE NUTS!!! 10× COINS!!!' });
+              for (const m of ['nuts', 'stampede', 'flip', 'giant', 'scatter', 'buck', 'barrel', 'money']) {
+                await wait(2600);
+                await live('nuts', { move: m });
+              }
+            },
+          },
+          {
+            name: 'Party Mode',
+            blurb: 'Disco + confetti, fireworks and a pet stampede',
+            c: '#ff8fd0',
+            run: async () => {
+              await live('switch', { type: 'disco' });
+              await live('shout', { text: 'PARTY TIME!' });
+              for (const m of ['confetti', 'fireworks', 'stampede', 'jelly', 'rainbow']) {
+                await wait(2000);
+                await live('nuts', { move: m });
+              }
+            },
+          },
+          {
             name: 'Calm Down',
             blurb: 'Back to 1× and a thank-you shout',
             c: '#8a93a3',
@@ -909,7 +936,7 @@
           .pl-q .btn{flex:none}.pl-n{font-size:11px;color:var(--mut)}.pl-t{font-size:14px}
           .pl-add{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.pl-add .in{flex:1;min-width:140px}
           .pl-opts{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:13px}.pl-opts label{display:flex;align-items:center;gap:6px}.pl-opts .in{width:auto;height:32px;padding:0 8px}
-          .ab-qs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+          .ab-qs,.ab-nuts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
           .ab-combos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
           .ab-combo{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid color-mix(in srgb,var(--a1) 45%,var(--line));background:linear-gradient(135deg,color-mix(in srgb,var(--a1) 20%,var(--panel)),var(--panel));color:var(--tx);font:inherit;cursor:pointer;transition:transform .12s,box-shadow .15s}
           .ab-combo:hover{transform:translateY(-1px);box-shadow:0 8px 22px -12px var(--a1)}.ab-combo:active{transform:scale(.98)}.ab-combo:disabled{opacity:.5;cursor:wait}

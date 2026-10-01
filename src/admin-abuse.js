@@ -414,6 +414,8 @@
                 <div class="ab-cb"><small>Coin rain on everyone online</small><div class="ab-row"><select class="in" id="abRc">${[100, 500, 1000, 5000, 25000].map(c => `<option value="${c}" ${c === 500 ? 'selected' : ''}>${num(c)} coins each</option>`).join('')}</select><button class="btn sm pri" id="abRGo">Make it rain</button></div></div>
               </div>
               <div class="ab-qs" id="abQs">${['Last chance!', 'GG everyone!', 'Who’s still here?', 'More loot incoming…', 'The admin is watching 👀', 'Prizes are almost gone!'].map(t => `<button type="button" class="btn sm" data-qs="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+              <div class="ch" style="margin-top:14px"><h3 style="font-size:14px">Go nuts</h3><span class="muted small">Fire a crazy move at every player’s screen</span></div>
+              <div class="ab-nuts" id="abNutsBtns">${[['nuts','GO NUTS (everything)'],['barrel','Barrel roll'],['flip','Upside down'],['mirror','Mirror world'],['tilt','Seasick'],['zoom','Bass drop'],['shrink','Shrink ray'],['spin','Spin cycle'],['drop','Everything falls'],['scatter','Scatter'],['jelly','Jelly cards'],['bounce','Bounce wave'],['rainbow','Rainbow'],['stampede','Pet stampede'],['giant','Giant pet'],['confetti','Confetti cannons'],['money','Money explosion'],['fireworks','Fireworks'],['buck','Giant Buck']].map(([k, l], i) => `<button type="button" class="btn sm ${i ? '' : 'pri'}" data-nuts="${k}">${esc(l)}</button>`).join('')}</div>
               <div class="ch" style="margin-top:14px"><h3 style="font-size:14px">Combo moves</h3><span class="muted small">One tap, several things at once</span></div>
               <div class="ab-combos">${(window.PBA_PLUS ? PBA_PLUS.COMBOS : []).map((c, i) => `<button type="button" class="ab-combo" data-combo="${i}" style="--a1:${c.c}"><b>${esc(c.name)}</b><small>${esc(c.blurb)}</small></button>`).join('')}</div>
               <label class="gall" style="margin-top:12px"><input type="checkbox" id="abChaos"><span class="sw"></span><span><b>Chaos mode</b><small>Switch to a random effect every <select class="in ab-chs" id="abChS">${[15, 30, 60, 120].map(s => `<option value="${s}" ${s === 30 ? 'selected' : ''}>${s}s</option>`).join('')}</select> while this event runs (keep this page open)</small></span></label>
@@ -439,6 +441,10 @@
             $('#abShGo').onclick = shout;
             $('#abSh').onkeydown = e => e.key === 'Enter' && (e.preventDefault(), shout());
             $('#abRGo').onclick = () => go('rain', { coins: +$('#abRc').value }, r => `Coin rain sent to ${num(r.players || 0)} player${r.players === 1 ? '' : 's'}`);
+            $('#abNutsBtns').onclick = e => {
+              const b = e.target.closest('[data-nuts]');
+              if (b) go('nuts', { move: b.dataset.nuts }, `${b.textContent} sent to everyone`);
+            };
             $('#abQs').onclick = e => {
               const b = e.target.closest('[data-qs]');
               if (b) go('shout', { text: b.dataset.qs }, 'Shouted to everyone');

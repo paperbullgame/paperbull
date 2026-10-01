@@ -222,3 +222,71 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
 .ab-rc svg { width: 28px; height: 28px; flex: none; }
 .ab-rc b { font-size: 14px; }
 @media (prefers-reduced-motion: reduce) { .ab-won-rays, .ab-won-art, #abBar.ab-late { animation: none; } #abCount b { animation-duration: .01s; } }
+
+/* ===================== ABUSE NUTS ===================== */
+#abNuts { position: fixed; inset: 0; z-index: 61; pointer-events: none; overflow: hidden; }
+#app.nu-on { transform-origin: 50% 40vh; }
+#app.nu-barrel { animation: nuBarrel 1.6s cubic-bezier(.6, 0, .3, 1); }
+#app.nu-flip { animation: nuFlip 5.2s cubic-bezier(.5, 0, .3, 1); }
+#app.nu-mirror { animation: nuMirror 5.2s ease-in-out; }
+#app.nu-tilt { animation: nuTilt 3s ease-in-out 2; }
+#app.nu-zoom { animation: nuZoom 0.5s cubic-bezier(.2, .9, .3, 1) 8; }
+#app.nu-shrink { animation: nuShrink 3.2s cubic-bezier(.5, 0, .3, 1); }
+#app.nu-rainbow { animation: nuHue 4s linear 2; }
+@keyframes nuBarrel { to { transform: rotate(360deg); } }
+@keyframes nuFlip { 0% { transform: none; } 12%, 85% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
+@keyframes nuMirror { 0%, 100% { transform: none; } 12%, 88% { transform: scaleX(-1); } }
+@keyframes nuTilt { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(4deg) translateY(10px); } 75% { transform: rotate(-4deg) translateY(-6px); } }
+@keyframes nuZoom { 0% { transform: scale(1.07); } 100% { transform: scale(1); } }
+@keyframes nuShrink { 0%, 100% { transform: none; } 40%, 60% { transform: scale(.28) rotate(720deg); } }
+@keyframes nuHue { to { filter: hue-rotate(360deg) saturate(1.4); } }
+
+#view > .nu-jelly, #view .card.nu-jelly { animation: nuJelly 1s ease-in-out 2 var(--nd, 0s); }
+#view > .nu-bounce, #view .card.nu-bounce { animation: nuBounce .7s cubic-bezier(.3, 1.6, .5, 1) var(--nd, 0s); }
+#view > .nu-spin, #view .card.nu-spin { animation: nuSpin 1.1s cubic-bezier(.5, 0, .3, 1) var(--nd, 0s); }
+#view > .nu-drop, #view .card.nu-drop { animation: nuDrop 2.2s cubic-bezier(.5, 0, .5, 1) var(--nd, 0s) both; }
+#view > .nu-scatter, #view .card.nu-scatter { animation: nuScatter 2.4s cubic-bezier(.4, 0, .3, 1) var(--nd, 0s); }
+@keyframes nuJelly { 0%, 100% { transform: scale(1, 1); } 25% { transform: scale(1.06, .92); } 50% { transform: scale(.94, 1.07); } 75% { transform: scale(1.03, .97); } }
+@keyframes nuBounce { 0%, 100% { transform: none; } 40% { transform: translateY(-26px); } }
+@keyframes nuSpin { to { transform: rotateY(360deg); } }
+@keyframes nuDrop { 0% { transform: none; } 35%, 55% { transform: translateY(120vh) rotate(25deg); } 85% { transform: translateY(-14px); } 100% { transform: none; } }
+@keyframes nuScatter { 0%, 100% { transform: none; } 40%, 60% { transform: translate(var(--sx), var(--sy)) rotate(var(--sr)) scale(.6); } }
+
+.nu-run { position: absolute; left: 0; animation: nuRun 3.6s linear both; }
+.nu-run.rev { animation-name: nuRunR; }
+.nu-run.rev .nu-pet { transform: scaleX(-1); }
+.nu-pet { display: block; width: 100%; height: 100%; animation: nuHop .28s ease-in-out infinite alternate; }
+.nu-pet svg { width: 100%; height: 100%; }
+.nu-dust { position: absolute; left: -30%; bottom: 0; width: 60%; height: 30%; border-radius: 50%; background: radial-gradient(rgba(210, 180, 140, .7), transparent 70%); }
+.nu-run.rev .nu-dust { left: auto; right: -30%; }
+@keyframes nuRun { from { transform: translateX(-140px); } to { transform: translateX(calc(100vw + 40px)); } }
+@keyframes nuRunR { from { transform: translateX(calc(100vw + 40px)); } to { transform: translateX(-140px); } }
+@keyframes nuHop { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(-14px) rotate(5deg); } }
+.nu-run.rev .nu-pet { animation-name: nuHopR; }
+@keyframes nuHopR { from { transform: scaleX(-1) translateY(0) rotate(-4deg); } to { transform: scaleX(-1) translateY(-14px) rotate(5deg); } }
+
+.nu-giant { position: absolute; bottom: -4vh; left: 0; width: min(62vh, 70vw); height: min(62vh, 70vw); animation: nuGiant 8s linear both; }
+.nu-giant .nu-pet { animation: nuStomp .75s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes nuGiant { from { transform: translateX(-70vw); } to { transform: translateX(110vw); } }
+@keyframes nuStomp { 0%, 100% { transform: rotate(-5deg) translateY(0); } 50% { transform: rotate(5deg) translateY(-4vh); } }
+
+.nu-cf { position: absolute; bottom: -10px; border-radius: 2px; animation: nuCf 3s cubic-bezier(.15, .7, .4, 1) both; }
+@keyframes nuCf { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 60% { opacity: 1; } 100% { transform: translate(var(--dx), calc(var(--dy) + 40vh)) rotate(var(--r)); opacity: 0; } }
+.nu-bill, .nu-coin { position: absolute; left: 50vw; top: 50vh; animation: nuBurst 2.8s cubic-bezier(.1, .8, .3, 1) both; }
+.nu-bill { width: 54px; height: 26px; margin: -13px 0 0 -27px; border-radius: 4px; background: linear-gradient(135deg, #b8f5c4, #3eb45e); border: 2px solid #1f6b35; display: grid; place-items: center; }
+.nu-bill b { font: 900 15px var(--sans); color: #1f6b35; }
+.nu-coin i { display: block; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6c4, #ffc53d 50%, #b8740a); border: 2px solid #9c5a05; }
+@keyframes nuBurst { 0% { transform: translate(0, 0) scale(.3) rotate(0); opacity: 0; } 10% { opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(var(--dx), calc(var(--dy) + 20vh)) scale(1.1) rotate(var(--r)); opacity: 0; } }
+.nu-spark { position: absolute; width: 7px; height: 7px; border-radius: 50%; animation: nuSpark 1.4s cubic-bezier(.1, .8, .3, 1) both; }
+@keyframes nuSpark { 0% { transform: translate(0, 0) scale(1.2); opacity: 1; } 100% { transform: translate(var(--dx), calc(var(--dy) + 60px)) scale(.3); opacity: 0; } }
+.nu-pop { position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; animation: nuSpark .65s cubic-bezier(.1, .8, .3, 1) both; }
+
+.nu-buck { position: absolute; left: 50%; bottom: 0; display: flex; flex-direction: column; align-items: center; animation: nuBuck 5.2s cubic-bezier(.3, 1.3, .5, 1) both; }
+.nu-buck-a { display: block; width: min(46vh, 60vw); height: min(46vh, 60vw); }
+.nu-buck-a svg { width: 100%; height: 100%; }
+.nu-buck b { order: -1; margin-bottom: 10px; padding: 12px 20px; border-radius: 18px; background: #fff; color: #111; font: 900 clamp(18px, 4vw, 34px) / 1.1 var(--sans); text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); max-width: 88vw; }
+@keyframes nuBuck { 0% { transform: translate(-50%, 100%); } 15%, 80% { transform: translate(-50%, 8%); } 100% { transform: translate(-50%, 110%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  #app.nu-on, #view .nu-jelly, #view .nu-bounce, #view .nu-spin, #view .nu-drop, #view .nu-scatter { animation: none !important; }
+}
