@@ -24,7 +24,7 @@ button.inv-it:hover { transform: translateY(-2px); border-color: color-mix(in sr
 .inv-it.pet[data-r='x'] .inv-art { filter: drop-shadow(0 0 12px color-mix(in srgb, var(--rc) 70%, transparent)); }
 .inv-it.pet[data-r='l'] .inv-art { filter: drop-shadow(0 0 10px rgba(255, 178, 36, 0.55)); }
 .inv-tag { position: absolute; top: 8px; left: 8px; font: 900 9px var(--sans); letter-spacing: 0.08em; padding: 3px 6px; border-radius: 6px; color: #fff; background: linear-gradient(90deg, #ff3d7f, #8b5cff, #22d3ee); }
-.inv-it .mut-pill { position: absolute; top: 8px; right: 8px; transform: scale(0.85); transform-origin: top right; }
+.inv-it .mut-pills { position: absolute; top: 8px; right: 8px; flex-direction: column; align-items: flex-end; transform: scale(0.85); transform-origin: top right; z-index: 2; }
 .inv-n { position: absolute; top: 8px; right: 10px; font: 800 12px var(--sans); color: var(--mut); }
 .inv-eq { font: 800 11px var(--sans); color: var(--rc, var(--amber)); }
 .inv-act { font: 700 11px var(--sans); color: var(--mut); }

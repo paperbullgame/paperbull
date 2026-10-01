@@ -1415,7 +1415,7 @@
       const a = { p, d, fly, x, z, tx: x, tz: z, y: 0, mode: 'idle', t: rnd(0.5, 3), ph: rnd(0, 6), v: (fly ? 1.5 : 1.15) * rnd(0.85, 1.2), grp: new THREE.Group(), mat: null, mesh: null, sh: null, scale: 1, pop: 0, hasHelmet: false };
       a.grp.position.set(x, onGround(x, z), z);
       scene.add(a.grp);
-      const key = p.id + '|' + (p.mut || '');
+      const key = p.id + '|' + (window.PBExotic ? PBExotic.mutsOf(p).join('+') : p.mut || '');
       svgTexture(key, petArt(p.id)).then(tex => {
         if (!tex || !a.grp.parent) return;
         const size = d.r === 's' || d.ultra ? 2.35 : d.r === 'x' || d.r === 'm' ? 2.15 : 1.9;
@@ -1701,7 +1701,7 @@
         M = window.PBExotic && p.mut ? PBExotic.MUT[p.mut] : null,
         rate = Math.round(PG().petRate(p) * PG().boost());
       card.innerHTML = `<button class="pg-x" aria-label="Close">×</button><span class="pg-cart">${petArt(p.id)}</span>
-        <div class="pg-ct"><b>${E(p.name)}</b><small style="color:${RARITY[d.r].color}">${d.r === 'x' ? '<span class="x-rar">' + (d.ultra ? 'ULTRA Exotic' : 'Exotic') + '</span>' : d.r === 'm' ? '<span class="m-rar">Mythic</span>' : d.r === 's' ? '<span class="s-rar">SECRET</span>' : RARITY[d.r].name} · Lv ${p.lvl}${M && window.PBExotic ? ' ' + PBExotic.pill(p.mut) : ''}</small>
+        <div class="pg-ct"><b>${E(p.name)}</b><small style="color:${RARITY[d.r].color}">${d.r === 'x' ? '<span class="x-rar">' + (d.ultra ? 'ULTRA Exotic' : 'Exotic') + '</span>' : d.r === 'm' ? '<span class="m-rar">Mythic</span>' : d.r === 's' ? '<span class="s-rar">SECRET</span>' : RARITY[d.r].name} · Lv ${p.lvl}${M && window.PBExotic ? ' ' + PBExotic.pills(p) : ''}</small>
         ${moodBar(p.mood)}<small class="muted">Earns ${rate} garden coins an hour</small>
         <div class="pg-cb"><button class="btn sm primary" data-a="pet" ${cd > 0 ? 'disabled' : ''}>${cd > 0 ? 'Pet in ' + fmtDur(cd / 1000) : 'Pet'}</button>${treats.length ? `<button class="btn sm" data-a="feed">Feed ${E(treats[0].name)}</button>` : ''}${p.uid !== acct.pets.active ? '<button class="btn sm" data-a="comp">Make companion</button>' : '<span class="pg-comp">Companion</span>'}<button class="btn sm" data-a="look">👀 Look</button></div></div>`;
       card.classList.add('on');

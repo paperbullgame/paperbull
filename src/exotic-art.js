@@ -832,5 +832,26 @@
       `<g class="mx-front">${fx.front || ''}</g></svg>`
     );
   }
-  window.ExoticArt = { PETS, EXTRA, MUTS, MUT, svg, mutate };
+  // several mutations on one pet: the strongest one recolors the body, every other one
+  // adds its own back + front layers (auras, particles, crystals, halos) on top
+  function mutateMany(svgStr, list) {
+    list = [...new Set((list || []).filter(m => MUT[m]))].sort((a, b) => MUT[b].mult - MUT[a].mult);
+    if (!list.length) return svgStr;
+    let out = mutate(svgStr, list[0]);
+    if (list.length < 2 || out === svgStr || !out.includes('<g class="mx-back">')) return out;
+    let defs = '',
+      back = '',
+      front = '';
+    for (const m of list.slice(1)) {
+      const u = `mx${SEED}${(++mseq).toString(36)}_`,
+        fx = MUT_FX[m](u);
+      defs += `<clipPath id="${u}c"><circle cx="32" cy="35" r="22"/></clipPath>${fx.defs || ''}`;
+      back += fx.back || '';
+      front += fx.front || '';
+    }
+    out = out.replace('<g class="mx-back">', `<defs>${defs}</defs><g class="mx-back mx-x">${back}</g><g class="mx-back">`);
+    out = out.replace(/<\/svg>\s*$/, `<g class="mx-front mx-x">${front}</g></svg>`);
+    return out.replace('data-mut="', `data-muts="${list.join(' ')}" data-mut="`);
+  }
+  window.ExoticArt = { PETS, EXTRA, MUTS, MUT, svg, mutate, mutateMany };
 })();

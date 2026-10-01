@@ -44,7 +44,7 @@
     Object.entries(acct.inv || {})
       .filter(([id, n]) => n >= 1 && tradableItem(id))
       .map(([id, n]) => ({ id, n: Math.floor(n) }));
-  const myPets = () => acct.pets.list.filter(p => !p.mission && PET[p.id]).map(p => ({ uid: p.uid, id: p.id, lvl: p.lvl, mut: p.mut, prime: p.prime }));
+  const myPets = () => acct.pets.list.filter(p => !p.mission && PET[p.id]).map(p => ({ uid: p.uid, id: p.id, lvl: p.lvl, mut: p.mut, muts: p.muts, prime: p.prime }));
   const theirItems = () =>
     Object.entries((S.them && S.them.inv) || {})
       .filter(([id, n]) => n >= 1 && tradableItem(id))
@@ -55,7 +55,7 @@
   const R = r => RARITY[r] || RARITY.c;
   const petTile = (p, extra = '') => {
     const d = PET[p.id];
-    return `<span class="tr-art">${petArt(d.id)}</span><b>${E(d.name)}</b><small style="color:${R(d.r).color}">Lv ${p.lvl || 1}${p.mut ? ' · ' + E(String(p.mut)) : ''}${p.prime ? ' · Prime' : ''}</small>${extra}`;
+    return `<span class="tr-art">${petArt(d.id)}</span><b>${E(d.name)}</b><small style="color:${R(d.r).color}">Lv ${p.lvl || 1}${p.mut ? ' · ' + E((window.PBExotic ? PBExotic.mutsOf(p).map(m => PBExotic.MUT[m].name) : [p.mut]).join(' + ')) : ''}${p.prime ? ' · Prime' : ''}</small>${extra}`;
   };
   const itemTile = (id, n, extra = '') => {
     const it = ITEM[id];

@@ -41,7 +41,7 @@ svg.xprism { animation: mxRainbow 5s linear infinite; }
 @keyframes xHue { to { background-position: 300% 0; } }
 
 html .col-item[data-r='x'] .rpill { color: #ff6af5 !important; background: rgba(255, 61, 240, .16) !important; border: 1px solid rgba(255, 61, 240, .45) !important; font-weight: 800; letter-spacing: .03em; }
-.col-item .mut-pill ~ .x-tag { display: none; }
+.col-item .mut-pill ~ .x-tag, .col-item .mut-pills ~ .x-tag { display: none; }
 .x-egg small.muted { color: var(--mut) !important; }
 /* Exotic eggs */
 .x-egg .face { filter: drop-shadow(0 0 8px var(--rc)); animation: xEgg 2.2s ease-in-out infinite; }
@@ -113,7 +113,12 @@ svg.art[data-mut='glitch'] { animation: mxGlitch 2.6s steps(1) infinite; }
 .mut-pill.rb:not([data-m]) { background: linear-gradient(90deg, #ff7ae6, #ffd34d, #7dff3d, #3de7ff, #8a5cff); }
 @keyframes mxPill { 0%, 55% { transform: translateX(-110%); } 100% { transform: translateX(110%); } }
 @keyframes mxPillBg { to { background-position: 200% 0; } }
-.col-item .mut-pill { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; padding: 2px 6px; }
+.mut-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+.col-item .mut-pills { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 2; flex-direction: column; align-items: flex-start; }
+.col-item .mut-pill { font-size: 9px; padding: 2px 6px; }
+.pm-pt .mut-pills { margin-top: 4px; }
+.pm-pet[disabled] { opacity: .45; cursor: not-allowed; }
+.hatched .mut-pills { justify-content: center; }
 .x-serums { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .x-serum { display: inline-flex; align-items: center; gap: 6px; }
 .x-serum i { width: 12px; height: 12px; border-radius: 50%; background: var(--mg, var(--mc)); box-shadow: 0 0 8px var(--mc); }

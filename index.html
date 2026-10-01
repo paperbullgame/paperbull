@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#06080c">
 <title>PAPERBULL</title>
 <!-- BRAND:START -->
-<script>window.PB_BUILD="20260930221736";</script>
+<script>window.PB_BUILD="20261001064709";</script>
 <script>/* MOVE-IN: the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull.
    The page at the old address packs up the player's login and (for guests) their save into the link
    (#pbmove=…) and sends them here. This runs before anything else: it stops the page, writes that data
@@ -20043,7 +20043,28 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       `<g class="mx-front">${fx.front || ''}</g></svg>`
     );
   }
-  window.ExoticArt = { PETS, EXTRA, MUTS, MUT, svg, mutate };
+  // several mutations on one pet: the strongest one recolors the body, every other one
+  // adds its own back + front layers (auras, particles, crystals, halos) on top
+  function mutateMany(svgStr, list) {
+    list = [...new Set((list || []).filter(m => MUT[m]))].sort((a, b) => MUT[b].mult - MUT[a].mult);
+    if (!list.length) return svgStr;
+    let out = mutate(svgStr, list[0]);
+    if (list.length < 2 || out === svgStr || !out.includes('<g class="mx-back">')) return out;
+    let defs = '',
+      back = '',
+      front = '';
+    for (const m of list.slice(1)) {
+      const u = `mx${SEED}${(++mseq).toString(36)}_`,
+        fx = MUT_FX[m](u);
+      defs += `<clipPath id="${u}c"><circle cx="32" cy="35" r="22"/></clipPath>${fx.defs || ''}`;
+      back += fx.back || '';
+      front += fx.front || '';
+    }
+    out = out.replace('<g class="mx-back">', `<defs>${defs}</defs><g class="mx-back mx-x">${back}</g><g class="mx-back">`);
+    out = out.replace(/<\/svg>\s*$/, `<g class="mx-front mx-x">${front}</g></svg>`);
+    return out.replace('data-mut="', `data-muts="${list.join(' ')}" data-mut="`);
+  }
+  window.ExoticArt = { PETS, EXTRA, MUTS, MUT, svg, mutate, mutateMany };
 })();
 
 /* =====================================================================
@@ -20108,15 +20129,61 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   for (const m of X.MUTS) reg({ id: 'mut_' + m.id, type: 'serum', name: `${m.name} Serum`, r: 'x', mut: m.id, desc: `Mutates a pet into ${m.name}: perk ×${m.mult}.` });
 
   /* ---------- mutations ---------- */
-  const mutMult = p => (p && p.mut && MUT[p.mut] ? MUT[p.mut].mult : 1);
+  // a pet can carry up to MAXM mutations. p.muts = all of them (strongest first),
+  // p.mut = the strongest one (kept so older code and saves keep working)
+  const MAXM = 4;
+  const mutsOf = p => {
+    if (!p) return [];
+    const a = (Array.isArray(p.muts) ? p.muts : []).filter(m => MUT[m]);
+    if (p.mut && MUT[p.mut]) a.unshift(p.mut);
+    return [...new Set(a)].sort((x, y) => MUT[y].mult - MUT[x].mult).slice(0, MAXM);
+  };
+  const setMuts = (p, list) => {
+    const a = [...new Set(list.filter(m => MUT[m]))].sort((x, y) => MUT[y].mult - MUT[x].mult).slice(0, MAXM);
+    if (a.length) (p.muts = a), (p.mut = a[0]);
+    else delete p.muts, delete p.mut;
+  };
+  // the strongest mutation counts fully, every extra one adds half of its bonus
+  const mutMult = p => {
+    const a = mutsOf(p);
+    if (!a.length) return 1;
+    return Math.round((MUT[a[0]].mult + a.slice(1).reduce((s, m) => s + 0.5 * (MUT[m].mult - 1), 0)) * 100) / 100;
+  };
+  // add a mutation: returns 'added' | 'replaced:<old>' | 'have' | 'full'
+  function addMut(p, m) {
+    if (!MUT[m]) return 'have';
+    const a = mutsOf(p);
+    if (a.includes(m)) return 'have';
+    if (a.length < MAXM) {
+      setMuts(p, [...a, m]);
+      return 'added';
+    }
+    const weak = a[a.length - 1];
+    if (MUT[m].mult <= MUT[weak].mult) return 'full';
+    setMuts(p, [...a.slice(0, -1), m]);
+    return 'replaced:' + weak;
+  }
   function rollMut() {
     const tot = X.MUTS.reduce((s, m) => s + m.w, 0);
     let r = Math.random() * tot;
     for (const m of X.MUTS) if ((r -= m.w) <= 0) return m.id;
     return 'gold';
   }
+  // one mutation, with a chance of a 2nd (and a smaller chance of a 3rd)
+  function rollMuts(extra = 0.12) {
+    const a = [rollMut()];
+    while (a.length < 3 && Math.random() < extra / a.length) {
+      const m = rollMut();
+      if (!a.includes(m)) a.push(m);
+    }
+    return a.length > 1 ? a : a[0];
+  }
   const mstyle = M => `--mc:${M.c};--mg:${M.bg || M.c};--mi:${M.ink || '#120a1e'}`;
   const pill = m => (MUT[m] ? `<span class="mut-pill" data-m="${m}" style="${mstyle(MUT[m])}">${esc(MUT[m].name)}</span>` : '');
+  const pills = p => {
+    const a = Array.isArray(p) ? p : mutsOf(p);
+    return a.length ? `<span class="mut-pills">${a.map(pill).join('')}</span>` : '';
+  };
 
   // any owned pet that is mutated is drawn mutated, on every screen
   const art0 = art;
@@ -20124,7 +20191,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const s = art0.apply(this, arguments);
     if (PET[key] && typeof acct !== 'undefined' && acct && acct.pets && acct.pets.list) {
       const mine = acct.pets.list.find(p => p.id === key);
-      if (mine && mine.mut) return X.mutate(s, mine.mut);
+      if (mine && (mine.mut || mine.muts)) return X.mutateMany(s, mutsOf(mine));
     }
     return s;
   };
@@ -20161,9 +20228,14 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const ex = acct.pets.list.find(p => p.id === petId);
     let note;
     if (ex) {
-      if (mut && ex.mut !== mut && (!ex.mut || MUT[mut].mult >= MUT[ex.mut].mult)) {
-        ex.mut = mut;
-        note = `${ex.name} mutated into ${MUT[mut].name}! Perk ×${MUT[mut].mult}.`;
+      const ml = mut ? (Array.isArray(mut) ? mut : [mut]) : [],
+        got = ml.filter(m => {
+          const x = addMut(ex, m);
+          return x === 'added' || x.startsWith('replaced');
+        });
+      if (got.length) {
+        const n = mutsOf(ex).length;
+        note = `${ex.name} got ${got.map(m => MUT[m].name).join(' + ')}! ${n} mutation${n > 1 ? 's' : ''}, perk ×${mutMult(ex)}.`;
       } else {
         petGainXP(ex, 300);
         acct.coins += 2000;
@@ -20172,10 +20244,10 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       }
     } else {
       const p = { uid: uid(), id: d.id, name: d.name, lvl: 1, xp: 0, mood: 100, lastPet: 0, born: Date.now() };
-      if (mut) p.mut = mut;
+      if (mut) setMuts(p, Array.isArray(mut) ? mut : [mut]);
       acct.pets.list.push(p);
       if (!acct.pets.active) acct.pets.active = p.uid;
-      note = `${mut ? MUT[mut].name + ' ' : ''}${RARITY[d.r].name} pet! ${acct.pets.active === p.uid ? 'Now your companion.' : 'Make it your companion on the Pets screen.'}`;
+      note = `${p.mut ? mutsOf(p).map(m => MUT[m].name).join(' + ') + ' ' : ''}${RARITY[d.r].name} pet! ${acct.pets.active === p.uid ? 'Now your companion.' : 'Make it your companion on the Pets screen.'}`;
     }
     saveAcct(true);
     return { d, note };
@@ -20210,15 +20282,16 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const { d, mut } = lastReveal;
     if (!h.textContent.includes(d.name)) return;
     h.dataset.x = 1;
-    const k = mut ? MUT[mut].mult : 1,
+    const ml = mut ? (Array.isArray(mut) ? mut : [mut]) : [],
+      k = ml.length ? mutMult({ muts: ml }) : 1,
       sm = h.querySelector('small'),
       rar = h.querySelector('.rar');
     if (sm) sm.textContent = PERK_TEXT[d.perk](d.base * k) + (d.perk2 ? ' · ' + PERK_TEXT[d.perk2](d.base2 * k) : '');
     if (rar && d.r === 'x') rar.innerHTML = '<span class="x-rar">Exotic pet</span>';
     if (rar && d.r === 'm') rar.innerHTML = '<span class="m-rar">Mythic pet</span>';
     if (rar && d.r === 's') rar.innerHTML = '<span class="s-rar">SECRET pet</span>';
-    if (rar && mut) rar.insertAdjacentHTML('afterend', `<span style="margin:4px 0 2px">${pill(mut)}</span>`);
-    if (window.AbuseFX && mut) AbuseFX.flash(MUT[mut].c);
+    if (rar && ml.length) rar.insertAdjacentHTML('afterend', `<span style="margin:4px 0 2px">${pills(ml)}</span>`);
+    if (window.AbuseFX && ml.length) AbuseFX.flash(MUT[ml[0]].c);
   }).observe(document.getElementById('packRoot') || document.body, { childList: true, subtree: true });
 
   function giveExotic(petId, mut, egg) {
@@ -20226,7 +20299,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const { d, note } = addPet(petId, mut);
     mark(d, mut);
     setTimeout(() => reveal(ITEM[egg || (mut ? 'egg_x_mutant' : 'egg_x_any')], d, note), 400);
-    return mut ? `${d.name} (${MUT[mut].name})` : d.name;
+    return mut ? `${d.name} (${(Array.isArray(mut) ? mut : [mut]).map(m => MUT[m].name).join(' + ')})` : d.name;
   }
 
   const g0 = grant;
@@ -20261,7 +20334,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     acct.inv[eggId]--;
     const pool = egg.tier ? TIER(egg.tier) : EXO.filter(p => (!egg.el || p.el === egg.el) && (!egg.ultra || p.ultra)),
       d = pick(pool.length ? pool : EXO),
-      mut = Math.random() < egg.mut ? rollMut() : null;
+      mut = Math.random() < egg.mut ? rollMuts(egg.mut >= 1 ? 0.3 : 0.12) : null;
     const r = addPet(d.id, mut);
     mark(r.d, mut);
     Hatch.show(egg, r.d, r.note);
@@ -20271,13 +20344,16 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const it = ITEM[serumId],
       p = acct.pets.list.find(x => x.uid === petUid) || activePet();
     if (!it || !(acct.inv[serumId] > 0) || !p) return false;
+    const r = addMut(p, it.mut);
+    if (r === 'have') return toast(`${p.name} already has ${MUT[it.mut].name}`, 'err'), false;
+    if (r === 'full') return toast(`${p.name} already has ${MAXM} stronger mutations`, 'err'), false;
     acct.inv[serumId]--;
-    p.mut = it.mut;
     saveAcct(true);
     SFX.play('legend');
     confetti();
     if (window.AbuseFX) AbuseFX.flash(MUT[it.mut].c);
-    toast(`${p.name} mutated into ${MUT[it.mut].name}! Perk ×${MUT[it.mut].mult}`, 'xp');
+    const n = mutsOf(p).length;
+    toast(`${p.name} got ${MUT[it.mut].name}${r.startsWith('replaced') ? ` (replaced ${MUT[r.slice(9)].name})` : ''}! ${n} mutation${n > 1 ? 's' : ''} · perk ×${mutMult(p)}`, 'xp');
     if (document.getElementById('petHero')) Pets.render();
     return true;
   }
@@ -20285,15 +20361,23 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     const it = ITEM[serumId],
       list = acct.pets.list;
     if (!list.length) return toast('Hatch a pet first, then use the serum on it', 'err');
-    let sel = acct.pets.active || list[0].uid;
+    const ok = p => {
+      const ms = mutsOf(p);
+      return !ms.includes(it.mut) && !(ms.length >= MAXM && MUT[it.mut].mult <= MUT[ms[ms.length - 1]].mult);
+    };
+    if (!list.some(ok)) return toast(`All your pets already have ${MUT[it.mut].name} or ${MAXM} stronger mutations`, 'err');
+    let sel = (list.find(p => p.uid === acct.pets.active && ok(p)) || list.find(ok)).uid;
     modal({
       title: `Use ${esc(it.name)}?`,
       confirm: 'Mutate!',
-      html: `<p class="muted small" style="margin:0 0 10px">${esc(it.desc)} It replaces any mutation the pet already has.</p>
+      html: `<p class="muted small" style="margin:0 0 10px">${esc(it.desc)} Mutations stack: a pet can carry up to ${MAXM}. The strongest counts fully and every extra one adds half its boost. On a full pet it replaces the weakest one.</p>
         <div class="pm-pick">${list
           .map(p => {
             const d = PET[p.id];
-            return d ? `<button class="pm-pet${p.uid === sel ? ' on' : ''}" data-u="${p.uid}" style="--rc:${RARITY[d.r].color}"><span class="face art-face">${petArt(p.id)}</span><span class="pm-pt"><b>${esc(p.name)}</b><small>${RARITY[d.r].name}${p.mut ? ' · ' + MUT[p.mut].name : ''}</small></span></button>` : '';
+            const ms = mutsOf(p),
+              has = ms.includes(it.mut),
+              full = !has && ms.length >= MAXM && MUT[it.mut].mult <= MUT[ms[ms.length - 1]].mult;
+            return d ? `<button class="pm-pet${p.uid === sel ? ' on' : ''}" data-u="${p.uid}" style="--rc:${RARITY[d.r].color}" ${has || full ? 'disabled' : ''}><span class="face art-face">${petArt(p.id)}</span><span class="pm-pt"><b>${esc(p.name)}</b><small>${RARITY[d.r].name} · ${ms.length}/${MAXM} mutations${has ? ' · already has it' : full ? ' · full' : ''}</small>${ms.length ? pills(ms) : ''}</span></button>` : '';
           })
           .join('')}</div>`,
       onMount: r =>
@@ -20344,7 +20428,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         perk.textContent = perkText(a) + (off ? (a.mission ? ' · off, on a mission' : ' · off, too sad') : '');
       }
       const line = hero.querySelector('.pet-info .small');
-      if (line && !line.querySelector('.mut-pill') && a.mut) line.insertAdjacentHTML('beforeend', ' ' + pill(a.mut) + ` <span class="muted">perk ×${MUT[a.mut].mult}</span>`);
+      if (line && !line.querySelector('.mut-pill') && a.mut) line.insertAdjacentHTML('beforeend', ' ' + pills(a) + ` <span class="muted">perk ×${mutMult(a)}</span>`);
       if (line && PET[a.id].r === 'x') line.style.color = '';
       if (line && PET[a.id].r === 'x' && !line.querySelector('.x-rar')) line.innerHTML = line.innerHTML.replace('Exotic ', '<span class="x-rar">Exotic</span> ');
     }
@@ -20360,7 +20444,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
           pm.textContent = PERK_TEXT[d.perk](d.base) + ' · ' + PERK_TEXT[d.perk2](d.base2);
         }
       }
-      if (mine && mine.mut && !el.querySelector('.mut-pill')) el.insertAdjacentHTML('afterbegin', pill(mine.mut));
+      if (mine && mine.mut && !el.querySelector('.mut-pill')) el.insertAdjacentHTML('afterbegin', pills(mine));
       if (d.r === 's') el.style.display = mine ? '' : 'none';
       if ((d.r === 'm' || d.r === 's') && d.perk2) {
         const pm = el.querySelector('.perk-mini');
@@ -20390,7 +20474,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     }
   };
 
-  window.PBExotic = { TIER, PETS: EXO, MUTS: X.MUTS, MUT, EGGS, rollMut, giveExotic, addPet, useSerum, serumModal, pill, perkText };
+  window.PBExotic = { TIER, PETS: EXO, MUTS: X.MUTS, MUT, EGGS, MAXM, rollMut, rollMuts, mutsOf, setMuts, addMut, mutMult, giveExotic, addPet, useSerum, serumModal, pill, pills, perkText };
 })();
 /* keep exotic perk text + badges after the pets-plus 10s refresh */
 (() => {
@@ -20495,7 +20579,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const slotsMax = () => BASE_SLOTS + DECO.filter(d => own(d.id)).reduce((s, d) => s + d.slots, 0);
   const boost = () => 1 + DECO.filter(d => own(d.id)).reduce((s, d) => s + d.boost, 0) + curTheme().boost;
   const petBy = uid => acct.pets.list.find(p => p.uid === uid);
-  const mutMult = p => (window.PBExotic && p.mut && PBExotic.MUT[p.mut] ? PBExotic.MUT[p.mut].mult : 1);
+  const mutMult = p => (window.PBExotic && p.mut && PBExotic.MUT[p.mut] ? (PBExotic.mutMult ? PBExotic.mutMult(p) : PBExotic.MUT[p.mut].mult) : 1);
   const home = () => {
     // who lives here: chosen pets (or, if you never chose, your first pets)
     const g = G(),
@@ -21054,7 +21138,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       treats = ITEMS.filter(i => i.type === 'treat' && acct.inv[i.id] > 0),
       M = window.PBExotic && p.mut ? PBExotic.MUT[p.mut] : null;
     card.innerHTML = `<button class="pg-x" aria-label="Close">×</button><span class="pg-cart">${petArt(p.id)}</span>
-      <div class="pg-ct"><b>${esc(p.name)}</b><small style="color:${RARITY[d.r].color}">${d.r === 'x' ? '<span class="x-rar">' + (d.ultra ? 'ULTRA Exotic' : 'Exotic') + '</span>' : RARITY[d.r].name} · Lv ${p.lvl}${M && window.PBExotic ? ' ' + PBExotic.pill(p.mut) : ''}</small>
+      <div class="pg-ct"><b>${esc(p.name)}</b><small style="color:${RARITY[d.r].color}">${d.r === 'x' ? '<span class="x-rar">' + (d.ultra ? 'ULTRA Exotic' : 'Exotic') + '</span>' : RARITY[d.r].name} · Lv ${p.lvl}${M && window.PBExotic ? ' ' + PBExotic.pills(p) : ''}</small>
       ${moodBar(p.mood)}<small class="muted">Earns ${Math.round(petRate(p) * boost())} garden coins an hour</small>
       <div class="pg-cb"><button class="btn sm primary" data-a="pet" ${cd > 0 ? 'disabled' : ''}>${cd > 0 ? 'Pet in ' + fmtDur(cd / 1000) : 'Pet'}</button>${treats.length ? `<button class="btn sm" data-a="feed">Feed ${esc(treats[0].name)}</button>` : ''}${p.uid !== acct.pets.active ? '<button class="btn sm" data-a="comp">Make companion</button>' : '<span class="pg-comp">Companion</span>'}</div></div>`;
     card.classList.add('on');
@@ -27087,12 +27171,14 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         ex = acct.pets.list.find(p => p.id === d.id);
       if (ex) {
         if (lvl > ex.lvl || (lvl === ex.lvl && xp > ex.xp)) (ex.lvl = lvl), (ex.xp = xp);
-        if (x.mut && !ex.mut) ex.mut = x.mut;
+        if ((x.mut || x.muts) && window.PBExotic) PBExotic.setMuts(ex, [...PBExotic.mutsOf(ex), ...(Array.isArray(x.muts) ? x.muts : []), x.mut].filter(Boolean).map(String));
+        else if (x.mut && !ex.mut) ex.mut = x.mut;
         if (x.prime) ex.prime = true;
         return `${d.name} (merged with yours, Lv ${ex.lvl})`;
       }
       const p = { uid: uid(), id: d.id, name: d.name, lvl, xp, mood: 100, lastPet: 0, born: Date.now() };
       if (x.mut) p.mut = String(x.mut);
+      if (Array.isArray(x.muts) && window.PBExotic) PBExotic.setMuts(p, [x.mut, ...x.muts].filter(Boolean).map(String));
       if (x.prime) p.prime = true;
       acct.pets.list.push(p);
       if (!acct.pets.active) acct.pets.active = p.uid;
@@ -41524,7 +41610,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
             rc = R(d.r),
             on = p.uid === acct.pets.active;
           return `<button class="inv-it pet ${on ? 'on' : ''}" data-r="${d.r}" data-pet="${p.uid}" style="--rc:${rc.color}">
-            ${d.r === 'x' ? `<span class="inv-tag">${d.ultra ? 'ULTRA' : 'EXOTIC'}</span>` : d.r === 'm' ? '<span class="inv-tag m-tag">MYTHIC</span>' : d.r === 's' ? '<span class="inv-tag s-tag">SECRET</span>' : ''}${p.mut && window.PBExotic ? PBExotic.pill(p.mut) : ''}
+            ${d.r === 'x' ? `<span class="inv-tag">${d.ultra ? 'ULTRA' : 'EXOTIC'}</span>` : d.r === 'm' ? '<span class="inv-tag m-tag">MYTHIC</span>' : d.r === 's' ? '<span class="inv-tag s-tag">SECRET</span>' : ''}${p.mut && window.PBExotic ? PBExotic.pills(p) : ''}
             <span class="inv-art">${petArt(p.id)}</span><b>${esc(p.name)}</b><small style="color:${rc.color}">${rc.name} · Lv ${p.lvl}</small>
             ${on ? '<span class="inv-eq">Active</span>' : '<span class="inv-act">Make active</span>'}</button>`;
         })
@@ -43629,7 +43715,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       const a = { p, d, fly, x, z, tx: x, tz: z, y: 0, mode: 'idle', t: rnd(0.5, 3), ph: rnd(0, 6), v: (fly ? 1.5 : 1.15) * rnd(0.85, 1.2), grp: new THREE.Group(), mat: null, mesh: null, sh: null, scale: 1, pop: 0, hasHelmet: false };
       a.grp.position.set(x, onGround(x, z), z);
       scene.add(a.grp);
-      const key = p.id + '|' + (p.mut || '');
+      const key = p.id + '|' + (window.PBExotic ? PBExotic.mutsOf(p).join('+') : p.mut || '');
       svgTexture(key, petArt(p.id)).then(tex => {
         if (!tex || !a.grp.parent) return;
         const size = d.r === 's' || d.ultra ? 2.35 : d.r === 'x' || d.r === 'm' ? 2.15 : 1.9;
@@ -43915,7 +44001,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         M = window.PBExotic && p.mut ? PBExotic.MUT[p.mut] : null,
         rate = Math.round(PG().petRate(p) * PG().boost());
       card.innerHTML = `<button class="pg-x" aria-label="Close">×</button><span class="pg-cart">${petArt(p.id)}</span>
-        <div class="pg-ct"><b>${E(p.name)}</b><small style="color:${RARITY[d.r].color}">${d.r === 'x' ? '<span class="x-rar">' + (d.ultra ? 'ULTRA Exotic' : 'Exotic') + '</span>' : d.r === 'm' ? '<span class="m-rar">Mythic</span>' : d.r === 's' ? '<span class="s-rar">SECRET</span>' : RARITY[d.r].name} · Lv ${p.lvl}${M && window.PBExotic ? ' ' + PBExotic.pill(p.mut) : ''}</small>
+        <div class="pg-ct"><b>${E(p.name)}</b><small style="color:${RARITY[d.r].color}">${d.r === 'x' ? '<span class="x-rar">' + (d.ultra ? 'ULTRA Exotic' : 'Exotic') + '</span>' : d.r === 'm' ? '<span class="m-rar">Mythic</span>' : d.r === 's' ? '<span class="s-rar">SECRET</span>' : RARITY[d.r].name} · Lv ${p.lvl}${M && window.PBExotic ? ' ' + PBExotic.pills(p) : ''}</small>
         ${moodBar(p.mood)}<small class="muted">Earns ${rate} garden coins an hour</small>
         <div class="pg-cb"><button class="btn sm primary" data-a="pet" ${cd > 0 ? 'disabled' : ''}>${cd > 0 ? 'Pet in ' + fmtDur(cd / 1000) : 'Pet'}</button>${treats.length ? `<button class="btn sm" data-a="feed">Feed ${E(treats[0].name)}</button>` : ''}${p.uid !== acct.pets.active ? '<button class="btn sm" data-a="comp">Make companion</button>' : '<span class="pg-comp">Companion</span>'}<button class="btn sm" data-a="look">👀 Look</button></div></div>`;
       card.classList.add('on');
@@ -48958,7 +49044,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     Object.entries(acct.inv || {})
       .filter(([id, n]) => n >= 1 && tradableItem(id))
       .map(([id, n]) => ({ id, n: Math.floor(n) }));
-  const myPets = () => acct.pets.list.filter(p => !p.mission && PET[p.id]).map(p => ({ uid: p.uid, id: p.id, lvl: p.lvl, mut: p.mut, prime: p.prime }));
+  const myPets = () => acct.pets.list.filter(p => !p.mission && PET[p.id]).map(p => ({ uid: p.uid, id: p.id, lvl: p.lvl, mut: p.mut, muts: p.muts, prime: p.prime }));
   const theirItems = () =>
     Object.entries((S.them && S.them.inv) || {})
       .filter(([id, n]) => n >= 1 && tradableItem(id))
@@ -48969,7 +49055,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const R = r => RARITY[r] || RARITY.c;
   const petTile = (p, extra = '') => {
     const d = PET[p.id];
-    return `<span class="tr-art">${petArt(d.id)}</span><b>${E(d.name)}</b><small style="color:${R(d.r).color}">Lv ${p.lvl || 1}${p.mut ? ' · ' + E(String(p.mut)) : ''}${p.prime ? ' · Prime' : ''}</small>${extra}`;
+    return `<span class="tr-art">${petArt(d.id)}</span><b>${E(d.name)}</b><small style="color:${R(d.r).color}">Lv ${p.lvl || 1}${p.mut ? ' · ' + E((window.PBExotic ? PBExotic.mutsOf(p).map(m => PBExotic.MUT[m].name) : [p.mut]).join(' + ')) : ''}${p.prime ? ' · Prime' : ''}</small>${extra}`;
   };
   const itemTile = (id, n, extra = '') => {
     const it = ITEM[id];
@@ -63581,7 +63667,7 @@ svg.xprism { animation: mxRainbow 5s linear infinite; }
 @keyframes xHue { to { background-position: 300% 0; } }
 
 html .col-item[data-r='x'] .rpill { color: #ff6af5 !important; background: rgba(255, 61, 240, .16) !important; border: 1px solid rgba(255, 61, 240, .45) !important; font-weight: 800; letter-spacing: .03em; }
-.col-item .mut-pill ~ .x-tag { display: none; }
+.col-item .mut-pill ~ .x-tag, .col-item .mut-pills ~ .x-tag { display: none; }
 .x-egg small.muted { color: var(--mut) !important; }
 /* Exotic eggs */
 .x-egg .face { filter: drop-shadow(0 0 8px var(--rc)); animation: xEgg 2.2s ease-in-out infinite; }
@@ -63653,7 +63739,12 @@ svg.art[data-mut='glitch'] { animation: mxGlitch 2.6s steps(1) infinite; }
 .mut-pill.rb:not([data-m]) { background: linear-gradient(90deg, #ff7ae6, #ffd34d, #7dff3d, #3de7ff, #8a5cff); }
 @keyframes mxPill { 0%, 55% { transform: translateX(-110%); } 100% { transform: translateX(110%); } }
 @keyframes mxPillBg { to { background-position: 200% 0; } }
-.col-item .mut-pill { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; padding: 2px 6px; }
+.mut-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+.col-item .mut-pills { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 2; flex-direction: column; align-items: flex-start; }
+.col-item .mut-pill { font-size: 9px; padding: 2px 6px; }
+.pm-pt .mut-pills { margin-top: 4px; }
+.pm-pet[disabled] { opacity: .45; cursor: not-allowed; }
+.hatched .mut-pills { justify-content: center; }
 .x-serums { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .x-serum { display: inline-flex; align-items: center; gap: 6px; }
 .x-serum i { width: 12px; height: 12px; border-radius: 50%; background: var(--mg, var(--mc)); box-shadow: 0 0 8px var(--mc); }
@@ -64168,7 +64259,7 @@ button.inv-it:hover { transform: translateY(-2px); border-color: color-mix(in sr
 .inv-it.pet[data-r='x'] .inv-art { filter: drop-shadow(0 0 12px color-mix(in srgb, var(--rc) 70%, transparent)); }
 .inv-it.pet[data-r='l'] .inv-art { filter: drop-shadow(0 0 10px rgba(255, 178, 36, 0.55)); }
 .inv-tag { position: absolute; top: 8px; left: 8px; font: 900 9px var(--sans); letter-spacing: 0.08em; padding: 3px 6px; border-radius: 6px; color: #fff; background: linear-gradient(90deg, #ff3d7f, #8b5cff, #22d3ee); }
-.inv-it .mut-pill { position: absolute; top: 8px; right: 8px; transform: scale(0.85); transform-origin: top right; }
+.inv-it .mut-pills { position: absolute; top: 8px; right: 8px; flex-direction: column; align-items: flex-end; transform: scale(0.85); transform-origin: top right; z-index: 2; }
 .inv-n { position: absolute; top: 8px; right: 10px; font: 800 12px var(--sans); color: var(--mut); }
 .inv-eq { font: 800 11px var(--sans); color: var(--rc, var(--amber)); }
 .inv-act { font: 700 11px var(--sans); color: var(--mut); }

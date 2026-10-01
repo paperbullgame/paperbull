@@ -30,7 +30,7 @@
             rc = R(d.r),
             on = p.uid === acct.pets.active;
           return `<button class="inv-it pet ${on ? 'on' : ''}" data-r="${d.r}" data-pet="${p.uid}" style="--rc:${rc.color}">
-            ${d.r === 'x' ? `<span class="inv-tag">${d.ultra ? 'ULTRA' : 'EXOTIC'}</span>` : d.r === 'm' ? '<span class="inv-tag m-tag">MYTHIC</span>' : d.r === 's' ? '<span class="inv-tag s-tag">SECRET</span>' : ''}${p.mut && window.PBExotic ? PBExotic.pill(p.mut) : ''}
+            ${d.r === 'x' ? `<span class="inv-tag">${d.ultra ? 'ULTRA' : 'EXOTIC'}</span>` : d.r === 'm' ? '<span class="inv-tag m-tag">MYTHIC</span>' : d.r === 's' ? '<span class="inv-tag s-tag">SECRET</span>' : ''}${p.mut && window.PBExotic ? PBExotic.pills(p) : ''}
             <span class="inv-art">${petArt(p.id)}</span><b>${esc(p.name)}</b><small style="color:${rc.color}">${rc.name} · Lv ${p.lvl}</small>
             ${on ? '<span class="inv-eq">Active</span>' : '<span class="inv-act">Make active</span>'}</button>`;
         })

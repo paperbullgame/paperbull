@@ -60,15 +60,61 @@
   for (const m of X.MUTS) reg({ id: 'mut_' + m.id, type: 'serum', name: `${m.name} Serum`, r: 'x', mut: m.id, desc: `Mutates a pet into ${m.name}: perk ×${m.mult}.` });
 
   /* ---------- mutations ---------- */
-  const mutMult = p => (p && p.mut && MUT[p.mut] ? MUT[p.mut].mult : 1);
+  // a pet can carry up to MAXM mutations. p.muts = all of them (strongest first),
+  // p.mut = the strongest one (kept so older code and saves keep working)
+  const MAXM = 4;
+  const mutsOf = p => {
+    if (!p) return [];
+    const a = (Array.isArray(p.muts) ? p.muts : []).filter(m => MUT[m]);
+    if (p.mut && MUT[p.mut]) a.unshift(p.mut);
+    return [...new Set(a)].sort((x, y) => MUT[y].mult - MUT[x].mult).slice(0, MAXM);
+  };
+  const setMuts = (p, list) => {
+    const a = [...new Set(list.filter(m => MUT[m]))].sort((x, y) => MUT[y].mult - MUT[x].mult).slice(0, MAXM);
+    if (a.length) (p.muts = a), (p.mut = a[0]);
+    else delete p.muts, delete p.mut;
+  };
+  // the strongest mutation counts fully, every extra one adds half of its bonus
+  const mutMult = p => {
+    const a = mutsOf(p);
+    if (!a.length) return 1;
+    return Math.round((MUT[a[0]].mult + a.slice(1).reduce((s, m) => s + 0.5 * (MUT[m].mult - 1), 0)) * 100) / 100;
+  };
+  // add a mutation: returns 'added' | 'replaced:<old>' | 'have' | 'full'
+  function addMut(p, m) {
+    if (!MUT[m]) return 'have';
+    const a = mutsOf(p);
+    if (a.includes(m)) return 'have';
+    if (a.length < MAXM) {
+      setMuts(p, [...a, m]);
+      return 'added';
+    }
+    const weak = a[a.length - 1];
+    if (MUT[m].mult <= MUT[weak].mult) return 'full';
+    setMuts(p, [...a.slice(0, -1), m]);
+    return 'replaced:' + weak;
+  }
   function rollMut() {
     const tot = X.MUTS.reduce((s, m) => s + m.w, 0);
     let r = Math.random() * tot;
     for (const m of X.MUTS) if ((r -= m.w) <= 0) return m.id;
     return 'gold';
   }
+  // one mutation, with a chance of a 2nd (and a smaller chance of a 3rd)
+  function rollMuts(extra = 0.12) {
+    const a = [rollMut()];
+    while (a.length < 3 && Math.random() < extra / a.length) {
+      const m = rollMut();
+      if (!a.includes(m)) a.push(m);
+    }
+    return a.length > 1 ? a : a[0];
+  }
   const mstyle = M => `--mc:${M.c};--mg:${M.bg || M.c};--mi:${M.ink || '#120a1e'}`;
   const pill = m => (MUT[m] ? `<span class="mut-pill" data-m="${m}" style="${mstyle(MUT[m])}">${esc(MUT[m].name)}</span>` : '');
+  const pills = p => {
+    const a = Array.isArray(p) ? p : mutsOf(p);
+    return a.length ? `<span class="mut-pills">${a.map(pill).join('')}</span>` : '';
+  };
 
   // any owned pet that is mutated is drawn mutated, on every screen
   const art0 = art;
@@ -76,7 +122,7 @@
     const s = art0.apply(this, arguments);
     if (PET[key] && typeof acct !== 'undefined' && acct && acct.pets && acct.pets.list) {
       const mine = acct.pets.list.find(p => p.id === key);
-      if (mine && mine.mut) return X.mutate(s, mine.mut);
+      if (mine && (mine.mut || mine.muts)) return X.mutateMany(s, mutsOf(mine));
     }
     return s;
   };
@@ -113,9 +159,14 @@
     const ex = acct.pets.list.find(p => p.id === petId);
     let note;
     if (ex) {
-      if (mut && ex.mut !== mut && (!ex.mut || MUT[mut].mult >= MUT[ex.mut].mult)) {
-        ex.mut = mut;
-        note = `${ex.name} mutated into ${MUT[mut].name}! Perk ×${MUT[mut].mult}.`;
+      const ml = mut ? (Array.isArray(mut) ? mut : [mut]) : [],
+        got = ml.filter(m => {
+          const x = addMut(ex, m);
+          return x === 'added' || x.startsWith('replaced');
+        });
+      if (got.length) {
+        const n = mutsOf(ex).length;
+        note = `${ex.name} got ${got.map(m => MUT[m].name).join(' + ')}! ${n} mutation${n > 1 ? 's' : ''}, perk ×${mutMult(ex)}.`;
       } else {
         petGainXP(ex, 300);
         acct.coins += 2000;
@@ -124,10 +175,10 @@
       }
     } else {
       const p = { uid: uid(), id: d.id, name: d.name, lvl: 1, xp: 0, mood: 100, lastPet: 0, born: Date.now() };
-      if (mut) p.mut = mut;
+      if (mut) setMuts(p, Array.isArray(mut) ? mut : [mut]);
       acct.pets.list.push(p);
       if (!acct.pets.active) acct.pets.active = p.uid;
-      note = `${mut ? MUT[mut].name + ' ' : ''}${RARITY[d.r].name} pet! ${acct.pets.active === p.uid ? 'Now your companion.' : 'Make it your companion on the Pets screen.'}`;
+      note = `${p.mut ? mutsOf(p).map(m => MUT[m].name).join(' + ') + ' ' : ''}${RARITY[d.r].name} pet! ${acct.pets.active === p.uid ? 'Now your companion.' : 'Make it your companion on the Pets screen.'}`;
     }
     saveAcct(true);
     return { d, note };
@@ -162,15 +213,16 @@
     const { d, mut } = lastReveal;
     if (!h.textContent.includes(d.name)) return;
     h.dataset.x = 1;
-    const k = mut ? MUT[mut].mult : 1,
+    const ml = mut ? (Array.isArray(mut) ? mut : [mut]) : [],
+      k = ml.length ? mutMult({ muts: ml }) : 1,
       sm = h.querySelector('small'),
       rar = h.querySelector('.rar');
     if (sm) sm.textContent = PERK_TEXT[d.perk](d.base * k) + (d.perk2 ? ' · ' + PERK_TEXT[d.perk2](d.base2 * k) : '');
     if (rar && d.r === 'x') rar.innerHTML = '<span class="x-rar">Exotic pet</span>';
     if (rar && d.r === 'm') rar.innerHTML = '<span class="m-rar">Mythic pet</span>';
     if (rar && d.r === 's') rar.innerHTML = '<span class="s-rar">SECRET pet</span>';
-    if (rar && mut) rar.insertAdjacentHTML('afterend', `<span style="margin:4px 0 2px">${pill(mut)}</span>`);
-    if (window.AbuseFX && mut) AbuseFX.flash(MUT[mut].c);
+    if (rar && ml.length) rar.insertAdjacentHTML('afterend', `<span style="margin:4px 0 2px">${pills(ml)}</span>`);
+    if (window.AbuseFX && ml.length) AbuseFX.flash(MUT[ml[0]].c);
   }).observe(document.getElementById('packRoot') || document.body, { childList: true, subtree: true });
 
   function giveExotic(petId, mut, egg) {
@@ -178,7 +230,7 @@
     const { d, note } = addPet(petId, mut);
     mark(d, mut);
     setTimeout(() => reveal(ITEM[egg || (mut ? 'egg_x_mutant' : 'egg_x_any')], d, note), 400);
-    return mut ? `${d.name} (${MUT[mut].name})` : d.name;
+    return mut ? `${d.name} (${(Array.isArray(mut) ? mut : [mut]).map(m => MUT[m].name).join(' + ')})` : d.name;
   }
 
   const g0 = grant;
@@ -213,7 +265,7 @@
     acct.inv[eggId]--;
     const pool = egg.tier ? TIER(egg.tier) : EXO.filter(p => (!egg.el || p.el === egg.el) && (!egg.ultra || p.ultra)),
       d = pick(pool.length ? pool : EXO),
-      mut = Math.random() < egg.mut ? rollMut() : null;
+      mut = Math.random() < egg.mut ? rollMuts(egg.mut >= 1 ? 0.3 : 0.12) : null;
     const r = addPet(d.id, mut);
     mark(r.d, mut);
     Hatch.show(egg, r.d, r.note);
@@ -223,13 +275,16 @@
     const it = ITEM[serumId],
       p = acct.pets.list.find(x => x.uid === petUid) || activePet();
     if (!it || !(acct.inv[serumId] > 0) || !p) return false;
+    const r = addMut(p, it.mut);
+    if (r === 'have') return toast(`${p.name} already has ${MUT[it.mut].name}`, 'err'), false;
+    if (r === 'full') return toast(`${p.name} already has ${MAXM} stronger mutations`, 'err'), false;
     acct.inv[serumId]--;
-    p.mut = it.mut;
     saveAcct(true);
     SFX.play('legend');
     confetti();
     if (window.AbuseFX) AbuseFX.flash(MUT[it.mut].c);
-    toast(`${p.name} mutated into ${MUT[it.mut].name}! Perk ×${MUT[it.mut].mult}`, 'xp');
+    const n = mutsOf(p).length;
+    toast(`${p.name} got ${MUT[it.mut].name}${r.startsWith('replaced') ? ` (replaced ${MUT[r.slice(9)].name})` : ''}! ${n} mutation${n > 1 ? 's' : ''} · perk ×${mutMult(p)}`, 'xp');
     if (document.getElementById('petHero')) Pets.render();
     return true;
   }
@@ -237,15 +292,23 @@
     const it = ITEM[serumId],
       list = acct.pets.list;
     if (!list.length) return toast('Hatch a pet first, then use the serum on it', 'err');
-    let sel = acct.pets.active || list[0].uid;
+    const ok = p => {
+      const ms = mutsOf(p);
+      return !ms.includes(it.mut) && !(ms.length >= MAXM && MUT[it.mut].mult <= MUT[ms[ms.length - 1]].mult);
+    };
+    if (!list.some(ok)) return toast(`All your pets already have ${MUT[it.mut].name} or ${MAXM} stronger mutations`, 'err');
+    let sel = (list.find(p => p.uid === acct.pets.active && ok(p)) || list.find(ok)).uid;
     modal({
       title: `Use ${esc(it.name)}?`,
       confirm: 'Mutate!',
-      html: `<p class="muted small" style="margin:0 0 10px">${esc(it.desc)} It replaces any mutation the pet already has.</p>
+      html: `<p class="muted small" style="margin:0 0 10px">${esc(it.desc)} Mutations stack: a pet can carry up to ${MAXM}. The strongest counts fully and every extra one adds half its boost. On a full pet it replaces the weakest one.</p>
         <div class="pm-pick">${list
           .map(p => {
             const d = PET[p.id];
-            return d ? `<button class="pm-pet${p.uid === sel ? ' on' : ''}" data-u="${p.uid}" style="--rc:${RARITY[d.r].color}"><span class="face art-face">${petArt(p.id)}</span><span class="pm-pt"><b>${esc(p.name)}</b><small>${RARITY[d.r].name}${p.mut ? ' · ' + MUT[p.mut].name : ''}</small></span></button>` : '';
+            const ms = mutsOf(p),
+              has = ms.includes(it.mut),
+              full = !has && ms.length >= MAXM && MUT[it.mut].mult <= MUT[ms[ms.length - 1]].mult;
+            return d ? `<button class="pm-pet${p.uid === sel ? ' on' : ''}" data-u="${p.uid}" style="--rc:${RARITY[d.r].color}" ${has || full ? 'disabled' : ''}><span class="face art-face">${petArt(p.id)}</span><span class="pm-pt"><b>${esc(p.name)}</b><small>${RARITY[d.r].name} · ${ms.length}/${MAXM} mutations${has ? ' · already has it' : full ? ' · full' : ''}</small>${ms.length ? pills(ms) : ''}</span></button>` : '';
           })
           .join('')}</div>`,
       onMount: r =>
@@ -296,7 +359,7 @@
         perk.textContent = perkText(a) + (off ? (a.mission ? ' · off, on a mission' : ' · off, too sad') : '');
       }
       const line = hero.querySelector('.pet-info .small');
-      if (line && !line.querySelector('.mut-pill') && a.mut) line.insertAdjacentHTML('beforeend', ' ' + pill(a.mut) + ` <span class="muted">perk ×${MUT[a.mut].mult}</span>`);
+      if (line && !line.querySelector('.mut-pill') && a.mut) line.insertAdjacentHTML('beforeend', ' ' + pills(a) + ` <span class="muted">perk ×${mutMult(a)}</span>`);
       if (line && PET[a.id].r === 'x') line.style.color = '';
       if (line && PET[a.id].r === 'x' && !line.querySelector('.x-rar')) line.innerHTML = line.innerHTML.replace('Exotic ', '<span class="x-rar">Exotic</span> ');
     }
@@ -312,7 +375,7 @@
           pm.textContent = PERK_TEXT[d.perk](d.base) + ' · ' + PERK_TEXT[d.perk2](d.base2);
         }
       }
-      if (mine && mine.mut && !el.querySelector('.mut-pill')) el.insertAdjacentHTML('afterbegin', pill(mine.mut));
+      if (mine && mine.mut && !el.querySelector('.mut-pill')) el.insertAdjacentHTML('afterbegin', pills(mine));
       if (d.r === 's') el.style.display = mine ? '' : 'none';
       if ((d.r === 'm' || d.r === 's') && d.perk2) {
         const pm = el.querySelector('.perk-mini');
@@ -342,7 +405,7 @@
     }
   };
 
-  window.PBExotic = { TIER, PETS: EXO, MUTS: X.MUTS, MUT, EGGS, rollMut, giveExotic, addPet, useSerum, serumModal, pill, perkText };
+  window.PBExotic = { TIER, PETS: EXO, MUTS: X.MUTS, MUT, EGGS, MAXM, rollMut, rollMuts, mutsOf, setMuts, addMut, mutMult, giveExotic, addPet, useSerum, serumModal, pill, pills, perkText };
 })();
 /* keep exotic perk text + badges after the pets-plus 10s refresh */
 (() => {

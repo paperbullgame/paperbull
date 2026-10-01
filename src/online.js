@@ -871,12 +871,14 @@
         ex = acct.pets.list.find(p => p.id === d.id);
       if (ex) {
         if (lvl > ex.lvl || (lvl === ex.lvl && xp > ex.xp)) (ex.lvl = lvl), (ex.xp = xp);
-        if (x.mut && !ex.mut) ex.mut = x.mut;
+        if ((x.mut || x.muts) && window.PBExotic) PBExotic.setMuts(ex, [...PBExotic.mutsOf(ex), ...(Array.isArray(x.muts) ? x.muts : []), x.mut].filter(Boolean).map(String));
+        else if (x.mut && !ex.mut) ex.mut = x.mut;
         if (x.prime) ex.prime = true;
         return `${d.name} (merged with yours, Lv ${ex.lvl})`;
       }
       const p = { uid: uid(), id: d.id, name: d.name, lvl, xp, mood: 100, lastPet: 0, born: Date.now() };
       if (x.mut) p.mut = String(x.mut);
+      if (Array.isArray(x.muts) && window.PBExotic) PBExotic.setMuts(p, [x.mut, ...x.muts].filter(Boolean).map(String));
       if (x.prime) p.prime = true;
       acct.pets.list.push(p);
       if (!acct.pets.active) acct.pets.active = p.uid;

@@ -50,7 +50,7 @@
   const slotsMax = () => BASE_SLOTS + DECO.filter(d => own(d.id)).reduce((s, d) => s + d.slots, 0);
   const boost = () => 1 + DECO.filter(d => own(d.id)).reduce((s, d) => s + d.boost, 0) + curTheme().boost;
   const petBy = uid => acct.pets.list.find(p => p.uid === uid);
-  const mutMult = p => (window.PBExotic && p.mut && PBExotic.MUT[p.mut] ? PBExotic.MUT[p.mut].mult : 1);
+  const mutMult = p => (window.PBExotic && p.mut && PBExotic.MUT[p.mut] ? (PBExotic.mutMult ? PBExotic.mutMult(p) : PBExotic.MUT[p.mut].mult) : 1);
   const home = () => {
     // who lives here: chosen pets (or, if you never chose, your first pets)
     const g = G(),
@@ -609,7 +609,7 @@
       treats = ITEMS.filter(i => i.type === 'treat' && acct.inv[i.id] > 0),
       M = window.PBExotic && p.mut ? PBExotic.MUT[p.mut] : null;
     card.innerHTML = `<button class="pg-x" aria-label="Close">×</button><span class="pg-cart">${petArt(p.id)}</span>
-      <div class="pg-ct"><b>${esc(p.name)}</b><small style="color:${RARITY[d.r].color}">${d.r === 'x' ? '<span class="x-rar">' + (d.ultra ? 'ULTRA Exotic' : 'Exotic') + '</span>' : RARITY[d.r].name} · Lv ${p.lvl}${M && window.PBExotic ? ' ' + PBExotic.pill(p.mut) : ''}</small>
+      <div class="pg-ct"><b>${esc(p.name)}</b><small style="color:${RARITY[d.r].color}">${d.r === 'x' ? '<span class="x-rar">' + (d.ultra ? 'ULTRA Exotic' : 'Exotic') + '</span>' : RARITY[d.r].name} · Lv ${p.lvl}${M && window.PBExotic ? ' ' + PBExotic.pills(p) : ''}</small>
       ${moodBar(p.mood)}<small class="muted">Earns ${Math.round(petRate(p) * boost())} garden coins an hour</small>
       <div class="pg-cb"><button class="btn sm primary" data-a="pet" ${cd > 0 ? 'disabled' : ''}>${cd > 0 ? 'Pet in ' + fmtDur(cd / 1000) : 'Pet'}</button>${treats.length ? `<button class="btn sm" data-a="feed">Feed ${esc(treats[0].name)}</button>` : ''}${p.uid !== acct.pets.active ? '<button class="btn sm" data-a="comp">Make companion</button>' : '<span class="pg-comp">Companion</span>'}</div></div>`;
     card.classList.add('on');

@@ -3677,7 +3677,7 @@ svg.xprism { animation: mxRainbow 5s linear infinite; }
 @keyframes xHue { to { background-position: 300% 0; } }
 
 html .col-item[data-r='x'] .rpill { color: #ff6af5 !important; background: rgba(255, 61, 240, .16) !important; border: 1px solid rgba(255, 61, 240, .45) !important; font-weight: 800; letter-spacing: .03em; }
-.col-item .mut-pill ~ .x-tag { display: none; }
+.col-item .mut-pill ~ .x-tag, .col-item .mut-pills ~ .x-tag { display: none; }
 .x-egg small.muted { color: var(--mut) !important; }
 /* Exotic eggs */
 .x-egg .face { filter: drop-shadow(0 0 8px var(--rc)); animation: xEgg 2.2s ease-in-out infinite; }
@@ -3749,7 +3749,12 @@ svg.art[data-mut='glitch'] { animation: mxGlitch 2.6s steps(1) infinite; }
 .mut-pill.rb:not([data-m]) { background: linear-gradient(90deg, #ff7ae6, #ffd34d, #7dff3d, #3de7ff, #8a5cff); }
 @keyframes mxPill { 0%, 55% { transform: translateX(-110%); } 100% { transform: translateX(110%); } }
 @keyframes mxPillBg { to { background-position: 200% 0; } }
-.col-item .mut-pill { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; padding: 2px 6px; }
+.mut-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+.col-item .mut-pills { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 2; flex-direction: column; align-items: flex-start; }
+.col-item .mut-pill { font-size: 9px; padding: 2px 6px; }
+.pm-pt .mut-pills { margin-top: 4px; }
+.pm-pet[disabled] { opacity: .45; cursor: not-allowed; }
+.hatched .mut-pills { justify-content: center; }
 .x-serums { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .x-serum { display: inline-flex; align-items: center; gap: 6px; }
 .x-serum i { width: 12px; height: 12px; border-radius: 50%; background: var(--mg, var(--mc)); box-shadow: 0 0 8px var(--mc); }
@@ -4896,7 +4901,28 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
       `<g class="mx-front">${fx.front || ''}</g></svg>`
     );
   }
-  window.ExoticArt = { PETS, EXTRA, MUTS, MUT, svg, mutate };
+  // several mutations on one pet: the strongest one recolors the body, every other one
+  // adds its own back + front layers (auras, particles, crystals, halos) on top
+  function mutateMany(svgStr, list) {
+    list = [...new Set((list || []).filter(m => MUT[m]))].sort((a, b) => MUT[b].mult - MUT[a].mult);
+    if (!list.length) return svgStr;
+    let out = mutate(svgStr, list[0]);
+    if (list.length < 2 || out === svgStr || !out.includes('<g class="mx-back">')) return out;
+    let defs = '',
+      back = '',
+      front = '';
+    for (const m of list.slice(1)) {
+      const u = `mx${SEED}${(++mseq).toString(36)}_`,
+        fx = MUT_FX[m](u);
+      defs += `<clipPath id="${u}c"><circle cx="32" cy="35" r="22"/></clipPath>${fx.defs || ''}`;
+      back += fx.back || '';
+      front += fx.front || '';
+    }
+    out = out.replace('<g class="mx-back">', `<defs>${defs}</defs><g class="mx-back mx-x">${back}</g><g class="mx-back">`);
+    out = out.replace(/<\/svg>\s*$/, `<g class="mx-front mx-x">${front}</g></svg>`);
+    return out.replace('data-mut="', `data-muts="${list.join(' ')}" data-mut="`);
+  }
+  window.ExoticArt = { PETS, EXTRA, MUTS, MUT, svg, mutate, mutateMany };
 })();
 
 /* =====================================================================
@@ -8312,7 +8338,7 @@ html[data-ab='gravity'] #view > *:nth-child(3n):not(.ar-wrap) { animation-delay:
           eq = Object.values(p.equip || {});
         const tile = (key, name, sub, on) => `<button type="button" class="inv-t${on ? ' on' : ''}" data-inv="${esc(key)}" title="${esc(name)}">${itemArt(key, 48)}<b>${esc(name)}</b><small>${sub}</small></button>`;
         return `<div class="card" style="margin-top:16px"><div class="card-h"><h3>Pets and items</h3><span class="muted small">${num(pets.length)} pets · ${num(inv.length)} items · from their last save</span></div>
-          ${pets.length ? `<div class="inv-h">Pets</div><div class="inv-g">${pets.map(x => tile(petKey(x.id) + (x.mut ? '_m_' + x.mut : ''), x.name || x.id, `Lv ${num(x.lvl || 1)}${x.mut && window.ExoticArt && ExoticArt.MUT[x.mut] ? ' · ' + esc(ExoticArt.MUT[x.mut].name) : ''}`, x.uid === p.active_pet)).join('')}</div>` : ''}
+          ${pets.length ? `<div class="inv-h">Pets</div><div class="inv-g">${pets.map(x => tile(petKey(x.id) + (x.mut ? '_m_' + x.mut : ''), x.name || x.id, `Lv ${num(x.lvl || 1)}${x.mut && window.ExoticArt && ExoticArt.MUT[x.mut] ? ' · ' + esc([...new Set([x.mut, ...(Array.isArray(x.muts) ? x.muts : [])])].filter(m => ExoticArt.MUT[m]).map(m => ExoticArt.MUT[m].name).join(' + ')) : ''}`, x.uid === p.active_pet)).join('')}</div>` : ''}
           ${inv.length ? `<div class="inv-h">Items</div><div class="inv-g">${inv.sort((a, b) => itemInfo(a[0]).type.localeCompare(itemInfo(b[0]).type)).map(([id, n]) => tile(id, itemInfo(id).name, `${esc(itemInfo(id).type)}${+n > 1 ? ' ×' + num(n) : ''}`, eq.includes(id))).join('')}</div>` : ''}
           ${!pets.length && !inv.length ? '<div class="empty small">They don’t own anything yet.</div>' : ''}</div>`;
       }
