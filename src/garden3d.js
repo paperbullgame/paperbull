@@ -55,7 +55,7 @@
         return d;
       }
     };
-    const want3D = () => !disabled && LS('pb2.g3d', '1') === '1' && webglOK();
+    const want3D = () => !disabled && LS('pb2.garden3d', '0') === '1' && webglOK();
     const isPhone = () => innerWidth < 700;
     const PG = () => window.PBGarden;
     const E = s => (typeof esc === 'function' ? esc(s) : String(s));
@@ -2426,7 +2426,7 @@
       };
       stage.querySelector('#g3Toggle').onclick = () => {
         try {
-          localStorage.setItem('pb2.g3d', '0');
+          localStorage.setItem('pb2.garden3d', '0');
         } catch (e) {}
         leave();
         const v = document.getElementById('view');
@@ -2447,7 +2447,7 @@
         top.insertAdjacentHTML('beforeend', '<button class="pg-act g3-b g3-tog on" id="g3On" title="Switch to the 3D garden">✨ 3D</button>');
         top.querySelector('#g3On').onclick = () => {
           try {
-            localStorage.setItem('pb2.g3d', '1');
+            localStorage.setItem('pb2.garden3d', '1');
           } catch (e) {}
           const v = document.getElementById('view');
           if (v) PG().Garden.mount(v);

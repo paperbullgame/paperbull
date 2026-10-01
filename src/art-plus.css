@@ -447,3 +447,14 @@ html body .pet-hero .pet-stage[data-r]:not(#_)::before { inset: -40px; }
 @media (max-width: 600px) {
   html body .pet-hero .pet-stage[data-r]:not(#_) { width: 100%; height: 220px; }
 }
+
+/* ---------- pets cool: wagging tails, rising sparks, orbiting star ---------- */
+svg.art .pc-tail { transform-box: view-box; transform-origin: 45px 55px; animation: pcWag 2.6s ease-in-out infinite; }
+svg.art .pc-stub, svg.art .pc-puff { animation-duration: 0.9s; }
+svg.art .pc-feather { animation-duration: 3.4s; }
+@keyframes pcWag { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(8deg); } }
+svg.art .pc-rise { opacity: 0; transform-box: fill-box; animation: pcRise 3.8s ease-in infinite; }
+@keyframes pcRise { 0% { opacity: 0; transform: translateY(0); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-36px); } }
+svg.art .pc-orb { transform-origin: 32px 34px; animation: apSpin 8s linear infinite; }
+.locked svg.art .pc-tail, .shadow svg.art .pc-tail { animation: none; }
+@media (prefers-reduced-motion: reduce) { svg.art .pc-tail, svg.art .pc-rise, svg.art .pc-orb { animation: none !important; } svg.art .pc-rise { opacity: 0.8; } }

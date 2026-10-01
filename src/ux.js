@@ -6,7 +6,7 @@
   /* ---------- grouped sidebar ---------- */
   const GROUPS = [
     [null, ['home', 'markets', 'portfolio', 'inventory']],
-    ['Fun', ['shop', 'play', 'social', 'profile']],
+    ['Fun', ['shop', 'trading', 'play', 'social', 'profile']],
   ];
   function tidyNav() {
     const nav = document.getElementById('nav');

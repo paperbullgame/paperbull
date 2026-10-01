@@ -106,6 +106,7 @@
       ranks: S(`<path ${W} d="M7 3h10v6.5a5 5 0 0 1-10 0z"/><path d="M17 5h2.5v1.8A3.4 3.4 0 0 1 16.4 10M7 5H4.5v1.8A3.4 3.4 0 0 0 7.6 10" stroke="#fff" stroke-opacity=".6" stroke-width="1.8" fill="none"/><path ${H} d="M10.3 14.4h3.4l.5 3.1h-4.4z"/><rect ${W} x="7.5" y="18" width="9" height="3" rx="1.2"/>`),
       learn: S(`<path ${W} d="M12 3.5 22 8.4 12 13.3 2 8.4z"/><path ${H} d="M6 11v4.2c0 1.8 2.7 3.3 6 3.3s6-1.5 6-3.3V11l-6 3z"/><path d="M21 9v5.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="21" cy="15.2" r="1.3" fill="#fff"/>`),
       tourney: S(`<path ${W} d="M7 3h10v6.5a5 5 0 0 1-10 0z"/><path d="m12 4.8.9 1.8 2 .3-1.5 1.4.4 2L12 9.3l-1.8 1 .4-2-1.5-1.4 2-.3z" fill="#000" fill-opacity=".3"/><rect ${W} x="7.5" y="18" width="9" height="3" rx="1.2"/><path ${H} d="M10.3 14.4h3.4l.5 3.1h-4.4z"/>`),
+      trading: S(`<path ${W} d="M6.5 3.8a1 1 0 0 1 1.5 0l3.3 3.3a1 1 0 0 1-.7 1.7H8.4v6.7a1.4 1.4 0 0 1-2.8 0V8.8H3.4a1 1 0 0 1-.7-1.7z"/><path ${H} d="M17.5 20.2a1 1 0 0 1-1.5 0l-3.3-3.3a1 1 0 0 1 .7-1.7h2.2V8.5a1.4 1.4 0 0 1 2.8 0v6.7h2.2a1 1 0 0 1 .7 1.7z"/>`),
       more: S(`<rect ${W} x="3.5" y="3.5" width="7" height="7" rx="2"/><rect ${H} x="13.5" y="3.5" width="7" height="7" rx="2"/><rect ${H} x="3.5" y="13.5" width="7" height="7" rx="2"/><rect ${W} x="13.5" y="13.5" width="7" height="7" rx="2"/>`),
     };
     const IC = window.PBIcons;

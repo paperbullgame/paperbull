@@ -91,7 +91,7 @@
     already_claimed: 'You already claimed this one.',
     slow_down: 'Slow down a little and try again in a minute.',
   };
-  window.PBCloud = { rpc, C };
+  window.PBCloud = { rpc, C, push: f => push(f), claimGrants: () => claimGrants(), linked: () => linked(), MSG };
 
   const setSess = (u, token) => {
     C.s = { u, token };
@@ -641,6 +641,7 @@
       'online',
       'friends',
       'gifts',
+      'trading',
     ])
       b.classList.toggle('off-' + k, !on(k));
     if (!on('pro') && typeof settings !== 'undefined' && settings.advanced && window.PBSetAdvanced)
@@ -856,11 +857,37 @@
       setTimeout(() => PackOpen.show(p, cards), 900);
       return p.name;
     }
+    if (g.kind === 'pet') {
+      // a pet from a trade keeps its level, mutation and Prime
+      const d = (typeof PET !== 'undefined' && PET[g.item_id]) || null,
+        x = g.data || {};
+      if (!d) {
+        acct.coins += 500;
+        bumpCoins();
+        return '500 coins';
+      }
+      const lvl = Math.max(1, Math.min(100, Math.round(+x.lvl || 1))),
+        xp = Math.max(0, Math.round(+x.xp || 0)),
+        ex = acct.pets.list.find(p => p.id === d.id);
+      if (ex) {
+        if (lvl > ex.lvl || (lvl === ex.lvl && xp > ex.xp)) (ex.lvl = lvl), (ex.xp = xp);
+        if (x.mut && !ex.mut) ex.mut = x.mut;
+        if (x.prime) ex.prime = true;
+        return `${d.name} (merged with yours, Lv ${ex.lvl})`;
+      }
+      const p = { uid: uid(), id: d.id, name: d.name, lvl, xp, mood: 100, lastPet: 0, born: Date.now() };
+      if (x.mut) p.mut = String(x.mut);
+      if (x.prime) p.prime = true;
+      acct.pets.list.push(p);
+      if (!acct.pets.active) acct.pets.active = p.uid;
+      return `${d.name} · Lv ${lvl}`;
+    }
     if (g.kind === 'item') {
       const it = typeof ITEM !== 'undefined' && ITEM[g.item_id];
       if (it) {
-        grant(it);
-        return it.name;
+        const k = Math.max(1, Math.min(99, Math.round(amt) || 1));
+        for (let i = 0; i < k; i++) grant(it);
+        return k > 1 ? `${it.name} ×${k}` : it.name;
       }
       acct.coins += 250;
       bumpCoins();
@@ -875,7 +902,7 @@
     grantsBusy = true;
     let list;
     try {
-      list = await rpc('pb_grants_claim', { p_token: C.s.token });
+      list = await rpc('pb_grants_claim2', { p_token: C.s.token });
     } catch (e) {
       authFail(e);
       return;
@@ -896,12 +923,14 @@
     SFX.play('coin');
     needRender = true;
     const msgs = list.map(g => g.message).filter(Boolean);
-    const neg = list.every(g => +g.amount < 0 && g.kind !== 'item');
+    const neg = list.every(g => +g.amount < 0 && g.kind !== 'item'),
+      trade = list.every(g => /^Trade /.test(g.name || ''));
+    if (trade && window.PBTrade) PBTrade.refresh(true);
     modal({
-      title: neg ? 'Account adjustment' : 'A gift from the PAPERBULL team',
+      title: trade ? (list.every(g => g.name === 'Trade refund') ? 'Trade items returned' : 'Trade complete!') : neg ? 'Account adjustment' : 'A gift from the PAPERBULL team',
       confirm: neg ? 'Okay' : 'Nice!',
       cancel: '',
-      html: `<div class="buck-intro">${buckSVG(neg ? 'sad' : 'cool')}<p>${neg ? '“The team made a change to your account.”' : '“Someone up there likes you.”'}</p></div>
+      html: `<div class="buck-intro">${buckSVG(neg ? 'sad' : 'cool')}<p>${trade ? (list.every(g => g.name === 'Trade refund') ? '“That trade didn’t happen, so your stuff is back.”' : '“Pleasure doing business.”') : neg ? '“The team made a change to your account.”' : '“Someone up there likes you.”'}</p></div>
       <ul class="pb-gotlist">${got.map(x => `<li><b>${E(x.g.name)}</b><span>${E(x.what)}</span></li>`).join('')}</ul>${msgs.length ? `<p class="muted small">${msgs.map(E).join('<br>')}</p>` : ''}`,
     });
   }

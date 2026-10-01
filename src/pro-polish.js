@@ -16,6 +16,7 @@
     store: ['Store', () => 'VIP, Pro mode, coin packs and exclusive items'],
     play: ['Play', () => 'Game modes, duels and weekly leaderboards'],
     social: ['Social', () => 'Chat, clans, friends and the weekly season'],
+    trading: ['Trading', () => 'Swap items and pets with other players'],
     pass: ['Battle Pass', () => 'Season rewards, quests and your login calendar'],
     pets: ['Pets', () => 'Your companions and the bonuses they give you'],
     ranks: ['Leaderboard', () => 'How your returns stack up against everyone else'],
@@ -55,7 +56,7 @@
   setTimeout(fixGear, 0);
 
   /* phone navigation: 4 main tabs + a More sheet */
-  const MORE = ['shop', 'play', 'social', 'profile', 'pass', 'ranks', 'news', 'settings'];
+  const MORE = ['shop', 'trading', 'play', 'social', 'profile', 'pass', 'ranks', 'news', 'settings'];
   const LBL = {
     play: 'Play',
     social: 'Social',
@@ -63,6 +64,7 @@
     store: 'Store',
     learn: 'Learn',
     shop: 'Shop',
+    trading: 'Trading',
     pets: 'Pets',
     garden: 'Garden',
     news: 'News',
@@ -203,7 +205,7 @@
   const st = document.createElement('style');
   st.textContent = `
   .nav-more{display:none!important;position:relative}.more-dot{position:absolute;top:8px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px var(--panel)}
-  @media(max-width:899px){#nav a[data-s="learn"],#nav a[data-s="shop"],#nav a[data-s="store"],#nav a[data-s="play"],#nav a[data-s="social"],#nav a[data-s="pass"],#nav a[data-s="pets"],#nav a[data-s="garden"],#nav a[data-s="bank"]{display:none!important}.nav-more{display:flex!important}#nav a{font-size:11px!important}}
+  @media(max-width:899px){#nav a[data-s="learn"],#nav a[data-s="shop"],#nav a[data-s="store"],#nav a[data-s="play"],#nav a[data-s="social"],#nav a[data-s="trading"],#nav a[data-s="pass"],#nav a[data-s="pets"],#nav a[data-s="garden"],#nav a[data-s="bank"]{display:none!important}.nav-more{display:flex!important}#nav a{font-size:11px!important}}
   .more-sheet{position:fixed;inset:0;z-index:950}.ms-bg{position:absolute;inset:0;background:rgba(10,6,30,.45);opacity:0;transition:opacity .2s}
   .ms-panel{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-radius:24px 24px 0 0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateY(100%);transition:transform .24s cubic-bezier(.2,0,0,1);box-shadow:0 -20px 50px -20px rgba(0,0,0,.4)}
   .more-sheet.open .ms-bg{opacity:1}.more-sheet.open .ms-panel{transform:none}

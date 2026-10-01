@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#06080c">
 <title>PAPERBULL</title>
 <!-- BRAND:START -->
-<script>window.PB_BUILD="20260930200936";</script>
+<script>window.PB_BUILD="20260930203101";</script>
 <script>/* MOVE-IN: the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull.
    The page at the old address packs up the player's login and (for guests) their save into the link
    (#pbmove=…) and sends them here. This runs before anything else: it stops the page, writes that data
@@ -4710,6 +4710,7 @@ html:not(.classic) #authGate {
     <a data-go="portfolio" data-s="portfolio" tabindex="0" role="link"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7 5"/></svg><span>Portfolio</span></a>
     <a data-go="learn" data-s="learn" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5A2.5 2.5 0 014 20.5z"/><path d="M9 7.5h7M9 11h5"/></svg><span>Learn</span></a>
     <a data-go="shop" data-s="shop" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.2a2 2 0 01-2 1.8H8.2a2 2 0 01-2-1.8L5 8z"/><path d="M9 10V7a3 3 0 016 0v3"/></svg><span>Shop</span><i class="nav-dot" id="shopDot" hidden></i></a>
+    <a data-go="trading" data-s="trading" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M7 4v14M3.5 7.5 7 4l3.5 3.5"/><path d="M17 20V6M13.5 16.5 17 20l3.5-3.5"/></svg><span>Trading</span><i class="nav-dot" id="tradeDot" hidden></i></a>
     <a data-go="play" data-s="play" tabindex="0" role="link"><svg viewBox="0 0 24 24"><rect x="2.5" y="7" width="19" height="11" rx="4"/><path d="M7.5 11v3M6 12.5h3M15 12h.01M17.5 13.5h.01"/></svg><span>Play</span></a>
     <a data-go="social" data-s="social" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>Social</span><i class="nav-dot" id="socialDot" hidden></i></a>
     <a data-go="pass" data-s="pass" tabindex="0" role="link"><svg viewBox="0 0 24 24"><path d="M4 6h16v4a2 2 0 000 4v4H4v-4a2 2 0 000-4z"/><path d="M14 6v2M14 11v2M14 16v2"/></svg><span>Pass</span><i class="nav-dot" id="passDot" hidden></i></a>
@@ -17490,6 +17491,105 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
   };
 })();
 
+/* =====================================================================
+   PETS COOL: a finishing pass over every normal pet picture.
+   · Colored, glowing eyes that match the pet's rarity
+   · A tail that wags, picked from the pet's shape (cat curl, fox brush,
+     dog stub, bunny puff, bird feathers)
+   · Rarer pets get more: floating sparks for Epic, rising gold for
+     Legendary, an orbiting star for Rare
+   Runs after art-plus.js and pets-more.js, so it works on old and new pets.
+   ===================================================================== */
+(() => {
+  if (typeof art !== 'function' || typeof critter !== 'function' || typeof ART_CACHE === 'undefined') return;
+  const HEX = /^#[0-9a-f]{6}$/i;
+  const sh = (h, a) => (HEX.test(h || '') && typeof shade === 'function' ? shade(h, a) : h);
+  const IRIS = { c: ['#c98a52', '#6b4424'], r: ['#6cc4ff', '#1f5fc4'], e: ['#d6a2ff', '#7b2fe0'], l: ['#ffe08a', '#e08a00'] };
+  const BIRDS = /penguin|owl|swan|chick|duck|parrot|flamingo|griffin|phoenix|thunderbird|sparrow|puffin|lovebird|hawk|starling|disco|eagle|pip/;
+  const BRUSH = /fox|wolf|raccoon|squirrel|tanuki|chipmunk|acorn|lemur|ferret|husky|corgi|waffle|rusty|glacia|shadow/;
+  const STUB = /dog|pup|bear|panda|koala|pug|cub|hamster|pig|cow|sheep|lamb|mouse|rat|mole|otter/;
+
+  function tailKind(id, o) {
+    if (!o) return '';
+    if (BIRDS.test(id) || (typeof o.mouth === 'string' && /M27\.5 [0-9.]+q4\.5-2\.6 9 0l-4\.5 6z/.test(o.mouth))) return 'feather';
+    if (/dragon|drake|lizard|gecko|rex|dino|wyvern|cinder|croc/.test(id)) return 'dragon';
+    if (o.ears === 'long') return 'puff';
+    if (BRUSH.test(id)) return 'brush';
+    if (o.ears === 'point' || o.ears === 'tufts') return 'curl';
+    if (STUB.test(id) || o.ears === 'round' || o.ears === 'floppy' || o.ears === 'small' || o.ears === 'fluffy') return 'stub';
+    return '';
+  }
+  function tail(kind, id, o) {
+    const c = o.c,
+      d = o.d || sh(c, -0.2),
+      ln = sh(d, -0.45),
+      tip = o.snout || o.belly || (HEX.test(c) ? sh(c, 0.6) : '#fff'),
+      g = `url(#apb${id.replace(/[^a-z0-9]/gi, '')})`,
+      st = `stroke="${ln}" stroke-opacity=".62" stroke-width="1.2" stroke-linejoin="round"`;
+    if (kind === 'curl')
+      return `<path d="M44.5 55.5c6 .6 10.6-2.6 10.6-8.6 0-4.6-3.6-6.2-2.4-10.4.9-3 4.2-3.6 5.6-1.6" stroke="${ln}" stroke-opacity=".7" stroke-width="6.4" fill="none" stroke-linecap="round"/><path d="M44.5 55.5c6 .6 10.6-2.6 10.6-8.6 0-4.6-3.6-6.2-2.4-10.4.9-3 4.2-3.6 5.6-1.6" stroke="${c}" stroke-width="4.2" fill="none" stroke-linecap="round"/><path d="M53.7 36.4c.9-3 4.2-3.6 5.6-1.6" stroke="${tip}" stroke-width="4.2" fill="none" stroke-linecap="round"/>`;
+    if (kind === 'brush')
+      return `<path d="M42.5 56.5c7.5 1.6 15-2.4 16-10.4.7-5.6-2.6-10-1-15.6-6.8 2.2-10.4 8.4-10.6 13.6-.1 4.4-1.8 8.8-4.4 12.4z" fill="${g}" ${st}/><path d="M57.5 30.5c-3.6 1.4-5.8 4.2-6.6 7.4 2.6.6 5.6-.2 7.4-2.2.4-1.8.2-3.6-.8-5.2z" fill="${tip}" opacity=".95"/>`;
+    if (kind === 'dragon')
+      return `<path d="M42 57c7 2 13-1 15-7 1.4-4.2.2-8.6 2.4-11.6-4.8 1-8 4.8-8.6 9-.6 3.8-4 7-8.8 9.6z" fill="${g}" ${st}/><path d="M59.4 38.4l3.4-5.4-6.2 1.6-1.2 4.2z" fill="${o.a && HEX.test(o.a) ? o.a : sh(c, -0.3)}" ${st}/>`;
+    if (kind === 'stub') return `<ellipse cx="46.6" cy="54.6" rx="3.8" ry="2.9" fill="${g}" ${st} transform="rotate(-32 46.6 54.6)"/>`;
+    if (kind === 'puff') return `<g fill="${tip}" ${st}><circle cx="47" cy="56.2" r="3.5"/><circle cx="49.2" cy="54.2" r="2.6"/></g>`;
+    if (kind === 'feather')
+      return `<g ${st}><ellipse cx="47.5" cy="56.5" rx="2.2" ry="5.4" fill="${sh(c, -0.15)}" transform="rotate(48 47.5 56.5)"/><ellipse cx="48.6" cy="54" rx="2" ry="5" fill="${c}" transform="rotate(70 48.6 54)"/></g>`;
+    return '';
+  }
+  const dot = (x, y, r, col, cls, delay) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" class="${cls}" style="animation-delay:${delay}s"/>`;
+  function sparks(r) {
+    const col = (RARITY[r] && RARITY[r].color) || '#fff';
+    if (r === 'r') return `<g class="ap-fx pc-orb"><circle cx="32" cy="34" r="27" fill="none" stroke="${col}" stroke-opacity=".18" stroke-width=".7" stroke-dasharray="2 4"/>${dot(32, 7, 1.6, '#cfe8ff', '', 0)}</g>`;
+    if (r === 'e') return `<g class="ap-fx">${dot(12, 50, 1.3, '#e6d4ff', 'pc-rise', 0)}${dot(52, 52, 1.1, col, 'pc-rise', 1.1)}${dot(20, 56, 0.9, '#fff', 'pc-rise', 2.2)}${dot(45, 46, 1.2, '#d1b3ff', 'pc-rise', 3)}</g>`;
+    if (r === 'l') return `<g class="ap-fx">${dot(10, 52, 1.5, '#ffe27a', 'pc-rise', 0)}${dot(54, 54, 1.3, '#fff4c2', 'pc-rise', 0.8)}${dot(18, 57, 1, '#ffd54a', 'pc-rise', 1.6)}${dot(48, 48, 1.4, '#ffe9a6', 'pc-rise', 2.4)}${dot(30, 60, 1.1, '#fff', 'pc-rise', 3.2)}</g>`;
+    return '';
+  }
+  function cool(svg, p, o) {
+    if (typeof svg !== 'string' || svg.includes('pc-done')) return svg;
+    const ir = IRIS[p.r] || IRIS.c,
+      def = `<radialGradient id="pcIris" cx=".5" cy=".62" r=".62"><stop offset="0" stop-color="${ir[0]}"/><stop offset=".55" stop-color="${ir[1]}"/><stop offset="1" stop-color="#160f22"/></radialGradient>`;
+    let s = svg.replace('<defs>', '<defs>' + def).replace('class="art ap-pet', 'class="art pc-done ap-pet');
+    // eyes: the dark pupils inside each eye group become colored, glowing irises
+    s = s.replace(/<g class="pe">([\s\S]*?)<\/g>/g, (m, inner) => `<g class="pe">${inner.replace(new RegExp(`fill="${INK}"`, 'g'), 'fill="url(#pcIris)"')}</g>`);
+    // a tail behind the body
+    const k = s.includes(' ap-bod') ? tailKind((p.id + ' ' + (p.name || '')).toLowerCase(), o) : '',
+      T = k && o && HEX.test(o.c || '') ? tail(k, p.id, o) : '';
+    const torso = '<path d="M32 37.5c-9.8 0-15.2 8';
+    if (T && s.includes(torso)) s = s.replace(torso, `<g class="pc-tail pc-${k}">${T}</g>${torso}`);
+    const fx = sparks(p.r);
+    if (fx) s = s.replace(/<\/svg>\s*$/, fx + '</svg>');
+    return s;
+  }
+
+  let cap = null;
+  const c0 = critter;
+  critter = function (k, o) {
+    if (cap && !cap.o) cap.o = o;
+    return c0.apply(this, arguments);
+  };
+  const a0 = art;
+  art = function (key) {
+    const p = PET[key];
+    if (p && p.r !== 'x' && !String(key).startsWith('x_') && !(key in ART_CACHE) && DESIGNS[key]) {
+      cap = {};
+      try {
+        a0.apply(this, arguments);
+      } catch (e) {}
+      const o = cap.o;
+      cap = null;
+      try {
+        if (ART_CACHE[key]) ART_CACHE[key] = cool(ART_CACHE[key], p, o);
+      } catch (e) {
+        console.error('pets-cool', key, e);
+      }
+    }
+    return a0.apply(this, arguments);
+  };
+  window.PBPetsCool = { cool, tailKind };
+})();
+
 /* ===================== THEMES: 20 named themes with logos ===================== */
 (function () {
   const H = (h, s, l) => `hsl(${((h % 360) + 360) % 360} ${Math.max(0, Math.min(100, s))}% ${l}%)`;
@@ -22746,6 +22846,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     store: ['Store', () => 'VIP, Pro mode, coin packs and exclusive items'],
     play: ['Play', () => 'Game modes, duels and weekly leaderboards'],
     social: ['Social', () => 'Chat, clans, friends and the weekly season'],
+    trading: ['Trading', () => 'Swap items and pets with other players'],
     pass: ['Battle Pass', () => 'Season rewards, quests and your login calendar'],
     pets: ['Pets', () => 'Your companions and the bonuses they give you'],
     ranks: ['Leaderboard', () => 'How your returns stack up against everyone else'],
@@ -22785,7 +22886,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   setTimeout(fixGear, 0);
 
   /* phone navigation: 4 main tabs + a More sheet */
-  const MORE = ['shop', 'play', 'social', 'profile', 'pass', 'ranks', 'news', 'settings'];
+  const MORE = ['shop', 'trading', 'play', 'social', 'profile', 'pass', 'ranks', 'news', 'settings'];
   const LBL = {
     play: 'Play',
     social: 'Social',
@@ -22793,6 +22894,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     store: 'Store',
     learn: 'Learn',
     shop: 'Shop',
+    trading: 'Trading',
     pets: 'Pets',
     garden: 'Garden',
     news: 'News',
@@ -22933,7 +23035,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   const st = document.createElement('style');
   st.textContent = `
   .nav-more{display:none!important;position:relative}.more-dot{position:absolute;top:8px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px var(--panel)}
-  @media(max-width:899px){#nav a[data-s="learn"],#nav a[data-s="shop"],#nav a[data-s="store"],#nav a[data-s="play"],#nav a[data-s="social"],#nav a[data-s="pass"],#nav a[data-s="pets"],#nav a[data-s="garden"],#nav a[data-s="bank"]{display:none!important}.nav-more{display:flex!important}#nav a{font-size:11px!important}}
+  @media(max-width:899px){#nav a[data-s="learn"],#nav a[data-s="shop"],#nav a[data-s="store"],#nav a[data-s="play"],#nav a[data-s="social"],#nav a[data-s="trading"],#nav a[data-s="pass"],#nav a[data-s="pets"],#nav a[data-s="garden"],#nav a[data-s="bank"]{display:none!important}.nav-more{display:flex!important}#nav a{font-size:11px!important}}
   .more-sheet{position:fixed;inset:0;z-index:950}.ms-bg{position:absolute;inset:0;background:rgba(10,6,30,.45);opacity:0;transition:opacity .2s}
   .ms-panel{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-radius:24px 24px 0 0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateY(100%);transition:transform .24s cubic-bezier(.2,0,0,1);box-shadow:0 -20px 50px -20px rgba(0,0,0,.4)}
   .more-sheet.open .ms-bg{opacity:1}.more-sheet.open .ms-panel{transform:none}
@@ -25713,6 +25815,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     news: ['#ffe066', '#e3a008'],
     learn: ['#67e8f9', '#0891b2'],
     shop: ['#ff8fc7', '#db2777'],
+    trading: ['#86efac', '#0d9488'],
     store: ['#fde68a', '#d97706'],
     play: ['#fca5a5', '#dc2626'],
     social: ['#93c5fd', '#2563eb'],
@@ -26172,7 +26275,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     already_claimed: 'You already claimed this one.',
     slow_down: 'Slow down a little and try again in a minute.',
   };
-  window.PBCloud = { rpc, C };
+  window.PBCloud = { rpc, C, push: f => push(f), claimGrants: () => claimGrants(), linked: () => linked(), MSG };
 
   const setSess = (u, token) => {
     C.s = { u, token };
@@ -26722,6 +26825,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       'online',
       'friends',
       'gifts',
+      'trading',
     ])
       b.classList.toggle('off-' + k, !on(k));
     if (!on('pro') && typeof settings !== 'undefined' && settings.advanced && window.PBSetAdvanced)
@@ -26937,11 +27041,37 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       setTimeout(() => PackOpen.show(p, cards), 900);
       return p.name;
     }
+    if (g.kind === 'pet') {
+      // a pet from a trade keeps its level, mutation and Prime
+      const d = (typeof PET !== 'undefined' && PET[g.item_id]) || null,
+        x = g.data || {};
+      if (!d) {
+        acct.coins += 500;
+        bumpCoins();
+        return '500 coins';
+      }
+      const lvl = Math.max(1, Math.min(100, Math.round(+x.lvl || 1))),
+        xp = Math.max(0, Math.round(+x.xp || 0)),
+        ex = acct.pets.list.find(p => p.id === d.id);
+      if (ex) {
+        if (lvl > ex.lvl || (lvl === ex.lvl && xp > ex.xp)) (ex.lvl = lvl), (ex.xp = xp);
+        if (x.mut && !ex.mut) ex.mut = x.mut;
+        if (x.prime) ex.prime = true;
+        return `${d.name} (merged with yours, Lv ${ex.lvl})`;
+      }
+      const p = { uid: uid(), id: d.id, name: d.name, lvl, xp, mood: 100, lastPet: 0, born: Date.now() };
+      if (x.mut) p.mut = String(x.mut);
+      if (x.prime) p.prime = true;
+      acct.pets.list.push(p);
+      if (!acct.pets.active) acct.pets.active = p.uid;
+      return `${d.name} · Lv ${lvl}`;
+    }
     if (g.kind === 'item') {
       const it = typeof ITEM !== 'undefined' && ITEM[g.item_id];
       if (it) {
-        grant(it);
-        return it.name;
+        const k = Math.max(1, Math.min(99, Math.round(amt) || 1));
+        for (let i = 0; i < k; i++) grant(it);
+        return k > 1 ? `${it.name} ×${k}` : it.name;
       }
       acct.coins += 250;
       bumpCoins();
@@ -26956,7 +27086,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     grantsBusy = true;
     let list;
     try {
-      list = await rpc('pb_grants_claim', { p_token: C.s.token });
+      list = await rpc('pb_grants_claim2', { p_token: C.s.token });
     } catch (e) {
       authFail(e);
       return;
@@ -26977,12 +27107,14 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     SFX.play('coin');
     needRender = true;
     const msgs = list.map(g => g.message).filter(Boolean);
-    const neg = list.every(g => +g.amount < 0 && g.kind !== 'item');
+    const neg = list.every(g => +g.amount < 0 && g.kind !== 'item'),
+      trade = list.every(g => /^Trade /.test(g.name || ''));
+    if (trade && window.PBTrade) PBTrade.refresh(true);
     modal({
-      title: neg ? 'Account adjustment' : 'A gift from the PAPERBULL team',
+      title: trade ? (list.every(g => g.name === 'Trade refund') ? 'Trade items returned' : 'Trade complete!') : neg ? 'Account adjustment' : 'A gift from the PAPERBULL team',
       confirm: neg ? 'Okay' : 'Nice!',
       cancel: '',
-      html: `<div class="buck-intro">${buckSVG(neg ? 'sad' : 'cool')}<p>${neg ? '“The team made a change to your account.”' : '“Someone up there likes you.”'}</p></div>
+      html: `<div class="buck-intro">${buckSVG(neg ? 'sad' : 'cool')}<p>${trade ? (list.every(g => g.name === 'Trade refund') ? '“That trade didn’t happen, so your stuff is back.”' : '“Pleasure doing business.”') : neg ? '“The team made a change to your account.”' : '“Someone up there likes you.”'}</p></div>
       <ul class="pb-gotlist">${got.map(x => `<li><b>${E(x.g.name)}</b><span>${E(x.what)}</span></li>`).join('')}</ul>${msgs.length ? `<p class="muted small">${msgs.map(E).join('<br>')}</p>` : ''}`,
     });
   }
@@ -37494,7 +37626,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   /* ---------- grouped sidebar ---------- */
   const GROUPS = [
     [null, ['home', 'markets', 'portfolio', 'inventory']],
-    ['Fun', ['shop', 'play', 'social', 'profile']],
+    ['Fun', ['shop', 'trading', 'play', 'social', 'profile']],
   ];
   function tidyNav() {
     const nav = document.getElementById('nav');
@@ -41331,7 +41463,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         return d;
       }
     };
-    const want3D = () => !disabled && LS('pb2.g3d', '1') === '1' && webglOK();
+    const want3D = () => !disabled && LS('pb2.garden3d', '0') === '1' && webglOK();
     const isPhone = () => innerWidth < 700;
     const PG = () => window.PBGarden;
     const E = s => (typeof esc === 'function' ? esc(s) : String(s));
@@ -43702,7 +43834,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       };
       stage.querySelector('#g3Toggle').onclick = () => {
         try {
-          localStorage.setItem('pb2.g3d', '0');
+          localStorage.setItem('pb2.garden3d', '0');
         } catch (e) {}
         leave();
         const v = document.getElementById('view');
@@ -43723,7 +43855,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         top.insertAdjacentHTML('beforeend', '<button class="pg-act g3-b g3-tog on" id="g3On" title="Switch to the 3D garden">✨ 3D</button>');
         top.querySelector('#g3On').onclick = () => {
           try {
-            localStorage.setItem('pb2.g3d', '1');
+            localStorage.setItem('pb2.garden3d', '1');
           } catch (e) {}
           const v = document.getElementById('view');
           if (v) PG().Garden.mount(v);
@@ -46121,6 +46253,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       ranks: S(`<path ${W} d="M7 3h10v6.5a5 5 0 0 1-10 0z"/><path d="M17 5h2.5v1.8A3.4 3.4 0 0 1 16.4 10M7 5H4.5v1.8A3.4 3.4 0 0 0 7.6 10" stroke="#fff" stroke-opacity=".6" stroke-width="1.8" fill="none"/><path ${H} d="M10.3 14.4h3.4l.5 3.1h-4.4z"/><rect ${W} x="7.5" y="18" width="9" height="3" rx="1.2"/>`),
       learn: S(`<path ${W} d="M12 3.5 22 8.4 12 13.3 2 8.4z"/><path ${H} d="M6 11v4.2c0 1.8 2.7 3.3 6 3.3s6-1.5 6-3.3V11l-6 3z"/><path d="M21 9v5.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="21" cy="15.2" r="1.3" fill="#fff"/>`),
       tourney: S(`<path ${W} d="M7 3h10v6.5a5 5 0 0 1-10 0z"/><path d="m12 4.8.9 1.8 2 .3-1.5 1.4.4 2L12 9.3l-1.8 1 .4-2-1.5-1.4 2-.3z" fill="#000" fill-opacity=".3"/><rect ${W} x="7.5" y="18" width="9" height="3" rx="1.2"/><path ${H} d="M10.3 14.4h3.4l.5 3.1h-4.4z"/>`),
+      trading: S(`<path ${W} d="M6.5 3.8a1 1 0 0 1 1.5 0l3.3 3.3a1 1 0 0 1-.7 1.7H8.4v6.7a1.4 1.4 0 0 1-2.8 0V8.8H3.4a1 1 0 0 1-.7-1.7z"/><path ${H} d="M17.5 20.2a1 1 0 0 1-1.5 0l-3.3-3.3a1 1 0 0 1 .7-1.7h2.2V8.5a1.4 1.4 0 0 1 2.8 0v6.7h2.2a1 1 0 0 1 .7 1.7z"/>`),
       more: S(`<rect ${W} x="3.5" y="3.5" width="7" height="7" rx="2"/><rect ${H} x="13.5" y="3.5" width="7" height="7" rx="2"/><rect ${H} x="3.5" y="13.5" width="7" height="7" rx="2"/><rect ${W} x="13.5" y="13.5" width="7" height="7" rx="2"/>`),
     };
     const IC = window.PBIcons;
@@ -47970,6 +48103,451 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
   };
   start();
   window.PBTidy = { show: (scr, tab) => ((cur[scr] = tab), remember(scr, tab), apply()), refresh: run };
+})();
+
+/* =====================================================================
+   TRADING: players swap items, pets and coins with each other.
+   · Pick a player, pick what you give and what you want, send the offer
+   · What you offer is held by the server until the trade ends: if they
+     say no, you cancel, or 3 days pass, it all comes back to you
+   · The server checks both saves, so nobody can trade what they don't have
+   · Pets keep their level, mutation and Prime when they change hands
+   ===================================================================== */
+(() => {
+  const CL = () => window.PBCloud;
+  const E = s => esc(s);
+  const EQUIP0 = { theme: 'th_amber', skin: 'sk_classic', avatar: 'av_bull', title: 'ti_rookie' };
+  const NOPE = ['coins', 'petgift', 'xpet'];
+  const LBL = { treat: 'Treat', egg: 'Egg', serum: 'Serum', mutation: 'Serum' };
+  const ERR = {
+    feature_off: 'Trading is switched off right now.',
+    no_user: 'No player with that username.',
+    self: 'You can’t trade with yourself.',
+    missing_item: 'Something in this trade isn’t in that saved game anymore.',
+    missing_pet: 'One of those pets isn’t there anymore.',
+    pet_busy: 'That pet is out on a mission. Wait until it’s back.',
+    not_enough_coins: 'Not enough coins for that.',
+    bad_items: 'That trade has something that can’t be traded.',
+    bad_coins: 'Coins must be between 0 and 50,000.',
+    too_many_trades: 'You already have 5 offers waiting. Cancel one first.',
+    their_box_full: 'That player has too many offers waiting. Try later.',
+    slow_down: 'That’s a lot of offers today. Try again tomorrow.',
+    empty_trade: 'Add something to the trade first.',
+    no_trade: 'That trade doesn’t exist anymore.',
+    trade_closed: 'That trade already ended.',
+    no_save: 'That player hasn’t saved a game online yet.',
+    auth: 'Log in again to trade.',
+  };
+  const err = e => ERR[e && (e.code || e.message)] || (e && e.message) || 'Something went wrong.';
+  const S = { tab: 'inbox', list: [], at: 0, busy: false, who: null, them: null, give: {}, want: {}, gc: 0, wc: 0, loading: false };
+  let v = null;
+
+  /* ---------- what can be traded ---------- */
+  const tradableItem = id => {
+    const it = ITEM[id];
+    return it && !it.def && !NOPE.includes(it.type) && !/^(pack_|co_)/.test(id);
+  };
+  const myItems = () =>
+    Object.entries(acct.inv || {})
+      .filter(([id, n]) => n >= 1 && tradableItem(id))
+      .map(([id, n]) => ({ id, n: Math.floor(n) }));
+  const myPets = () => acct.pets.list.filter(p => !p.mission && PET[p.id]).map(p => ({ uid: p.uid, id: p.id, lvl: p.lvl, mut: p.mut, prime: p.prime }));
+  const theirItems = () =>
+    Object.entries((S.them && S.them.inv) || {})
+      .filter(([id, n]) => n >= 1 && tradableItem(id))
+      .map(([id, n]) => ({ id, n: Math.floor(n) }));
+  const theirPets = () => ((S.them && S.them.pets) || []).filter(p => !p.busy && PET[p.id]);
+
+  /* ---------- pictures ---------- */
+  const R = r => RARITY[r] || RARITY.c;
+  const petTile = (p, extra = '') => {
+    const d = PET[p.id];
+    return `<span class="tr-art">${petArt(d.id)}</span><b>${E(d.name)}</b><small style="color:${R(d.r).color}">Lv ${p.lvl || 1}${p.mut ? ' · ' + E(String(p.mut)) : ''}${p.prime ? ' · Prime' : ''}</small>${extra}`;
+  };
+  const itemTile = (id, n, extra = '') => {
+    const it = ITEM[id];
+    return `<span class="tr-art">${itemFace(it)}</span><b>${E(it.name)}</b><small style="color:${R(it.r).color}">${E(R(it.r).name)} ${E(LBL[it.type] || TYPE_LABEL[it.type] || it.type)}</small>${n > 1 ? `<i class="tr-n">×${n}</i>` : ''}${extra}`;
+  };
+  const coinTile = n => {
+    const it = ITEM[n >= 1000 ? 'co_l' : n >= 200 ? 'co_m' : 'co_s'];
+    return `<span class="tr-art">${it ? itemFace(it) : ''}</span><b>${n.toLocaleString()}</b><small>coins</small>`;
+  };
+  const entries = (list, coins) => {
+    const h = (list || [])
+      .map(e => {
+        if (e.t === 'p') return PET[e.id] ? `<div class="tr-it">${petTile(e)}</div>` : '';
+        return ITEM[e.id] ? `<div class="tr-it">${itemTile(e.id, e.n)}</div>` : '';
+      })
+      .join('');
+    return h || coins ? `<div class="tr-its">${h}${coins ? `<div class="tr-it">${coinTile(coins)}</div>` : ''}</div>` : '<p class="muted small tr-none">Nothing</p>';
+  };
+
+  /* ---------- taking things out when they leave your game ---------- */
+  function take(list, coins) {
+    for (const e of list || []) {
+      if (e.t === 'i') {
+        acct.inv[e.id] = Math.max(0, (acct.inv[e.id] || 0) - e.n);
+        const it = ITEM[e.id];
+        if (!acct.inv[e.id] && it && acct.equip && acct.equip[it.type] === e.id) acct.equip[it.type] = EQUIP0[it.type] || acct.equip[it.type];
+      } else {
+        const i = acct.pets.list.findIndex(p => p.uid === e.uid);
+        if (i < 0) continue;
+        acct.pets.list.splice(i, 1);
+        if (acct.pets.active === e.uid) acct.pets.active = acct.pets.list[0] ? acct.pets.list[0].uid : null;
+        if (acct.pets.side === e.uid) acct.pets.side = null;
+        if (acct.garden && acct.garden.slots) acct.garden.slots = acct.garden.slots.filter(u => u !== e.uid);
+      }
+    }
+    if (coins > 0) {
+      acct.coins = Math.max(0, acct.coins - coins);
+      bumpCoins();
+    }
+    try {
+      applyCosmetics();
+    } catch (e) {}
+    saveAcct(true);
+  }
+  // do I still have everything in this list?
+  const have = (list, coins) => {
+    for (const e of list || []) {
+      if (e.t === 'i' && !((acct.inv[e.id] || 0) >= e.n)) return ITEM[e.id] ? ITEM[e.id].name : e.id;
+      if (e.t === 'p') {
+        const p = acct.pets.list.find(x => x.uid === e.uid);
+        if (!p) return PET[e.id] ? PET[e.id].name : 'a pet';
+        if (p.mission) return `${p.name} (on a mission)`;
+      }
+    }
+    if (coins > acct.coins) return `${coins.toLocaleString()} coins`;
+    return null;
+  };
+  // the server checks your online save, so send it fresh first
+  async function syncSave() {
+    const C = CL().C;
+    for (let i = 0; i < 50 && C.pushing; i++) await new Promise(r => setTimeout(r, 100));
+    await CL().push(true);
+    if (C.err) throw new Error(C.err);
+  }
+
+  /* ---------- talking to the server ---------- */
+  const rpc = (fn, a) => CL().rpc(fn, Object.assign({ p_token: CL().C.s.token }, a));
+  const online = () => CL() && CL().linked();
+  async function refresh(force) {
+    if (!online() || S.loading) return;
+    if (!force && Date.now() - S.at < 20000) return;
+    S.loading = true;
+    try {
+      S.list = (await rpc('pb_trades')) || [];
+      S.at = Date.now();
+      badge();
+    } catch (e) {
+    } finally {
+      S.loading = false;
+    }
+    if (v && document.body.dataset.screen === 'trading' && S.tab !== 'new') paint();
+  }
+  const incoming = () => S.list.filter(t => t.status === 'open' && !t.mine);
+  const outgoing = () => S.list.filter(t => t.status === 'open' && t.mine);
+  const closed = () => S.list.filter(t => t.status !== 'open');
+  function badge() {
+    const n = incoming().length,
+      d = document.getElementById('tradeDot');
+    if (d) d.hidden = !n;
+    const seen = new Set(Store.get('pb2.tradeSeen', []) || []),
+      fresh = incoming().filter(t => !seen.has(t.id));
+    if (fresh.length) {
+      for (const t of fresh) seen.add(t.id);
+      Store.set('pb2.tradeSeen', [...seen].slice(-200));
+      if (window.PBNotify)
+        try {
+          for (const t of fresh.slice(0, 3)) PBNotify.push({ kind: 'info', title: `@${t.from_name} sent you a trade offer`, go: 'trading' });
+        } catch (e) {}
+    }
+  }
+
+  /* ---------- screen ---------- */
+  function shell() {
+    const head = v.querySelector(':scope > .pg-h');
+    [...v.children].forEach(c => c !== head && c.remove());
+    v.insertAdjacentHTML('beforeend', '<div class="tr-wrap" id="trWrap"></div>');
+    v.querySelector('#trWrap').onclick = click;
+    v.querySelector('#trWrap').oninput = input;
+  }
+  function paint() {
+    if (!v || !v.isConnected) return;
+    const w = v.querySelector('#trWrap');
+    if (!w) return;
+    if (document.body.classList.contains('off-trading')) {
+      w.innerHTML = '<section class="card tr-gate"><b>Trading is closed for now</b><p class="muted">The team switched trading off for a bit. Your items are safe.</p></section>';
+      return;
+    }
+    if (!online()) {
+      w.innerHTML = `<section class="card tr-gate"><div class="tr-gate-art">${petArt((acct.pets.list[0] || {}).id || 'cat')}<span class="tr-swap">${SWAP}</span>${itemFace(ITEM.egg_c || ITEMS.find(i => i.type === 'egg'))}</div>
+        <b>Trade with other players</b><p class="muted">Swap pets, eggs, power-ups, cosmetics and coins with anyone. You need a free account so trades can reach you on any device.</p>
+        <div class="tr-gate-b"><button class="btn primary" data-ol="signup">Sign up</button><button class="btn" data-ol="login">Log in</button></div></section>`;
+      return;
+    }
+    const n = incoming().length,
+      tabs = [
+        ['inbox', 'Offers', n],
+        ['new', 'New trade', 0],
+        ['sent', 'Sent', outgoing().length],
+        ['past', 'History', 0],
+      ];
+    w.innerHTML = `<div class="seg tr-tabs">${tabs.map(([k, l, c]) => `<button data-tab="${k}" class="${S.tab === k ? 'on' : ''}">${l}${c ? ` <em>${c}</em>` : ''}</button>`).join('')}</div><div id="trBody"></div>`;
+    const b = w.querySelector('#trBody');
+    if (S.tab === 'inbox') b.innerHTML = list(incoming(), 'Nobody has sent you an offer yet. Start one yourself in New trade.');
+    else if (S.tab === 'sent') b.innerHTML = list(outgoing(), 'You haven’t sent any offers that are still waiting.');
+    else if (S.tab === 'past') b.innerHTML = list(closed(), 'Finished trades from the last week show up here.');
+    else b.innerHTML = builder();
+  }
+  const SWAP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v14M3.5 7.5 7 4l3.5 3.5"/><path d="M17 20V6M13.5 16.5 17 20l3.5-3.5"/></svg>';
+  const ago = t => {
+    const s = (Date.now() - new Date(t).getTime()) / 1000;
+    return s < 3600 ? Math.max(1, Math.round(s / 60)) + 'm ago' : s < 86400 ? Math.round(s / 3600) + 'h ago' : Math.round(s / 86400) + 'd ago';
+  };
+  const STATUS = { done: ['Traded', 'ok'], declined: ['Declined', 'no'], cancelled: ['Cancelled', 'no'], expired: ['Expired', 'no'] };
+  function list(ts, empty) {
+    if (!ts.length) return `<section class="card tr-empty"><span class="tr-swap big">${SWAP}</span><p class="muted">${empty}</p>${S.tab === 'inbox' ? '<button class="btn primary" data-tab="new">Start a trade</button>' : ''}</section>`;
+    return ts
+      .map(t => {
+        const other = t.mine ? t.to_name : t.from_name;
+        // "you get" is what comes to you, whichever side you're on
+        const getL = t.mine ? t.want : t.give,
+          getC = t.mine ? t.want_coins : t.give_coins,
+          giveL = t.mine ? t.give : t.want,
+          giveC = t.mine ? t.give_coins : t.want_coins;
+        let act = '';
+        if (t.status === 'open' && !t.mine) {
+          const miss = have(t.want, t.want_coins);
+          act = `${miss ? `<p class="tr-miss">You don’t have ${E(miss)} anymore.</p>` : ''}<div class="tr-act"><button class="btn" data-decline="${t.id}">Decline</button><button class="btn primary" data-accept="${t.id}" ${miss ? 'disabled' : ''}>Accept trade</button></div>`;
+        } else if (t.status === 'open') act = `<div class="tr-act"><span class="muted small">Waiting for @${E(other)} · ends in ${Math.max(1, Math.ceil(3 - (Date.now() - new Date(t.created_at)) / 864e5))}d</span><button class="btn" data-cancel="${t.id}">Cancel offer</button></div>`;
+        const st = STATUS[t.status];
+        return `<section class="card tr-card">
+          <div class="tr-h"><span class="tr-who">@${E(other)}</span><span class="muted small">${t.mine ? 'You offered' : 'Offered you'} · ${ago(t.created_at)}</span>${st ? `<span class="tr-st ${st[1]}">${st[0]}</span>` : ''}</div>
+          <div class="tr-sides"><div class="tr-side get"><small>You get</small>${entries(getL, getC)}</div><span class="tr-swap">${SWAP}</span><div class="tr-side give"><small>You give</small>${entries(giveL, giveC)}</div></div>
+          ${act}</section>`;
+      })
+      .join('');
+  }
+
+  /* ---------- making a new offer ---------- */
+  function friends() {
+    const fr = (CL().C.fr && CL().C.fr.friends) || [];
+    return Array.isArray(fr) ? fr.filter(f => f && f.username).slice(0, 8) : [];
+  }
+  const count = o => Object.values(o).reduce((a, b) => a + (b === true ? 1 : b), 0);
+  function picker(side) {
+    const mine = side === 'give',
+      sel = mine ? S.give : S.want,
+      items = mine ? myItems() : theirItems(),
+      pets = mine ? myPets() : theirPets();
+    const petsH = pets
+      .map(p => {
+        const on = !!sel['p:' + p.uid];
+        return `<button class="tr-pick ${on ? 'on' : ''}" data-pick="${side}" data-k="p:${p.uid}" style="--rc:${R(PET[p.id].r).color}">${petTile(p, on ? '<i class="tr-ck">✓</i>' : '')}</button>`;
+      })
+      .join('');
+    const itemsH = items
+      .sort((a, b) => 'clreg'.indexOf(ITEM[b.id].r) - 'clreg'.indexOf(ITEM[a.id].r) || ITEM[a.id].name.localeCompare(ITEM[b.id].name))
+      .map(x => {
+        const q = sel['i:' + x.id] || 0;
+        return `<button class="tr-pick ${q ? 'on' : ''}" data-pick="${side}" data-k="i:${x.id}" data-max="${x.n}" style="--rc:${R(ITEM[x.id].r).color}">${itemTile(x.id, 0, `<i class="tr-have">${q ? `${q} of ${x.n}` : `has ${x.n}`}</i>${q ? '<i class="tr-ck">✓</i>' : ''}`)}</button>`;
+      })
+      .join('');
+    const coins = mine ? acct.coins : Math.floor((S.them && S.them.coins) || 0),
+      cv = mine ? S.gc : S.wc;
+    return `<div class="tr-pk-sec"><small>Pets</small>${petsH ? `<div class="tr-grid">${petsH}</div>` : `<p class="muted small">${mine ? 'You don’t have any pets to trade.' : 'They don’t have any pets to trade.'}</p>`}</div>
+      <div class="tr-pk-sec"><small>Items</small>${itemsH ? `<div class="tr-grid">${itemsH}</div>` : `<p class="muted small">${mine ? 'Nothing to trade yet. Open some packs!' : 'They don’t have any items to trade.'}</p>`}</div>
+      <label class="tr-cn"><span>Coins</span><input type="number" inputmode="numeric" min="0" max="${Math.min(50000, coins)}" step="10" value="${cv || ''}" placeholder="0" data-coins="${side}"><small class="muted">${mine ? 'You have' : 'They have'} ${coins.toLocaleString()}</small></label>`;
+  }
+  function builder() {
+    if (!S.them)
+      return `<section class="card tr-find"><b>Who do you want to trade with?</b><p class="muted small">Type their username. You can trade with anyone who has an account.</p>
+        <form class="tr-ff" id="trFind" autocomplete="off"><input id="trWho" maxlength="20" placeholder="Username" value="${E(S.who || '')}" autocapitalize="off" spellcheck="false" aria-label="Username"><button class="btn primary" type="submit">Find</button></form>
+        ${friends().length ? `<div class="tr-fr"><small class="muted">Your friends</small>${friends().map(f => `<button class="chip" data-who="${E(f.username)}">@${E(f.username)}</button>`).join('')}</div>` : ''}
+        <p class="tr-msg" id="trMsg" role="status"></p></section>`;
+    const g = count(S.give) + (S.gc ? 1 : 0),
+      w = count(S.want) + (S.wc ? 1 : 0);
+    return `<section class="card tr-build">
+      <div class="tr-h"><span class="tr-who">Trading with @${E(S.them.username)}</span><button class="btn sm" data-reset="1">Change player</button></div>
+      <div class="tr-cols"><div class="tr-col"><h3>You give</h3>${picker('give')}</div><div class="tr-col"><h3>You want</h3>${picker('want')}</div></div>
+      <div class="tr-send"><p class="muted small">What you give is held safely until they answer. If they say no, or 3 days pass, it all comes back to you. Pets keep their level.</p>
+      <button class="btn primary" data-send="1" ${g + w ? '' : 'disabled'}>Send offer${g + w ? ` · ${g} for ${w}` : ''}</button></div>
+      <p class="tr-msg" id="trMsg" role="status"></p></section>`;
+  }
+  async function find(name) {
+    name = String(name || '').trim().replace(/^@/, '');
+    if (!name) return;
+    S.who = name;
+    const m = v.querySelector('#trMsg');
+    if (m) (m.className = 'tr-msg'), (m.textContent = 'Looking…');
+    try {
+      const r = await rpc('pb_trade_inv', { p_username: name });
+      if (r.self) throw new Error(ERR.self);
+      S.them = r;
+      S.give = {};
+      S.want = {};
+      S.gc = S.wc = 0;
+      paint();
+    } catch (e) {
+      const m2 = v.querySelector('#trMsg');
+      if (m2) (m2.className = 'tr-msg err'), (m2.textContent = err(e));
+    }
+  }
+  const toList = sel =>
+    Object.entries(sel)
+      .filter(([, q]) => q)
+      .map(([k, q]) => (k[0] === 'p' ? { t: 'p', uid: k.slice(2) } : { t: 'i', id: k.slice(2), n: q }));
+  async function send(btn) {
+    if (S.busy) return;
+    const give = toList(S.give),
+      want = toList(S.want),
+      miss = have(
+        give.map(e => (e.t === 'p' ? Object.assign({ id: (acct.pets.list.find(p => p.uid === e.uid) || {}).id }, e) : e)),
+        S.gc
+      ),
+      m = v.querySelector('#trMsg');
+    if (miss) return (m.className = 'tr-msg err'), (m.textContent = `You don’t have ${miss}.`);
+    S.busy = true;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      await syncSave();
+      const r = await rpc('pb_trade_offer', { p_username: S.them.username, p_give: give, p_want: want, p_give_coins: S.gc || 0, p_want_coins: S.wc || 0 });
+      take(r.give, S.gc || 0);
+      CL().push(true);
+      toast(`Offer sent to @${S.them.username}`, 'ok');
+      try {
+        SFX.play('coin');
+      } catch (e) {}
+      S.them = null;
+      S.tab = 'sent';
+      await refresh(true);
+      paint();
+    } catch (e) {
+      m.className = 'tr-msg err';
+      m.textContent = err(e);
+      btn.disabled = false;
+      btn.textContent = 'Send offer';
+    }
+    S.busy = false;
+  }
+  async function act(kind, id, btn) {
+    if (S.busy) return;
+    const t = S.list.find(x => x.id === +id);
+    if (!t) return;
+    if (kind === 'accept') {
+      const miss = have(t.want, t.want_coins);
+      if (miss) return toast(`You don’t have ${miss} anymore.`, 'err');
+    }
+    S.busy = true;
+    btn.disabled = true;
+    try {
+      if (kind === 'accept') {
+        await syncSave();
+        const r = await rpc('pb_trade_accept', { p_id: t.id });
+        take(r.want, r.want_coins || 0);
+        CL().push(true);
+        await CL().claimGrants();
+      } else {
+        await rpc('pb_trade_close', { p_id: t.id });
+        if (t.mine) await CL().claimGrants();
+        toast(kind === 'cancel' ? 'Offer cancelled. Your items are coming back.' : 'Offer declined', 'info');
+      }
+      await refresh(true);
+    } catch (e) {
+      toast(err(e), 'err');
+      btn.disabled = false;
+      refresh(true);
+    }
+    S.busy = false;
+  }
+  function click(e) {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const d = b.dataset;
+    if (d.tab) {
+      S.tab = d.tab;
+      if (d.tab !== 'new') refresh();
+      return paint();
+    }
+    if (d.who) return find(d.who);
+    if (d.reset) {
+      S.them = null;
+      return paint();
+    }
+    if (d.pick) {
+      const sel = d.pick === 'give' ? S.give : S.want,
+        k = d.k;
+      if (k[0] === 'p') sel[k] = !sel[k];
+      else {
+        const max = +d.max || 1,
+          q = sel[k] || 0;
+        sel[k] = q >= max ? 0 : q + 1; // tap again for more; past what they have goes back to none
+      }
+      if (count(S.give) + count(S.want) > 16 || toList(sel).length > 8) {
+        sel[k] = 0;
+        toast('Up to 8 different things on each side.', 'info');
+      }
+      return paint();
+    }
+    if (d.send) return send(b);
+    if (d.accept) return act('accept', d.accept, b);
+    if (d.decline) return act('decline', d.decline, b);
+    if (d.cancel) return act('cancel', d.cancel, b);
+  }
+  function input(e) {
+    const t = e.target;
+    if (t.dataset.coins) {
+      const max = +t.max || 0,
+        n = Math.max(0, Math.min(max, Math.floor(+t.value || 0)));
+      if (t.dataset.coins === 'give') S.gc = n;
+      else S.wc = n;
+      const b = v.querySelector('[data-send]');
+      if (b) {
+        const g = count(S.give) + (S.gc ? 1 : 0),
+          w = count(S.want) + (S.wc ? 1 : 0);
+        b.disabled = !(g + w);
+        b.textContent = g + w ? `Send offer · ${g} for ${w}` : 'Send offer';
+      }
+    }
+  }
+  document.addEventListener('submit', e => {
+    if (e.target && e.target.id === 'trFind') {
+      e.preventDefault();
+      find(document.getElementById('trWho').value);
+    }
+  });
+
+  SCREENS.trading = {
+    mount(view) {
+      v = view;
+      view.innerHTML = '';
+      shell();
+      paint();
+      refresh(true);
+      if (online() && !CL().C.fr)
+        CL()
+          .rpc('pb_friends', { p_token: CL().C.s.token })
+          .then(f => {
+            CL().C.fr = f;
+            CL().C.frAt = Date.now();
+            if (S.tab === 'new' && !S.them) paint();
+          })
+          .catch(() => {});
+    },
+    update() {},
+    unmount() {
+      v = null;
+    },
+  };
+  if (window.PBPages && !PBPages.trading) PBPages.trading = ['Trading', () => 'Swap items and pets with other players'];
+  // check for new offers now and then
+  setTimeout(() => refresh(true), 4000);
+  setInterval(() => {
+    if (!document.hidden) refresh(true);
+  }, 60000);
+  window.PBTrade = { refresh, state: S };
 })();
 
 /* SHOP-PLUS:END */
@@ -59992,6 +60570,17 @@ html body .pet-hero .pet-stage[data-r]:not(#_)::before { inset: -40px; }
   html body .pet-hero .pet-stage[data-r]:not(#_) { width: 100%; height: 220px; }
 }
 
+/* ---------- pets cool: wagging tails, rising sparks, orbiting star ---------- */
+svg.art .pc-tail { transform-box: view-box; transform-origin: 45px 55px; animation: pcWag 2.6s ease-in-out infinite; }
+svg.art .pc-stub, svg.art .pc-puff { animation-duration: 0.9s; }
+svg.art .pc-feather { animation-duration: 3.4s; }
+@keyframes pcWag { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(8deg); } }
+svg.art .pc-rise { opacity: 0; transform-box: fill-box; animation: pcRise 3.8s ease-in infinite; }
+@keyframes pcRise { 0% { opacity: 0; transform: translateY(0); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-36px); } }
+svg.art .pc-orb { transform-origin: 32px 34px; animation: apSpin 8s linear infinite; }
+.locked svg.art .pc-tail, .shadow svg.art .pc-tail { animation: none; }
+@media (prefers-reduced-motion: reduce) { svg.art .pc-tail, svg.art .pc-rise, svg.art .pc-orb { animation: none !important; } svg.art .pc-rise { opacity: 0.8; } }
+
 </style>
 <style id="pbInv">
 /* ===================== INVENTORY ===================== */
@@ -62370,6 +62959,95 @@ html.classic:not(.dark) .dr-inp input { background: #f1f5f9; border-color: rgba(
 #petGrid:not(.show-locked):not(:has(.col-item:not(.locked)))::before { content: 'No pets yet. Hatch an egg or pick one in the Pet shop tab.'; grid-column: 1 / -1; color: var(--mut); font-size: 14px; padding: 18px 0; text-align: center; }
 .tidy-lk { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--mut); cursor: pointer; margin-left: 10px; white-space: nowrap; }
 .tidy-lk input { accent-color: var(--amber); width: 15px; height: 15px; margin: 0; }
+
+</style>
+<style id="pbTrade">
+/* ===================== TRADING ===================== */
+.tr-wrap { display: flex; flex-direction: column; gap: 14px; }
+.tr-tabs { display: flex; overflow-x: auto; scrollbar-width: none; }
+.tr-tabs::-webkit-scrollbar { display: none; }
+.tr-tabs button { flex: 1 0 auto; white-space: nowrap; }
+.tr-tabs em { font-style: normal; font-size: 11px; font-weight: 800; margin-left: 4px; padding: 1px 6px; border-radius: 99px; background: var(--brand, #e8700a); color: #fff; }
+.tr-swap { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--bg2); border: 1px solid var(--line); color: var(--brand, #e8700a); flex: none; }
+.tr-swap svg { width: 18px; height: 18px; }
+.tr-swap.big { width: 56px; height: 56px; }
+.tr-swap.big svg { width: 28px; height: 28px; }
+
+/* not logged in / empty */
+.tr-gate, .tr-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 28px 18px !important; }
+.tr-gate b { font-size: 19px; }
+.tr-gate p, .tr-empty p { max-width: 420px; margin: 0; }
+.tr-gate-art { display: flex; align-items: center; gap: 12px; }
+.tr-gate-art > svg, .tr-gate-art > .face { width: 74px; height: 74px; }
+.tr-gate-art .face svg { width: 52px; height: 66px; }
+.tr-gate-b { display: flex; gap: 8px; }
+
+/* one trade */
+.tr-card { display: flex; flex-direction: column; gap: 12px; }
+.tr-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tr-who { font-weight: 800; font-size: 16px; }
+.tr-h .btn { margin-left: auto; }
+.tr-st { margin-left: auto; font: 800 11px var(--sans); padding: 4px 9px; border-radius: 99px; background: var(--bg2); color: var(--mut); }
+.tr-st.ok { background: color-mix(in srgb, var(--up) 18%, transparent); color: var(--up); }
+.tr-sides { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+.tr-side { min-width: 0; padding: 10px; border-radius: 14px; background: var(--bg2); border: 1px solid var(--line); align-self: stretch; }
+.tr-side > small { display: block; font: 800 11px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mut); margin-bottom: 8px; }
+.tr-side.get > small { color: var(--up); }
+.tr-its { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.tr-it { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; min-width: 0; padding: 6px 4px; border-radius: 12px; background: var(--panel); }
+.tr-it.coin { justify-content: center; font-weight: 800; }
+.tr-it b, .tr-pick b { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tr-it small, .tr-pick small { font-size: 10.5px; line-height: 1.25; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tr-art { width: 52px; height: 52px; display: grid; place-items: center; }
+.tr-art svg { width: 100%; height: 100%; }
+.tr-art .face, .tr-art .face.big { width: auto; height: auto; }
+.tr-art .face svg { width: 36px; height: 46px; }
+.tr-n { position: absolute; top: 4px; right: 6px; font: 800 11px var(--sans); font-style: normal; color: var(--tx); }
+.tr-none { margin: 4px 0; }
+.tr-act { display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.tr-act .muted { margin-right: auto; }
+.tr-miss { margin: 0; color: var(--dn); font-size: 13px; font-weight: 600; }
+@media (max-width: 600px) {
+  .tr-sides { grid-template-columns: 1fr; }
+  .tr-sides > .tr-swap { justify-self: center; transform: rotate(90deg); }
+  .tr-act .btn { flex: 1; }
+}
+
+/* finding a player */
+.tr-find { display: flex; flex-direction: column; gap: 8px; }
+.tr-find b { font-size: 17px; }
+.tr-find p { margin: 0; }
+.tr-ff { display: flex; gap: 8px; max-width: 440px; }
+.tr-ff input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line2); background: var(--bg2); color: var(--tx); font: 600 16px var(--sans); }
+.tr-fr { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+.tr-fr small { width: 100%; }
+.tr-fr .chip { padding: 6px 11px; border-radius: 99px; border: 1px solid var(--line); background: var(--bg2); color: var(--tx); font: 700 13px var(--sans); cursor: pointer; }
+.tr-msg { margin: 0; min-height: 1em; font-size: 13px; font-weight: 600; color: var(--mut); }
+.tr-msg.err { color: var(--dn); }
+
+/* building an offer */
+.tr-build { display: flex; flex-direction: column; gap: 14px; }
+.tr-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.tr-col { min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 12px; border-radius: 16px; background: var(--bg2); border: 1px solid var(--line); }
+.tr-col h3 { margin: 0; font-size: 15px; }
+.tr-pk-sec > small { display: block; font: 800 11px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mut); margin-bottom: 6px; }
+.tr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; max-height: 330px; overflow-y: auto; padding: 2px; }
+.tr-pick { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; padding: 8px 4px 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--tx); font: inherit; cursor: pointer; transition: transform 0.12s, border-color 0.12s; }
+.tr-pick:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--rc, #888) 60%, transparent); }
+.tr-pick.on { border-color: var(--rc, var(--brand)); box-shadow: 0 0 0 1px var(--rc, var(--brand)) inset; background: color-mix(in srgb, var(--rc, #888) 12%, var(--panel)); }
+.tr-have { font: 700 10px var(--sans); font-style: normal; color: var(--mut); }
+.tr-pick.on .tr-have { color: var(--tx); }
+.tr-ck { position: absolute; top: 4px; right: 5px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--rc, var(--brand)); color: #fff; font: 900 11px var(--sans); font-style: normal; }
+.tr-cn { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tr-cn span { font-weight: 700; font-size: 13px; }
+.tr-cn input { width: 110px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line2); background: var(--panel); color: var(--tx); font: 700 16px var(--sans); }
+.tr-send { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tr-send p { flex: 1 1 260px; margin: 0; }
+@media (max-width: 760px) {
+  .tr-cols { grid-template-columns: 1fr; }
+  .tr-send .btn { width: 100%; }
+}
+body.off-trading #nav a[data-s='trading'] { display: none !important; }
 
 </style>
 <style id="pbMobile">
