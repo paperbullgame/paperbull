@@ -1006,7 +1006,7 @@
                 ${rows.length ? `<div class="tw"><table><thead><tr><th>Clan</th><th>Owner</th><th class="r">Members</th><th class="r">Avg return</th><th class="r">Chat (7d)</th><th>Joining</th><th>Last active</th><th class="r"></th></tr></thead><tbody>${rows
                   .map(
                     c => `<tr class="click" data-open="${c.id}"><td data-l="Clan"><div class="who"><span class="cl-e">${esc(c.emoji || '🛡️')}</span><div><b>${esc(c.name)} <span class="tag sm mono">${esc(c.tag)}</span></b><small style="white-space:normal;max-width:300px;display:block">${esc(c.about || 'No description')}</small></div></div></td>
-                      <td data-l="Owner">${c.owner ? '@' + esc(c.owner) : '<span class="muted">—</span>'}</td><td class="r mono" data-l="Members">${num(c.members)}<span class="muted">/30</span></td><td class="r ${cls(+c.avg_return || 0)}" data-l="Avg return">${c.avg_return == null ? '—' : pct(+c.avg_return)}</td><td class="r mono" data-l="Chat (7d)">${num(c.msgs_week || 0)}</td>
+                      <td data-l="Owner">${c.owner ? '@' + esc(c.owner) : '<span class="muted">—</span>'}</td><td class="r mono" data-l="Members">${num(c.members)}<span class="muted">/300</span></td><td class="r ${cls(+c.avg_return || 0)}" data-l="Avg return">${c.avg_return == null ? '—' : pct(+c.avg_return)}</td><td class="r mono" data-l="Chat (7d)">${num(c.msgs_week || 0)}</td>
                       <td data-l="Joining">${c.open ? '<span class="pill p-ok">Open</span>' : '<span class="pill p-mut">Invite only</span>'}</td><td data-l="Last active">${seen(c.last_active)}</td><td class="r"><button class="btn sm" data-open="${c.id}">Open</button></td></tr>`
                   )
                   .join('')}</tbody></table></div>` : `<div class="empty">${q ? 'No clans match.' : 'No clans yet.'}</div>`}</div>`;
@@ -1052,7 +1052,7 @@
             };
             v.innerHTML = `<a href="#/clans" class="btn ghost sm" style="margin-bottom:12px">${IC.back}All clans</a>
               <div class="card"><div class="prof"><span class="cl-e big">${esc(c.emoji || '🛡️')}</span><div style="flex:1;min-width:0"><h2>${esc(c.name)} <span class="tag mono">${esc(c.tag)}</span> ${c.open ? '<span class="pill p-ok">Open</span>' : '<span class="pill p-mut">Invite only</span>'}</h2>
-                <div class="muted">Owner ${c.owner_name ? '@' + esc(c.owner_name) : '—'} · ${num(M.length)}/30 members · made ${dday(c.created_at)}</div>
+                <div class="muted">Owner ${c.owner_name ? '@' + esc(c.owner_name) : '—'} · ${num(M.length)}/300 members · made ${dday(c.created_at)}</div>
                 <p style="margin:8px 0 0">${esc(c.about || 'No description')}</p></div></div>
                 <div class="row-act" style="margin-top:14px;flex-wrap:wrap"><button class="btn" id="clEdit">${IC.edit || ''}Edit name, tag or about</button><button class="btn" id="clOpen">${c.open ? 'Make invite only' : 'Open to join'}</button><a class="btn" href="#/chat?room=clan:${c.id}">${IC.chat}Open clan chat</a>${can('admin') ? `<button class="btn dan-o" id="clClear">Clear clan chat</button><button class="btn dan" id="clDel">${IC.trash}Delete clan</button>` : ''}</div></div>
               <div style="display:flex;flex-direction:column;gap:16px;margin-top:16px">

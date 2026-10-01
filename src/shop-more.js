@@ -168,6 +168,8 @@
     { id: 'th_neon', type: 'theme', name: 'Neon', r: 'e', color: '#39ff14' },
     { id: 'th_royal', type: 'theme', name: 'Royal', r: 'l', color: '#6366f1' },
     { id: 'th_rosegold', type: 'theme', name: 'Rose Gold', r: 'l', color: '#f4a6a0' },
+    // the most expensive thing in the game: never in packs, only bought outright
+    { id: 'th_rainbow', type: 'theme', name: 'Rainbow Glow', r: 'l', color: '#ff3df0', price: 250000, nopack: true, desc: 'The whole game glows and shifts through every color of the rainbow.' },
     // chart skins
     { id: 'sk_candy', type: 'skin', name: 'Cotton Candy', r: 'c', up: '#f9a8d4', dn: '#93c5fd' },
     { id: 'sk_mono', type: 'skin', name: 'Newspaper', r: 'c', up: '#e5e7eb', dn: '#4b5563' },
@@ -234,6 +236,16 @@
       ITEMS.push(it);
       ITEM[it.id] = it;
     }
+
+  /* the Rainbow Glow theme gets its own animated rainbow picture */
+  const itemFace1 = itemFace;
+  itemFace = function (it, big) {
+    if (it && it.id === 'th_rainbow') {
+      const u = 'rbw' + Math.random().toString(36).slice(2, 7);
+      return `<span class="face rb-face${big ? ' big' : ''}"><svg viewBox="0 0 56 42" aria-hidden="true"><defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3d6e"/><stop offset=".2" stop-color="#ffb02e"/><stop offset=".4" stop-color="#ffe94d"/><stop offset=".6" stop-color="#3ddc84"/><stop offset=".8" stop-color="#3d8bff"/><stop offset="1" stop-color="#b44dff"/></linearGradient></defs><rect x="1" y="1" width="54" height="40" rx="6" fill="#0d1017" stroke="url(#${u})" stroke-width="2"/><rect x="6" y="7" width="20" height="4" rx="2" fill="url(#${u})"/><rect x="6" y="15" width="44" height="12" rx="3" fill="url(#${u})" opacity=".85"/><rect x="6" y="31" width="14" height="5" rx="2.5" fill="url(#${u})"/><rect x="23" y="31" width="14" height="5" rx="2.5" fill="#fff" opacity=".25"/><rect x="40" y="31" width="10" height="5" rx="2.5" fill="#fff" opacity=".18"/></svg></span>`;
+    }
+    return itemFace1.apply(this, arguments);
+  };
 
   /* ---------------- new packs ---------------- */
   if (typeof PACKS !== 'undefined')

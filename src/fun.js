@@ -411,5 +411,38 @@
       requestAnimationFrame(() => requestAnimationFrame(paintHome));
       return out;
     };
-  window.PBFun = { openWheel, wheel: W, races: RS, SEG };
+  /* shop showcase: the Rainbow Glow theme, the priciest thing in the game */
+  function rainbowCard() {
+    const v = document.getElementById('view'),
+      it = ITEM.th_rainbow;
+    if (!v || !it || document.body.dataset.screen !== 'shop') return;
+    v.querySelector('#rbShow')?.remove();
+    const has = owns('th_rainbow'),
+      on = acct.equip.theme === 'th_rainbow',
+      price = itemPrice(it),
+      short = acct.coins < price;
+    const html = `<section class="card rb-show" id="rbShow"><span class="rb-art">${itemFace(it, true)}</span><span class="rb-t"><small>THE MOST EXPENSIVE ITEM IN PAPERBULL</small><b>Rainbow Glow theme</b><span>${E(it.desc)}</span></span>
+      <span class="rb-b">${on ? '<span class="rb-on">Equipped</span>' : has ? '<button class="btn primary" data-rbeq="1">Equip</button>' : `<button class="btn ${short ? '' : 'primary'}" data-rbbuy="1" ${short ? `title="You need ${(price - acct.coins).toLocaleString()} more coins"` : ''}>${coinHTML(price)}</button>${short ? `<small>${(price - acct.coins).toLocaleString()} more coins to go</small>` : ''}`}</span></section>`;
+    const anchor = v.querySelector(':scope > #tidyBar') || v.querySelector(':scope > nav.hub-tabs') || v.querySelector(':scope > .pg-h');
+    if (anchor) anchor.insertAdjacentHTML('afterend', html);
+    else v.insertAdjacentHTML('afterbegin', html);
+    const c = v.querySelector('#rbShow');
+    c.onclick = e => {
+      if (e.target.closest('[data-rbbuy]')) {
+        buyItem('th_rainbow');
+        setTimeout(rainbowCard, 400);
+      } else if (e.target.closest('[data-rbeq]')) {
+        equip('th_rainbow');
+        rainbowCard();
+      }
+    };
+  }
+  const sm = SCREENS.shop && SCREENS.shop.mount;
+  if (sm)
+    SCREENS.shop.mount = function () {
+      const out = sm.apply(this, arguments);
+      requestAnimationFrame(() => requestAnimationFrame(rainbowCard));
+      return out;
+    };
+  window.PBFun = { openWheel, wheel: W, races: RS, SEG, rainbowCard };
 })();

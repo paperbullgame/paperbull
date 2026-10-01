@@ -98,3 +98,43 @@
   .pr-ctl .btn { flex: 1; }
 }
 @media (prefers-reduced-motion: reduce) { .pr-runner.run svg, .pr-cheer:not(:disabled) { animation: none; } }
+
+/* ===================== RAINBOW GLOW THEME ===================== */
+/* one number (--rbh) turns slowly through 0..360; every glow is built from it. steps() keeps it cheap: ~5 updates a second */
+@property --rbh { syntax: '<number>'; inherits: true; initial-value: 0; }
+@keyframes rbHue { to { --rbh: 360; } }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) {
+  animation: rbHue 14s steps(70) infinite;
+  --rb1: hsl(calc(var(--rbh) * 1deg) 95% 60%);
+  --rb2: hsl(calc(var(--rbh) * 1deg + 120deg) 95% 60%);
+  --rb3: hsl(calc(var(--rbh) * 1deg + 240deg) 95% 60%);
+  --amber: var(--rb1) !important;
+  --brand: hsl(calc(var(--rbh) * 1deg) 92% 56%) !important;
+  --brand-hi: hsl(calc(var(--rbh) * 1deg + 30deg) 95% 64%) !important;
+  --brand-soft: hsl(calc(var(--rbh) * 1deg) 92% 56% / 0.14) !important;
+}
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .card,
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .sh-act,
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .tile { box-shadow: 0 0 0 1px var(--rb1), 0 0 22px -6px var(--rb1), 0 0 44px -18px var(--rb2) !important; }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .btn.primary,
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .promo-go { background: linear-gradient(100deg, var(--rb1), var(--rb2), var(--rb3)) !important; color: #fff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); box-shadow: 0 0 18px -4px var(--rb1) !important; border-color: transparent !important; }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .hero [data-b='total'],
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) #topVal,
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .pg-h h1 { text-shadow: 0 0 18px var(--rb1), 0 0 36px var(--rb2); }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) #topWrap { box-shadow: 0 1px 0 var(--rb1), 0 8px 28px -12px var(--rb2) !important; }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) #nav a.on { box-shadow: 0 0 0 1px var(--rb1), 0 0 18px -4px var(--rb1) !important; }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) #nav { box-shadow: 1px 0 0 var(--rb1), 8px 0 30px -18px var(--rb2) !important; }
+@media (prefers-reduced-motion: reduce) { html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) { animation: none; --rbh: 300; } }
+.rb-face svg { animation: rbFace 4s linear infinite; }
+@keyframes rbFace { to { filter: hue-rotate(360deg); } }
+.rb-show { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; position: relative; overflow: hidden; }
+.rb-show::before { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 2px; background: linear-gradient(100deg, #ff3d6e, #ffb02e, #ffe94d, #3ddc84, #3d8bff, #b44dff, #ff3d6e); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.rb-art .face svg { width: 96px; height: 72px; }
+.rb-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rb-t small { font: 800 10.5px var(--sans); letter-spacing: 0.08em; color: #ffb02e; }
+.rb-t b { font-size: 19px; }
+.rb-t span { color: var(--mut); font-size: 13px; }
+.rb-b { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.rb-b small { color: var(--mut); font-size: 11.5px; }
+.rb-on { font-weight: 800; color: var(--up); }
+@media (max-width: 600px) { .rb-show { grid-template-columns: auto 1fr; } .rb-b { grid-column: 1 / -1; align-items: stretch; } .rb-art .face svg { width: 72px; height: 54px; } }

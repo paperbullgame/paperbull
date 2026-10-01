@@ -87,7 +87,7 @@
     bad_name: 'Clan names need 3–24 letters, numbers or spaces.',
     bad_tag: 'Tags are 2–4 letters or numbers.',
     taken: 'That clan name or tag is already taken.',
-    full: 'That clan is full (30 members).',
+    full: 'That clan is full (300 members).',
     closed: 'That clan isn’t taking new members right now.',
     not_in_clan: 'You’re not in a clan.',
     forbidden: 'Only the clan owner can do that.',
@@ -1352,7 +1352,7 @@
       return;
     }
     if (!linked()) {
-      body.innerHTML = gateCTA('Team up with up to 30 players, climb the clan ranks together and get your own clan chat.', IC.users);
+      body.innerHTML = gateCTA('Team up with up to 300 players, climb the clan ranks together and get your own clan chat.', IC.users);
       return;
     }
     if (first && S.clan === undefined) body.innerHTML = skel(5);
@@ -1380,7 +1380,7 @@
     body.innerHTML = `<section class="card sc-clan-hero">
       <div class="sc-ch-top"><span class="sc-ch-emo">${E(c.emoji || '🛡️')}</span><div class="sc-ch-t"><h2><em class="sc-tag lg">${E(c.tag)}</em>${E(c.name)}</h2><p>${c.about ? E(c.about) : '<span class="muted">No description yet.</span>'}</p></div></div>
       <div class="sc-stats">
-        <div><small>Members</small><b>${c.members != null ? c.members : roster.length}<span>/30</span></b></div>
+        <div><small>Members</small><b>${c.members != null ? c.members : roster.length}<span>/300</span></b></div>
         <div><small>Avg return</small><b class="${pcls(c.avg_return)}">${pct(c.avg_return)}</b></div>
         <div><small>Total value</small><b>${big(c.total_value)}</b></div>
         <div><small>Clan rank</small><b>${rank ? '#' + rank : '—'}</b></div>
@@ -1403,11 +1403,11 @@
         .join('')}</section>`;
   }
   function clanRow(c) {
-    const full = (+c.members || 0) >= 30,
+    const full = (+c.members || 0) >= 300,
       closed = c.open === false;
     return `<div class="sc-cl"><span class="sc-cl-emo">${E(c.emoji || '🛡️')}</span>
       <span class="sc-cl-t"><b><em class="sc-tag">${E(c.tag)}</em>${E(c.name)}</b><small>${c.about ? E(c.about) : 'No description'}</small></span>
-      <span class="sc-cl-m"><b class="${pcls(c.avg_return)}">${pct(c.avg_return)}</b><small>${+c.members || 0}/30</small></span>
+      <span class="sc-cl-m"><b class="${pcls(c.avg_return)}">${pct(c.avg_return)}</b><small>${+c.members || 0}/300</small></span>
       <button class="btn sm ${full || closed ? '' : 'primary'}" data-join="${E(c.id)}" ${full || closed ? 'disabled' : ''}>${full ? 'Full' : closed ? 'Closed' : 'Join'}</button></div>`;
   }
   async function clanBrowse(body, first) {

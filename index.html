@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#06080c">
 <title>PAPERBULL</title>
 <!-- BRAND:START -->
-<script>window.PB_BUILD="20260930213420";</script>
+<script>window.PB_BUILD="20260930214310";</script>
 <script>/* MOVE-IN: the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull.
    The page at the old address packs up the player's login and (for guests) their save into the link
    (#pbmove=…) and sends them here. This runs before anything else: it stops the page, writes that data
@@ -8783,7 +8783,7 @@ const itemPrice = it => {
   if (it.rm) return null; // real-money store items can't be bought with coins
   const o = ITEM_OV[it.id];
   if (o && o.price != null) return o.price;
-  return ['power', 'egg', 'treat'].includes(it.type) ? it.price : isCosmetic(it) ? COSMETIC_PRICE[it.r] : null;
+  return ['power', 'egg', 'treat'].includes(it.type) ? it.price : isCosmetic(it) ? it.price || COSMETIC_PRICE[it.r] : null;
 };
 const itemOff = id => !!(ITEM_OV[id] && ITEM_OV[id].off);
 const coinHTML = n => `<span class="coins"><i class="coin"></i>${Number(n).toLocaleString('en-US')}</span>`;
@@ -8849,6 +8849,7 @@ function applyCosmetics() {
     st.setProperty('--dn', SKIN.dn);
   }
   document.body.classList.toggle('gold-theme', th.id === 'th_gold');
+  document.body.classList.toggle('rainbow-theme', th.id === 'th_rainbow');
 }
 function equip(id) {
   const it = ITEM[id];
@@ -8890,7 +8891,7 @@ function rollRarity(w, min) {
 function rollPack(p, extra = 0) {
   const L = petPerk('packLuck'),
     w = { c: p.w.c, r: p.w.r * (1 + L), e: p.w.e * (1 + L), l: p.w.l * (1 + L) };
-  const inPack = x => !x.def && !x.rm && (!p.types || p.types.includes(x.type));
+  const inPack = x => !x.def && !x.rm && !x.nopack && (!p.types || p.types.includes(x.type));
   for (const k of RORDER) if (!ITEMS.some(x => x.r === k && inPack(x))) w[k] = 0; // themed packs only roll rarities they contain
   const out = [];
   const n = p.cards + extra;
@@ -9038,7 +9039,7 @@ function checkTips(t, quiet) {
 }
 function dailyDeals() {
   const k = localDateKey();
-  const pool = ITEMS.filter(it => itemPrice(it) && !it.def && !itemOff(it.id)).sort(
+  const pool = ITEMS.filter(it => itemPrice(it) && !it.def && !it.nopack && !itemOff(it.id)).sort(
     (a, b) => hashStr(k + acct.id + a.id) - hashStr(k + acct.id + b.id)
   );
   return pool.slice(0, 3);
@@ -17308,6 +17309,8 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
     { id: 'th_neon', type: 'theme', name: 'Neon', r: 'e', color: '#39ff14' },
     { id: 'th_royal', type: 'theme', name: 'Royal', r: 'l', color: '#6366f1' },
     { id: 'th_rosegold', type: 'theme', name: 'Rose Gold', r: 'l', color: '#f4a6a0' },
+    // the most expensive thing in the game: never in packs, only bought outright
+    { id: 'th_rainbow', type: 'theme', name: 'Rainbow Glow', r: 'l', color: '#ff3df0', price: 250000, nopack: true, desc: 'The whole game glows and shifts through every color of the rainbow.' },
     // chart skins
     { id: 'sk_candy', type: 'skin', name: 'Cotton Candy', r: 'c', up: '#f9a8d4', dn: '#93c5fd' },
     { id: 'sk_mono', type: 'skin', name: 'Newspaper', r: 'c', up: '#e5e7eb', dn: '#4b5563' },
@@ -17374,6 +17377,16 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
       ITEMS.push(it);
       ITEM[it.id] = it;
     }
+
+  /* the Rainbow Glow theme gets its own animated rainbow picture */
+  const itemFace1 = itemFace;
+  itemFace = function (it, big) {
+    if (it && it.id === 'th_rainbow') {
+      const u = 'rbw' + Math.random().toString(36).slice(2, 7);
+      return `<span class="face rb-face${big ? ' big' : ''}"><svg viewBox="0 0 56 42" aria-hidden="true"><defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3d6e"/><stop offset=".2" stop-color="#ffb02e"/><stop offset=".4" stop-color="#ffe94d"/><stop offset=".6" stop-color="#3ddc84"/><stop offset=".8" stop-color="#3d8bff"/><stop offset="1" stop-color="#b44dff"/></linearGradient></defs><rect x="1" y="1" width="54" height="40" rx="6" fill="#0d1017" stroke="url(#${u})" stroke-width="2"/><rect x="6" y="7" width="20" height="4" rx="2" fill="url(#${u})"/><rect x="6" y="15" width="44" height="12" rx="3" fill="url(#${u})" opacity=".85"/><rect x="6" y="31" width="14" height="5" rx="2.5" fill="url(#${u})"/><rect x="23" y="31" width="14" height="5" rx="2.5" fill="#fff" opacity=".25"/><rect x="40" y="31" width="10" height="5" rx="2.5" fill="#fff" opacity=".18"/></svg></span>`;
+    }
+    return itemFace1.apply(this, arguments);
+  };
 
   /* ---------------- new packs ---------------- */
   if (typeof PACKS !== 'undefined')
@@ -35653,7 +35666,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     bad_name: 'Clan names need 3–24 letters, numbers or spaces.',
     bad_tag: 'Tags are 2–4 letters or numbers.',
     taken: 'That clan name or tag is already taken.',
-    full: 'That clan is full (30 members).',
+    full: 'That clan is full (300 members).',
     closed: 'That clan isn’t taking new members right now.',
     not_in_clan: 'You’re not in a clan.',
     forbidden: 'Only the clan owner can do that.',
@@ -36918,7 +36931,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       return;
     }
     if (!linked()) {
-      body.innerHTML = gateCTA('Team up with up to 30 players, climb the clan ranks together and get your own clan chat.', IC.users);
+      body.innerHTML = gateCTA('Team up with up to 300 players, climb the clan ranks together and get your own clan chat.', IC.users);
       return;
     }
     if (first && S.clan === undefined) body.innerHTML = skel(5);
@@ -36946,7 +36959,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     body.innerHTML = `<section class="card sc-clan-hero">
       <div class="sc-ch-top"><span class="sc-ch-emo">${E(c.emoji || '🛡️')}</span><div class="sc-ch-t"><h2><em class="sc-tag lg">${E(c.tag)}</em>${E(c.name)}</h2><p>${c.about ? E(c.about) : '<span class="muted">No description yet.</span>'}</p></div></div>
       <div class="sc-stats">
-        <div><small>Members</small><b>${c.members != null ? c.members : roster.length}<span>/30</span></b></div>
+        <div><small>Members</small><b>${c.members != null ? c.members : roster.length}<span>/300</span></b></div>
         <div><small>Avg return</small><b class="${pcls(c.avg_return)}">${pct(c.avg_return)}</b></div>
         <div><small>Total value</small><b>${big(c.total_value)}</b></div>
         <div><small>Clan rank</small><b>${rank ? '#' + rank : '—'}</b></div>
@@ -36969,11 +36982,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
         .join('')}</section>`;
   }
   function clanRow(c) {
-    const full = (+c.members || 0) >= 30,
+    const full = (+c.members || 0) >= 300,
       closed = c.open === false;
     return `<div class="sc-cl"><span class="sc-cl-emo">${E(c.emoji || '🛡️')}</span>
       <span class="sc-cl-t"><b><em class="sc-tag">${E(c.tag)}</em>${E(c.name)}</b><small>${c.about ? E(c.about) : 'No description'}</small></span>
-      <span class="sc-cl-m"><b class="${pcls(c.avg_return)}">${pct(c.avg_return)}</b><small>${+c.members || 0}/30</small></span>
+      <span class="sc-cl-m"><b class="${pcls(c.avg_return)}">${pct(c.avg_return)}</b><small>${+c.members || 0}/300</small></span>
       <button class="btn sm ${full || closed ? '' : 'primary'}" data-join="${E(c.id)}" ${full || closed ? 'disabled' : ''}>${full ? 'Full' : closed ? 'Closed' : 'Join'}</button></div>`;
   }
   async function clanBrowse(body, first) {
@@ -49762,7 +49775,40 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       requestAnimationFrame(() => requestAnimationFrame(paintHome));
       return out;
     };
-  window.PBFun = { openWheel, wheel: W, races: RS, SEG };
+  /* shop showcase: the Rainbow Glow theme, the priciest thing in the game */
+  function rainbowCard() {
+    const v = document.getElementById('view'),
+      it = ITEM.th_rainbow;
+    if (!v || !it || document.body.dataset.screen !== 'shop') return;
+    v.querySelector('#rbShow')?.remove();
+    const has = owns('th_rainbow'),
+      on = acct.equip.theme === 'th_rainbow',
+      price = itemPrice(it),
+      short = acct.coins < price;
+    const html = `<section class="card rb-show" id="rbShow"><span class="rb-art">${itemFace(it, true)}</span><span class="rb-t"><small>THE MOST EXPENSIVE ITEM IN PAPERBULL</small><b>Rainbow Glow theme</b><span>${E(it.desc)}</span></span>
+      <span class="rb-b">${on ? '<span class="rb-on">Equipped</span>' : has ? '<button class="btn primary" data-rbeq="1">Equip</button>' : `<button class="btn ${short ? '' : 'primary'}" data-rbbuy="1" ${short ? `title="You need ${(price - acct.coins).toLocaleString()} more coins"` : ''}>${coinHTML(price)}</button>${short ? `<small>${(price - acct.coins).toLocaleString()} more coins to go</small>` : ''}`}</span></section>`;
+    const anchor = v.querySelector(':scope > #tidyBar') || v.querySelector(':scope > nav.hub-tabs') || v.querySelector(':scope > .pg-h');
+    if (anchor) anchor.insertAdjacentHTML('afterend', html);
+    else v.insertAdjacentHTML('afterbegin', html);
+    const c = v.querySelector('#rbShow');
+    c.onclick = e => {
+      if (e.target.closest('[data-rbbuy]')) {
+        buyItem('th_rainbow');
+        setTimeout(rainbowCard, 400);
+      } else if (e.target.closest('[data-rbeq]')) {
+        equip('th_rainbow');
+        rainbowCard();
+      }
+    };
+  }
+  const sm = SCREENS.shop && SCREENS.shop.mount;
+  if (sm)
+    SCREENS.shop.mount = function () {
+      const out = sm.apply(this, arguments);
+      requestAnimationFrame(() => requestAnimationFrame(rainbowCard));
+      return out;
+    };
+  window.PBFun = { openWheel, wheel: W, races: RS, SEG, rainbowCard };
 })();
 
 /* =====================================================================
@@ -64662,6 +64708,46 @@ body.off-trading #nav a[data-s='trading'] { display: none !important; }
   .pr-ctl .btn { flex: 1; }
 }
 @media (prefers-reduced-motion: reduce) { .pr-runner.run svg, .pr-cheer:not(:disabled) { animation: none; } }
+
+/* ===================== RAINBOW GLOW THEME ===================== */
+/* one number (--rbh) turns slowly through 0..360; every glow is built from it. steps() keeps it cheap: ~5 updates a second */
+@property --rbh { syntax: '<number>'; inherits: true; initial-value: 0; }
+@keyframes rbHue { to { --rbh: 360; } }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) {
+  animation: rbHue 14s steps(70) infinite;
+  --rb1: hsl(calc(var(--rbh) * 1deg) 95% 60%);
+  --rb2: hsl(calc(var(--rbh) * 1deg + 120deg) 95% 60%);
+  --rb3: hsl(calc(var(--rbh) * 1deg + 240deg) 95% 60%);
+  --amber: var(--rb1) !important;
+  --brand: hsl(calc(var(--rbh) * 1deg) 92% 56%) !important;
+  --brand-hi: hsl(calc(var(--rbh) * 1deg + 30deg) 95% 64%) !important;
+  --brand-soft: hsl(calc(var(--rbh) * 1deg) 92% 56% / 0.14) !important;
+}
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .card,
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .sh-act,
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .tile { box-shadow: 0 0 0 1px var(--rb1), 0 0 22px -6px var(--rb1), 0 0 44px -18px var(--rb2) !important; }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .btn.primary,
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .promo-go { background: linear-gradient(100deg, var(--rb1), var(--rb2), var(--rb3)) !important; color: #fff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); box-shadow: 0 0 18px -4px var(--rb1) !important; border-color: transparent !important; }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .hero [data-b='total'],
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) #topVal,
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) .pg-h h1 { text-shadow: 0 0 18px var(--rb1), 0 0 36px var(--rb2); }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) #topWrap { box-shadow: 0 1px 0 var(--rb1), 0 8px 28px -12px var(--rb2) !important; }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) #nav a.on { box-shadow: 0 0 0 1px var(--rb1), 0 0 18px -4px var(--rb1) !important; }
+html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) #nav { box-shadow: 1px 0 0 var(--rb1), 8px 0 30px -18px var(--rb2) !important; }
+@media (prefers-reduced-motion: reduce) { html body.rainbow-theme:not(#_):not(#_):not(#_):not(#_) { animation: none; --rbh: 300; } }
+.rb-face svg { animation: rbFace 4s linear infinite; }
+@keyframes rbFace { to { filter: hue-rotate(360deg); } }
+.rb-show { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; position: relative; overflow: hidden; }
+.rb-show::before { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 2px; background: linear-gradient(100deg, #ff3d6e, #ffb02e, #ffe94d, #3ddc84, #3d8bff, #b44dff, #ff3d6e); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.rb-art .face svg { width: 96px; height: 72px; }
+.rb-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rb-t small { font: 800 10.5px var(--sans); letter-spacing: 0.08em; color: #ffb02e; }
+.rb-t b { font-size: 19px; }
+.rb-t span { color: var(--mut); font-size: 13px; }
+.rb-b { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.rb-b small { color: var(--mut); font-size: 11.5px; }
+.rb-on { font-weight: 800; color: var(--up); }
+@media (max-width: 600px) { .rb-show { grid-template-columns: auto 1fr; } .rb-b { grid-column: 1 / -1; align-items: stretch; } .rb-art .face svg { width: 72px; height: 54px; } }
 
 </style>
 <style id="pbMobile">
