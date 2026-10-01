@@ -458,3 +458,7 @@ svg.art .pc-rise { opacity: 0; transform-box: fill-box; animation: pcRise 3.8s e
 svg.art .pc-orb { transform-origin: 32px 34px; animation: apSpin 8s linear infinite; }
 .locked svg.art .pc-tail, .shadow svg.art .pc-tail { animation: none; }
 @media (prefers-reduced-motion: reduce) { svg.art .pc-tail, svg.art .pc-rise, svg.art .pc-orb { animation: none !important; } svg.art .pc-rise { opacity: 0.8; } }
+/* the big pet on the Pets screen breathes */
+.pet-big svg.art.ap-bod, .pg-body svg.art.ap-bod { transform-origin: 50% 94%; animation: pcBreathe 3.2s ease-in-out infinite; }
+@keyframes pcBreathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.025, 0.975); } }
+@media (prefers-reduced-motion: reduce) { .pet-big svg.art.ap-bod, .pg-body svg.art.ap-bod { animation: none; } }

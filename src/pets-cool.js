@@ -12,6 +12,7 @@
   const HEX = /^#[0-9a-f]{6}$/i;
   const sh = (h, a) => (HEX.test(h || '') && typeof shade === 'function' ? shade(h, a) : h);
   const IRIS = { c: ['#c98a52', '#6b4424'], r: ['#6cc4ff', '#1f5fc4'], e: ['#d6a2ff', '#7b2fe0'], l: ['#ffe08a', '#e08a00'] };
+  const COLLAR = { r: { band: '#3d8bff' }, e: { band: '#7b2fe0', gem: '#ff5fd2' }, l: { band: '#f2b705', gem: '#ff2e55' } };
   const BIRDS = /penguin|owl|swan|chick|duck|parrot|flamingo|griffin|phoenix|thunderbird|sparrow|puffin|lovebird|hawk|starling|disco|eagle|pip/;
   const BRUSH = /fox|wolf|raccoon|squirrel|tanuki|chipmunk|acorn|lemur|ferret|husky|corgi|waffle|rusty|glacia|shadow/;
   const STUB = /dog|pup|bear|panda|koala|pug|cub|hamster|pig|cow|sheep|lamb|mouse|rat|mole|otter/;
@@ -65,6 +66,22 @@
       T = k && o && HEX.test(o.c || '') ? tail(k, p.id, o) : '';
     const torso = '<path d="M32 37.5c-9.8 0-15.2 8';
     if (T && s.includes(torso)) s = s.replace(torso, `<g class="pc-tail pc-${k}">${T}</g>${torso}`);
+    // collars for Rare and up, and a royal cape for Legendary
+    if (s.includes(' ap-bod') && s.includes('<g class="ap-hd"')) {
+      const W = COLLAR[p.r];
+      if (W) {
+        const gem =
+          p.r === 'r'
+            ? `<path d="M30.1 49h3.8l-.5 3.8h-2.8z" fill="#e8eef7" stroke="#8a97ab" stroke-width=".6"/><circle cx="32" cy="50.8" r=".7" fill="#8a97ab"/>`
+            : `<path d="M32 48l2.8 2.8-2.8 3.6-2.8-3.6z" fill="${W.gem}" stroke="#fff" stroke-opacity=".8" stroke-width=".6"/><path d="M31.1 49.6l.9-.9.9.9" stroke="#fff" stroke-width=".5" fill="none"/>`;
+        const collar = `<g class="pc-collar"><path d="M20.8 46.4q11.2 6.4 22.4 0" stroke="${sh(W.band, -0.35)}" stroke-width="4.4" fill="none" stroke-linecap="round"/><path d="M20.8 46.4q11.2 6.4 22.4 0" stroke="${W.band}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M23.6 47.6q8.4 4.4 16.8 0" stroke="#fff" stroke-opacity=".45" stroke-width=".7" fill="none" stroke-linecap="round"/>${gem}</g>`;
+        s = s.replace('<g class="ap-hd"', collar + '<g class="ap-hd"');
+        if (p.r === 'l' && s.includes(torso)) {
+          const cape = `<g class="pc-cape"><path d="M24 39.5C15 43 9.6 52 9.6 60.6c7.2 1.4 37.6 1.4 44.8 0C54.4 52 49 43 40 39.5z" fill="#b3123a" stroke="#5c0a1f" stroke-opacity=".7" stroke-width="1.1"/><path d="M9.8 60c7.2 1.3 37.2 1.3 44.4 0" stroke="#ffd54a" stroke-width="1.6" fill="none"/><path d="M22 41.5c-5 3.4-8.4 9-9.4 15" stroke="#ff5a7a" stroke-opacity=".5" stroke-width="1" fill="none"/></g>`;
+          s = s.replace(/(<g class="pc-tail[^>]*>)|<path d="M32 37\.5c-9\.8 0-15\.2 8/, m => cape + m);
+        }
+      }
+    }
     const fx = sparks(p.r);
     if (fx) s = s.replace(/<\/svg>\s*$/, fx + '</svg>');
     return s;

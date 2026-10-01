@@ -1,0 +1,100 @@
+/* ===================== LUCKY WHEEL ===================== */
+.fw-pop { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 16px; }
+.fw-bg { position: absolute; inset: 0; background: rgba(4, 6, 12, 0.72); }
+.fw-card { position: relative; width: min(380px, 100%); padding: 22px 20px 18px; border-radius: 24px; background: var(--panel); border: 1px solid var(--line); text-align: center; box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.7); animation: fwIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+@keyframes fwIn { from { transform: scale(0.9); opacity: 0; } }
+.fw-card h3 { margin: 0; font-size: 22px; }
+.fw-card p { margin: 6px 0 0; }
+.fw-x { position: absolute; top: 10px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--bg2); color: var(--tx); font-size: 20px; cursor: pointer; }
+.fw-wheel { position: relative; width: min(290px, 78vw); aspect-ratio: 1; margin: 16px auto 14px; }
+.fw-wheel .fw-svg { width: 100%; height: 100%; filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.45)); }
+.fw-rot { transform-origin: 100px 100px; }
+.fw-ptr { position: absolute; left: 50%; top: -8px; z-index: 2; width: 26px; height: 32px; transform: translateX(-50%); background: #fff; clip-path: polygon(0 0, 100% 0, 50% 100%); filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.4)); }
+.fw-ptr::after { content: ''; position: absolute; inset: 3px 4px 8px; background: var(--brand, #e8700a); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.fw-go { min-width: 170px; font-size: 16px; }
+.fw-res { min-height: 22px; font-size: 16px; opacity: 0; transform: translateY(4px); transition: 0.25s; }
+.fw-res.on { opacity: 1; transform: none; }
+.fw-res b { color: var(--brand, #e8700a); }
+
+/* home card: wheel + races side by side */
+.fw-home { display: grid; grid-template-columns: auto 1fr auto auto auto 1fr auto; align-items: center; gap: 12px; }
+.fw-mini { width: 52px; height: 52px; display: block; }
+.fw-mini svg { width: 100%; height: 100%; }
+.fw-home.ready .fw-mini svg { animation: fwWig 2.4s ease-in-out infinite; }
+@keyframes fwWig { 0%, 70%, 100% { transform: rotate(0); } 80% { transform: rotate(14deg); } 90% { transform: rotate(-8deg); } }
+.fw-t { display: flex; flex-direction: column; min-width: 0; }
+.fw-t b { font-size: 15px; }
+.fw-t small { color: var(--mut); font-size: 12.5px; }
+.fw-home.ready .fw-t:first-of-type small { color: var(--up); font-weight: 700; }
+.fw-sep { width: 1px; height: 40px; background: var(--line); }
+.fw-race-ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--brand, #e8700a) 16%, transparent); color: var(--brand, #e8700a); }
+.fw-race-ic svg { width: 26px; height: 26px; }
+@media (max-width: 640px) {
+  .fw-home { grid-template-columns: auto 1fr auto; row-gap: 12px; }
+  .fw-sep { grid-column: 1 / -1; width: 100%; height: 1px; }
+}
+@media (prefers-reduced-motion: reduce) { .fw-home.ready .fw-mini svg, .fw-card { animation: none; } }
+
+/* ===================== PET RACES ===================== */
+.pr-wrap { display: flex; flex-direction: column; gap: 14px; }
+.pr-hd { display: flex; align-items: flex-start; gap: 14px; }
+.pr-hd h3 { margin: 0; font-size: 20px; }
+.pr-hd p { margin: 4px 0 0; }
+.pr-tk { margin-left: auto; text-align: right; display: flex; flex-direction: column; flex: none; }
+.pr-tk b { font-size: 28px; line-height: 1; color: var(--brand, #e8700a); }
+.pr-tk small { color: var(--mut); font-size: 11.5px; }
+.pr-stats { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.pr-stats span { display: flex; flex-direction: column; padding: 8px 14px; border-radius: 12px; background: var(--bg2); min-width: 72px; }
+.pr-stats b { font-size: 17px; }
+.pr-stats small { color: var(--mut); font-size: 11px; }
+.pr-stats .btn { margin-left: auto; }
+.pr-lbl { display: block; font: 800 11px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mut); margin-bottom: 8px; }
+.pr-pets { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: thin; }
+.pr-pet { flex: none; width: 104px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 6px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg2); color: var(--tx); font: inherit; cursor: pointer; }
+.pr-pet.on { border-color: var(--rc); box-shadow: 0 0 0 1px var(--rc) inset; background: color-mix(in srgb, var(--rc) 12%, var(--bg2)); }
+.pr-pet b { font-size: 12.5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-pet small { font-size: 11px; color: var(--mut); }
+.pr-art { width: 58px; height: 58px; display: block; }
+.pr-art svg { width: 100%; height: 100%; }
+.pr-stars { color: #f5b301; letter-spacing: -1px; }
+.pr-empty { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+.pr-track { position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(#3f8f3a, #2f7a2c); padding: 6px 0; }
+.pr-lane { position: relative; height: 58px; margin: 0 8px; border-bottom: 2px dashed rgba(255, 255, 255, 0.28); background: linear-gradient(90deg, rgba(196, 140, 82, 0.55), rgba(176, 120, 66, 0.55)); }
+.pr-lane:last-child { border-bottom: 0; }
+.pr-lane.me { background: linear-gradient(90deg, rgba(255, 196, 92, 0.55), rgba(232, 150, 60, 0.55)); }
+.pr-fin { position: absolute; top: 0; bottom: 0; right: 4%; width: 10px; background: repeating-conic-gradient(#fff 0 25%, #111 0 50%) 0 0 / 10px 10px; opacity: 0.85; }
+.pr-name { position: absolute; left: 6px; top: 3px; z-index: 2; font: 800 10.5px var(--sans); color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+.pr-lane.me .pr-name { color: #fff7d6; }
+.pr-runner { position: absolute; bottom: 0; left: calc(var(--x) * 0.84% + 2%); width: 54px; height: 54px; display: block; transition: none; }
+.pr-runner svg { width: 100%; height: 100%; }
+.pr-runner.run svg { animation: prHop 0.32s ease-in-out infinite alternate; transform-origin: 50% 100%; }
+.pr-runner.boost::before { content: ''; position: absolute; right: 80%; top: 30%; width: 34px; height: 40%; border-radius: 99px; background: linear-gradient(90deg, transparent, #ffe27a); opacity: 0.9; }
+.pr-runner.ghost { display: grid; place-items: center; font: 900 22px var(--sans); color: rgba(255, 255, 255, 0.5); left: 2%; }
+@keyframes prHop { from { transform: translateY(0) rotate(-3deg); } to { transform: translateY(-6px) rotate(4deg); } }
+.pr-ctl { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.pr-say { flex: 1 1 200px; margin: 0; font-weight: 800; font-size: 16px; min-height: 22px; }
+.pr-cheer:not(:disabled) { background: #f5b301; color: #1a1200; border-color: transparent; animation: prPulse 0.8s ease-in-out infinite; }
+@keyframes prPulse { 50% { transform: scale(1.06); } }
+.pr-res { margin-top: 14px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; align-items: start; }
+.pr-pod { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pr-pod li { display: grid; grid-template-columns: 44px 36px 1fr auto; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 12px; background: var(--bg2); }
+.pr-pod li.me { outline: 2px solid var(--brand, #e8700a); }
+.pr-pod b { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-pod small { color: var(--mut); font-variant-numeric: tabular-nums; }
+.pr-pl { font: 900 13px var(--sans); }
+.pr-pl.p1 { color: #f5b301; }
+.pr-pl.p2 { color: #b8c2d0; }
+.pr-pl.p3 { color: #d08a4a; }
+.pr-mini { width: 36px; height: 36px; display: block; }
+.pr-mini svg { width: 100%; height: 100%; }
+.pr-win { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--brand, #e8700a) 12%, var(--bg2)); }
+.pr-win small { color: var(--mut); }
+.pr-wb { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+@media (max-width: 640px) {
+  .pr-res { grid-template-columns: 1fr; }
+  .pr-lane { height: 50px; }
+  .pr-runner { width: 46px; height: 46px; }
+  .pr-ctl .btn { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .pr-runner.run svg, .pr-cheer:not(:disabled) { animation: none; } }

@@ -306,6 +306,7 @@
     learn: ['#67e8f9', '#0891b2'],
     shop: ['#ff8fc7', '#db2777'],
     trading: ['#86efac', '#0d9488'],
+    races: ['#fde68a', '#f97316'],
     store: ['#fde68a', '#d97706'],
     play: ['#fca5a5', '#dc2626'],
     social: ['#93c5fd', '#2563eb'],

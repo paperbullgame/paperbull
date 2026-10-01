@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#06080c">
 <title>PAPERBULL</title>
 <!-- BRAND:START -->
-<script>window.PB_BUILD="20260930203101";</script>
+<script>window.PB_BUILD="20260930205335";</script>
 <script>/* MOVE-IN: the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull.
    The page at the old address packs up the player's login and (for guests) their save into the link
    (#pbmove=…) and sends them here. This runs before anything else: it stops the page, writes that data
@@ -17505,6 +17505,7 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
   const HEX = /^#[0-9a-f]{6}$/i;
   const sh = (h, a) => (HEX.test(h || '') && typeof shade === 'function' ? shade(h, a) : h);
   const IRIS = { c: ['#c98a52', '#6b4424'], r: ['#6cc4ff', '#1f5fc4'], e: ['#d6a2ff', '#7b2fe0'], l: ['#ffe08a', '#e08a00'] };
+  const COLLAR = { r: { band: '#3d8bff' }, e: { band: '#7b2fe0', gem: '#ff5fd2' }, l: { band: '#f2b705', gem: '#ff2e55' } };
   const BIRDS = /penguin|owl|swan|chick|duck|parrot|flamingo|griffin|phoenix|thunderbird|sparrow|puffin|lovebird|hawk|starling|disco|eagle|pip/;
   const BRUSH = /fox|wolf|raccoon|squirrel|tanuki|chipmunk|acorn|lemur|ferret|husky|corgi|waffle|rusty|glacia|shadow/;
   const STUB = /dog|pup|bear|panda|koala|pug|cub|hamster|pig|cow|sheep|lamb|mouse|rat|mole|otter/;
@@ -17558,6 +17559,22 @@ const REAL_COINS = [["BNB","BNB",775.3,0.7,"Layer 1","825/bnb-icon2_2x.png"],["T
       T = k && o && HEX.test(o.c || '') ? tail(k, p.id, o) : '';
     const torso = '<path d="M32 37.5c-9.8 0-15.2 8';
     if (T && s.includes(torso)) s = s.replace(torso, `<g class="pc-tail pc-${k}">${T}</g>${torso}`);
+    // collars for Rare and up, and a royal cape for Legendary
+    if (s.includes(' ap-bod') && s.includes('<g class="ap-hd"')) {
+      const W = COLLAR[p.r];
+      if (W) {
+        const gem =
+          p.r === 'r'
+            ? `<path d="M30.1 49h3.8l-.5 3.8h-2.8z" fill="#e8eef7" stroke="#8a97ab" stroke-width=".6"/><circle cx="32" cy="50.8" r=".7" fill="#8a97ab"/>`
+            : `<path d="M32 48l2.8 2.8-2.8 3.6-2.8-3.6z" fill="${W.gem}" stroke="#fff" stroke-opacity=".8" stroke-width=".6"/><path d="M31.1 49.6l.9-.9.9.9" stroke="#fff" stroke-width=".5" fill="none"/>`;
+        const collar = `<g class="pc-collar"><path d="M20.8 46.4q11.2 6.4 22.4 0" stroke="${sh(W.band, -0.35)}" stroke-width="4.4" fill="none" stroke-linecap="round"/><path d="M20.8 46.4q11.2 6.4 22.4 0" stroke="${W.band}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M23.6 47.6q8.4 4.4 16.8 0" stroke="#fff" stroke-opacity=".45" stroke-width=".7" fill="none" stroke-linecap="round"/>${gem}</g>`;
+        s = s.replace('<g class="ap-hd"', collar + '<g class="ap-hd"');
+        if (p.r === 'l' && s.includes(torso)) {
+          const cape = `<g class="pc-cape"><path d="M24 39.5C15 43 9.6 52 9.6 60.6c7.2 1.4 37.6 1.4 44.8 0C54.4 52 49 43 40 39.5z" fill="#b3123a" stroke="#5c0a1f" stroke-opacity=".7" stroke-width="1.1"/><path d="M9.8 60c7.2 1.3 37.2 1.3 44.4 0" stroke="#ffd54a" stroke-width="1.6" fill="none"/><path d="M22 41.5c-5 3.4-8.4 9-9.4 15" stroke="#ff5a7a" stroke-opacity=".5" stroke-width="1" fill="none"/></g>`;
+          s = s.replace(/(<g class="pc-tail[^>]*>)|<path d="M32 37\.5c-9\.8 0-15\.2 8/, m => cape + m);
+        }
+      }
+    }
     const fx = sparks(p.r);
     if (fx) s = s.replace(/<\/svg>\s*$/, fx + '</svg>');
     return s;
@@ -25816,6 +25833,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     learn: ['#67e8f9', '#0891b2'],
     shop: ['#ff8fc7', '#db2777'],
     trading: ['#86efac', '#0d9488'],
+    races: ['#fde68a', '#f97316'],
     store: ['#fde68a', '#d97706'],
     play: ['#fca5a5', '#dc2626'],
     social: ['#93c5fd', '#2563eb'],
@@ -46153,11 +46171,11 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       portfolio: ['portfolio', 'office', 'bank'],
       inventory: ['inventory', 'pets', 'garden'],
       shop: ['shop', 'store'],
-      play: ['play', 'tourney', 'pass', 'ranks'],
+      play: ['play', 'races', 'tourney', 'pass', 'ranks'],
       social: ['social'],
       profile: ['profile', 'learn'],
     };
-    const LBL = { markets: 'Stocks & coins', news: 'News', portfolio: 'Holdings', office: 'Office', bank: 'Bank', inventory: 'Overview', pets: 'Pets', garden: 'Garden', shop: 'Shop', store: 'Store', play: 'Modes', tourney: 'Tournaments', pass: 'Battle Pass', ranks: 'Leaderboard', profile: 'Profile', learn: 'Learn' };
+    const LBL = { markets: 'Stocks & coins', news: 'News', portfolio: 'Holdings', office: 'Office', bank: 'Bank', inventory: 'Overview', pets: 'Pets', garden: 'Garden', shop: 'Shop', store: 'Store', play: 'Modes', races: 'Pet Races', tourney: 'Tournaments', pass: 'Battle Pass', ranks: 'Leaderboard', profile: 'Profile', learn: 'Learn' };
     const hubOf = {};
     for (const [h, ks] of Object.entries(HUBS)) for (const k of ks) hubOf[k] = h;
     hubOf.asset = 'markets';
@@ -46253,6 +46271,7 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
       ranks: S(`<path ${W} d="M7 3h10v6.5a5 5 0 0 1-10 0z"/><path d="M17 5h2.5v1.8A3.4 3.4 0 0 1 16.4 10M7 5H4.5v1.8A3.4 3.4 0 0 0 7.6 10" stroke="#fff" stroke-opacity=".6" stroke-width="1.8" fill="none"/><path ${H} d="M10.3 14.4h3.4l.5 3.1h-4.4z"/><rect ${W} x="7.5" y="18" width="9" height="3" rx="1.2"/>`),
       learn: S(`<path ${W} d="M12 3.5 22 8.4 12 13.3 2 8.4z"/><path ${H} d="M6 11v4.2c0 1.8 2.7 3.3 6 3.3s6-1.5 6-3.3V11l-6 3z"/><path d="M21 9v5.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="21" cy="15.2" r="1.3" fill="#fff"/>`),
       tourney: S(`<path ${W} d="M7 3h10v6.5a5 5 0 0 1-10 0z"/><path d="m12 4.8.9 1.8 2 .3-1.5 1.4.4 2L12 9.3l-1.8 1 .4-2-1.5-1.4 2-.3z" fill="#000" fill-opacity=".3"/><rect ${W} x="7.5" y="18" width="9" height="3" rx="1.2"/><path ${H} d="M10.3 14.4h3.4l.5 3.1h-4.4z"/>`),
+      races: S(`<path ${W} d="M5 2.5a1.2 1.2 0 0 1 1.2 1.2V21a1.2 1.2 0 0 1-2.4 0V3.7A1.2 1.2 0 0 1 5 2.5z"/><path ${W} d="M7 4h12.2c.6 0 .9.7.5 1.2L17 8.6l2.7 3.4c.4.5.1 1.2-.5 1.2H7z"/><path d="M10.5 4v9.2M14 4v9.2" stroke="#000" stroke-opacity=".25" stroke-width="1.6"/>`),
       trading: S(`<path ${W} d="M6.5 3.8a1 1 0 0 1 1.5 0l3.3 3.3a1 1 0 0 1-.7 1.7H8.4v6.7a1.4 1.4 0 0 1-2.8 0V8.8H3.4a1 1 0 0 1-.7-1.7z"/><path ${H} d="M17.5 20.2a1 1 0 0 1-1.5 0l-3.3-3.3a1 1 0 0 1 .7-1.7h2.2V8.5a1.4 1.4 0 0 1 2.8 0v6.7h2.2a1 1 0 0 1 .7 1.7z"/>`),
       more: S(`<rect ${W} x="3.5" y="3.5" width="7" height="7" rx="2"/><rect ${H} x="13.5" y="3.5" width="7" height="7" rx="2"/><rect ${H} x="3.5" y="13.5" width="7" height="7" rx="2"/><rect ${W} x="13.5" y="13.5" width="7" height="7" rx="2"/>`),
     };
@@ -48548,6 +48567,422 @@ ${R} .pg-h .pg-ic{box-shadow:0 0 20px -6px #5ee7ff!important}
     if (!document.hidden) refresh(true);
   }, 60000);
   window.PBTrade = { refresh, state: S };
+})();
+
+/* =====================================================================
+   FUN: two new things to do.
+   · LUCKY WHEEL: one free spin a day (plus a bonus spin for every Pet
+     Race you win). Prizes are coins, power-ups, treats and eggs. No
+     paying to spin.
+   · PET RACES (Play › Pet Races): race one of your pets against four
+     others. 5 free race tickets a day. Tap Cheer once per race for a
+     burst of speed. Rarer and higher-level pets are a bit faster, but
+     anyone can win. Prizes: coins and pet XP; 1st place also gives a
+     bonus wheel spin.
+   ===================================================================== */
+(() => {
+  const E = s => esc(String(s == null ? '' : s));
+  const today = () => localDateKey();
+  const sfx = k => {
+    try {
+      SFX.play(k);
+    } catch (e) {}
+  };
+  const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const R = r => RARITY[r] || RARITY.c;
+
+  /* =================== LUCKY WHEEL =================== */
+  const W = () => {
+    const w = (acct.wheel ||= {});
+    w.last ??= '';
+    w.bonus ??= 0;
+    w.n ??= 0;
+    return w;
+  };
+  // [label, weight, color, give()] : give returns what you got
+  const SEG = [
+    { t: '50', sub: 'coins', w: 24, c: '#f59e0b', give: () => coins(50) },
+    { t: 'Treats', sub: '×3 cookies', w: 13, c: '#ec4899', give: () => item('tr_cookie', 3) },
+    { t: '120', sub: 'coins', w: 18, c: '#22c55e', give: () => coins(120) },
+    { t: 'XP', sub: 'Booster', w: 13, c: '#3b82f6', give: () => item('pu_xp', 1) },
+    { t: '300', sub: 'coins', w: 9, c: '#a855f7', give: () => coins(300) },
+    { t: 'Egg', sub: 'Pet Egg', w: 11, c: '#14b8a6', give: () => item('egg_c', 1) },
+    { t: '?', sub: 'Mystery Box', w: 9, c: '#6366f1', give: () => item('pu_mystery', 1) },
+    { t: 'JACKPOT', sub: '1,500 coins', w: 3, c: '#e11d48', give: () => coins(1500) },
+  ];
+  const coins = n => {
+    acct.coins += n;
+    bumpCoins();
+    return `${n.toLocaleString()} coins`;
+  };
+  const item = (id, n) => {
+    const it = ITEM[id];
+    if (!it) return coins(100);
+    for (let i = 0; i < n; i++) grant(it);
+    return n > 1 ? `${n}× ${it.name}` : it.name;
+  };
+  const canSpin = () => W().last !== today() || W().bonus > 0;
+  const spinsLeft = () => (W().last !== today() ? 1 : 0) + W().bonus;
+  function wheelSVG() {
+    const n = SEG.length,
+      a = 360 / n;
+    const P = (deg, r) => {
+      const t = ((deg - 90) * Math.PI) / 180;
+      return [(100 + r * Math.cos(t)).toFixed(2), (100 + r * Math.sin(t)).toFixed(2)];
+    };
+    const slices = SEG.map((s, i) => {
+      const [x0, y0] = P(i * a, 96),
+        [x1, y1] = P((i + 1) * a, 96),
+        mid = i * a + a / 2,
+        [tx, ty] = P(mid, 64);
+      return `<path d="M100 100L${x0} ${y0}A96 96 0 0 1 ${x1} ${y1}z" fill="${s.c}"/><path d="M100 100L${x0} ${y0}" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/>
+        <g transform="rotate(${mid} ${tx} ${ty})"><text x="${tx}" y="${(+ty + 1).toFixed(2)}" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="${s.t.length > 4 ? 10 : 15}" fill="#fff">${s.t}</text><text x="${tx}" y="${(+ty + 12).toFixed(2)}" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="7.5" fill="#fff" fill-opacity=".85">${s.sub}</text></g>`;
+    }).join('');
+    const pegs = Array.from({ length: n * 2 }, (_, i) => {
+      const [x, y] = P(i * (a / 2), 92);
+      return `<circle cx="${x}" cy="${y}" r="2.4" fill="#fff" stroke="#00000033"/>`;
+    }).join('');
+    return `<svg viewBox="0 0 200 200" class="fw-svg" aria-hidden="true"><circle cx="100" cy="100" r="99" fill="#1f2937"/><g class="fw-rot">${slices}${pegs}</g><circle cx="100" cy="100" r="17" fill="#fff" stroke="#e5e7eb" stroke-width="3"/><circle cx="100" cy="100" r="9" fill="#f59e0b"/></svg>`;
+  }
+  let spinning = false;
+  function openWheel() {
+    document.querySelector('.fw-pop')?.remove();
+    const el = document.createElement('div');
+    el.className = 'fw-pop';
+    el.innerHTML = `<div class="fw-bg"></div><div class="fw-card" role="dialog" aria-label="Lucky Wheel"><button class="fw-x" aria-label="Close">×</button>
+      <h3>Lucky Wheel</h3><p class="muted small fw-sub">${spinTxt()}</p>
+      <div class="fw-wheel"><span class="fw-ptr" aria-hidden="true"></span>${wheelSVG()}</div>
+      <button class="btn primary fw-go" ${canSpin() ? '' : 'disabled'}>${canSpin() ? 'Spin!' : 'Come back tomorrow'}</button>
+      <p class="fw-res" role="status"></p>
+      <p class="muted small">One free spin every day. Win a Pet Race for a bonus spin.</p></div>`;
+    document.body.appendChild(el);
+    const close = () => !spinning && el.remove();
+    el.querySelector('.fw-bg').onclick = close;
+    el.querySelector('.fw-x').onclick = close;
+    el.querySelector('.fw-go').onclick = () => spin(el);
+  }
+  const spinTxt = () => {
+    const n = spinsLeft();
+    if (n) return `You have ${n} spin${n > 1 ? 's' : ''} ready`;
+    const t = new Date();
+    t.setHours(24, 0, 0, 0);
+    const h = Math.ceil((t - Date.now()) / 3600e3);
+    return `Next free spin in about ${h} hour${h === 1 ? '' : 's'}`;
+  };
+  function spin(el) {
+    if (spinning || !canSpin()) return;
+    spinning = true;
+    const w = W();
+    if (w.last !== today()) w.last = today();
+    else w.bonus = Math.max(0, w.bonus - 1);
+    w.n++;
+    // pick the prize first, then turn the wheel to land on it
+    let r = Math.random() * SEG.reduce((s, x) => s + x.w, 0),
+      k = 0;
+    for (; k < SEG.length - 1; k++) if ((r -= SEG[k].w) <= 0) break;
+    const a = 360 / SEG.length,
+      land = 360 - (k * a + a / 2) + (Math.random() - 0.5) * a * 0.6,
+      turns = reduced() ? 0 : 5;
+    const rot = el.querySelector('.fw-rot'),
+      go = el.querySelector('.fw-go');
+    go.disabled = true;
+    go.textContent = 'Spinning…';
+    rot.style.transition = reduced() ? 'none' : 'transform 4.6s cubic-bezier(.12,.8,.18,1)';
+    rot.style.transform = `rotate(${turns * 360 + land}deg)`;
+    sfx('flip');
+    let ticks = 0;
+    const tick = setInterval(() => {
+      if (++ticks > 14) return clearInterval(tick);
+      sfx('flip');
+    }, 300);
+    setTimeout(
+      () => {
+        clearInterval(tick);
+        const got = SEG[k].give();
+        saveAcct(true);
+        const res = el.querySelector('.fw-res');
+        res.innerHTML = `You won <b>${E(got)}</b>!`;
+        res.classList.add('on');
+        sfx(k === SEG.length - 1 ? 'legend' : 'coin');
+        if (k === SEG.length - 1 || SEG[k].t === 'Egg')
+          try {
+            confetti();
+          } catch (e) {}
+        spinning = false;
+        el.querySelector('.fw-sub').textContent = spinTxt();
+        go.disabled = !canSpin();
+        go.textContent = canSpin() ? 'Spin again!' : 'Come back tomorrow';
+        if (canSpin())
+          go.onclick = () => {
+            rot.style.transition = 'none';
+            rot.style.transform = 'rotate(0deg)';
+            void rot.getBoundingClientRect();
+            res.classList.remove('on');
+            res.textContent = '';
+            spin(el);
+          };
+        paintHome();
+      },
+      reduced() ? 300 : 4700
+    );
+  }
+  function homeCard() {
+    const ready = canSpin();
+    return `<section class="card fw-home ${ready ? 'ready' : ''}" id="fwHome"><span class="fw-mini">${wheelSVG()}</span><span class="fw-t"><b>Lucky Wheel</b><small>${ready ? 'Free spin ready!' : spinTxt()}</small></span><button class="btn ${ready ? 'primary' : ''} sm" data-fw="1">${ready ? 'Spin' : 'Look'}</button>
+      <span class="fw-sep"></span><span class="fw-race-ic">${raceIcon()}</span><span class="fw-t"><b>Pet Races</b><small>${ticketsLeft()} free race${ticketsLeft() === 1 ? '' : 's'} left today</small></span><button class="btn sm" data-go="races">Race</button></section>`;
+  }
+  function paintHome() {
+    const v = document.getElementById('view');
+    if (!v || document.body.dataset.screen !== 'home') return;
+    const old = v.querySelector('#fwHome'),
+      html = homeCard();
+    if (old) old.outerHTML = html;
+    else {
+      const d = v.querySelector('#cmDaily'),
+        anchor = d ? d.closest('#view > *') : v.querySelector(':scope > .buck-card');
+      if (anchor) anchor.insertAdjacentHTML('afterend', html);
+      else return;
+    }
+    const c = v.querySelector('#fwHome [data-fw]');
+    if (c) c.onclick = openWheel;
+  }
+
+  /* =================== PET RACES =================== */
+  const TICKETS = 5;
+  const RS = () => {
+    const r = (acct.races ||= {});
+    if (r.day !== today()) (r.day = today()), (r.used = 0);
+    r.n ??= 0;
+    r.wins ??= 0;
+    r.podium ??= 0;
+    r.hist ||= [];
+    return r;
+  };
+  const ticketsLeft = () => Math.max(0, TICKETS - RS().used);
+  const RB = { c: 0, r: 0.035, e: 0.07, l: 0.105, m: 0.12, x: 0.12, s: 0.13 };
+  const COIN = [120, 60, 30, 12, 6],
+    XP = [60, 30, 18, 10, 6];
+  const PLACE = ['1st', '2nd', '3rd', '4th', '5th'];
+  const NAMES = ['Zoomie', 'Dash', 'Pebbles', 'Rocket', 'Biscuit', 'Turbo', 'Mochi', 'Blitz', 'Noodle', 'Comet', 'Sprout', 'Bolt', 'Waffles', 'Jet', 'Pixel', 'Nugget'];
+  function raceIcon() {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 4h14l-3 4 3 4H5" fill="currentColor" fill-opacity=".25" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 4v8M13 4v8" stroke="currentColor" stroke-width="1.4" stroke-opacity=".6"/></svg>`;
+  }
+  const UI = { v: null, pick: null, race: null, raf: 0 };
+  const myRacers = () => acct.pets.list.filter(p => PET[p.id] && !p.mission);
+  const speedOf = (r, lvl) => 1 + (RB[r] || 0) + Math.min(60, lvl || 1) * 0.0045;
+  const stars = (r, lvl) => {
+    const s = Math.round(((speedOf(r, lvl) - 1) / 0.39) * 5 * 2) / 2 + 1;
+    return `<span class="pr-stars" title="Speed">${'★'.repeat(Math.floor(Math.min(5, s)))}${s % 1 ? '½' : ''}</span>`;
+  };
+  function rivals(me) {
+    const d = PET[me.id],
+      pool = PETS.filter(p => p.id !== me.id && !p.exotic && ['c', 'r', 'e', 'l'].includes(p.r) && DESIGNS[p.id]),
+      order = ['c', 'r', 'e', 'l'],
+      mi = order.indexOf(d.r);
+    const out = [],
+      used = new Set();
+    while (out.length < 4 && pool.length) {
+      const want = order[Math.max(0, Math.min(3, mi + Math.round((Math.random() - 0.45) * 2.2)))],
+        c = pool.filter(p => p.r === want && !used.has(p.id));
+      const p = (c.length ? c : pool.filter(x => !used.has(x.id)))[(Math.random() * (c.length || pool.length)) | 0];
+      if (!p) break;
+      used.add(p.id);
+      const nm = NAMES.filter(x => !out.some(o => o.name.startsWith(x + ' ')));
+      out.push({ id: p.id, r: p.r, lvl: Math.max(1, Math.round(me.lvl + (Math.random() - 0.5) * 8)), name: nm[(Math.random() * nm.length) | 0] + ' the ' + p.name, me: false });
+    }
+    return out;
+  }
+  function screen() {
+    const v = UI.v;
+    if (!v || !v.isConnected) return;
+    const head = v.querySelector(':scope > .pg-h, :scope > .hub-tabs');
+    [...v.children].forEach(c => { if (!c.matches('.pg-h, .hub-tabs')) c.remove(); });
+    const pets = myRacers();
+    if (!UI.pick || !pets.some(p => p.uid === UI.pick)) UI.pick = (pets.find(p => p.uid === acct.pets.active) || pets[0] || {}).uid || null;
+    const s = RS(),
+      t = ticketsLeft();
+    let h = `<div class="pr-wrap">`;
+    h += `<section class="card pr-top"><div class="pr-hd"><div><h3>Pet Races</h3><p class="muted small">Pick a racer, then tap Cheer once during the race for a burst of speed.</p></div>
+      <div class="pr-tk"><b>${t}</b><small>free race${t === 1 ? '' : 's'} left today</small></div></div>
+      <div class="pr-stats"><span><b>${s.n}</b><small>Races</small></span><span><b>${s.wins}</b><small>Wins</small></span><span><b>${s.podium}</b><small>Top 3</small></span><span><b>${spinsLeft()}</b><small>Wheel spins</small></span><button class="btn sm" data-fw="1">Lucky Wheel</button></div></section>`;
+    if (!pets.length) {
+      h += `<section class="card pr-empty"><p>You need a pet to race. Hatch an egg first!</p><button class="btn primary" data-go="pets">Go to Pets</button></section>`;
+    } else {
+      h += `<section class="card pr-pick"><small class="pr-lbl">Your racer</small><div class="pr-pets">${pets
+        .map(p => {
+          const d = PET[p.id];
+          return `<button class="pr-pet ${p.uid === UI.pick ? 'on' : ''}" data-pick="${E(p.uid)}" style="--rc:${R(d.r).color}"><span class="pr-art">${petArt(d.id)}</span><b>${E(p.name)}</b><small>Lv ${p.lvl} ${stars(d.r, p.lvl)}</small></button>`;
+        })
+        .join('')}</div></section>`;
+      h += `<section class="card pr-trackc"><div class="pr-track" id="prTrack">${trackHTML()}</div>
+        <div class="pr-ctl"><p class="pr-say" id="prSay">${UI.race ? '' : t ? 'Ready when you are.' : 'Out of free races today. New ones at midnight.'}</p>
+        <button class="btn pr-cheer" id="prCheer" disabled>Cheer!</button><button class="btn primary" id="prGo" ${t && !UI.race ? '' : 'disabled'}>${t ? 'Start race' : 'No races left'}</button></div><div id="prRes"></div></section>`;
+    }
+    h += `</div>`;
+    v.insertAdjacentHTML('beforeend', h);
+    void head;
+    const w = v.querySelector('.pr-wrap');
+    w.onclick = e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.fw) return openWheel();
+      if (b.dataset.pick && !UI.race) {
+        UI.pick = b.dataset.pick;
+        return screen();
+      }
+      if (b.id === 'prGo') return start();
+      if (b.id === 'prCheer') return cheer();
+      if (b.dataset.again) {
+        UI.race = null;
+        return screen();
+      }
+    };
+  }
+  function trackHTML() {
+    const lanes = UI.race ? UI.race.L : [];
+    if (!lanes.length) {
+      const me = myRacers().find(p => p.uid === UI.pick);
+      return `<div class="pr-lane me"><span class="pr-runner" style="--x:0">${me ? petArt(me.id) : ''}</span><i class="pr-fin"></i></div>${[1, 2, 3, 4].map(() => '<div class="pr-lane"><span class="pr-runner ghost">?</span><i class="pr-fin"></i></div>').join('')}`;
+    }
+    return lanes
+      .map((l, i) => `<div class="pr-lane ${l.me ? 'me' : ''}" data-i="${i}"><span class="pr-name">${E(l.me ? 'You' : l.name.split(' the ')[0])}</span><span class="pr-runner" id="prR${i}" style="--x:0">${petArt(l.id)}</span><i class="pr-fin"></i></div>`)
+      .join('');
+  }
+  function start() {
+    if (UI.race || !ticketsLeft()) return;
+    const p = myRacers().find(x => x.uid === UI.pick);
+    if (!p) return;
+    const me = { id: p.id, r: PET[p.id].r, lvl: p.lvl, name: p.name, me: true, uid: p.uid };
+    const L = [me, ...rivals(p)].sort(() => Math.random() - 0.5);
+    for (const l of L) Object.assign(l, { x: 0, v: speedOf(l.r, l.lvl), n: 0.8 + Math.random() * 0.4, nt: 0, done: 0 });
+    RS().used++;
+    saveAcct(true);
+    UI.race = { L, t: -3, lead: null, boost: 0, cheered: false, place: [], over: false };
+    screen();
+    const say = UI.v.querySelector('#prSay');
+    UI.v.querySelector('#prGo').disabled = true;
+    let last = performance.now();
+    const step = now => {
+      const R0 = UI.race;
+      if (!R0 || !UI.v || !UI.v.isConnected) return;
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      R0.t += dt;
+      if (R0.t < 0) {
+        const c = Math.ceil(-R0.t);
+        if (say && say.dataset.c !== String(c)) (say.dataset.c = c), (say.textContent = c + '…'), sfx('flip');
+      } else {
+        if (say && say.dataset.c !== 'go') {
+          say.dataset.c = 'go';
+          say.textContent = 'Go!';
+          const ch = UI.v.querySelector('#prCheer');
+          if (ch) ch.disabled = false;
+        }
+        for (const l of R0.L) {
+          if (l.done) continue;
+          if ((l.nt -= dt) <= 0) (l.n = 0.72 + Math.random() * 0.56), (l.nt = 0.35 + Math.random() * 0.5);
+          const boost = l.me && R0.boost > 0 ? 1.65 : 1;
+          l.x += l.v * l.n * boost * dt * 9.2;
+          if (l.x >= 100) {
+            l.x = 100;
+            l.done = R0.t;
+            R0.place.push(l);
+            if (l.me) sfx(R0.place.length === 1 ? 'win' : 'coin');
+          }
+        }
+        if (R0.boost > 0) R0.boost -= dt;
+        const lead = [...R0.L].sort((a, b) => b.x - a.x)[0];
+        if (lead !== R0.lead && R0.t > 0.8 && !R0.place.length) {
+          R0.lead = lead;
+          if (say) say.textContent = lead.me ? `${lead.name} takes the lead!` : `${lead.name.split(' the ')[0]} pulls ahead!`;
+        }
+      }
+      R0.L.forEach((l, i) => {
+        const el = UI.v.querySelector('#prR' + i);
+        if (el) el.style.setProperty('--x', l.x.toFixed(2));
+        if (el) el.classList.toggle('run', R0.t > 0 && !l.done);
+        if (el) el.classList.toggle('boost', l.me && R0.boost > 0);
+      });
+      if (R0.place.length === R0.L.length) return finish();
+      UI.raf = requestAnimationFrame(step);
+    };
+    UI.raf = requestAnimationFrame(step);
+  }
+  function cheer() {
+    const R0 = UI.race;
+    if (!R0 || R0.cheered || R0.t < 0) return;
+    R0.cheered = true;
+    R0.boost = 1.3;
+    sfx('rare');
+    const b = UI.v.querySelector('#prCheer');
+    if (b) (b.disabled = true), (b.textContent = 'Go go go!');
+  }
+  function finish() {
+    const R0 = UI.race;
+    if (!R0 || R0.over) return;
+    R0.over = true;
+    const k = R0.place.findIndex(l => l.me),
+      me = R0.place[k],
+      pet = acct.pets.list.find(p => p.uid === me.uid),
+      s = RS();
+    s.n++;
+    if (k === 0) s.wins++;
+    if (k < 3) s.podium++;
+    acct.coins += COIN[k];
+    bumpCoins();
+    if (pet)
+      try {
+        petGainXP(pet, XP[k]);
+      } catch (e) {}
+    if (k === 0) W().bonus++;
+    s.hist.unshift({ t: Date.now(), place: k + 1, pet: me.id });
+    s.hist = s.hist.slice(0, 20);
+    saveAcct(true);
+    const say = UI.v.querySelector('#prSay');
+    if (say) say.textContent = k === 0 ? `${me.name} wins!` : `${me.name} finished ${PLACE[k]}.`;
+    if (k === 0)
+      try {
+        confetti();
+      } catch (e) {}
+    const res = UI.v.querySelector('#prRes');
+    if (res)
+      res.innerHTML = `<div class="pr-res"><ol class="pr-pod">${R0.place
+        .map((l, i) => `<li class="${l.me ? 'me' : ''}"><span class="pr-pl p${i + 1}">${PLACE[i]}</span><span class="pr-mini">${petArt(l.id)}</span><b>${E(l.me ? l.name + ' (you)' : l.name)}</b><small>${(l.done).toFixed(2)}s</small></li>`)
+        .join('')}</ol>
+        <div class="pr-win"><b>You got ${COIN[k]} coins and ${XP[k]} pet XP</b>${k === 0 ? '<small>Plus a bonus spin on the Lucky Wheel!</small>' : ''}
+        <div class="pr-wb">${k === 0 ? '<button class="btn" data-fw="1">Spin the wheel</button>' : ''}<button class="btn primary" data-again="1" ${ticketsLeft() ? '' : 'disabled'}>${ticketsLeft() ? 'Race again' : 'No races left today'}</button></div></div></div>`;
+    const ch = UI.v.querySelector('#prCheer');
+    if (ch) ch.disabled = true;
+  }
+  SCREENS.races = {
+    mount(v) {
+      UI.v = v;
+      v.innerHTML = '';
+      screen();
+    },
+    update() {},
+    unmount() {
+      cancelAnimationFrame(UI.raf);
+      // a race left halfway still counts; it just ends quietly
+      if (UI.race && !UI.race.over) UI.race = null;
+      UI.v = null;
+    },
+  };
+  if (window.PBPages) PBPages.races = ['Pet Races', () => 'Race your pets for coins, XP and wheel spins'];
+  if (window.PBHubs && PBHubs.HUBS.play && !PBHubs.HUBS.play.includes('races')) {
+    PBHubs.HUBS.play.splice(1, 0, 'races');
+    PBHubs.hubOf.races = 'play';
+  }
+
+  /* home card: after the Home screen draws (and after Tidy rearranges it) */
+  const hm = SCREENS.home && SCREENS.home.mount;
+  if (hm)
+    SCREENS.home.mount = function () {
+      const out = hm.apply(this, arguments);
+      requestAnimationFrame(() => requestAnimationFrame(paintHome));
+      return out;
+    };
+  window.PBFun = { openWheel, wheel: W, races: RS, SEG };
 })();
 
 /* SHOP-PLUS:END */
@@ -60580,6 +61015,10 @@ svg.art .pc-rise { opacity: 0; transform-box: fill-box; animation: pcRise 3.8s e
 svg.art .pc-orb { transform-origin: 32px 34px; animation: apSpin 8s linear infinite; }
 .locked svg.art .pc-tail, .shadow svg.art .pc-tail { animation: none; }
 @media (prefers-reduced-motion: reduce) { svg.art .pc-tail, svg.art .pc-rise, svg.art .pc-orb { animation: none !important; } svg.art .pc-rise { opacity: 0.8; } }
+/* the big pet on the Pets screen breathes */
+.pet-big svg.art.ap-bod, .pg-body svg.art.ap-bod { transform-origin: 50% 94%; animation: pcBreathe 3.2s ease-in-out infinite; }
+@keyframes pcBreathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.025, 0.975); } }
+@media (prefers-reduced-motion: reduce) { .pet-big svg.art.ap-bod, .pg-body svg.art.ap-bod { animation: none; } }
 
 </style>
 <style id="pbInv">
@@ -63048,6 +63487,109 @@ html.classic:not(.dark) .dr-inp input { background: #f1f5f9; border-color: rgba(
   .tr-send .btn { width: 100%; }
 }
 body.off-trading #nav a[data-s='trading'] { display: none !important; }
+
+</style>
+<style id="pbFun">
+/* ===================== LUCKY WHEEL ===================== */
+.fw-pop { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 16px; }
+.fw-bg { position: absolute; inset: 0; background: rgba(4, 6, 12, 0.72); }
+.fw-card { position: relative; width: min(380px, 100%); padding: 22px 20px 18px; border-radius: 24px; background: var(--panel); border: 1px solid var(--line); text-align: center; box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.7); animation: fwIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+@keyframes fwIn { from { transform: scale(0.9); opacity: 0; } }
+.fw-card h3 { margin: 0; font-size: 22px; }
+.fw-card p { margin: 6px 0 0; }
+.fw-x { position: absolute; top: 10px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--bg2); color: var(--tx); font-size: 20px; cursor: pointer; }
+.fw-wheel { position: relative; width: min(290px, 78vw); aspect-ratio: 1; margin: 16px auto 14px; }
+.fw-wheel .fw-svg { width: 100%; height: 100%; filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.45)); }
+.fw-rot { transform-origin: 100px 100px; }
+.fw-ptr { position: absolute; left: 50%; top: -8px; z-index: 2; width: 26px; height: 32px; transform: translateX(-50%); background: #fff; clip-path: polygon(0 0, 100% 0, 50% 100%); filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.4)); }
+.fw-ptr::after { content: ''; position: absolute; inset: 3px 4px 8px; background: var(--brand, #e8700a); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.fw-go { min-width: 170px; font-size: 16px; }
+.fw-res { min-height: 22px; font-size: 16px; opacity: 0; transform: translateY(4px); transition: 0.25s; }
+.fw-res.on { opacity: 1; transform: none; }
+.fw-res b { color: var(--brand, #e8700a); }
+
+/* home card: wheel + races side by side */
+.fw-home { display: grid; grid-template-columns: auto 1fr auto auto auto 1fr auto; align-items: center; gap: 12px; }
+.fw-mini { width: 52px; height: 52px; display: block; }
+.fw-mini svg { width: 100%; height: 100%; }
+.fw-home.ready .fw-mini svg { animation: fwWig 2.4s ease-in-out infinite; }
+@keyframes fwWig { 0%, 70%, 100% { transform: rotate(0); } 80% { transform: rotate(14deg); } 90% { transform: rotate(-8deg); } }
+.fw-t { display: flex; flex-direction: column; min-width: 0; }
+.fw-t b { font-size: 15px; }
+.fw-t small { color: var(--mut); font-size: 12.5px; }
+.fw-home.ready .fw-t:first-of-type small { color: var(--up); font-weight: 700; }
+.fw-sep { width: 1px; height: 40px; background: var(--line); }
+.fw-race-ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--brand, #e8700a) 16%, transparent); color: var(--brand, #e8700a); }
+.fw-race-ic svg { width: 26px; height: 26px; }
+@media (max-width: 640px) {
+  .fw-home { grid-template-columns: auto 1fr auto; row-gap: 12px; }
+  .fw-sep { grid-column: 1 / -1; width: 100%; height: 1px; }
+}
+@media (prefers-reduced-motion: reduce) { .fw-home.ready .fw-mini svg, .fw-card { animation: none; } }
+
+/* ===================== PET RACES ===================== */
+.pr-wrap { display: flex; flex-direction: column; gap: 14px; }
+.pr-hd { display: flex; align-items: flex-start; gap: 14px; }
+.pr-hd h3 { margin: 0; font-size: 20px; }
+.pr-hd p { margin: 4px 0 0; }
+.pr-tk { margin-left: auto; text-align: right; display: flex; flex-direction: column; flex: none; }
+.pr-tk b { font-size: 28px; line-height: 1; color: var(--brand, #e8700a); }
+.pr-tk small { color: var(--mut); font-size: 11.5px; }
+.pr-stats { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.pr-stats span { display: flex; flex-direction: column; padding: 8px 14px; border-radius: 12px; background: var(--bg2); min-width: 72px; }
+.pr-stats b { font-size: 17px; }
+.pr-stats small { color: var(--mut); font-size: 11px; }
+.pr-stats .btn { margin-left: auto; }
+.pr-lbl { display: block; font: 800 11px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mut); margin-bottom: 8px; }
+.pr-pets { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: thin; }
+.pr-pet { flex: none; width: 104px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 6px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg2); color: var(--tx); font: inherit; cursor: pointer; }
+.pr-pet.on { border-color: var(--rc); box-shadow: 0 0 0 1px var(--rc) inset; background: color-mix(in srgb, var(--rc) 12%, var(--bg2)); }
+.pr-pet b { font-size: 12.5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-pet small { font-size: 11px; color: var(--mut); }
+.pr-art { width: 58px; height: 58px; display: block; }
+.pr-art svg { width: 100%; height: 100%; }
+.pr-stars { color: #f5b301; letter-spacing: -1px; }
+.pr-empty { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+.pr-track { position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(#3f8f3a, #2f7a2c); padding: 6px 0; }
+.pr-lane { position: relative; height: 58px; margin: 0 8px; border-bottom: 2px dashed rgba(255, 255, 255, 0.28); background: linear-gradient(90deg, rgba(196, 140, 82, 0.55), rgba(176, 120, 66, 0.55)); }
+.pr-lane:last-child { border-bottom: 0; }
+.pr-lane.me { background: linear-gradient(90deg, rgba(255, 196, 92, 0.55), rgba(232, 150, 60, 0.55)); }
+.pr-fin { position: absolute; top: 0; bottom: 0; right: 4%; width: 10px; background: repeating-conic-gradient(#fff 0 25%, #111 0 50%) 0 0 / 10px 10px; opacity: 0.85; }
+.pr-name { position: absolute; left: 6px; top: 3px; z-index: 2; font: 800 10.5px var(--sans); color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+.pr-lane.me .pr-name { color: #fff7d6; }
+.pr-runner { position: absolute; bottom: 0; left: calc(var(--x) * 0.84% + 2%); width: 54px; height: 54px; display: block; transition: none; }
+.pr-runner svg { width: 100%; height: 100%; }
+.pr-runner.run svg { animation: prHop 0.32s ease-in-out infinite alternate; transform-origin: 50% 100%; }
+.pr-runner.boost::before { content: ''; position: absolute; right: 80%; top: 30%; width: 34px; height: 40%; border-radius: 99px; background: linear-gradient(90deg, transparent, #ffe27a); opacity: 0.9; }
+.pr-runner.ghost { display: grid; place-items: center; font: 900 22px var(--sans); color: rgba(255, 255, 255, 0.5); left: 2%; }
+@keyframes prHop { from { transform: translateY(0) rotate(-3deg); } to { transform: translateY(-6px) rotate(4deg); } }
+.pr-ctl { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.pr-say { flex: 1 1 200px; margin: 0; font-weight: 800; font-size: 16px; min-height: 22px; }
+.pr-cheer:not(:disabled) { background: #f5b301; color: #1a1200; border-color: transparent; animation: prPulse 0.8s ease-in-out infinite; }
+@keyframes prPulse { 50% { transform: scale(1.06); } }
+.pr-res { margin-top: 14px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; align-items: start; }
+.pr-pod { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pr-pod li { display: grid; grid-template-columns: 44px 36px 1fr auto; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 12px; background: var(--bg2); }
+.pr-pod li.me { outline: 2px solid var(--brand, #e8700a); }
+.pr-pod b { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-pod small { color: var(--mut); font-variant-numeric: tabular-nums; }
+.pr-pl { font: 900 13px var(--sans); }
+.pr-pl.p1 { color: #f5b301; }
+.pr-pl.p2 { color: #b8c2d0; }
+.pr-pl.p3 { color: #d08a4a; }
+.pr-mini { width: 36px; height: 36px; display: block; }
+.pr-mini svg { width: 100%; height: 100%; }
+.pr-win { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--brand, #e8700a) 12%, var(--bg2)); }
+.pr-win small { color: var(--mut); }
+.pr-wb { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+@media (max-width: 640px) {
+  .pr-res { grid-template-columns: 1fr; }
+  .pr-lane { height: 50px; }
+  .pr-runner { width: 46px; height: 46px; }
+  .pr-ctl .btn { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .pr-runner.run svg, .pr-cheer:not(:disabled) { animation: none; } }
 
 </style>
 <style id="pbMobile">
