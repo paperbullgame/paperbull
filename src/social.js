@@ -62,6 +62,8 @@
     ['other', 'Something else'],
   ];
   const TABS = [
+    ['home', 'Home'],
+    ['friends', 'Friends'],
     ['chat', 'Chat'],
     ['clan', 'Clan'],
     ['duels', 'Duels'],
@@ -339,6 +341,7 @@
       };
       set('chat', unread);
       set('duels', inc);
+      set('friends', ((S.fr && S.fr.incoming) || []).length);
     }
     paintSummary();
     const rooms = document.getElementById('scRooms');
@@ -372,11 +375,12 @@
   const Social = {
     mount(v, rest) {
       const want = String(rest || '').split('/')[0];
-      S.tab = TABS.some(t => t[0] === want) ? want : settings.socialTab && TABS.some(t => t[0] === settings.socialTab) ? settings.socialTab : 'chat';
+      S.tab = TABS.some(t => t[0] === want) ? want : pendingTab && TABS.some(t => t[0] === pendingTab) ? pendingTab : 'home';
+      pendingTab = null;
       S.vis = true;
       S.mountedTab = '';
       v.innerHTML = `<div class="soc" id="soc">
-        <div class="sc-top"><div class="seg sc-tabs" id="scTabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" data-sct="${k}" class="${S.tab === k ? 'on' : ''}" aria-selected="${S.tab === k}">${l}</button>`).join('')}</div>
+        <div class="sc-top"><div class="seg sc-tabs" id="scTabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" data-sct="${k}" class="${S.tab === k ? 'on' : ''}" aria-selected="${S.tab === k}">${TIC[k] || ''}<span>${l}</span></button>`).join('')}</div>
         <div class="sc-sum" id="scSum"></div></div>
         <div id="scBody" class="sc-body"></div></div>`;
       window.addEventListener('resize', fit);
@@ -403,17 +407,13 @@
     },
   };
   SCREENS.social = Social;
-  window.PBSocial = { open: (tab, room) => openTab(tab, room), state: S, repaintComposer: () => paintComposer(), dm: u => dmWith(u) };
+  window.PBSocial = { open: (tab, room) => openTab(tab, room), state: S, repaintComposer: () => paintComposer(), dm: u => dmWith(u), card: u => playerCard(u) };
 
+  let pendingTab = null;
   function openTab(tab, room) {
     if (room) S.room = room;
     if (curRoute.split('/')[0] !== 'social') {
-      if (tab) {
-        settings.socialTab = tab;
-        try {
-          saveSettings();
-        } catch (e) {}
-      }
+      pendingTab = tab || null;
       go('social');
     } else showTab(tab || S.tab);
   }
@@ -436,6 +436,8 @@
     body.dataset.tab = t;
     S.mountedTab = t;
     if (t === 'chat') chatMount(body);
+    else if (t === 'home') homePaint(body, true);
+    else if (t === 'friends') friendsPaint(body, true);
     else if (t === 'clan') clanPaint(body, true);
     else if (t === 'duels') duelsPaint(body, true);
     else seasonPaint(body, true);
@@ -449,6 +451,277 @@
   }
   const offCard = t => `<div class="sc-gate off"><span class="sc-gate-ic">${IC.lock}</span><h3>${E(t)}</h3><p>The PAPERBULL team switched this off for a bit. Check back soon.</p></div>`;
   const skel = n => `<div class="pb-skel">${'<i></i>'.repeat(n || 4)}</div>`;
+
+  /* ================= HOME (the social hub) ================= */
+  const TIC = {
+    home: I('<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>'),
+    friends: IC.users,
+    chat: IC.chat,
+    clan: I('<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>'),
+    duels: IC.swords,
+    season: IC.trophy,
+  };
+  const isOnline = f => f && (f.online === true || (f.updated_at && Date.now() - Date.parse(f.updated_at) < 6 * 60000));
+  let FEED = null,
+    feedAt = 0;
+  async function loadFeed(force) {
+    if (!force && FEED && Date.now() - feedAt < 30000) return FEED;
+    try {
+      FEED = (await Cloud.rpc('pb_social_feed', { p_token: tok() })) || [];
+      feedAt = Date.now();
+    } catch (e) {
+      FEED ||= [];
+    }
+    return FEED;
+  }
+  const who = u => `<button class="sh-u" data-pcard="${E(u)}">@${E(u)}</button>`;
+  const FEEDTXT = {
+    trade: f => [IC.users, `${who(f.a)} traded with ${who(f.b)}`, 'g'],
+    duel: f => [IC.swords, `${who(f.a)} beat ${who(f.b)} in a duel`, 'r'],
+    abuse: f => [IC.crown, `${who(f.a)} won a prize in Admin Abuse`, 'y'],
+    clan: f => [TIC.clan, `${who(f.a)} started the clan <b>${E(f.x || '')}</b>${f.t ? ` [${E(f.t)}]` : ''}`, 'p'],
+    join: f => [IC.plus, `${who(f.a)} joined PAPERBULL`, 'b'],
+  };
+  function feedHTML(list) {
+    const rows = (list || [])
+      .filter(f => FEEDTXT[f.k])
+      .slice(0, 14)
+      .map(f => {
+        const [ic, txt, c] = FEEDTXT[f.k](f);
+        return `<li class="sh-fi"><span class="sh-fic ${c}">${ic}</span><span class="sh-ft">${txt}</span><time>${E(ago(f.at))}</time></li>`;
+      })
+      .join('');
+    return rows ? `<ul class="sh-feed">${rows}</ul>` : '<p class="muted small">Quiet right now. Make some noise!</p>';
+  }
+  function meCard() {
+    let lv = '';
+    try {
+      lv = levelInfo(acct.xp).level;
+    } catch (e) {}
+    const fs = (S.fr && S.fr.friends) || [];
+    const rec = S.record || {};
+    const sm = S.season && S.season.me;
+    const title = acct.equip && ITEM[acct.equip.title] ? ITEM[acct.equip.title].name : '';
+    const stat = (b, s, go) => `<button class="sh-st" ${go ? `data-sct="${go}"` : ''}><b>${b}</b><small>${s}</small></button>`;
+    return `<section class="card sh-me">
+      <div class="sh-me-a"><span class="sh-big">${av(typeof myAvatar === 'function' ? myAvatar() : 'av_bull')}</span>${lv ? `<i class="sh-lv">${lv}</i>` : ''}</div>
+      <div class="sh-me-t"><h2>${E(acct.name || acct.user || 'Guest')}</h2><p>${linked() ? '@' + E(meKey()) : 'Playing as guest'}${title ? ` · <span class="sh-title">${E(title)}</span>` : ''}</p>
+        ${S.clan && S.clan.id ? `<button class="sh-clan" data-sct="clan"><span>${E(S.clan.emoji || '')}</span>${E(S.clan.name)} <em>${E(S.clan.tag || '')}</em></button>` : linked() ? '<button class="sh-clan none" data-sct="clan">Join a clan</button>' : ''}</div>
+      <div class="sh-stats">${stat(fs.length, 'Friends', 'friends')}${stat(fs.filter(isOnline).length, 'Online now', 'friends')}${stat(`${rec.wins || 0}`, 'Duel wins', 'duels')}${stat(sm ? '#' + sm.rank : '—', 'Season rank', 'season')}</div>
+      ${linked() ? `<div class="sh-me-b"><button class="btn sm" data-pcard="${E(meKey())}">View my card</button><button class="btn sm" data-go="profile">Edit look</button></div>` : `<div class="sh-me-b"><button class="btn primary sm" data-ol="${acct && acct.user ? 'connect' : 'signup'}">${acct && acct.user ? 'Connect to join in' : 'Sign up free'}</button></div>`}
+    </section>`;
+  }
+  function actionsHTML() {
+    const unread = unreadDMs().length,
+      inc = feat('duels') ? incoming().length : 0,
+      req = ((S.fr && S.fr.incoming) || []).length;
+    const A = [
+      ['chat', IC.globe, 'Global chat', 'Talk with everyone', unread ? `${unread} new` : '', 'c1'],
+      ['friends', IC.search, 'Find friends', 'Add players you know', req ? `${req} request${req > 1 ? 's' : ''}` : '', 'c2'],
+      ['duels', IC.swords, 'Duel', 'Battle a friend 1v1', inc ? `${inc} waiting` : '', 'c3'],
+      ['trading', I('<path d="M7 4v14M3.5 7.5 7 4l3.5 3.5"/><path d="M17 20V6M13.5 16.5 17 20l3.5-3.5"/>'), 'Trade', 'Swap items and pets', '', 'c4'],
+      ['clan', TIC.clan, 'Clans', S.clan && S.clan.id ? 'Your crew' : 'Join a crew', '', 'c5'],
+      ['season', IC.trophy, 'Season', 'Weekly prizes', '', 'c6'],
+    ];
+    return `<div class="sh-acts">${A.map(([k, ic, t, s, badge, c]) => `<button class="sh-act ${c}" ${k === 'trading' ? 'data-go="trading"' : `data-sct="${k}"`}><span class="sh-aic">${ic}</span><b>${t}</b><small>${s}</small>${badge ? `<em>${badge}</em>` : ''}</button>`).join('')}</div>`;
+  }
+  function onlineStrip() {
+    const fs = ((S.fr && S.fr.friends) || []).slice().sort((a, b) => (isOnline(b) ? 1 : 0) - (isOnline(a) ? 1 : 0) || Date.parse(b.updated_at || 0) - Date.parse(a.updated_at || 0));
+    if (!fs.length) return `<div class="sh-strip empty"><p class="muted small">No friends yet. Add a few and they’ll show up here.</p><button class="btn sm primary" data-sct="friends">Find friends</button></div>`;
+    return `<div class="sh-strip">${fs
+      .slice(0, 14)
+      .map(f => `<button class="sh-fa ${isOnline(f) ? 'on' : ''}" data-pcard="${E(f.username)}"><span class="sh-fav">${av(f.avatar)}</span><b>${E(f.name || f.username)}</b><small>${isOnline(f) ? 'Online' : f.updated_at ? ago(f.updated_at) + ' ago' : ''}</small></button>`)
+      .join('')}</div>`;
+  }
+  function topFriends() {
+    const fs = ((S.fr && S.fr.friends) || []).slice().sort((a, b) => (+b.return_pct || 0) - (+a.return_pct || 0));
+    if (fs.length < 2) return '';
+    return `<section class="card sh-top"><div class="card-h"><h3>Friends leaderboard</h3><span class="muted small">All-time return</span></div>${fs
+      .slice(0, 5)
+      .map((f, i) => `<button class="sh-tr" data-pcard="${E(f.username)}"><span class="sc-n ${i < 3 ? 'top' : ''}">${i + 1}</span><span class="sc-av">${av(f.avatar)}</span><span class="sc-who"><b>${E(f.name || f.username)}</b><small>LV ${E(f.level || 1)}</small></span><b class="${pcls(f.return_pct)}">${pct(f.return_pct)}</b></button>`)
+      .join('')}</section>`;
+  }
+  async function homePaint(body, first) {
+    body = body || bodyFor('home');
+    if (!body) return;
+    const draw = () => {
+      const b = bodyFor('home');
+      if (!b) return;
+      b.innerHTML = `<div class="sh-grid"><div class="sh-main">${meCard()}${actionsHTML()}
+        <section class="card sh-on"><div class="card-h"><h3>Friends</h3>${linked() ? `<button class="linkish" data-sct="friends">See all</button>` : ''}</div>${linked() ? onlineStrip() : '<p class="muted small">Sign up to add friends, chat and duel.</p>'}</section>
+        ${topFriends()}</div>
+        <aside class="sh-side"><section class="card sh-live"><div class="card-h"><h3><i class="sc-live"></i> Live around PAPERBULL</h3></div>${FEED ? feedHTML(FEED) : skel(5)}</section></aside></div>`;
+    };
+    draw();
+    if (first) {
+      await Promise.all([loadFeed(), linked() ? loadFriends() : null, linked() && feat('clans') && S.clan === undefined ? loadClan() : null, linked() && !S.season ? loadSeason() : null, linked() && feat('duels') && !S.duels ? loadDuels() : null]);
+      draw();
+    }
+  }
+
+  /* ================= FRIENDS ================= */
+  let SUG = null,
+    sugQ = '';
+  async function loadSug(q) {
+    if (!linked()) return [];
+    try {
+      SUG = (await Cloud.rpc('pb_players_suggest', { p_token: tok(), p_q: q || null })) || [];
+    } catch (e) {
+      SUG = [];
+    }
+    sugQ = q || '';
+    return SUG;
+  }
+  function friendRow(f, kind) {
+    const on = isOnline(f);
+    const acts =
+      kind === 'in'
+        ? `<button class="btn sm primary" data-fr-yes="${E(f.username)}">Accept</button><button class="btn sm ghost" data-fr-no="${E(f.username)}">Decline</button>`
+        : kind === 'out'
+          ? '<span class="muted small">Request sent</span>'
+          : kind === 'sug'
+            ? f.sent
+              ? '<span class="muted small">Request sent</span>'
+              : `<button class="btn sm primary" data-fr-add="${E(f.username)}">Add</button>`
+            : `<button class="btn sm" data-fr-dm="${E(f.username)}" title="Message">${IC.chat}<span>Chat</span></button>${feat('duels') ? `<button class="btn sm" data-fr-duel="${E(f.username)}" title="Duel">${IC.swords}<span>Duel</span></button>` : ''}<button class="btn sm" data-fr-trade="${E(f.username)}" title="Trade">${I('<path d="M7 4v14M3.5 7.5 7 4l3.5 3.5"/><path d="M17 20V6M13.5 16.5 17 20l3.5-3.5"/>')}<span>Trade</span></button>`;
+    return `<div class="sf-row ${on ? 'on' : ''}"><button class="sf-av" data-pcard="${E(f.username)}"><span>${av(f.avatar)}</span>${kind === 'friend' ? `<i class="sf-dot"></i>` : ''}</button>
+      <button class="sf-who" data-pcard="${E(f.username)}"><b>${E(f.name || f.username)}</b><small>@${E(f.username)}${f.level ? ' · LV ' + f.level : ''}${kind === 'sug' && f.why ? ' · ' + E(f.why) : kind === 'friend' ? ` · ${on ? 'online' : f.updated_at ? 'seen ' + ago(f.updated_at) + ' ago' : ''}` : ''}</small></button>
+      ${kind === 'friend' || kind === 'sug' ? `<span class="sf-ret ${pcls(f.return_pct)}">${pct(f.return_pct)}</span>` : ''}<span class="sf-acts">${acts}</span></div>`;
+  }
+  async function friendsPaint(body, first) {
+    body = body || bodyFor('friends');
+    if (!body) return;
+    if (!linked()) {
+      body.innerHTML = gateCTA('Add friends to chat, duel, trade and compare returns.', IC.users);
+      return;
+    }
+    if (!feat('friends')) {
+      body.innerHTML = offCard('Friends are turned off right now');
+      return;
+    }
+    const draw = () => {
+      const b = bodyFor('friends');
+      if (!b) return;
+      const f = S.fr || {},
+        fs = ((f.friends || []).slice()).sort((a, c) => (isOnline(c) ? 1 : 0) - (isOnline(a) ? 1 : 0) || String(a.name || a.username).localeCompare(String(c.name || c.username)));
+      b.innerHTML = `<div class="sf-grid"><div class="sf-main">
+        ${(f.incoming || []).length ? `<section class="card sf-req"><div class="card-h"><h3>Friend requests</h3><span class="sf-badge">${f.incoming.length}</span></div>${f.incoming.map(x => friendRow(x, 'in')).join('')}</section>` : ''}
+        <section class="card"><div class="card-h"><h3>Your friends</h3><span class="muted small">${fs.filter(isOnline).length} online · ${fs.length} total</span></div>
+        ${fs.length ? fs.map(x => friendRow(x, 'friend')).join('') : '<div class="sc-empty sm"><b>No friends yet</b><p>Search for players on the right, or pick someone who’s playing now.</p></div>'}
+        ${(f.outgoing || []).length ? `<div class="sf-out"><small class="muted">Waiting for them to accept</small>${f.outgoing.map(x => friendRow(x, 'out')).join('')}</div>` : ''}</section></div>
+        <aside class="sf-side"><section class="card sf-find"><div class="card-h"><h3>Find players</h3></div>
+          <form class="sf-search" id="sfSearch" autocomplete="off">${IC.search}<input id="sfQ" maxlength="20" placeholder="Search by username" value="${E(sugQ)}" aria-label="Search players" spellcheck="false" autocapitalize="off"></form>
+          <div id="sfSug">${SUG ? (SUG.length ? SUG.slice(0, 12).map(x => friendRow(x, 'sug')).join('') : '<p class="muted small">Nobody found.</p>') : skel(4)}</div></section></aside></div>`;
+      const fm = b.querySelector('#sfSearch'),
+        q = b.querySelector('#sfQ');
+      let t = 0;
+      fm.onsubmit = e => (e.preventDefault(), runQ());
+      q.oninput = () => {
+        clearTimeout(t);
+        t = setTimeout(runQ, 300);
+      };
+      const runQ = async () => {
+        await loadSug(q.value.trim());
+        const box = bodyFor('friends') && document.getElementById('sfSug');
+        if (box) box.innerHTML = SUG.length ? SUG.slice(0, 12).map(x => friendRow(x, 'sug')).join('') : '<p class="muted small">Nobody found.</p>';
+      };
+    };
+    draw();
+    if (first) {
+      await Promise.all([loadFriends(true), SUG ? null : loadSug('')]);
+      draw();
+    }
+  }
+  async function frAct(fn, args, msg) {
+    try {
+      await Cloud.rpc(fn, Object.assign({ p_token: tok() }, args));
+      if (msg) toast(msg, 'ok');
+      await loadFriends(true);
+      if (fn === 'pb_friend_add') await loadSug(sugQ);
+    } catch (e) {
+      toast(errText(e), 'err');
+    }
+    if (bodyFor('friends')) friendsPaint();
+    if (bodyFor('home')) homePaint();
+    paintSummary();
+    paintTabCounts();
+  }
+  function tradeWith(u) {
+    go('trading');
+    setTimeout(() => {
+      if (window.PBTrade && PBTrade.with) PBTrade.with(u);
+    }, 60);
+  }
+
+  /* ================= PLAYER CARD ================= */
+  const RORD = { c: 0, r: 1, e: 2, l: 3, m: 4, x: 5, s: 6 };
+  async function playerCard(u) {
+    if (!u) return;
+    modal({ title: '', confirm: '', cancel: 'Close', html: `<div class="pc-wrap" id="pcWrap">${skel(5)}</div>` });
+    let c;
+    try {
+      c = await Cloud.rpc('pb_player_card', { p_token: tok(), p_username: u });
+    } catch (e) {
+      const w = document.getElementById('pcWrap');
+      if (w) w.innerHTML = `<div class="sc-empty sm"><b>Couldn’t load @${E(u)}</b><p>${E(errText(e))}</p></div>`;
+      return;
+    }
+    const w = document.getElementById('pcWrap');
+    if (!w) return;
+    const pets = (c.pets || [])
+      .filter(p => typeof PET !== 'undefined' && PET[p.id])
+      .sort((a, b) => (RORD[PET[b.id].r] || 0) - (RORD[PET[a.id].r] || 0) || (+b.lvl || 0) - (+a.lvl || 0))
+      .slice(0, 6);
+    const title = c.title && ITEM[c.title] ? ITEM[c.title].name : c.title;
+    const fs = c.friend;
+    const btn = (attr, ic, t, pri) => `<button class="btn ${pri ? 'primary' : ''}" ${attr}>${ic}<span>${t}</span></button>`;
+    const acts =
+      fs === 'self'
+        ? btn('data-go="profile"', IC.smile, 'Edit my look', true)
+        : !linked()
+          ? `<button class="btn primary" data-ol="signup">Sign up to add friends</button>`
+          : [
+              fs === 'friends' ? btn(`data-fr-dm="${E(c.username)}"`, IC.chat, 'Message', true) : fs === 'incoming' ? btn(`data-fr-yes="${E(c.username)}"`, IC.plus, 'Accept request', true) : fs === 'sent' ? '<span class="muted small">Friend request sent</span>' : btn(`data-fr-add="${E(c.username)}"`, IC.plus, 'Add friend', true),
+              fs === 'friends' && feat('duels') ? btn(`data-fr-duel="${E(c.username)}"`, IC.swords, 'Duel') : '',
+              btn(`data-fr-trade="${E(c.username)}"`, I('<path d="M7 4v14M3.5 7.5 7 4l3.5 3.5"/><path d="M17 20V6M13.5 16.5 17 20l3.5-3.5"/>'), 'Trade'),
+            ].join('');
+    w.innerHTML = `<div class="pc-hero"><span class="pc-av">${av(c.avatar)}${c.online ? '<i class="pc-on" title="Online"></i>' : ''}</span>
+      <div class="pc-id"><h2>${E(c.name || c.username)}</h2><p>@${E(c.username)}${title ? ` · <span class="sh-title">${E(title)}</span>` : ''}</p>
+      <div class="pc-tags"><span class="pc-tag lv">LV ${E(c.level || 1)}</span>${c.clan ? `<span class="pc-tag">${E(c.clan.emoji || '')} ${E(c.clan.name)} <em>${E(c.clan.tag || '')}</em></span>` : ''}<span class="pc-tag ${c.online ? 'on' : ''}">${c.online ? 'Online now' : 'Offline'}</span></div></div></div>
+      <div class="pc-stats"><div><b class="${pcls(c.return_pct)}">${pct(c.return_pct)}</b><small>Return</small></div><div><b>${big(c.value)}</b><small>Portfolio</small></div><div><b>${(+c.trades || 0).toLocaleString()}</b><small>Trades</small></div><div><b>${(c.duels && c.duels.w) || 0}-${(c.duels && c.duels.l) || 0}</b><small>Duels W-L</small></div></div>
+      <div class="pc-pets"><div class="pc-ph"><b>Pet showcase</b><small class="muted">${(+c.pet_count || 0).toLocaleString()} pet${c.pet_count === 1 ? '' : 's'}</small></div>${pets.length ? `<div class="pc-pg">${pets.map(p => `<span class="pc-pet" style="--rc:${(RARITY[PET[p.id].r] || {}).color || '#888'}"><span class="pc-pa">${petArt(p.id)}</span><b>${E(PET[p.id].name)}</b><small>Lv ${E(p.lvl || 1)}${p.prime ? ' · Prime' : ''}</small></span>`).join('')}</div>` : '<p class="muted small">No pets yet.</p>'}</div>
+      <p class="muted small pc-j">Playing since ${E(new Date(c.joined + 'T12:00:00').toLocaleDateString([], { month: 'long', year: 'numeric' }))}</p>
+      <div class="pc-acts">${acts}</div>`;
+  }
+  // one click handler for every new button (works in the modal too)
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-pcard],[data-fr-add],[data-fr-yes],[data-fr-no],[data-fr-dm],[data-fr-duel],[data-fr-trade],#scBody [data-sct], #pcWrap [data-sct]');
+    if (!t) return;
+    const d = t.dataset,
+      inModal = !!t.closest('#modalRoot');
+    const closeModal = () => {
+      if (inModal) {
+        const r = document.getElementById('modalRoot');
+        r.classList.remove('open');
+        r.innerHTML = '';
+      }
+    };
+    if (d.pcard) return playerCard(d.pcard);
+    if (d.frAdd) return frAct('pb_friend_add', { p_username: d.frAdd }, `Friend request sent to @${d.frAdd}`).then(() => inModal && playerCard(d.frAdd));
+    if (d.frYes) return frAct('pb_friend_respond', { p_username: d.frYes, p_accept: true }, `You and @${d.frYes} are friends now`).then(() => inModal && playerCard(d.frYes));
+    if (d.frNo) return frAct('pb_friend_respond', { p_username: d.frNo, p_accept: false }, 'Request declined');
+    if (d.frDm) return closeModal(), dmWith(d.frDm);
+    if (d.frDuel) return closeModal(), challengeDialog(d.frDuel);
+    if (d.frTrade) return closeModal(), tradeWith(d.frTrade);
+    if (d.sct) return closeModal(), openTab(d.sct);
+  });
+  function paintTabCounts() {
+    const tabs = document.getElementById('scTabs');
+    if (!tabs) return;
+    const req = ((S.fr && S.fr.incoming) || []).length,
+      b = tabs.querySelector('[data-sct="friends"]');
+    if (b) b.classList.toggle('dot', !!req);
+  }
 
   /* ================= CHAT ================= */
   function roomList() {
@@ -767,7 +1040,7 @@
           ? `<div class="sc-emote">${E(m.body)}</div>`
           : `<div class="sc-bub ${m.kind === 'quick' ? 'quick' : ''} ${ment ? 'ment' : ''}">${E(m.body)}</div>`;
       h += `<div class="sc-msg ${m.mine ? 'mine' : ''} ${grouped ? 'grp' : ''} ${m._last ? 'last' : ''} ${fresh ? 'fresh' : ''}" data-mid="${E(m.id)}" style="--nh:${hue(m.uname || m.username)}">
-        ${m.mine ? '' : `<span class="sc-av">${grouped ? '' : av(m.avatar)}</span>`}
+        ${m.mine ? '' : `<span class="sc-av" ${grouped ? '' : `data-pcard="${E(m.uname || m.username)}"`}>${grouped ? '' : av(m.avatar)}</span>`}
         <div class="sc-mc">${grouped || m.mine ? '' : `<div class="sc-mh"><b>${E(m.username || m.uname)}</b>${m.clan ? `<em class="sc-tag">${E(m.clan)}</em>` : ''}<time>${E(when(m.at))}</time></div>`}
         <div class="sc-mrow">${content}${m.mine ? '' : `<button class="sc-mx" data-mmenu="${E(m.id)}" aria-label="Message options">${IC.more}</button>`}</div>
         ${m.mine && m._last ? `<time class="sc-mt">${E(when(m.at))}</time>` : ''}</div></div>`;
@@ -1122,7 +1395,7 @@
       ${roster
         .map((r, i) => {
           const isMe = String(r.username).toLowerCase() === me;
-          return `<div class="sc-rr ${isMe ? 'me' : ''}"><span class="sc-n ${i < 3 ? 'top' : ''}">${i + 1}</span><span class="sc-av">${av(r.avatar)}</span>
+          return `<div class="sc-rr ${isMe ? 'me' : ''}"><span class="sc-n ${i < 3 ? 'top' : ''}">${i + 1}</span><span class="sc-av" data-pcard="${E(r.username)}">${av(r.avatar)}</span>
           <span class="sc-who"><b>${E(r.name || r.username)}${r.role === 'owner' ? `<i class="sc-crown" title="Clan owner">${IC.crown}</i>` : ''}${isMe ? ' <span class="sim-pill">YOU</span>' : ''}</b><small>@${E(r.username)}${r.level ? ' · LV ' + r.level : ''}</small></span>
           <span class="sc-ret"><b class="${pcls(r.return_pct)}">${pct(r.return_pct)}</b><small>${big(r.value)}</small></span>
           ${owner && !isMe ? `<button class="sc-mx vis" data-kick="${E(r.username)}" aria-label="Remove @${E(r.username)}">${IC.more}</button>` : ''}</div>`;
@@ -1729,7 +2002,7 @@
     const row = (r, i) => {
       const rank = r.rank || i + 1;
       const p = prizeFor(rank - 1);
-      return `<div class="sc-sr ${isMe(r) ? 'me' : ''} ${rank <= 3 ? 'podium' : ''}"><span class="sc-n ${rank <= 3 ? 'top' : ''}">${rank <= 3 ? MEDAL[rank - 1] : rank}</span><span class="sc-av">${av(r.avatar)}</span>
+      return `<div class="sc-sr ${isMe(r) ? 'me' : ''} ${rank <= 3 ? 'podium' : ''}"><span class="sc-n ${rank <= 3 ? 'top' : ''}">${rank <= 3 ? MEDAL[rank - 1] : rank}</span><span class="sc-av" data-pcard="${E(r.username)}">${av(r.avatar)}</span>
         <span class="sc-who"><b>${E(r.name || r.username)}${isMe(r) ? ' <span class="sim-pill">YOU</span>' : ''}</b><small>@${E(r.username)}</small></span>
         ${p ? `<span class="sc-prize">${coinHTML(p)}</span>` : '<span class="sc-prize"></span>'}<span class="sc-ret"><b class="${pcls(r.ret)}">${pct(r.ret)}</b></span></div>`;
     };
@@ -1798,6 +2071,7 @@
   function tick60() {
     if (!S.vis || document.visibilityState !== 'visible') return;
     if (S.tab === 'season') seasonPaint();
+    if (S.tab === 'home' && tickN % 5 === 0) loadFeed(true).then(() => bodyFor('home') && homePaint());
     if (S.tab === 'clan' && linked() && S.clan) loadClan(true).then(() => bodyFor('clan') && clanPaint());
     if (linked()) loadFriends(true).then(paintSummary);
   }

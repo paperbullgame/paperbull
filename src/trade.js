@@ -440,5 +440,14 @@
   setInterval(() => {
     if (!document.hidden) refresh(true);
   }, 60000);
-  window.PBTrade = { refresh, state: S };
+  window.PBTrade = {
+    refresh,
+    state: S,
+    with(u) {
+      S.tab = 'new';
+      S.them = null;
+      paint();
+      if (online()) find(u);
+    },
+  };
 })();
