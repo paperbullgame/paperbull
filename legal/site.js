@@ -1,3 +1,4 @@
+/* move-out off */
 /* ============================================================
    PAPERBULL legal settings: change these in ONE place.
    Every legal page and the in-game footer read from here.
@@ -10,7 +11,7 @@ window.PB_LEGAL = {
   region: 'Maine, USA',
   law: 'the State of Maine, USA',
   updated: 'September 29, 2026',
-  site: 'https://paperbullgame.github.io/paperbull/',
+  site: 'https://paperbullgame.github.io/paperbull/', // switch to https://paperbull.pages.dev/ together with MOVE_OUT in build.py
 };
 (function () {
   var L = window.PB_LEGAL;

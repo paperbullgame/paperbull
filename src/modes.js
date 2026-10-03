@@ -18,6 +18,9 @@
   const featOn = () => !(window.PBSite && window.PBSite.features && window.PBSite.features.modes === false);
   const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const CAP = { speed: 3, updown: 500, replay: 20, crash: 1000, chicken: 1000 };
+  // extra modes plugged in from their own files (cards.js): { panel, mount, unmount, side, running, fmt, tokens }
+  const EXT = {};
+  const ext = k => EXT[k] || null;
   const vip = () => {
     try {
       return !!(window.PBVipOn && window.PBVipOn());
@@ -94,7 +97,7 @@
   }
   async function submit(mode, score) {
     const m = st();
-    if (!linked() || !(score > -Infinity) || mode === 'chicken') return;
+    if (!linked() || !(score > -Infinity) || mode === 'chicken' || ext(mode)) return;
     const s = clamp(score, -1, CAP[mode]);
     if (m.sub[mode] != null && s <= m.sub[mode]) return;
     try {
@@ -108,7 +111,7 @@
     }
   }
   const fmtScore = (mode, v) =>
-    v == null ? '—' : mode === 'updown' ? `${Math.round(v)} in a row` : mode === 'crash' || mode === 'chicken' ? `${(+v).toFixed(2)}×` : fmtPct(+v, 1);
+    v == null ? '—' : ext(mode) && ext(mode).fmt ? ext(mode).fmt(v) : mode === 'updown' ? `${Math.round(v)} in a row` : mode === 'crash' || mode === 'chicken' ? `${(+v).toFixed(2)}×` : fmtPct(+v, 1);
   function reward({ coins = 0, xp = 0 }) {
     let c = 0;
     if (coins > 0) {
@@ -150,7 +153,7 @@
   /* ---------------- boards ---------------- */
   const BD = {};
   async function loadBoard(mode, force) {
-    if (mode === 'chicken') return; // local stats only
+    if (mode === 'chicken' || ext(mode)) return; // local stats only
     const b = BD[mode];
     if (!force && b && (b.loading || Date.now() - b.at < 30000)) return;
     BD[mode] = Object.assign(b || {}, { loading: true });
@@ -165,8 +168,8 @@
   function paintBoard() {
     const box = UI.v && UI.v.querySelector('#mdBoard');
     if (!box) return;
-    if (UI.mode === 'chicken') {
-      const h = window.PBChicken ? PBChicken.side() : '';
+    if (UI.mode === 'chicken' || ext(UI.mode)) {
+      const h = ext(UI.mode) ? ext(UI.mode).side() : window.PBChicken ? PBChicken.side() : '';
       if (box._h !== h) box.innerHTML = box._h = h;
       return;
     }
@@ -1095,7 +1098,7 @@
     const m = st(),
       best = m.best[mm.k];
     const extra =
-      mm.k === 'crash' || mm.k === 'chicken'
+      mm.k === 'crash' || mm.k === 'chicken' || (ext(mm.k) && ext(mm.k).tokens)
         ? `<span class="md-chip">${I_TOK}${m.tokens} tokens</span>`
         : mm.k === 'updown' && m.udStreak
           ? `<span class="md-chip">🔥 ${m.udStreak} streak</span>`
@@ -1108,7 +1111,7 @@
   }
   function panelHTML() {
     const mm = MBY[UI.mode];
-    const body = UI.mode === 'speed' ? speedPanel() : UI.mode === 'updown' ? udPanel() : UI.mode === 'crash' ? crPanel() : UI.mode === 'chicken' ? (window.PBChicken ? PBChicken.panel() : '') : replayPanel();
+    const body = UI.mode === 'speed' ? speedPanel() : UI.mode === 'updown' ? udPanel() : UI.mode === 'crash' ? crPanel() : UI.mode === 'chicken' ? (window.PBChicken ? PBChicken.panel() : '') : ext(UI.mode) ? ext(UI.mode).panel() : replayPanel();
     return `<div class="md-ph" style="--ac:${mm.ac}"><span class="md-pi">${ART[mm.k]}</span><div><h2>${mm.name}</h2><p>${mm.tag}</p></div></div>${body}`;
   }
   function repaint() {
@@ -1116,7 +1119,7 @@
     const cards = UI.v.querySelector('#mdCards');
     if (cards) cards.innerHTML = MODES.map(cardHTML).join('');
     const p = UI.v.querySelector('#mdPanel');
-    if (p && !(UI.mode === 'crash' && CR.phase === 'run') && !(UI.mode === 'chicken' && window.PBChicken && PBChicken.running())) {
+    if (p && !(UI.mode === 'crash' && CR.phase === 'run') && !(UI.mode === 'chicken' && window.PBChicken && PBChicken.running()) && !(ext(UI.mode) && ext(UI.mode).running())) {
       p.innerHTML = panelHTML();
       p.style.setProperty('--ac', MBY[UI.mode].ac);
       afterPanel();
@@ -1134,6 +1137,7 @@
       crLoop();
     }
     if (UI.mode === 'chicken' && window.PBChicken) PBChicken.mount(UI.v.querySelector('#mdPanel'));
+    if (ext(UI.mode)) ext(UI.mode).mount(UI.v.querySelector('#mdPanel'));
   }
   function setMode(k) {
     if (!MBY[k] || k === UI.mode) return;
@@ -1260,6 +1264,7 @@
     unmount() {
       cancelAnimationFrame(CR.raf);
       if (window.PBChicken) PBChicken.unmount();
+      for (const k in EXT) EXT[k].unmount && EXT[k].unmount();
       UI.v = null;
     },
   };
@@ -1283,6 +1288,20 @@
     emit,
     tokIcon: I_TOK,
     repaintSide: () => paintBoard(),
+    repaintCards: () => {
+      const c = UI.v && UI.v.querySelector('#mdCards');
+      if (c) c.innerHTML = MODES.map(cardHTML).join('');
+    },
+    // plug in another mode: { k, name, tag, ac, art, panel, mount, unmount, side, running, fmt, tokens }
+    addMode(def) {
+      if (MBY[def.k]) return;
+      const row = { k: def.k, name: def.name, tag: def.tag, ac: def.ac };
+      const at = MODES.findIndex(m => m.k === 'replay');
+      MODES.splice(at < 0 ? MODES.length : at, 0, row);
+      MBY[def.k] = row;
+      ART[def.k] = def.art;
+      EXT[def.k] = def;
+    },
     _forceHit: 0,
     _forceSafe: 0,
   };

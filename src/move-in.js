@@ -1,4 +1,5 @@
-/* MOVE-IN: the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull.
+/* MOVE-IN: the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull,
+   and then to paperbull.pages.dev (see move-out.js).
    The page at the old address packs up the player's login and (for guests) their save into the link
    (#pbmove=…) and sends them here. This runs before anything else: it stops the page, writes that data
    into this site's storage, fetches a logged-in player's save from the server, then reloads, so the
@@ -11,7 +12,7 @@
   try {
     history.replaceState(null, '', clean);
   } catch (e) {}
-  var fromOld = /^https:\/\/taylanthe10\.github\.io\//.test(document.referrer || '');
+  var fromOld = /^https:\/\/(taylanthe10|paperbullgame)\.github\.io\//.test(document.referrer || '');
   var fresh = true;
   try {
     for (var i = 0; i < localStorage.length; i++) {
