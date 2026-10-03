@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#06080c">
 <title>PAPERBULL</title>
 <!-- BRAND:START -->
-<script>window.PB_BUILD="20261002225919";</script>
+<script>window.PB_BUILD="20261002230632";</script>
 <script>/* move-out off */</script>
 <script>/* MOVE-IN: the game moved from taylanthe10.github.io/paperbull to paperbullgame.github.io/paperbull,
    and then to paperbull.pages.dev (see move-out.js).
@@ -69613,6 +69613,64 @@ html.classic:not(.dark):not(#_):not(#_):not(#_) .seg.side button[data-side='cove
   html:not(.dark) #nav:not(#_):not(#_):not(#_):not(#_) a.on .nt { color: #fff !important; background: linear-gradient(145deg, var(--n1), var(--n2)) !important; }
   html:not(.dark) #nav:not(#_):not(#_):not(#_):not(#_) a[data-go]:not(.nav-brand) { color: color-mix(in srgb, var(--tx) 72%, transparent) !important; }
   html:not(.dark) #nav:not(#_):not(#_):not(#_):not(#_) a[data-go].on:not(.nav-brand) { color: var(--tx) !important; }
+}
+
+</style>
+<style id="pbReadable">
+/* =====================================================================
+   READABLE: a minimum size for text and buttons everywhere.
+   Lots of labels had drifted down to 9.5–11px and small buttons to 30px
+   tall. This sheet loads last and lifts them: small print ≥ 12.5px,
+   tags ≥ 11px, small buttons ≥ 36px tall (40px on phones), bottom nav
+   labels 11.5px. html:not(#_):not(#_):not(#_):not(#_):not(#_) = a selector prefix strong enough to beat the
+   theme sheets. Playing cards, charts and SVG art keep their own sizes.
+   ===================================================================== */
+
+/* ---- small print ---- */
+html:not(#_):not(#_):not(#_):not(#_):not(#_) #view small:not(.pc *), html:not(#_):not(#_):not(#_):not(#_):not(#_) #view .small, html:not(#_):not(#_):not(#_):not(#_):not(#_) .modal small, html:not(#_):not(#_):not(#_):not(#_):not(#_) .modal .small { font-size: 12.5px !important; line-height: 1.35; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) #view .muted:not(small):not(.pc *) { font-size: max(13px, 1em) !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) #view p { font-size: max(14px, 1em) !important; line-height: 1.5; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) #view p.muted.small, html:not(#_):not(#_):not(#_):not(#_):not(#_) #view p.small { font-size: 13px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) #view .foot-note, html:not(#_):not(#_):not(#_):not(#_):not(#_) #view .cr-free, html:not(#_):not(#_):not(#_):not(#_):not(#_) .lg-foot small, html:not(#_):not(#_):not(#_):not(#_):not(#_) footer.site-credit small { font-size: 12.5px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) #view em:not(.pc *):not([class*='tag']) { font-size: max(12px, 1em) !important; }
+
+/* ---- headings ---- */
+html:not(#_):not(#_):not(#_):not(#_):not(#_) #view .card h3, html:not(#_):not(#_):not(#_):not(#_):not(#_) #view .card-h h3 { font-size: 16.5px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) #view .card h2 { font-size: max(19px, 1em) !important; }
+
+/* ---- tags, badges, chips ---- */
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .np-tag, html:not(#_):not(#_):not(#_):not(#_):not(#_) .badge, html:not(#_):not(#_):not(#_):not(#_):not(#_) .x-tag, html:not(#_):not(#_):not(#_):not(#_):not(#_) .inv-tag, html:not(#_):not(#_):not(#_):not(#_):not(#_) .mut-pill, html:not(#_):not(#_):not(#_):not(#_):not(#_) .lvchip, html:not(#_):not(#_):not(#_):not(#_):not(#_) .md-chip, html:not(#_):not(#_):not(#_):not(#_):not(#_) .bp-more, html:not(#_):not(#_):not(#_):not(#_):not(#_) .fe-lk, html:not(#_):not(#_):not(#_):not(#_):not(#_) .fe-tick, html:not(#_):not(#_):not(#_):not(#_):not(#_) .pk-act, html:not(#_):not(#_):not(#_):not(#_):not(#_) .bj-r { font-size: 11px !important; letter-spacing: 0.04em; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) #nfCount { font-size: 11px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .np-when, html:not(#_):not(#_):not(#_):not(#_):not(#_) .np-date, html:not(#_):not(#_):not(#_):not(#_):not(#_) .np-live, html:not(#_):not(#_):not(#_):not(#_):not(#_) .np-cl { font-size: 12.5px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .ap-odds em, html:not(#_):not(#_):not(#_):not(#_):not(#_) .ap-ot { font-size: 12px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .sfx-need { font-size: 12px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .bp-cn { font-size: 12.5px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .nav-sec { font-size: 11.5px !important; letter-spacing: 0.12em; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .mkt-chip span, html:not(#_):not(#_):not(#_):not(#_):not(#_) .mkt-chip b { font-size: 12px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) #topChg { font-size: 12px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .sc-nm small, html:not(#_):not(#_):not(#_):not(#_):not(#_) .sc-chg { font-size: 12.5px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .ach small { font-size: 12.5px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .ach em { font-size: 12px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .bk-chips i { font-size: 12px !important; }
+
+/* ---- buttons and controls ---- */
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .btn.sm { font-size: 13.5px !important; min-height: 36px !important; padding-left: 14px; padding-right: 14px; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .btn { font-size: max(14.5px, 1em) !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .seg button, html:not(#_):not(#_):not(#_):not(#_):not(#_) .seg .seg-b { font-size: 13.5px !important; min-height: 36px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .hub-tabs button { font-size: 14px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) .linkish { font-size: 13.5px !important; min-height: 32px !important; }
+html:not(#_):not(#_):not(#_):not(#_):not(#_) input.txt, html:not(#_):not(#_):not(#_):not(#_):not(#_) select.txt, html:not(#_):not(#_):not(#_):not(#_):not(#_) .txt { font-size: max(15px, 1em) !important; }
+
+/* ---- phones: bigger tap targets, bigger bottom nav labels ---- */
+@media (max-width: 900px) {
+  html:not(#_):not(#_):not(#_):not(#_):not(#_) #nav a span, html:not(#_):not(#_):not(#_):not(#_):not(#_) #navMore span { font-size: 11.5px !important; }
+  html:not(#_):not(#_):not(#_):not(#_):not(#_) .btn.sm { min-height: 40px !important; font-size: 14px !important; }
+  html:not(#_):not(#_):not(#_):not(#_):not(#_) .seg button { min-height: 40px !important; font-size: 14px !important; }
+  html:not(#_):not(#_):not(#_):not(#_):not(#_) #view p { font-size: max(14.5px, 1em) !important; }
+  html:not(#_):not(#_):not(#_):not(#_):not(#_) #view small:not(.pc *), html:not(#_):not(#_):not(#_):not(#_):not(#_) #view .small { font-size: 13px !important; }
+  html:not(#_):not(#_):not(#_):not(#_):not(#_) #view .muted:not(small):not(.pc *) { font-size: max(13.5px, 1em) !important; }
+  html:not(#_):not(#_):not(#_):not(#_):not(#_) .hub-tabs button { font-size: 14px !important; min-height: 44px !important; }
+  html:not(#_):not(#_):not(#_):not(#_):not(#_) .lg-foot a, html:not(#_):not(#_):not(#_):not(#_):not(#_) .site-credit a { display: inline-block; padding: 6px 2px; }
 }
 
 </style>

@@ -1,0 +1,55 @@
+/* =====================================================================
+   READABLE: a minimum size for text and buttons everywhere.
+   Lots of labels had drifted down to 9.5–11px and small buttons to 30px
+   tall. This sheet loads last and lifts them: small print ≥ 12.5px,
+   tags ≥ 11px, small buttons ≥ 36px tall (40px on phones), bottom nav
+   labels 11.5px. $R = a selector prefix strong enough to beat the
+   theme sheets. Playing cards, charts and SVG art keep their own sizes.
+   ===================================================================== */
+
+/* ---- small print ---- */
+$R #view small:not(.pc *), $R #view .small, $R .modal small, $R .modal .small { font-size: 12.5px !important; line-height: 1.35; }
+$R #view .muted:not(small):not(.pc *) { font-size: max(13px, 1em) !important; }
+$R #view p { font-size: max(14px, 1em) !important; line-height: 1.5; }
+$R #view p.muted.small, $R #view p.small { font-size: 13px !important; }
+$R #view .foot-note, $R #view .cr-free, $R .lg-foot small, $R footer.site-credit small { font-size: 12.5px !important; }
+$R #view em:not(.pc *):not([class*='tag']) { font-size: max(12px, 1em) !important; }
+
+/* ---- headings ---- */
+$R #view .card h3, $R #view .card-h h3 { font-size: 16.5px !important; }
+$R #view .card h2 { font-size: max(19px, 1em) !important; }
+
+/* ---- tags, badges, chips ---- */
+$R .np-tag, $R .badge, $R .x-tag, $R .inv-tag, $R .mut-pill, $R .lvchip, $R .md-chip, $R .bp-more, $R .fe-lk, $R .fe-tick, $R .pk-act, $R .bj-r { font-size: 11px !important; letter-spacing: 0.04em; }
+$R #nfCount { font-size: 11px !important; }
+$R .np-when, $R .np-date, $R .np-live, $R .np-cl { font-size: 12.5px !important; }
+$R .ap-odds em, $R .ap-ot { font-size: 12px !important; }
+$R .sfx-need { font-size: 12px !important; }
+$R .bp-cn { font-size: 12.5px !important; }
+$R .nav-sec { font-size: 11.5px !important; letter-spacing: 0.12em; }
+$R .mkt-chip span, $R .mkt-chip b { font-size: 12px !important; }
+$R #topChg { font-size: 12px !important; }
+$R .sc-nm small, $R .sc-chg { font-size: 12.5px !important; }
+$R .ach small { font-size: 12.5px !important; }
+$R .ach em { font-size: 12px !important; }
+$R .bk-chips i { font-size: 12px !important; }
+
+/* ---- buttons and controls ---- */
+$R .btn.sm { font-size: 13.5px !important; min-height: 36px !important; padding-left: 14px; padding-right: 14px; }
+$R .btn { font-size: max(14.5px, 1em) !important; }
+$R .seg button, $R .seg .seg-b { font-size: 13.5px !important; min-height: 36px !important; }
+$R .hub-tabs button { font-size: 14px !important; }
+$R .linkish { font-size: 13.5px !important; min-height: 32px !important; }
+$R input.txt, $R select.txt, $R .txt { font-size: max(15px, 1em) !important; }
+
+/* ---- phones: bigger tap targets, bigger bottom nav labels ---- */
+@media (max-width: 900px) {
+  $R #nav a span, $R #navMore span { font-size: 11.5px !important; }
+  $R .btn.sm { min-height: 40px !important; font-size: 14px !important; }
+  $R .seg button { min-height: 40px !important; font-size: 14px !important; }
+  $R #view p { font-size: max(14.5px, 1em) !important; }
+  $R #view small:not(.pc *), $R #view .small { font-size: 13px !important; }
+  $R #view .muted:not(small):not(.pc *) { font-size: max(13.5px, 1em) !important; }
+  $R .hub-tabs button { font-size: 14px !important; min-height: 44px !important; }
+  $R .lg-foot a, $R .site-credit a { display: inline-block; padding: 6px 2px; }
+}
